@@ -1,0 +1,498 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD01F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv .
+  IF go_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con
+    EXPORTING
+      container_name              = 'CON'
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  CREATE OBJECT go_alv
+    EXPORTING
+      i_parent          = go_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv .
+  PERFORM set_alv_layo.
+  PERFORM set_fcat.
+*  PERFORM set_sort.
+*  PERFORM set_light.
+
+  CALL METHOD go_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMD0102'
+      is_layout                     = gs_layo
+    CHANGING
+      it_outtab                     = gt_list
+      it_fieldcatalog               = gt_fcat
+*     it_sort                       = gt_sort
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_layo .
+  CLEAR gs_layo.
+  gs_layo-cwidth_opt = 'X'.
+  gs_layo-zebra = 'X'.
+*  gs_layo-excp_fname = 'LIGHT'.
+*  gs_layo-excp_led = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_emp_list .
+  DATA: lr_estat TYPE RANGE OF ztssemp-estat,
+        ls_estat LIKE LINE OF lr_estat.
+  CLEAR: lr_estat, gt_list.
+
+  " 체크박스 range변수
+  IF zsssmd0101-estat_1 = 'X'.
+*    CLEAR ls_estat.
+    ls_estat-sign = 'I'.
+    ls_estat-option = 'EQ'.
+    ls_estat-low = '1'.
+    APPEND ls_estat TO lr_estat.
+  ENDIF.
+  IF zsssmd0101-estat_2 = 'X'.
+*    CLEAR ls_estat.
+    ls_estat-sign = 'I'.
+    ls_estat-option = 'EQ'.
+    ls_estat-low = '2'.
+    APPEND ls_estat TO lr_estat.
+  ENDIF.
+  IF zsssmd0101-estat_3 = 'X'.
+*    CLEAR ls_estat.
+    ls_estat-sign = 'I'.
+    ls_estat-option = 'EQ'.
+    ls_estat-low = '3'.
+    APPEND ls_estat TO lr_estat.
+  ENDIF.
+  " estat 선택 안 했을 때 모든 estat 조회
+  IF lr_estat IS INITIAL.
+    DO 3 TIMES.
+      CLEAR ls_estat.
+      ls_estat-sign = 'I'.
+      ls_estat-option = 'EQ'.
+      ls_estat-low = sy-index.  "1,2,3
+      APPEND ls_estat TO lr_estat.
+    ENDDO.
+  ENDIF.
+
+  IF zsssmd0101-depid IS INITIAL.
+    SELECT a~pernr a~depid b~dname a~persg a~lname a~fname a~entdt a~gesch
+           a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
+      FROM ztssemp AS a INNER JOIN ztssdept_t AS b
+        ON a~depid EQ b~depid
+        INNER JOIN ztssdom AS c
+        ON a~edom EQ c~edom
+      INTO CORRESPONDING FIELDS OF TABLE gt_list
+      WHERE a~estat IN lr_estat
+        AND b~langu EQ '3'.
+  ELSE.
+    SELECT a~pernr a~depid b~dname a~persg a~lname a~fname a~entdt a~gesch
+           a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
+      FROM ztssemp AS a INNER JOIN ztssdept_t AS b
+        ON a~depid EQ b~depid
+        INNER JOIN ztssdom AS c
+        ON a~edom EQ c~edom
+      INTO CORRESPONDING FIELDS OF TABLE gt_list
+      WHERE a~depid = zsssmd0101-depid
+        AND a~estat IN lr_estat
+        AND b~langu EQ '3'.
+  ENDIF.
+
+  PERFORM modify_emp_list.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_EMP_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_emp_list .
+  DATA: ls_dom_sg TYPE dd07v,
+        lt_dom_sg TYPE TABLE OF dd07v,
+        ls_dom_gs TYPE dd07v,
+        lt_dom_gs TYPE TABLE OF dd07v,
+        ls_dom_st TYPE dd07v,
+        lt_dom_st TYPE TABLE OF dd07v.
+
+  " 1. 직급 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSPERSG'
+*     text            = 'X'
+    TABLES
+      values_tab      = lt_dom_sg
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  LOOP AT gt_list INTO gs_list.
+    READ TABLE lt_dom_sg WITH KEY domvalue_l = gs_list-persg INTO ls_dom_sg.
+    IF sy-subrc EQ 0.
+      gs_list-persg_t = ls_dom_sg-ddtext.
+    ENDIF.
+    MODIFY gt_list FROM gs_list.
+  ENDLOOP.
+
+  " 2. 성별 fixed value
+*  CALL FUNCTION 'GET_DOMAIN_VALUES'
+*    EXPORTING
+*      domname         = 'ZDSSGESCH'
+**      text            = 'X'
+*    TABLES
+*      values_tab      = lt_dom_gs
+*    EXCEPTIONS
+*      no_values_found = 1
+*      OTHERS          = 2.
+*  LOOP AT gt_list INTO gs_list.
+*    READ TABLE lt_dom_gs WITH KEY domvalue_l = gs_list-gesch INTO ls_dom_gs.
+*    IF sy-subrc EQ 0.
+*      gs_list-gesch_t = ls_dom_gs-ddtext.
+*    ENDIF.
+*    MODIFY gt_list FROM gs_list.
+*  ENDLOOP.
+
+  " 3. 재직상태 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSESTAT'
+*     text            = 'X'
+    TABLES
+      values_tab      = lt_dom_st
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  LOOP AT gt_list INTO gs_list.
+    READ TABLE lt_dom_st WITH KEY domvalue_l = gs_list-estat INTO ls_dom_st.
+    IF sy-subrc EQ 0.
+      gs_list-estat_t = ls_dom_st-ddtext.
+    ENDIF.
+    MODIFY gt_list FROM gs_list.
+  ENDLOOP.
+
+  " 4. 사원명 concatenate
+  IF gs_list-lname IS NOT INITIAL AND gs_list-fname IS NOT INITIAL.
+    LOOP AT gt_list INTO gs_list.
+      CONCATENATE gs_list-lname gs_list-fname INTO gs_list-ename.
+      MODIFY gt_list FROM gs_list.
+    ENDLOOP.
+  ENDIF.
+
+  " 5. 이메일 concatenate
+  IF gs_list-eid IS NOT INITIAL AND gs_list-edom IS NOT INITIAL.
+    LOOP AT gt_list INTO gs_list.
+      CONCATENATE gs_list-eid '@' gs_list-ednme INTO gs_list-email.
+      MODIFY gt_list FROM gs_list.
+    ENDLOOP.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat .
+  CLEAR gt_fcat.
+
+  gs_fcat-fieldname = 'PERSG'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'PERSG_T'.
+  gs_fcat-coltext = '직급'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'LNAME'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'FNAME'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'ENAME'.
+  gs_fcat-coltext = '사원명'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'ENTDT'.
+*  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'GESCH'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'GESCH_T'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'GBDAT'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'POSTC'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'ADDRE'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'TELNR'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'EID'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'EDOM'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'EDNME'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'EMAIL'.
+  gs_fcat-coltext = '이메일'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'ESTAT'.
+  gs_fcat-no_out = 'X'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+  gs_fcat-fieldname = 'ESTAT_T'.
+  gs_fcat-coltext = '재직상태'.
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row .
+  CLEAR gs_list.
+
+  DATA: lt_rows TYPE lvc_t_row,
+        ls_rows LIKE LINE OF lt_rows,
+        lv_cnt  TYPE sy-tabix.
+
+  CALL METHOD go_alv->get_selected_rows
+    IMPORTING
+      et_index_rows = lt_rows.
+*     et_row_no     =
+  DESCRIBE TABLE lt_rows LINES lv_cnt.
+  CASE lv_cnt.
+    WHEN '1'.
+      READ TABLE lt_rows INDEX 1 INTO ls_rows.
+      CLEAR gs_list.
+      READ TABLE gt_list INDEX ls_rows-index INTO gs_list.
+
+    WHEN OTHERS.
+      gv_subrc = 4.      " False
+      MESSAGE i999(zmcss) WITH '한 개의 레코드를 선택해 주세요.'.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_DETAIL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_emp_detail.
+  CLEAR gs_det.
+  SELECT SINGLE a~pernr a~depid b~dname a~persg a~lname a~fname a~entdt a~gesch
+                a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
+      FROM ztssemp AS a INNER JOIN ztssdept_t AS b
+        ON a~depid EQ b~depid
+        INNER JOIN ztssdom AS c
+        ON a~edom EQ c~edom
+      INTO CORRESPONDING FIELDS OF gs_det
+      WHERE a~pernr EQ gv_pernr
+        AND b~langu EQ '3'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_EMP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_emp .
+  DATA: lv_pernr TYPE char7,   " 신규사번
+        ls_new TYPE ztssemp.
+
+  CLEAR: lv_pernr, ls_new.
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMD01'
+    IMPORTING
+      number                  = lv_pernr
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'ERROR' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  " persg 라디오버튼
+  IF zsssmd0103-persg_1 EQ 'X'.
+    ls_new-persg = '1'.
+  ELSEIF zsssmd0103-persg_2 EQ 'X'.
+    ls_new-persg = '2'.
+  ELSEIF zsssmd0103-persg_3 EQ 'X'.
+    ls_new-persg = '3'.
+  ENDIF.
+
+  " gesch 라디오버튼
+  IF zsssmd0103-gesch_1 EQ 'X'.
+    ls_new-gesch = '1'.
+  ELSEIF zsssmd0103-gesch_2 EQ 'X'.
+    ls_new-gesch = '2'.
+  ENDIF.
+
+  ls_new-pernr = 'E' && lv_pernr.
+  ls_new-depid = zsssmd0103-depid.
+  ls_new-lname = zsssmd0103-lname.
+  ls_new-fname = zsssmd0103-fname.
+  ls_new-entdt = zsssmd0103-entdt.
+  ls_new-gbdat = zsssmd0103-gbdat.
+  ls_new-postc = zsssmd0103-postc.
+  ls_new-addre = zsssmd0103-addre.
+  ls_new-telnr = zsssmd0103-telnr.
+  ls_new-eid = zsssmd0103-eid.
+  ls_new-edom = zsssmd0103-edom.
+  ls_new-estat = '1'.
+  INSERT ztssemp FROM ls_new.
+
+  IF sy-subrc EQ 0.
+    COMMIT WORK.
+    MESSAGE i999(zmcss) WITH '사원' ls_new-pernr '등록 완료' DISPLAY LIKE 'S'.
+    APPEND ls_new TO gt_list.
+    LEAVE TO SCREEN 0.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '사원 등록 실패' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv .
+  CALL METHOD go_alv->refresh_table_display
+*    EXPORTING
+*      is_stable      = 'ZTSSEMP'
+*      i_soft_refresh =
+    EXCEPTIONS
+      finished       = 1
+      others         = 2
+          .
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

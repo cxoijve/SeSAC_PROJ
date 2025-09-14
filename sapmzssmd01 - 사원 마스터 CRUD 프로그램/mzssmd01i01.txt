@@ -1,0 +1,79 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD01I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+      " 사원 정보 가져오기(alv)
+      PERFORM get_emp_list.
+    WHEN 'DETAIL'.
+      " 사원 상세정보 가져오기
+      PERFORM select_row.
+      PERFORM get_emp_detail.
+      READ TABLE gt_list WITH KEY pernr = gs_list-pernr INTO gs_list.
+      IF sy-subrc EQ 0.
+        gv_pernr = gs_list-pernr.
+      ENDIF.
+    WHEN 'REGIS'.
+      " 사원 등록
+      CALL SCREEN 0200.
+      CLEAR: zsssmd0103-depid, zsssmd0103-lname, zsssmd0103-fname, zsssmd0103-entdt,
+             zsssmd0103-gbdat, zsssmd0103-eid, zsssmd0103-edom, zsssmd0103-telnr,
+             zsssmd0103-postc, zsssmd0103-addre.
+    WHEN 'UPDAT'.
+      " 사원 정보 변경
+      CALL SCREEN 0300.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SAVE'.
+      " 사원 insert
+      PERFORM insert_emp.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'UPDATE'.
+      " 사원 update
+
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

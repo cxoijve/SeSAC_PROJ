@@ -1,0 +1,189 @@
+*&---------------------------------------------------------------------*
+*&  Include           SAPMZSSTEMPI01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ENTER'.
+      PERFORM get_matnm TABLES   gt_ztssmat_t
+                        USING    zsssmd0201-matnr
+                                 sy-langu
+                        CHANGING zsssmd0201-matnm.
+
+    WHEN 'SEARCH'.
+      PERFORM get_matnm TABLES   gt_ztssmat_t
+                        USING    zsssmd0201-matnr
+                                 sy-langu
+                        CHANGING zsssmd0201-matnm.
+
+      " 검색
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                   gt_r_mtype
+                                   gt_r_matnr
+                            USING  zsssmd0201.
+    WHEN 'M200'.
+      " 200 condition 클리어
+      PERFORM set_default_0200 CHANGING gs_cond_0200.
+
+      " 신규 자재 창으로 이동
+      CALL SCREEN 200.
+
+      " 200 condition 클리어
+      PERFORM set_default_0200 CHANGING gs_cond_0200.
+
+      " 신규 자재 등록 이후 검색
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                   gt_r_mtype
+                                   gt_r_matnr
+                            USING  zsssmd0201.
+
+    WHEN 'M300'.
+      " 100에서 선택한 Row를 설정.
+      PERFORM select_row_0100 TABLES   gt_info_0100
+                              CHANGING gs_row_0100
+                                       gv_subrc.
+
+      " 열 하나만 골라야되는데 그게 안됐으면 이 다음은 진행하면 안됨.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 수정 혹은 삭제할 자재가 수정, 삭제가 가능한 자재인지 검사해 봐야 함.
+      PERFORM check_updatability USING    gs_row_0100
+                                 CHANGING gv_subrc.
+
+      " 검사 결과 수정 삭제가 불가능하면 이 다음은 진행하면 안됨.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 300 Condition을 100에서 선택한 요소 값으로 설정
+      PERFORM set_default_0300 USING    gs_row_0100
+                               CHANGING gs_cond_0300.
+
+      " 자재 변경 혹은 삭제 창으로 이동
+      CALL SCREEN 300.
+
+      " Screen 300에서 복귀한 이후,
+
+      " 100에서 선택한 Row를 Clear
+      CLEAR gs_row_0100.
+
+      " 300 Condition을 100에서 선택한 요소 값으로 설정 (여기서는 Initial)
+      PERFORM set_default_0300 USING    gs_row_0100
+                               CHANGING gs_cond_0300.
+
+      " 자재 변경 및 삭제 이후 재검색
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                   gt_r_mtype
+                                   gt_r_matnr
+                            USING  zsssmd0201.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+    WHEN 'INSERT'.
+
+      PERFORM insert_material USING gs_cond_0200
+                              CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_EXPDA  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_expda_0200 INPUT.
+
+  PERFORM check_expda USING gs_cond_0200-expda.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_ENAME  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_ename_0200 INPUT.
+
+  PERFORM check_ename USING gs_cond_0200-ename
+                            'W'.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'DELETE'.
+
+      PERFORM update_del USING    gs_cond_0300
+                                  'I'
+                         CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
+    WHEN 'UPDATE'.
+      PERFORM check_ename  USING  gs_cond_0300-ename
+                                  'I'.
+
+
+      PERFORM check_identity USING gs_row_0100
+                                   gs_cond_0300
+                             CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      PERFORM update_material USING gs_cond_0300
+                              CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

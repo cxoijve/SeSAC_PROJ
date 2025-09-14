@@ -1,0 +1,42 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSS_TEMPLATE
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE MZSSMD02TOP.
+INCLUDE MZSSMD02O01.
+INCLUDE MZSSMD02I01.
+INCLUDE MZSSMD02F01.
+
+LOAD-OF-PROGRAM.
+
+  " alv의 기본 세팅 - 0100
+  PERFORM set_default_alv TABLES    gt_fcat_0100
+                                    gt_sort_0100
+                          USING     '0100'
+                          CHANGING  gs_layo_0100.
+
+  " Domain Fixed Value 가져오기
+  PERFORM get_domain_fixed_values TABLES  gt_dd07v
+                                  USING  'ZDSSMTYPE'.
+
+  " 프로그램 시작시 쿼리 1회 실행.
+  PERFORM get_info_0100 TABLES gt_info_0100
+                               gt_r_mtype
+                               gt_r_matnr
+                        USING  zsssmd0201.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> & - &
+* T200 --> & - &
+* T300 --> & - &
+* T100 --> & - &
+* T200 --> & - &
+* T300 --> & - &
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

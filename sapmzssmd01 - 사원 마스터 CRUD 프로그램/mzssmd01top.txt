@@ -1,0 +1,43 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSMD01TOP                                       Module Pool      SAPMZSSMD01
+*&
+*&---------------------------------------------------------------------*
+PROGRAM SAPMZSSMD01.
+
+" Common
+DATA: ok_code TYPE sy-ucomm,
+      gv_subrc TYPE sy-subrc,
+      gv_pernr TYPE ztssemp-pernr.
+
+" Screen 100 - Condition
+TABLES zsssmd0101.
+
+" Screen 100 - ALV
+DATA: BEGIN OF gs_list.
+        INCLUDE STRUCTURE zsssmd0102.
+DATA: END OF gs_list,
+      gt_list LIKE TABLE OF gs_list.
+*TABLES zsssmd0102.
+
+" ALV
+DATA: go_con TYPE REF TO cl_gui_custom_container,
+      go_alv  TYPE REF TO cl_gui_alv_grid,
+      gs_layo TYPE lvc_s_layo,
+      gt_fcat TYPE lvc_t_fcat,
+      gs_fcat LIKE LINE OF gt_fcat.
+
+" Screen 101
+DATA: BEGIN OF gs_det.
+        INCLUDE STRUCTURE zsssmd0102.
+DATA: END OF gs_det,
+      gt_det LIKE TABLE OF gs_det.
+
+" Screen 200
+*DATA: BEGIN OF gs_new.
+*        INCLUDE STRUCTURE zsssmd0103.
+*DATA: END OF gs_new,
+*      gt_new LIKE TABLE OF gs_new.
+TABLES zsssmd0103.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

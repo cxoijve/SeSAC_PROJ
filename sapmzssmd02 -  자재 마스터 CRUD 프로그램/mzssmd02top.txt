@@ -1,0 +1,52 @@
+*&---------------------------------------------------------------------*
+*& Include SAPMZSSTEMPTOP                                    Module Pool      SAPMZSS_TEMPLATE
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzss_template.
+
+
+DATA : ok_code  TYPE sy-ucomm,
+       gv_subrc TYPE sy-subrc,
+       gv_dynnr TYPE sy-dynnr.
+
+" ALV Objects 0100
+DATA   go_con_0100 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0100 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0100 TYPE lvc_s_layo.
+DATA : gt_fcat_0100 TYPE lvc_t_fcat,
+       gs_fcat_0100 LIKE LINE OF gt_fcat_0100.
+DATA : gt_sort_0100 TYPE lvc_t_sort,
+       gs_sort_0100 LIKE LINE OF gt_sort_0100.
+
+" Condition 0100
+TABLES zsssmd0201.
+
+" Selected Row 0100
+DATA : gs_row_0100 LIKE zsssmd0203.
+
+" Range 0100
+DATA : gt_r_mtype TYPE RANGE OF zsssmd0201-mtype WITH HEADER LINE.
+DATA : gt_r_matnr TYPE RANGE OF zsssmd0201-matnr WITH HEADER LINE.
+
+" Info 0100
+DATA : BEGIN OF gs_info_0100.
+    INCLUDE TYPE zsssmd0202.
+DATA : END OF gs_info_0100.
+DATA : gt_info_0100 LIKE TABLE OF gs_info_0100.
+
+" Itab 0100
+DATA gt_dd07v TYPE TABLE OF dd07v WITH HEADER LINE.
+DATA gt_ztssmat_t TYPE TABLE OF ztssmat_t WITH HEADER LINE.
+
+" Condition 0200
+DATA : BEGIN OF gs_cond_0200.
+    INCLUDE TYPE zsssmd0203.
+DATA : END OF gs_cond_0200.
+
+" Condition 0300
+DATA : BEGIN OF gs_cond_0300.
+    INCLUDE TYPE zsssmd0203.
+DATA : END OF gs_cond_0300.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
