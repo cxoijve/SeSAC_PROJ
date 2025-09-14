@@ -1,0 +1,71 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSMD04TOP                                       Module Pool      SAPMZSSMD04
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzssmd04.
+
+DATA : gv_subrc TYPE sy-subrc,
+       ok_code  TYPE sy-ucomm.
+
+TABLES : zsssmd04001,"ALV
+         zsssmd04002,
+         zsssmd04003,
+         zsssmd04004,
+         zsssmd04005,
+         zsssmd04006,
+         zsssmd04007.
+
+DATA : gt_data TYPE TABLE OF zsssmd04001, "DISPLAY ALV
+       gs_data LIKE LINE OF gt_data.
+
+DATA: gt_cstid TYPE RANGE OF zsssmd04002-cstid WITH HEADER LINE, "cstid CONDITION
+      gt_penid TYPE RANGE OF zsssmd04002-penid WITH HEADER LINE, "PENID CONDITION
+      gt_ctype TYPE RANGE OF zsssmd04002-ctype WITH HEADER LINE. "CTYPE CONDITION
+
+DATA: BEGIN OF gs_customer,
+        cstid TYPE zesscstid,
+      END OF gs_customer.
+DATA gt_customer LIKE TABLE OF gs_customer.
+
+DATA: BEGIN OF gs_pernr,
+        pernr TYPE zesspernr,
+      END OF gs_pernr.
+DATA gt_pernr LIKE TABLE OF gs_pernr.
+
+DATA : BEGIN OF gs_email,
+         edom  TYPE zessedom,
+         ednme TYPE zessednme,
+       END OF gs_email.
+DATA gt_email LIKE TABLE OF gs_email.
+
+
+DATA : BEGIN OF gs_edom,
+         edom1 TYPE zessedom,
+         edom2 TYPE zessedom,
+       END OF gs_edom.
+
+*"------------------------------------------------------
+*
+*DATA gv_num1(4) TYPE n.
+*
+*DATA : gt_info TYPE TABLE OF  ztssdom,
+*       gs_info LIKE LINE OF gt_info.
+*
+*"------------------------------------------------------
+
+DATA: gs_layo TYPE lvc_s_layo.
+
+DATA: gt_fval TYPE TABLE OF dd07v,
+      gs_fval LIKE LINE OF gt_fval.
+
+DATA: gt_mstat TYPE TABLE OF dd07v,
+      gs_mstat LIKE LINE OF gt_mstat.
+
+DATA: gt_fcat TYPE lvc_t_fcat,
+      gs_fcat LIKE LINE OF gt_fcat.
+
+DATA: go_con TYPE  REF TO cl_gui_custom_container,
+      go_alv TYPE REF TO cl_gui_alv_grid.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

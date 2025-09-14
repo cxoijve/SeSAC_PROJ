@@ -1,0 +1,36 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSMD04
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE mzssmd04top                             .    " global Data
+
+INCLUDE mzssmd04o01                             .  " PBO-Modules
+INCLUDE mzssmd04i01                             .  " PAI-Modules
+INCLUDE mzssmd04f01                             .  " FORM-Routines
+
+
+
+LOAD-OF-PROGRAM.
+*  PERFORM get_all_domain_value.
+
+  PERFORM get_customer_data.
+  PERFORM check_field_condition.
+  PERFORM check_alv_condition.
+  PERFORM get_all_table_data.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> SIXTH SENSE 고객 정보 프로그램
+* T200 --> 고객 등록
+* T201 --> 계약종료일
+* T202 --> 이메일 도메인 추가
+* T300 --> 고객 정보 수정
+* T301 --> 계약종료일 등록창
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -1,0 +1,152 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD04I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+      PERFORM check_field_condition.
+      PERFORM check_alv_condition.
+      PERFORM get_customer_data.
+
+    WHEN 'REGIST'.
+      CALL SCREEN 200.
+      CLEAR: zsssmd04003,
+             zsssmd04004.
+
+    WHEN 'CHANGE'.
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF gv_subrc IS INITIAL.
+        CALL SCREEN 300.
+        CLEAR: gs_data,
+               zsssmd04006,
+               zsssmd04007.
+      ENDIF.
+
+    WHEN 'DETAIL'.
+
+    WHEN 'ENTER'.
+      PERFORM check_field_condition.
+
+*	WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+*    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ENDSET'.
+      CALL SCREEN 201 STARTING AT 85 3 ENDING AT 120 6.
+
+    WHEN 'INSERT'.
+      PERFORM insert_email_data USING zsssmd04003-ednme.
+
+      PERFORM insert_customer_data USING    zsssmd04003-endda
+                                   CHANGING zsssmd04003-endda
+                                            zsssmd04003.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0201  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0201 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'."추가
+      PERFORM check_endda_field USING zsssmd04003-endda
+                                CHANGING zsssmd04003-endda.
+    WHEN 'BACK'. "취소
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0202  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0202 INPUT.
+  CASE sy-ucomm.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'DOMINSERT'.
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'UPDATE'.
+      PERFORM insert_email_data USING zsssmd04007-ednme.
+
+      PERFORM update_customer_data USING    zsssmd04007-endda
+                                   CHANGING zsssmd04007-endda
+                                            zsssmd04007.
+
+
+    WHEN 'ENDSET'.
+      CALL SCREEN 301 STARTING AT 85 3 ENDING AT 120 6.
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0301  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0301 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'.
+      PERFORM check_endda_field USING zsssmd04007-endda
+                                CHANGING zsssmd04007-endda.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

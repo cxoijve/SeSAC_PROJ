@@ -1,0 +1,741 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD04F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0100 .
+  IF go_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0100 .
+
+  PERFORM set_all_fcat.
+  PERFORM set_alv_layo.
+
+  CALL METHOD go_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMD04001'
+      is_layout                     = gs_layo
+    CHANGING
+      it_outtab                     = gt_data
+      it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_customer_data .
+  SELECT cstid cname begda endda postc addre ctype eid edom cpnme penid
+    FROM ztsscust
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    WHERE cstid IN gt_cstid
+      AND ctype IN gt_ctype
+      AND penid IN gt_penid.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_CUSTOMER_DATA 데이터 없음'.
+  ENDIF.
+
+  PERFORM modify_customer_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_layo .
+  CLEAR gs_layo.
+  gs_layo-cwidth_opt = 'X'.
+  gs_layo-zebra = 'X'.
+  gs_layo-sel_mode = 'A'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_customer_data .
+  DATA : ls_data LIKE LINE OF gt_data.
+
+  LOOP AT gt_data INTO ls_data.
+
+    PERFORM get_email_data USING ls_data-edom
+                           CHANGING ls_data-ednme.
+
+*    READ TABLE gt_fval WITH KEY domvalue_l = ls_data-edom INTO gs_fval.
+*    ls_data-XXX = gs_fval-ddtext.
+
+    CONCATENATE ls_data-eid ls_data-ednme INTO ls_data-email SEPARATED BY '@'.
+
+
+
+
+    MODIFY gt_data FROM ls_data.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_CONDITION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_alv_condition .
+  CLEAR: gt_cstid[],
+         gt_ctype[],
+         gt_penid[].
+
+  IF zsssmd04002-cstid IS NOT INITIAL.
+    gt_cstid-sign = 'I'.
+    gt_cstid-option = 'EQ'.
+    gt_cstid-low = zsssmd04002-cstid.
+    APPEND gt_cstid.
+  ENDIF.
+
+  IF zsssmd04002-ctype IS NOT INITIAL.
+    gt_ctype-sign = 'I'.
+    gt_ctype-option = 'EQ'.
+    gt_ctype-low = zsssmd04002-ctype.
+    APPEND gt_ctype.
+  ENDIF.
+
+  IF zsssmd04002-penid IS NOT INITIAL.
+    gt_penid-sign = 'I'.
+    gt_penid-option = 'EQ'.
+    gt_penid-low = zsssmd04002-penid.
+    APPEND gt_penid.
+  ENDIF.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALL_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_all_fcat .
+  CLEAR gt_fcat.
+
+  PERFORM set_fcat USING 'EID' '' '' 'X'.
+  PERFORM set_fcat USING 'EDOM' '' '' 'X'.
+  PERFORM set_fcat USING 'EDNME' '' '' 'X'.
+  PERFORM set_fcat USING 'EMAIL' '' '이메일' ''.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat USING VALUE(p_fieldname) TYPE lvc_fname
+                    VALUE(p_col_pos) TYPE lvc_colpos
+                    VALUE(p_coltext) TYPE lvc_txtcol
+                    VALUE(p_no_out) TYPE lvc_noout.
+  CLEAR gs_fcat.
+  gs_fcat-fieldname = p_fieldname .
+  gs_fcat-col_pos = p_col_pos.
+  gs_fcat-coltext = p_coltext.
+  gs_fcat-no_out    = p_no_out.
+  APPEND gs_fcat TO gt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_ALL_DOMAIN_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_all_domain_value .
+*  DATA: lt_XXX TYPE TABLE OF dd07v.
+*
+*  PERFORM get_domain_value TABLES lt_XXX
+*                           USING  'XXXX'.
+*
+*
+*  LOOP AT lt_XXX INTO gs_fval.
+*    APPEND gs_fval TO gt_fval.
+*  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_EDOM  text
+*      -->P_0305   text
+*----------------------------------------------------------------------*
+FORM get_domain_value TABLES t_domain STRUCTURE dd07v
+                      USING VALUE(pv_domname) TYPE dd07l-domname.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = pv_domname
+      text            = 'X'
+*     FILL_DD07L_TAB  = ' '
+    TABLES
+      values_tab      = t_domain
+*     VALUES_DD07L    =
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMAIL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_email_data USING VALUE(pv_edom) TYPE zessedom
+                       CHANGING cv_ednme TYPE zessednme.
+
+  SELECT SINGLE ednme
+    FROM ztssdom
+    INTO cv_ednme
+    WHERE edom = pv_edom.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_EMIAL_DATA 데이터 없음'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_NAME_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_name_data USING VALUE(pv_penid) TYPE zesspenid
+                        CHANGING cs_name TYPE zessfname.
+
+  DATA: BEGIN OF ls_data,
+          lname TYPE zesslname,
+          fname TYPE zessfname,
+        END OF ls_data.
+
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO CORRESPONDING FIELDS OF ls_data
+    WHERE pernr = pv_penid.
+
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_LFNAME_DATA 데이터 없음'.
+  ENDIF.
+
+  CONCATENATE ls_data-lname ls_data-fname INTO cs_name.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CUSTOMER_NAME_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_customer_name_data USING VALUE(pv_cstid) TYPE zesscstid
+                            CHANGING cv_cname TYPE zesscname.
+
+  SELECT SINGLE cname
+    FROM ztsscust
+    INTO cv_cname
+    WHERE cstid = pv_cstid.
+
+  IF  sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_CUSTOMER_NAME_DATA 데이터 없음'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_ALL_TABLE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_all_table_data .
+
+  SELECT cstid
+    FROM ztsscust
+    INTO CORRESPONDING FIELDS OF TABLE gt_customer.
+
+  SELECT pernr
+    FROM ztssemp
+    INTO CORRESPONDING FIELDS OF TABLE gt_pernr.
+
+  SELECT edom ednme
+    FROM ztssdom
+    INTO CORRESPONDING FIELDS OF TABLE gt_email.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_FIELD_CONDITION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_field_condition .
+  CLEAR sy-subrc.
+
+  IF zsssmd04002-cstid IS NOT INITIAL.
+    READ TABLE gt_customer WITH KEY cstid = zsssmd04002-cstid INTO gs_customer.
+
+    IF sy-subrc <> 0.
+      CLEAR zsssmd04002-cname.
+      MESSAGE i999(zmcss) WITH '올바른 고객코드를 입력해주세요'.
+    ELSE.
+      PERFORM get_customer_name_data USING zsssmd04002-cstid
+                                      CHANGING zsssmd04002-cname.
+    ENDIF.
+  ENDIF.
+
+  CLEAR sy-subrc.
+
+  IF zsssmd04002-penid IS NOT INITIAL.
+    READ TABLE gt_pernr WITH KEY pernr = zsssmd04002-penid INTO gs_pernr.
+
+    IF sy-subrc <> 0.
+      CLEAR zsssmd04002-name.
+      MESSAGE i999(zmcss) WITH '올바른 사원명을 입력해주세요'.
+    ELSE.
+      PERFORM get_name_data USING zsssmd04002-penid
+                         CHANGING zsssmd04002-name.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ENDDA_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_endda_field USING pv_endda TYPE zessendda
+                       CHANGING cv_endda TYPE zessendda.
+
+  IF pv_endda IS NOT INITIAL.
+    IF zsssmd04004-endda >= sy-datum AND zsssmd04004-endda >= zsssmd04003-begda AND zsssmd04004-endda >= pv_endda.
+      cv_endda = zsssmd04004-endda.
+      MESSAGE i999(zmcss) WITH '계약종료일 추가'.
+      LEAVE TO SCREEN 0.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '올바른 계약종료일을 입력해주세요'.
+    ENDIF.
+  ELSE.
+    IF zsssmd04004-endda >= sy-datum AND zsssmd04004-endda >= zsssmd04003-begda.
+      cv_endda = zsssmd04004-endda.
+      MESSAGE i999(zmcss) WITH '계약종료일 추가'.
+      LEAVE TO SCREEN 0.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '올바른 계약종료일을 입력해주세요'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_customer_data USING VALUE(pv_endda) TYPE zessendda
+                          CHANGING cv_endda     TYPE zessendda
+                                   cs_data STRUCTURE zsssmd04003.
+
+  DATA : lv_num(7)  TYPE n, "채번
+         lv_num1(8) TYPE n. "고객 컨벤션 '2' + 채번
+  DATA : lv_num2(4) TYPE n. "EDOM '000X"
+  DATA : lt_info TYPE TABLE OF  ztsscust,
+         ls_info LIKE LINE OF lt_info.
+
+  PERFORM check_insert_endda_field USING pv_endda    "zsssmd04003-endda
+                                   CHANGING cv_endda. "zsssmd04003-endda
+
+  PERFORM get_customer_num CHANGING lv_num.
+  lv_num1 = 2 && lv_num.
+  ls_info-cstid = lv_num1.
+
+
+  IF gs_edom-edom1 IS INITIAL.
+
+    ls_info-edom = gs_edom-edom2.
+
+  ELSEIF gs_edom-edom2 IS INITIAL.
+
+    ls_info-edom = gs_edom-edom1.
+
+  ENDIF.
+
+
+  MOVE-CORRESPONDING cs_data TO ls_info. "zsssmd04003
+
+  INSERT ztsscust FROM ls_info.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '고객등록실패'.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '고객등록성공'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMAIL_NUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_email_num CHANGING cv_domnum TYPE n.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMD07'
+*     QUANTITY                = '1'
+*     SUBOBJECT               = ' '
+*     TOYEAR                  = '0000'
+*     IGNORE_BUFFER           = ' '
+    IMPORTING
+      number                  = cv_domnum
+*     QUANTITY                =
+*     RETURNCODE              =
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+  IF sy-subrc <> 0.
+    MESSAGE a000(zmcss).
+* Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_EMAIL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_email_data USING pv_denme TYPE zessednme.
+  DATA lv_num(4) TYPE n.
+  DATA : lt_info TYPE TABLE OF  ztssdom,
+         ls_info LIKE LINE OF lt_info.
+
+
+  PERFORM check_insert_ednme_field USING pv_denme "zsssmd04003-ednme
+                                   CHANGING gv_subrc.
+
+  IF gv_subrc = 0.     " 저장된 인터널 테이블에 이메일 데이터가 존재
+    gs_edom-edom1 = gs_email-edom.
+
+  ELSEIF gv_subrc = 4. "저장된 인터널 테이블에 이메일 데이터가 존재 하지 않음
+
+    PERFORM get_email_num CHANGING lv_num.
+    ls_info-ednme = pv_denme. "zsssmd04003-ednme.
+    ls_info-edom = lv_num.
+
+    gs_edom-edom2 = lv_num.
+
+    INSERT ztssdom FROM ls_info.
+    CLEAR gv_subrc.
+
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '이메일 등록 실패'.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '이메일 등록 성공'.
+    ENDIF.
+
+    PERFORM get_all_table_data. "인터널 테이블 새로고침
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERT_EDNME_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_insert_ednme_field USING pv_ednme TYPE zsssmd04003-ednme
+                        CHANGING cv_subrc TYPE sy-subrc.
+
+  READ TABLE gt_email WITH KEY ednme = pv_ednme INTO gs_email.
+
+  IF sy-subrc <> 0.
+    cv_subrc = 4.
+  ELSE.
+    cv_subrc = 0.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CUSTOMER_NUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LV_NUM  text
+*----------------------------------------------------------------------*
+FORM get_customer_num  CHANGING cv_custnum TYPE n.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMD03'
+*     QUANTITY                = '1'
+*     SUBOBJECT               = ' '
+*     TOYEAR                  = '0000'
+*     IGNORE_BUFFER           = ' '
+    IMPORTING
+      number                  = cv_custnum
+*     QUANTITY                =
+*     RETURNCODE              =
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERT_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_insert_field.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERT_ENDDA_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_insert_endda_field USING pv_endda TYPE zessendda
+                              CHANGING cv_endda TYPE zessendda.
+
+  IF pv_endda IS INITIAL.  "zsssmd04003-endda
+    cv_endda = '99991231'. "zsssmd04003-endda
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DETAIL_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_detail_info  CHANGING pv_subrc.
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no LIKE LINE OF lt_row_no,
+        lv_cnt    TYPE i.
+
+  CLEAR pv_subrc.
+
+  CALL METHOD go_alv->get_selected_rows
+    IMPORTING
+*     et_index_rows =
+      et_row_no = lt_row_no.
+
+  "Case 1
+  IF lt_row_no IS INITIAL.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  "Case 2
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+  IF lv_cnt > 1.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  CLEAR ls_row_no.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+
+  CLEAR gs_data.
+  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_UPDATE_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_update_field .
+
+  MOVE-CORRESPONDING gs_data TO zsssmd04006.
+  zsssmd04007-cstid = gs_data-cstid.
+
+  IF zsssmd04006-endda <> '99991231'.
+    zsssmd04007-endda = gs_data-endda.
+    zsssmd04007-begda = gs_data-begda.
+    zsssmd04007-cname = gs_data-cname.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM update_customer_data USING VALUE(pv_endda) TYPE zessendda
+                          CHANGING cv_endda     TYPE zessendda
+                                   cs_data STRUCTURE zsssmd04007.
+
+  DATA : lt_info TYPE TABLE OF  ztsscust,
+         ls_info LIKE LINE OF lt_info.
+
+  PERFORM check_insert_endda_field USING pv_endda    "zsssmd04003-endda
+                                   CHANGING cv_endda. "zsssmd04003-endda
+
+  IF gs_edom-edom1 IS INITIAL.
+    ls_info-edom = gs_edom-edom2.
+  ELSEIF gs_edom-edom2 IS INITIAL.
+    ls_info-edom = gs_edom-edom1.
+  ENDIF.
+
+  MOVE-CORRESPONDING cs_data TO ls_info. "zsssmd04003
+
+  UPDATE ztsscust FROM ls_info.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '변경실패'.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '변경성공'.
+  ENDIF.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
