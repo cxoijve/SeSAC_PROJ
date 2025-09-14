@@ -1,0 +1,244 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMM01I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC' OR 'CLOSE'.
+*      perform free_alv.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+*      set SCREEN 0.
+    WHEN 'SEARCH'.
+      PERFORM search_po_all_infos.
+    WHEN 'CREATE'.
+      zsssmm0103-venid = '10000001'.
+      zsssmm0103-rgtor = 'E0000002'.
+      zsssmm0103-dudat = sy-datum + 14.
+
+      CALL SCREEN 0200.
+    WHEN 'EDIT'.
+
+    WHEN 'DETAIL'.
+      DATA : lv_rowid TYPE i,
+             ls_data like line of gt_data.
+
+      PERFORM check_pop USING go_alv CHANGING gv_subrc lv_rowid.
+      IF gv_subrc = 0.
+        READ TABLE gt_data index lv_rowid into ls_data.
+
+        MOVE-CORRESPONDING ls_data to zsssmm0103.
+        perform get_po_item_in_details.
+        CALL SCREEN 0400.
+      ENDIF.
+
+
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+      PERFORM get_emp_name.
+      PERFORM get_ven_name.
+    WHEN 'ORDER'.
+      PERFORM insert_purchase_order CHANGING gv_subrc.
+      IF gv_subrc = 0.
+        CLEAR : zsssmm0103,
+          gt_item.
+        zsssmm0103-podat = sy-datum.
+      ENDIF.
+    WHEN 'I_ADD'.
+      zsssmm0104-itnum = gv_item_num.
+
+      IF zsssmm0103-venid IS NOT INITIAL.
+        CALL SCREEN 210 STARTING AT 5 5 ENDING AT 120 30.
+      ELSE.
+        MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
+      ENDIF.
+      CLEAR : zsssmm0104-pomnr,
+              zsssmm0104-amount,
+              zsssmm0104-poprc,
+              zsssmm0104-toprc,
+              zsssmm0104-pname.
+
+    WHEN 'I_EDIT'.
+      DATA : lv_item_rowid TYPE i.
+
+
+      PERFORM check_pop USING go_alv2 CHANGING gv_subrc lv_item_rowid.
+      IF gv_subrc = 0.
+        READ TABLE gt_item INDEX lv_item_rowid INTO gs_item.
+        gv_temp_num = lv_item_rowid.
+        MOVE-CORRESPONDING gs_item TO gs_cond_item.
+        MOVE-CORRESPONDING gs_cond_item TO zsssmm0104.
+        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 120 30.
+      ENDIF.
+    WHEN 'I_DEL'.
+      data : ls_del_item like line of gt_item.
+      PERFORM check_pop USING go_alv2 CHANGING gv_subrc lv_item_rowid.
+      IF gv_subrc = 0.
+         READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
+        zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
+        DELETE gt_item INDEX lv_item_rowid.
+        PERFORM renumber_item.
+      ENDIF.
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0210  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0210 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'SAVE'.
+      LEAVE TO SCREEN 0.
+    WHEN 'CLOSE'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0201  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0201 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'ENTER'.
+*      message i999(zmcss) with 'here'.
+
+      " 함수명 추후에 바꾸기 - get으로
+      PERFORM set_items_record.
+      PERFORM get_mat_name.
+    WHEN 'SAVE'.
+      PERFORM save_po_item CHANGING zsssmm0103 zsssmm0104.
+    WHEN 'EDIT'.
+      PERFORM edit_po_item CHANGING zsssmm0103 zsssmm0104.
+    when 'DELETE'.
+      perform delete_po_item CHANGING zsssmm0103.
+
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0220  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0220 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'EDIT'.
+      LEAVE TO SCREEN 0.
+    WHEN 'CLOSE'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_PO_HEADER_CREATE  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_po_header_create INPUT.
+
+  " 필수값 체크 로직
+*  PERFORM check_required_fields CHANGING zsssmm0103.
+  " 구매일자 체크 로직
+  PERFORM check_po_date CHANGING zsssmm0103-podat.
+  " 납기일 체크 로직
+  PERFORM check_due_date CHANGING zsssmm0103-dudat.
+  " 등록자 체크 로직
+  PERFORM check_resgistor CHANGING zsssmm0103-rgtor.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_ITEM_CREATE  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_item_create INPUT.
+
+  " 자재코드 체크로직
+  PERFORM check_material USING zsssmm0103-venid CHANGING zsssmm0104-pomnr.
+  " 수량 체크 로직
+*  PERFORM check_amount CHANGING zsssmm0104-amount.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_SUB  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_sub INPUT.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_MODAL  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_modal INPUT.
+  CASE sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC' OR 'CLOSE'.
+*      perform free_alv.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0400  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0400 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+    WHEN 'TAB1' or 'TAB2'.
+      t_info-activetab = OK_CODE.
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
