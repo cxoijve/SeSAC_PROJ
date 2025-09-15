@@ -1,0 +1,705 @@
+*&---------------------------------------------------------------------*
+*&  Include           SAPMZSSMD05F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0021   text
+*      <--P_GO_CON_0100  text
+*      <--P_GO_ALV_0100  text
+*----------------------------------------------------------------------*
+FORM create_alv  USING     VALUE(pv_cname)
+                 CHANGING  po_con TYPE REF TO cl_gui_custom_container
+                           po_alv TYPE REF TO cl_gui_alv_grid.
+
+  CREATE OBJECT po_con
+    EXPORTING
+      container_name              = pv_cname
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'CON_ERROR'.
+  ENDIF.
+
+  CREATE OBJECT po_alv
+    EXPORTING
+      i_parent          = po_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'ALV_ERROR'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO  text
+*      -->P_GT_FCAT_0100  text
+*      -->P_GT_SORT_0100  text
+*      -->P_0042   text
+*      -->P_GS_LAYO_0100  text
+*      -->P_GO_ALV_0100  text
+*----------------------------------------------------------------------*
+FORM display_alv  TABLES    pt_info
+                            pt_fcat STRUCTURE lvc_s_fcat
+                            pt_sort STRUCTURE lvc_s_sort
+                  USING     VALUE(pv_sname)
+                            VALUE(ps_layo) TYPE lvc_s_layo
+                            po_alv TYPE REF TO cl_gui_alv_grid.
+
+  CALL METHOD po_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = pv_sname
+      is_layout                     = ps_layo
+    CHANGING
+      it_outtab                     = pt_info[]
+      it_fieldcatalog               = pt_fcat[]
+      it_sort                       = pt_sort[]
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '<display_alv>' 'DISPLAY_ERR'.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0100  text
+*      -->P_GT_SORT_0100  text
+*      <--P_GS_LAYO_0100  text
+*----------------------------------------------------------------------*
+FORM set_default_alv  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                               pt_sort STRUCTURE lvc_s_sort
+                      USING    pv_tname "tablename
+                      CHANGING ps_layo.
+
+
+  PERFORM set_fcat TABLES pt_fcat
+                   USING  pv_tname.
+
+  PERFORM set_layo USING    pv_tname
+                   CHANGING ps_layo.
+
+  PERFORM set_sort TABLES pt_sort
+                   USING pv_tname.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FIELD_CATALOG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_PV_DYNNR  text
+*----------------------------------------------------------------------*
+FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
+               USING    pv_tname.
+
+  CLEAR pt_fcat[].
+  CASE pv_tname.
+    WHEN '0100L'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'PRDNR'
+                           '1'
+                           '완제품 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'RAWNR'
+                           '-1'
+                           '원자재 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MATNM'
+                           '2'
+                           '완제품 명'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'AMOUNT'
+                           '-1'
+                           '수량'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MEINS'
+                           '-1'
+                           '단위'.
+    WHEN '0100R' OR '0200R' OR '0300R'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'PRDNR'
+                           '-1'
+                           '완제품 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'RAWNR'
+                           '1'
+                           '원자재 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MATNM'
+                           '2'
+                           '원자재 명'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'AMOUNT'
+                           '3'
+                           '수량'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MEINS'
+                           '4'
+                           '단위'.
+    WHEN '0200L' OR '0300L'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'PRDNR'
+                           '-1'
+                           '완제품 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'RAWNR'
+                           '1'
+                           '원자재 번호'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MATNM'
+                           '2'
+                           '원자재 명'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'AMOUNT'
+                           '-1'
+                           '수량'.
+      PERFORM modify_fcat :
+                           TABLES pt_fcat
+                           USING  'MEINS'
+                           '-1'
+                           '단위'.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  APPEND_FCAT_RECORD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_0199   text
+*      -->P_0200   text
+*      -->P_0201   text
+*----------------------------------------------------------------------*
+FORM modify_fcat  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                  USING    VALUE(pv_fieldname)
+                           VALUE(pv_colpos)
+                           VALUE(pv_coltext).
+
+  CLEAR : pt_fcat.
+
+  pt_fcat-fieldname = pv_fieldname.
+
+  CASE pv_colpos.
+    WHEN '-1'.
+      pt_fcat-no_out = 'X'.
+
+    WHEN OTHERS.
+      pt_fcat-col_pos = pv_colpos.
+      pt_fcat-coltext = pv_coltext.
+  ENDCASE.
+
+  APPEND pt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYOUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_DYNNR  text
+*      <--P_PS_LAYO  text
+*----------------------------------------------------------------------*
+FORM set_layo  USING    pv_tname
+               CHANGING ps_layo TYPE lvc_s_layo.
+
+  CASE pv_tname.
+    WHEN '0100L' OR '0100R'.
+      ps_layo-cwidth_opt = 'X'.
+      ps_layo-ctab_fname = 'IT_COL'.
+*      ps_layo-sel_mode = 'A'. "A, B C D
+    WHEN '0200L' OR '0200R' OR '0300L' OR '0300R'.
+      ps_layo-cwidth_opt = 'X'.
+      ps_layo-ctab_fname = 'IT_COL'.
+      ps_layo-sel_mode = 'A'. "A, B C D
+    WHEN OTHERS.
+  ENDCASE.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0100  text
+*      -->P_GT_INFO_0100L  text
+*      -->P_GT_INFO_0100R  text
+*      -->P_ZSSSMD0201  text
+*----------------------------------------------------------------------*
+FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
+                             pt_info_0100l STRUCTURE gs_info_0100
+                             pt_info_0100r STRUCTURE gs_info_0100
+                    USING    ps_cond_0100 TYPE zsssmd0201.
+
+  CLEAR : pt_info_0100[], pt_info_0100l[], pt_info_0100r[].
+
+  IF ps_cond_0100 IS INITIAL.
+    MESSAGE s999(zmcss) WITH  '<get_info_0100>' '자재 번호를 입력해 주십시오'.
+    RETURN.
+  ENDIF.
+
+  " 조건의 이름과 타입 세팅
+  PERFORM get_matnm  TABLES    gt_ztssmat_t
+                     USING     ps_cond_0100-matnr
+                               sy-langu
+                     CHANGING  ps_cond_0100-matnm.
+
+  PERFORM get_mtype  TABLES    gt_ztssmat
+                     USING     ps_cond_0100-matnr
+                     CHANGING  ps_cond_0100-mtype.
+
+  IF ps_cond_0100-matnm IS INITIAL OR ps_cond_0100-mtype IS INITIAL.
+    MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 에 대한 정보가 없습니다'.
+    RETURN.
+  ENDIF.
+
+  " 타입이 확인 후 REQ에서 다 찾기 -> Itab에 저장
+  CASE ps_cond_0100-mtype.
+    WHEN 'F'.
+      SELECT prdnr rawnr amount meins
+        FROM ztssreq
+        INTO CORRESPONDING FIELDS OF TABLE pt_info_0100
+        WHERE prdnr = ps_cond_0100-matnr.
+
+      IF sy-subrc <> 0.
+        MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
+        RETURN.
+      ENDIF.
+
+      " L : 완제품 - 한개만
+      READ TABLE pt_info_0100 INDEX 1.
+      APPEND pt_info_0100 TO pt_info_0100l.
+      " R : 원자재 - 여러개
+      APPEND LINES OF pt_info_0100 TO pt_info_0100r.
+
+    WHEN 'R'.
+      SELECT prdnr rawnr amount meins
+        FROM ztssreq
+        INTO CORRESPONDING FIELDS OF TABLE pt_info_0100
+        WHERE rawnr = ps_cond_0100-matnr.
+
+      IF sy-subrc <> 0.
+        MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
+        RETURN.
+      ENDIF.
+
+      " L : 완제품 - 여러개
+      APPEND LINES OF pt_info_0100 TO pt_info_0100l.
+      " R : 원자재 - 한개만
+      READ TABLE pt_info_0100 INDEX 1.
+      APPEND pt_info_0100 TO pt_info_0100r.
+
+    WHEN OTHERS.
+      MESSAGE a999(zmcss) WITH '<get_info_0100>' '자재 번호' ps_cond_0100-matnr '의 자재 유형이 불확실합니다'.
+  ENDCASE.
+
+
+
+  " L : Modify
+  PERFORM modify_info_0100l TABLES pt_info_0100l.
+
+  " R : Modify
+  PERFORM modify_info_0100r TABLES pt_info_0100r.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MATNM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_matnm  TABLES   pt_ztssmat_t STRUCTURE gt_ztssmat_t
+                USING    VALUE(pv_matnr) TYPE zsssmd0201-matnr
+                         VALUE(pv_langu) LIKE sy-langu
+                CHANGING pv_matnm.
+
+  CLEAR pt_ztssmat_t.
+
+  READ TABLE pt_ztssmat_t WITH KEY matnr = pv_matnr langu = pv_langu.
+
+  IF sy-subrc = 0.
+    pv_matnm = pt_ztssmat_t-matnm.
+    RETURN.
+  ENDIF.
+
+  SELECT SINGLE matnr langu matnm
+    FROM ztssmat_t
+    INTO CORRESPONDING FIELDS OF pt_ztssmat_t
+    WHERE matnr = pv_matnr
+    AND langu = pv_langu.
+
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '<get_matnm>' '조건을 만족하는 자재 이름이 없습니다.'.
+    CLEAR pv_matnm.
+    RETURN.
+  ENDIF.
+
+  pv_matnm = pt_ztssmat_t-matnm.
+  APPEND pt_ztssmat_t.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MTYPE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_ZTSSMAT  text
+*      -->P_PS_COND_0100_MATNR  text
+*      <--P_PS_COND_0100_MTYPE  text
+*----------------------------------------------------------------------*
+FORM get_mtype  TABLES   pt_ztssmat STRUCTURE gt_ztssmat
+                USING    VALUE(pv_matnr) TYPE ztssmat-matnr
+                CHANGING pv_mtype.
+
+  CLEAR pt_ztssmat.
+
+  READ TABLE pt_ztssmat WITH KEY matnr = pv_matnr.
+
+  IF sy-subrc = 0.
+    pv_mtype = pt_ztssmat-mtype.
+    RETURN.
+  ENDIF.
+
+  SELECT SINGLE matnr mtype
+    FROM ztssmat
+    INTO CORRESPONDING FIELDS OF pt_ztssmat
+    WHERE matnr = pv_matnr.
+
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '<get_mtype>' '조건을 만족하는 자재 유형이 없습니다.'.
+    CLEAR pv_mtype.
+    RETURN.
+  ENDIF.
+
+  pv_mtype = pt_ztssmat-mtype.
+  APPEND pt_ztssmat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_INFO_0100L
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0100L  text
+*----------------------------------------------------------------------*
+FORM modify_info_0100l  TABLES   pt_info_0100l STRUCTURE gs_info_0100l.
+
+  LOOP AT pt_info_0100l.
+
+    PERFORM get_matnm TABLES   gt_ztssmat_t
+                      USING    pt_info_0100l-prdnr
+                               sy-langu
+                      CHANGING pt_info_0100l-matnm.
+
+
+    MODIFY pt_info_0100l.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_INFO_0100R
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0100R  text
+*----------------------------------------------------------------------*
+FORM modify_info_0100r  TABLES   pt_info_0100r STRUCTURE gs_info_0100r.
+
+  LOOP AT pt_info_0100r.
+
+    PERFORM get_matnm TABLES   gt_ztssmat_t
+                      USING    pt_info_0100r-rawnr
+                               sy-langu
+                      CHANGING pt_info_0100r-matnm.
+
+
+    MODIFY pt_info_0100r.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERTABILITY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_COND_0200_MATNR  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_insertability  USING    VALUE(gv_matnr) TYPE ztssmat-matnr.
+
+  DATA : lv_ztssreq TYPE ztssreq.
+
+  SELECT SINGLE prdnr rawnr
+    FROM ztssreq
+    INTO CORRESPONDING FIELDS OF lv_ztssreq
+    WHERE prdnr = gv_matnr.
+
+  IF sy-subrc = 0.
+    MESSAGE e999(zmcss) WITH '<check_insertability>' '이미 레시피가 있는 완제품입니다.'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0200L
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200L  text
+*----------------------------------------------------------------------*
+FORM get_info_0200l  TABLES   pt_info_0200l STRUCTURE gs_info_0200l
+                              pt_info_0200r STRUCTURE gs_info_0200r.
+
+  CLEAR : pt_info_0200l[], pt_info_0200r[].
+  DATA : lt_ztssmat TYPE TABLE OF ztssmat WITH HEADER LINE.
+
+  SELECT matnr mtype expda meins del
+    FROM ztssmat
+    INTO CORRESPONDING FIELDS OF TABLE lt_ztssmat
+    WHERE del NE 'X'
+    AND   mtype EQ 'R'.
+
+  " 200l 세팅
+  LOOP AT lt_ztssmat.
+    CLEAR pt_info_0200l.
+    pt_info_0200l-rawnr = lt_ztssmat-matnr .
+    pt_info_0200l-meins = lt_ztssmat-meins.
+    PERFORM get_matnm TABLES  gt_ztssmat_t
+                      USING   pt_info_0200l-rawnr
+                              sy-langu
+                      CHANGING pt_info_0200l-matnm.
+
+    APPEND pt_info_0200l.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0200L
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row_0200l  TABLES   pt_info_0200l STRUCTURE gs_info_0200l
+                                pt_info_0200r STRUCTURE gs_info_0200r
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+
+  DATA : lt_row        TYPE lvc_t_roid,
+         ls_row        LIKE LINE OF lt_row,
+         lv_index      TYPE i,
+         lv_tabix      TYPE sy-tabix,
+         lt_info_0200l LIKE TABLE OF pt_info_0200l WITH HEADER LINE.
+
+
+  CALL METHOD go_alv_0200l->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '<select_row_0200l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      pv_subrc = 4.
+      RETURN.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0200l INDEX ls_row-row_id.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0200l>' '치명적인 에러가 발생했습니다. 인터널 테이블에서 선택한 열을 찾을 수 없습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    pt_info_0200l-amount = 1.
+    APPEND pt_info_0200l TO pt_info_0200r.
+    APPEND pt_info_0200l TO lt_info_0200l.
+  ENDLOOP.
+
+  LOOP AT lt_info_0200l.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0200l WITH KEY rawnr = lt_info_0200l-rawnr.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0200l>' '치명적인 에러가 발생했습니다. 삭제가 실패했습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    DELETE pt_info_0200l INDEX lv_tabix.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0200R
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200R  text
+*      -->P_GT_INFO_0200L  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_row_0200r  TABLES   pt_info_0200r STRUCTURE gs_info_0200r
+                                pt_info_0200l STRUCTURE gs_info_0200l
+                       USING    VALUE(pv_clear)
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+*  IF pt_info_0200r IS INITIAL.
+*    MESSAGE i999(zmcss) WITH '<select_row_0200r>' '삭제할 아이템이 없습니다.'.
+*    RETURN.
+*  ENDIF.
+
+
+  IF pv_clear EQ 'ALL'.
+    LOOP AT pt_info_0200r.
+      APPEND pt_info_0200r TO pt_info_0200l.
+    ENDLOOP.
+
+    CLEAR pt_info_0200r[].
+    RETURN.
+  ENDIF.
+
+  DATA : lt_row        TYPE lvc_t_roid,
+         ls_row        LIKE LINE OF lt_row,
+         lv_index      TYPE i,
+         lv_tabix      TYPE sy-tabix,
+         lt_info_0200r LIKE TABLE OF pt_info_0200r WITH HEADER LINE.
+
+  CALL METHOD go_alv_0200r->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '<select_row_0200r>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      pv_subrc = 4.
+      RETURN.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0200r INDEX ls_row-row_id.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0200r>' '치명적인 에러가 발생했습니다. 인터널 테이블에서 선택한 열을 찾을 수 없습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    APPEND pt_info_0200r TO pt_info_0200l.
+    APPEND pt_info_0200r TO lt_info_0200r.
+  ENDLOOP.
+
+  " 전달 완료, 삭제하기.
+  LOOP AT lt_info_0200r.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0200r WITH KEY rawnr = lt_info_0200r-rawnr.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0200r>' '치명적인 에러가 발생했습니다. 삭제가 실패했습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    DELETE pt_info_0200r INDEX lv_tabix.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_SORT  text
+*      -->P_PV_TNAME  text
+*----------------------------------------------------------------------*
+FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
+               USING    pv_tname.
+
+  CLEAR pt_sort[].
+
+  CASE pv_tname.
+    WHEN '0200L' OR '0200R' OR '0300L' OR '0300R'.
+      pt_sort-spos = '1'.
+      pt_sort-fieldname = 'RAWNR'.
+      pt_sort-up = 'X'.
+      APPEND pt_sort.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_REQ
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200R  text
+*      -->P_ZSSSMD0501_MATNR  text
+*----------------------------------------------------------------------*
+FORM insert_req  TABLES   pt_info_0200r STRUCTURE gs_info_0200r
+                 USING    VALUE(pv_matnr) TYPE ztssmat-matnr
+                 CHANGING pv_subrc LIKE  sy-subrc.
+
+  CLEAR gv_subrc.
+  DATA ls_req TYPE ztssreq.
+
+  LOOP AT pt_info_0200r.
+    CLEAR ls_req.
+    MOVE-CORRESPONDING pt_info_0200r TO ls_req.
+    ls_req-prdnr = pv_matnr.
+
+    INSERT ztssreq FROM ls_req.
+
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH '<insert_req>' '레시피 추가가 실패하였습니다.'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+  MESSAGE i999(zmcss) WITH '<insert_req> 완제품' pv_matnr '의 레시피가 추가되었습니다'.
+  pv_subrc = 0.
+  COMMIT WORK.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

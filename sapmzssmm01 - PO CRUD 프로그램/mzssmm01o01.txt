@@ -108,6 +108,74 @@ MODULE create_display_alv_0400 OUTPUT.
 
 
 ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_DISPLAY_ALV_0402  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_display_alv_0402 OUTPUT.
+
+  PERFORM create_alv USING 'CON5' CHANGING go_con5 go_alv5.
+  PERFORM display_alv USING 'ZSSSMM0105' CHANGING gt_prcat gs_layo5 gt_fcat5 gt_sort5 go_alv5.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_DISPLAY_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_display_alv_0300 OUTPUT.
+
+  PERFORM create_alv USING 'CON3' CHANGING go_con3 go_alv3.
+  PERFORM display_alv USING 'ZSSSMM0104' CHANGING gt_item gs_layo3 gt_fcat3 gt_sort3 go_alv3.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0200 OUTPUT.
+  IF gv_ven_screen = 'SAVE'.
+    LOOP AT SCREEN.
+      IF screen-name = 'ZSSSMM0103-VENID'.
+        screen-input = 0.
+      ENDIF.
+      IF screen-name = 'ZSSSMM0103-RGTOR'.
+        screen-input = 0.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_I_INFO  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_i_info OUTPUT.
+
+  CASE i_info-activetab.
+    WHEN 'TAB1'.
+      gv_dynnr = '0301'.
+    WHEN 'TAB2'.
+      gv_dynnr = '0302'.
+    WHEN OTHERS.
+      i_info-activetab = 'TAB2'.
+      gv_dynnr = '0302'.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_DISPLAY_ALV_0302  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_display_alv_0302 OUTPUT.
+
+  PERFORM create_display_0302.
+
+ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

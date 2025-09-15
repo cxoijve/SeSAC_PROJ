@@ -46,15 +46,34 @@ DATA : gr_ponum TYPE RANGE OF ztsspoh-ponum,
 
 " 구매오더 헤더
 TABLES : zsssmm0103.
-DATA : gs_cond_head TYPE zsssmm0103.
+*DATA : gs_cond_head TYPE zsssmm0103.
+DATA: BEGIN OF gs_cond_head,
+        ponum    TYPE     zessponum,
+        podat    TYPE     zesspodat,
+        venid    TYPE     zessvenid,
+        vname    TYPE     zessvname,
+        dudat    TYPE     zessdudat,
+        stext    TYPE     zesstext,
+        curky    TYPE     zesscurky,
+        rgdat    TYPE     zessrgdat,
+        rgtor    TYPE     zessrgtor,
+        ename    TYPE     zessename,
+        toprc    TYPE     zesspoprc,
+*CURRENCY TYPE C LENGTH 24,
+        currency TYPE    char30,
+      END OF gs_cond_head.
 
+*DATA: BEGIN OF gs_cond_head.
+*      include STRUCTURE zsssmm0103.
+*      data : currency type c LENGTH 24,
+*end of gs_cond_head.
 
 " 구매오더 아이템
 TABLES : zsssmm0104.
-DATA : gs_cond_item type zsssmm0104.
+DATA : gs_cond_item TYPE zsssmm0104.
 
 " 구매오더 아이템 결과
-DATA : gt_item  TYPE zsssmm0104_t,
+DATA : gt_item TYPE zsssmm0104_t,
        gs_item LIKE LINE OF gt_item.
 
 
@@ -75,18 +94,44 @@ DATA : gv_po_num  TYPE c LENGTH 11.
 
 " PO item - 넘버링 변수
 DATA : gv_item_num TYPE n LENGTH 3.
-data : gv_temp_num type i.
+DATA : gv_temp_num TYPE i.
+DATA : gv_ven_screen TYPE string.
 
 
+*-------------------------------------------------------*
+* 300번 스크린 관련 변수들 & 구매오더 수정
+*-------------------------------------------------------*
+CONTROLS i_info TYPE TABSTRIP.
+
+" 300번 스크린 alv 상세 조건 설정
+DATA : go_con3 TYPE REF TO cl_gui_custom_container,
+       go_alv3 TYPE REF TO cl_gui_alv_grid.
+
+DATA : gs_layo3 TYPE lvc_s_layo,
+       gt_fcat3 TYPE lvc_t_fcat,
+       gs_fcat3 TYPE lvc_s_fcat,
+       gt_sort3 TYPE lvc_t_sort,
+       gs_sort3 TYPE lvc_s_sort.
 
 
+" 302번 스크린 alv 상세 조건
+DATA : go_con32 TYPE REF TO cl_gui_custom_container,
+       go_alv32 TYPE REF TO cl_gui_alv_grid.
+
+DATA : gs_layo32 TYPE lvc_s_layo,
+       gt_fcat32 TYPE lvc_t_fcat,
+       gs_fcat32 TYPE lvc_s_fcat,
+       gt_sort32 TYPE lvc_t_sort,
+       gs_sort32 TYPE lvc_s_sort.
+
+DATA : gt_proto_item like gt_item.
 
 
 *-------------------------------------------------------*
 * 400번 스크린 관련 변수들
 *-------------------------------------------------------*
 
-CONTROLS t_info type TABSTRIP.
+CONTROLS t_info TYPE TABSTRIP.
 
 " 400번 스크린 alv 상세 조건 설정
 DATA : go_con4 TYPE REF TO cl_gui_custom_container,
@@ -98,8 +143,22 @@ DATA : gs_layo4 TYPE lvc_s_layo,
        gt_sort4 TYPE lvc_t_sort,
        gs_sort4 TYPE lvc_s_sort.
 
+DATA : gv_total_price TYPE i.
 
+TABLES : zsssmd0302.
 
+" 추후 스트럭쳐로 변경예정! => 벤더-가격정보
+DATA : gt_prcat LIKE TABLE OF zsssmm0105,
+       gs_prcat LIKE LINE OF gt_prcat.
+
+DATA : go_con5 TYPE REF TO cl_gui_custom_container,
+       go_alv5 TYPE REF TO cl_gui_alv_grid.
+
+DATA : gs_layo5 TYPE lvc_s_layo,
+       gt_fcat5 TYPE lvc_t_fcat,
+       gs_fcat5 TYPE lvc_s_fcat,
+       gt_sort5 TYPE lvc_t_sort,
+       gs_sort5 TYPE lvc_s_sort.
 
 *-------------------------------------------------------*
 * class

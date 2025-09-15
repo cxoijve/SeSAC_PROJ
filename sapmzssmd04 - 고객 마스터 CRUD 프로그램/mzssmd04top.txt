@@ -13,7 +13,9 @@ TABLES : zsssmd04001,"ALV
          zsssmd04004,
          zsssmd04005,
          zsssmd04006,
-         zsssmd04007.
+         zsssmd04007,
+         zsssmd04008.
+
 
 DATA : gt_data TYPE TABLE OF zsssmd04001, "DISPLAY ALV
        gs_data LIKE LINE OF gt_data.

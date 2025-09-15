@@ -16,12 +16,11 @@ INCLUDE mzssmd04f01                             .  " FORM-Routines
 
 
 LOAD-OF-PROGRAM.
-*  PERFORM get_all_domain_value.
-
-  PERFORM get_customer_data.
+*  PERFORM get_all_domain_value
+  PERFORM get_all_table_data.
   PERFORM check_field_condition.
   PERFORM check_alv_condition.
-  PERFORM get_all_table_data.
+  PERFORM get_customer_data.
 
 *GUI Texts
 *----------------------------------------------------------
@@ -31,6 +30,7 @@ LOAD-OF-PROGRAM.
 * T202 --> 이메일 도메인 추가
 * T300 --> 고객 정보 수정
 * T301 --> 계약종료일 등록창
+* T400 --> 고객 상세정보
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

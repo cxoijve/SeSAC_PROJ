@@ -82,8 +82,9 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_alv_layo .
   CLEAR gs_layo.
-  gs_layo-cwidth_opt = 'X'.
+  gs_layo-cwidth_opt = 'A'.
   gs_layo-zebra = 'X'.
+  gs_layo-sel_mode = 'A'.
 *  gs_layo-excp_fname = 'LIGHT'.
 *  gs_layo-excp_led = 'X'.
 ENDFORM.
@@ -194,22 +195,22 @@ FORM modify_emp_list .
   ENDLOOP.
 
   " 2. 성별 fixed value
-*  CALL FUNCTION 'GET_DOMAIN_VALUES'
-*    EXPORTING
-*      domname         = 'ZDSSGESCH'
-**      text            = 'X'
-*    TABLES
-*      values_tab      = lt_dom_gs
-*    EXCEPTIONS
-*      no_values_found = 1
-*      OTHERS          = 2.
-*  LOOP AT gt_list INTO gs_list.
-*    READ TABLE lt_dom_gs WITH KEY domvalue_l = gs_list-gesch INTO ls_dom_gs.
-*    IF sy-subrc EQ 0.
-*      gs_list-gesch_t = ls_dom_gs-ddtext.
-*    ENDIF.
-*    MODIFY gt_list FROM gs_list.
-*  ENDLOOP.
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSGESCH'
+*      text            = 'X'
+    TABLES
+      values_tab      = lt_dom_gs
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  LOOP AT gt_list INTO gs_list.
+    READ TABLE lt_dom_gs WITH KEY domvalue_l = gs_list-gesch INTO ls_dom_gs.
+    IF sy-subrc EQ 0.
+      gs_list-gesch_t = ls_dom_gs-ddtext.
+    ENDIF.
+    MODIFY gt_list FROM gs_list.
+  ENDLOOP.
 
   " 3. 재직상태 fixed value
   CALL FUNCTION 'GET_DOMAIN_VALUES'
@@ -354,7 +355,7 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM select_row .
+FORM select_row CHANGING p_subrc.
   CLEAR gs_list.
 
   DATA: lt_rows TYPE lvc_t_row,
@@ -366,15 +367,17 @@ FORM select_row .
       et_index_rows = lt_rows.
 *     et_row_no     =
   DESCRIBE TABLE lt_rows LINES lv_cnt.
+
   CASE lv_cnt.
     WHEN '1'.
+      p_subrc = 0.      " True
       READ TABLE lt_rows INDEX 1 INTO ls_rows.
       CLEAR gs_list.
       READ TABLE gt_list INDEX ls_rows-index INTO gs_list.
-
     WHEN OTHERS.
-      gv_subrc = 4.      " False
+      p_subrc = 4.      " False
       MESSAGE i999(zmcss) WITH '한 개의 레코드를 선택해 주세요.'.
+      EXIT.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -385,18 +388,18 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM get_emp_detail.
-  CLEAR gs_det.
-  SELECT SINGLE a~pernr a~depid b~dname a~persg a~lname a~fname a~entdt a~gesch
-                a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
-      FROM ztssemp AS a INNER JOIN ztssdept_t AS b
-        ON a~depid EQ b~depid
-        INNER JOIN ztssdom AS c
-        ON a~edom EQ c~edom
-      INTO CORRESPONDING FIELDS OF gs_det
-      WHERE a~pernr EQ gv_pernr
-        AND b~langu EQ '3'.
-ENDFORM.
+*FORM get_emp_detail.
+*  CLEAR gs_det.
+*  SELECT SINGLE a~pernr a~depid b~dname a~persg a~lname a~fname a~entdt a~gesch
+*                a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
+*      FROM ztssemp AS a INNER JOIN ztssdept_t AS b
+*        ON a~depid EQ b~depid
+*        INNER JOIN ztssdom AS c
+*        ON a~edom EQ c~edom
+*      INTO CORRESPONDING FIELDS OF gs_det
+*      WHERE a~pernr EQ gv_pernr
+*        AND b~langu EQ '3'.
+*ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INSERT_EMP
 *&---------------------------------------------------------------------*
@@ -407,7 +410,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM insert_emp .
   DATA: lv_pernr TYPE char7,   " 신규사번
-        ls_new TYPE ztssemp.
+        lv_name TYPE ztssemp-fname,
+        ls_new   TYPE ztssemp.
 
   CLEAR: lv_pernr, ls_new.
   CALL FUNCTION 'NUMBER_GET_NEXT'
@@ -446,30 +450,26 @@ FORM insert_emp .
     ls_new-gesch = '2'.
   ENDIF.
 
+  MOVE-CORRESPONDING zsssmd0103 TO ls_new.
   ls_new-pernr = 'E' && lv_pernr.
-  ls_new-depid = zsssmd0103-depid.
-  ls_new-lname = zsssmd0103-lname.
-  ls_new-fname = zsssmd0103-fname.
-  ls_new-entdt = zsssmd0103-entdt.
-  ls_new-gbdat = zsssmd0103-gbdat.
-  ls_new-postc = zsssmd0103-postc.
-  ls_new-addre = zsssmd0103-addre.
-  ls_new-telnr = zsssmd0103-telnr.
-  ls_new-eid = zsssmd0103-eid.
-  ls_new-edom = zsssmd0103-edom.
+*  ls_new-telnr = gv_tel_1 && '-' && gv_tel_2 && '-' && gv_tel_3.
+  CONCATENATE gv_tel_1 gv_tel_2 gv_tel_3 INTO ls_new-telnr SEPARATED BY '-'.
   ls_new-estat = '1'.
   INSERT ztssemp FROM ls_new.
 
+  lv_name = zsssmd0103-lname && zsssmd0103-fname.
+
   IF sy-subrc EQ 0.
     COMMIT WORK.
-    MESSAGE i999(zmcss) WITH '사원' ls_new-pernr '등록 완료' DISPLAY LIKE 'S'.
+    MESSAGE i999(zmcss) WITH ls_new-pernr lv_name '등록 완료' DISPLAY LIKE 'S'.
     APPEND ls_new TO gt_list.
-    LEAVE TO SCREEN 0.
+    PERFORM get_emp_list.
+    PERFORM modify_emp_list.
   ELSE.
     ROLLBACK WORK.
-    MESSAGE i999(zmcss) WITH '사원 등록 실패' DISPLAY LIKE 'E'.
+    MESSAGE i999(zmcss) WITH '등록 실패' DISPLAY LIKE 'E'.
   ENDIF.
-
+  CLEAR: gv_tel_1, gv_tel_2, gv_tel_3.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  REFRESH_ALV
@@ -481,17 +481,75 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM refresh_alv .
   CALL METHOD go_alv->refresh_table_display
-*    EXPORTING
-*      is_stable      = 'ZTSSEMP'
-*      i_soft_refresh =
     EXCEPTIONS
-      finished       = 1
-      others         = 2
-          .
+      finished = 1
+      OTHERS   = 2.
   IF sy-subrc <> 0.
 *   Implement suitable error handling here
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_EMP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM update_emp .
+  DATA: ls_udt TYPE ztssemp,
+        lv_name TYPE ztssemp-fname.
+  CLEAR ls_udt.
 
+  " persg 라디오버튼
+  IF zsssmd0105-persg_1 EQ 'X'.
+    ls_udt-persg = '1'.
+  ELSEIF zsssmd0105-persg_2 EQ 'X'.
+    ls_udt-persg = '2'.
+  ELSEIF zsssmd0105-persg_3 EQ 'X'.
+    ls_udt-persg = '3'.
+  ENDIF.
+
+  " estat 라디오버튼
+  IF zsssmd0105-estat_1 EQ 'X'.
+    ls_udt-estat = '1'.
+  ELSEIF zsssmd0105-estat_2 EQ 'X'.
+    ls_udt-estat = '2'.
+  ELSEIF zsssmd0105-estat_3 EQ 'X'.
+    ls_udt-estat = '3'.
+  ENDIF.
+
+  CONCATENATE gv_tel_4 gv_tel_5 gv_tel_6 INTO ls_udt-telnr SEPARATED BY '-'.
+
+  UPDATE ztssemp
+     SET depid = zsssmd0105-depid
+         persg = ls_udt-persg
+         lname = zsssmd0105-lname
+         fname = zsssmd0105-fname
+         entdt = zsssmd0105-entdt
+         gesch = zsssmd0105-gesch
+         gbdat = zsssmd0105-gbdat
+         eid = zsssmd0105-eid
+         edom = zsssmd0105-edom
+         telnr = ls_udt-telnr
+         postc = zsssmd0105-postc
+         addre = zsssmd0105-addre
+         estat = ls_udt-estat
+     WHERE pernr = zsssmd0105-pernr.
+
+  lv_name = zsssmd0105-lname && zsssmd0105-fname.
+
+  IF sy-subrc EQ 0.
+    COMMIT WORK.
+    MESSAGE i999(zmcss) WITH zsssmd0105-pernr lv_name '정보 변경 완료' DISPLAY LIKE 'S'.
+    APPEND ls_udt TO gt_list.
+    PERFORM get_emp_list.
+    PERFORM modify_emp_list.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH zsssmd0105-pernr lv_name '정보 변경 실패' DISPLAY LIKE 'E'.
+  ENDIF.
+  CLEAR: gv_tel_4, gv_tel_5, gv_tel_6.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

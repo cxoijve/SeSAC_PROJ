@@ -25,12 +25,23 @@ MODULE user_command_0100 INPUT.
       PERFORM get_detail_info CHANGING gv_subrc.
       IF gv_subrc IS INITIAL.
         CALL SCREEN 300.
+        PERFORM check_field_condition.
+        PERFORM check_alv_condition.
+        PERFORM get_customer_data.
         CLEAR: gs_data,
                zsssmd04006,
                zsssmd04007.
       ENDIF.
 
-    WHEN 'DETAIL'.
+*    WHEN 'DETAIL'.
+*      PERFORM get_detail_info CHANGING gv_subrc.
+*      IF gv_subrc IS INITIAL.
+*        CALL SCREEN 400.
+*        PERFORM check_field_condition.
+*        PERFORM check_alv_condition.
+*        PERFORM get_customer_data.
+*        CLEAR zsssmd04008.
+*      ENDIF.
 
     WHEN 'ENTER'.
       PERFORM check_field_condition.
@@ -143,6 +154,19 @@ MODULE user_command_0301 INPUT.
       PERFORM check_endda_field USING zsssmd04007-endda
                                 CHANGING zsssmd04007-endda.
     WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0400  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0400 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
       LEAVE TO SCREEN 0.
   ENDCASE.
 

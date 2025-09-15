@@ -1,0 +1,197 @@
+*&---------------------------------------------------------------------*
+*&  Include           SAPMZSSTEMPO01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'S100'.
+  SET TITLEBAR  'T100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_ALV_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_alv_0100 OUTPUT.
+
+  " alv 생성_ 0100L
+  IF go_con_0100l IS INITIAL.
+    PERFORM create_alv  USING     'CON_0100L'
+                        CHANGING  go_con_0100l
+                                  go_alv_0100l.
+  ENDIF.
+
+  " alv 생성_ 0100R
+  IF go_con_0100r IS INITIAL.
+    PERFORM create_alv  USING     'CON_0100R'
+                        CHANGING  go_con_0100r
+                                  go_alv_0100r.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  DISPLAY_ALV_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE display_alv_0100 OUTPUT.
+
+  " alv display 0100L
+  IF go_con_0100l IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0100l
+                                 gt_fcat_0100l
+                                 gt_sort_0100l
+                         USING   'ZTSSREQ'
+                                 gs_layo_0100l
+                                 go_alv_0100l.
+  ENDIF.
+
+  " alv display 0100R
+  IF go_con_0100r IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0100r
+                                 gt_fcat_0100r
+                                 gt_sort_0100r
+                         USING   'ZTSSREQ'
+                                 gs_layo_0100r
+                                 go_alv_0100r.
+  ENDIF.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_alv_0200 OUTPUT.
+  " alv 생성_ 0200L
+  IF go_con_0200l IS INITIAL.
+    PERFORM create_alv  USING     'CON_0200L'
+                        CHANGING  go_con_0200l
+                                  go_alv_0200l.
+  ENDIF.
+
+  " alv 생성_ 0200R
+  IF go_con_0200r IS INITIAL.
+    PERFORM create_alv  USING     'CON_0200R'
+                        CHANGING  go_con_0200r
+                                  go_alv_0200r.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  DISPLAY_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE display_alv_0200 OUTPUT.
+  " alv display 0200L
+  IF go_con_0200l IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0200l
+                                 gt_fcat_0200l
+                                 gt_sort_0200l
+                         USING   'ZTSSREQ'
+                                 gs_layo_0200l
+                                 go_alv_0200l.
+  ENDIF.
+
+  " alv display 0200R
+  IF go_con_0200r IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0200r
+                                 gt_fcat_0200r
+                                 gt_sort_0200r
+                         USING   'ZTSSREQ'
+                                 gs_layo_0200r
+                                 go_alv_0200r.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0200 OUTPUT.
+
+  LOOP AT SCREEN.
+    " gt_info_200R에 아이템이 있으면 변경할 수 없도록 꺼버려야 함.
+    IF screen-group1 = 'CND'.
+      IF gt_info_0200r IS NOT INITIAL.
+        screen-input = 0.
+      ElSE.
+        screen-input = 1.
+      ENDIF.
+    ENDIF.
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300' WITH ZSSSMD0201-matnr.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_alv_0300 OUTPUT.
+    " alv 생성_ 0300L
+  IF go_con_0300l IS INITIAL.
+    PERFORM create_alv  USING     'CON_0300L'
+                        CHANGING  go_con_0300l
+                                  go_alv_0300l.
+  ENDIF.
+
+  " alv 생성_ 0300R
+  IF go_con_0300r IS INITIAL.
+    PERFORM create_alv  USING     'CON_0300R'
+                        CHANGING  go_con_0300r
+                                  go_alv_0300r.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  DISPLAY_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE display_alv_0300 OUTPUT.
+    " alv display 0300L
+  IF go_con_0300l IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0300l
+                                 gt_fcat_0300l
+                                 gt_sort_0300l
+                         USING   'ZTSSREQ'
+                                 gs_layo_0300l
+                                 go_alv_0300l.
+  ENDIF.
+
+  " alv display 0300R
+  IF go_con_0300r IS NOT INITIAL.
+    PERFORM display_alv  TABLES  gt_info_0300r
+                                 gt_fcat_0300r
+                                 gt_sort_0300r
+                         USING   'ZTSSREQ'
+                                 gs_layo_0300r
+                                 go_alv_0300r.
+  ENDIF.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

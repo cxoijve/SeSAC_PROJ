@@ -35,21 +35,76 @@ MODULE user_command_0100 INPUT.
       zsssmm0103-venid = '10000001'.
       zsssmm0103-rgtor = 'E0000002'.
       zsssmm0103-dudat = sy-datum + 14.
-
       CALL SCREEN 0200.
-    WHEN 'EDIT'.
+      CLEAR :  zsssmm0103-venid,
+               zsssmm0103-rgtor,
+               zsssmm0103-toprc,
+               gv_ven_screen,
+               gt_item.
 
-    WHEN 'DETAIL'.
+    WHEN 'EDIT'.
       DATA : lv_rowid TYPE i,
-             ls_data like line of gt_data.
+             ls_data  LIKE LINE OF gt_data,
+             ls_vend2 LIKE zsssmd0302.
 
       PERFORM check_pop USING go_alv CHANGING gv_subrc lv_rowid.
       IF gv_subrc = 0.
-        READ TABLE gt_data index lv_rowid into ls_data.
+        READ TABLE gt_data INDEX lv_rowid INTO ls_data.
 
-        MOVE-CORRESPONDING ls_data to zsssmm0103.
-        perform get_po_item_in_details.
+        PERFORM check_ok_edit_by_gr USING ls_data-ponum CHANGING gv_subrc.
+        IF gv_subrc = 1.
+          RETURN.
+        ENDIF.
+
+        MOVE-CORRESPONDING ls_data TO zsssmm0103.
+        PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING zsssmm0103-ename.
+        PERFORM get_po_item_in_details.
+        PERFORM get_vender_info USING  zsssmm0103-venid CHANGING ls_vend2.
+        zsssmm0103-vname = ls_vend2-vname.
+        PERFORM get_price_info_by_vender.
+
+
+        MOVE-CORRESPONDING zsssmm0103 TO gs_cond_head.
+        gs_cond_head-ename = zsssmm0103-ename.
+
+*        WRITE zsssmm0103-toprc to gs_cond_head-currency CURRENCY gs_cond_head-curky.
+*        WRITE zsssmm0103-toprc to gs_cond_head-toprc CURRENCY gs_cond_head-curky.
+        WRITE gs_cond_head-toprc  TO gs_cond_head-currency CURRENCY gs_cond_head-curky.
+*        gs_cond_head-currency = | { gs_cond_head-toprc CURRENCY = gs_cond_head-curky } |.
+        gt_proto_item = gt_item.
+        zsssmm0103-rgdat = sy-datum.
+        CALL SCREEN 0300.
+        CLEAR : gt_item,
+                zsssmm0103.
+
+      ENDIF.
+
+    WHEN 'DETAIL'.
+
+      PERFORM check_pop USING go_alv CHANGING gv_subrc lv_rowid.
+      IF gv_subrc = 0.
+        READ TABLE gt_data INDEX lv_rowid INTO ls_data.
+        MOVE-CORRESPONDING ls_data TO zsssmm0103.
+        PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING zsssmm0103-ename.
+        zsssmm0103-curky = 'KRW'. " 추후 수정 예정
+        PERFORM get_po_item_in_details.
+
+        DATA : ls_vend LIKE zsssmd0302,
+               lv_name TYPE zsssmm0103-ename.
+
+        PERFORM get_vender_info USING zsssmm0103-venid CHANGING ls_vend.
+        zsssmm0103-vname = ls_vend-vname.
+        MOVE-CORRESPONDING ls_vend TO zsssmd0302.
+        PERFORM get_emp_name USING zsssmd0302-penid CHANGING lv_name.
+        zsssmd0302-penid_t = lv_name.
+        PERFORM get_email_domain USING ls_vend-edom CHANGING zsssmd0302-ednme.
+
+
+        PERFORM get_price_info_by_vender.
+
         CALL SCREEN 0400.
+        CLEAR : gt_item,
+                zsssmm0103.
       ENDIF.
 
 
@@ -68,7 +123,9 @@ MODULE user_command_0200 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
-      PERFORM get_emp_name.
+      DATA : lv_name2 TYPE zsssmm0103-ename.
+      PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING lv_name2.
+      zsssmm0103-ename = lv_name2.
       PERFORM get_ven_name.
     WHEN 'ORDER'.
       PERFORM insert_purchase_order CHANGING gv_subrc.
@@ -76,6 +133,7 @@ MODULE user_command_0200 INPUT.
         CLEAR : zsssmm0103,
           gt_item.
         zsssmm0103-podat = sy-datum.
+        zsssmm0103-dudat = sy-datum + 14.
       ENDIF.
     WHEN 'I_ADD'.
       zsssmm0104-itnum = gv_item_num.
@@ -85,6 +143,7 @@ MODULE user_command_0200 INPUT.
       ELSE.
         MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
       ENDIF.
+
       CLEAR : zsssmm0104-pomnr,
               zsssmm0104-amount,
               zsssmm0104-poprc,
@@ -93,8 +152,6 @@ MODULE user_command_0200 INPUT.
 
     WHEN 'I_EDIT'.
       DATA : lv_item_rowid TYPE i.
-
-
       PERFORM check_pop USING go_alv2 CHANGING gv_subrc lv_item_rowid.
       IF gv_subrc = 0.
         READ TABLE gt_item INDEX lv_item_rowid INTO gs_item.
@@ -104,10 +161,10 @@ MODULE user_command_0200 INPUT.
         CALL SCREEN 220 STARTING AT 5 5 ENDING AT 120 30.
       ENDIF.
     WHEN 'I_DEL'.
-      data : ls_del_item like line of gt_item.
+      DATA : ls_del_item LIKE LINE OF gt_item.
       PERFORM check_pop USING go_alv2 CHANGING gv_subrc lv_item_rowid.
       IF gv_subrc = 0.
-         READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
+        READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
         zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
         DELETE gt_item INDEX lv_item_rowid.
         PERFORM renumber_item.
@@ -125,6 +182,7 @@ MODULE user_command_0210 INPUT.
 
   CASE sy-ucomm.
     WHEN 'SAVE'.
+      gv_ven_screen = 'SAVE'.
       LEAVE TO SCREEN 0.
     WHEN 'CLOSE'.
       LEAVE TO SCREEN 0.
@@ -149,8 +207,8 @@ MODULE user_command_0201 INPUT.
       PERFORM save_po_item CHANGING zsssmm0103 zsssmm0104.
     WHEN 'EDIT'.
       PERFORM edit_po_item CHANGING zsssmm0103 zsssmm0104.
-    when 'DELETE'.
-      perform delete_po_item CHANGING zsssmm0103.
+    WHEN 'DELETE'.
+      PERFORM delete_po_item CHANGING zsssmm0103.
 
 
   ENDCASE.
@@ -179,7 +237,7 @@ ENDMODULE.
 MODULE check_po_header_create INPUT.
 
   " 필수값 체크 로직
-*  PERFORM check_required_fields CHANGING zsssmm0103.
+  PERFORM check_required_fields CHANGING zsssmm0103.
   " 구매일자 체크 로직
   PERFORM check_po_date CHANGING zsssmm0103-podat.
   " 납기일 체크 로직
@@ -235,9 +293,89 @@ MODULE user_command_0400 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
-    WHEN 'TAB1' or 'TAB2'.
-      t_info-activetab = OK_CODE.
+    WHEN 'TAB1' OR 'TAB2'.
+      t_info-activetab = ok_code.
   ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+
+  CASE ok_code.
+    WHEN 'ENTER'.
+
+      perform get_emp_name using zsssmm0103-rgtor CHANGING zsssmm0103-ename.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'EDIT'.
+      PERFORM update_po_infos.
+    WHEN 'TAB1' OR 'TAB2'.
+      i_info-activetab = ok_code.
+    WHEN 'I_ADD'.
+      DATA : lv_cnt TYPE i.
+      DESCRIBE TABLE gt_item LINES lv_cnt.
+      zsssmm0104-itnum = lv_cnt + 1.
+
+      IF zsssmm0103-venid IS NOT INITIAL.
+        CALL SCREEN 210 STARTING AT 5 5 ENDING AT 120 30.
+      ELSE.
+        MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
+      ENDIF.
+      CLEAR : zsssmm0104-pomnr,
+              zsssmm0104-amount,
+              zsssmm0104-poprc,
+              zsssmm0104-toprc,
+              zsssmm0104-pname.
+    WHEN 'I_EDIT'.
+      PERFORM check_pop USING go_alv3 CHANGING gv_subrc lv_item_rowid.
+      IF gv_subrc = 0.
+        READ TABLE gt_item INDEX lv_item_rowid INTO gs_item.
+        gv_temp_num = lv_item_rowid.
+        MOVE-CORRESPONDING gs_item TO gs_cond_item.
+        MOVE-CORRESPONDING gs_cond_item TO zsssmm0104.
+        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 120 30.
+      ENDIF.
+    WHEN 'I_DEL'.
+
+      CLEAR lv_item_rowid.
+      PERFORM check_pop USING go_alv3 CHANGING gv_subrc lv_item_rowid.
+      IF gv_subrc = 0.
+        CLEAR : ls_del_item.
+        READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
+        MESSAGE i999(zmcss) WITH ls_del_item-itnum.
+
+        zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
+        UPDATE ztsspoi
+        SET
+            del = 'X'
+             WHERE ponum = ls_del_item-ponum
+             AND itnum = ls_del_item-itnum.
+
+        DELETE gt_item INDEX lv_item_rowid.
+
+        PERFORM renumber_item.
+      ENDIF.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_PO_HEADER_UPDATE  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_po_header_update INPUT.
+
+  " 체크로직
+  PERFORM check_required_fields CHANGING zsssmm0103.
+  " 납기일 체크 로직
+  PERFORM check_due_date CHANGING zsssmm0103-dudat.
+  " 등록자 체크 로직
+  PERFORM check_resgistor CHANGING zsssmm0103-rgtor.
+
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

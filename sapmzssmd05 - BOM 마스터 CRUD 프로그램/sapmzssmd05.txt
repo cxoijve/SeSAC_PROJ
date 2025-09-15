@@ -1,0 +1,63 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSMD05
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE mzssmd05top.
+INCLUDE mzssmd05o01.
+INCLUDE mzssmd05i01.
+INCLUDE mzssmd05f01.
+
+LOAD-OF-PROGRAM.
+
+  " alv의 기본 세팅 - 0100L
+  PERFORM set_default_alv TABLES    gt_fcat_0100l
+                                    gt_sort_0100l
+                          USING     '0100L'
+                          CHANGING  gs_layo_0100l.
+
+  " alv의 기본 세팅 - 0100R
+  PERFORM set_default_alv TABLES    gt_fcat_0100r
+                                    gt_sort_0100r
+                          USING     '0100R'
+                          CHANGING  gs_layo_0100r.
+
+  " alv의 기본 세팅 - 0200L
+  PERFORM set_default_alv TABLES    gt_fcat_0200l
+                                    gt_sort_0200l
+                          USING     '0200L'
+                          CHANGING  gs_layo_0200l.
+
+  " alv의 기본 세팅 - 0200R
+  PERFORM set_default_alv TABLES    gt_fcat_0200r
+                                    gt_sort_0200r
+                          USING     '0200R'
+                          CHANGING  gs_layo_0200r.
+
+
+  " alv의 기본 세팅 - 0300L
+  PERFORM set_default_alv TABLES    gt_fcat_0300l
+                                    gt_sort_0300l
+                          USING     '0300L'
+                          CHANGING  gs_layo_0300l.
+
+  " alv의 기본 세팅 - 0300R
+  PERFORM set_default_alv TABLES    gt_fcat_0300r
+                                    gt_sort_0300r
+                          USING     '0300R'
+                          CHANGING  gs_layo_0300r.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> Bills Of Material - 조회
+* T200 --> BOM 신규 생성
+* T300 --> Bills Of Material - & 수정
+* T100 --> Bills Of Material - 조회
+* T200 --> BOM 신규 생성
+* T300 --> Bills Of Material - & 수정
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

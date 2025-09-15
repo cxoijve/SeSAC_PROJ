@@ -63,7 +63,14 @@ ENDMODULE.
 MODULE get_customer_data OUTPUT.
   CASE ok_code.
     WHEN 'CHANGE'.
-      PERFORM set_update_field.
+      PERFORM set_update_field CHANGING zsssmd04006
+                                        zsssmd04007.
+      CLEAR ok_code.
+
+    WHEN 'DETAIL'.
+      PERFORM set_update_field CHANGING zsssmd04008
+                                        zsssmd04007.
+      CLEAR zsssmd04007.
       CLEAR ok_code.
   ENDCASE.
 ENDMODULE.
@@ -75,6 +82,15 @@ ENDMODULE.
 MODULE status_0301 OUTPUT.
   SET PF-STATUS 'S301'.
   SET TITLEBAR 'T301'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0400 OUTPUT.
+  SET PF-STATUS 'S400'.
+  SET TITLEBAR 'T400'.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

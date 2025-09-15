@@ -28,22 +28,29 @@ MODULE user_command_0100 INPUT.
       PERFORM get_emp_list.
     WHEN 'DETAIL'.
       " 사원 상세정보 가져오기
-      PERFORM select_row.
-      PERFORM get_emp_detail.
-      READ TABLE gt_list WITH KEY pernr = gs_list-pernr INTO gs_list.
-      IF sy-subrc EQ 0.
-        gv_pernr = gs_list-pernr.
-      ENDIF.
+      PERFORM select_row CHANGING gv_subrc.
+      MOVE-CORRESPONDING gs_list TO zsssmd0102.
+*      PERFORM get_emp_detail.
+*      READ TABLE gt_list WITH KEY pernr = gs_list-pernr INTO gs_list.
+*      IF sy-subrc EQ 0.
+*        gv_pernr = gs_list-pernr.
+*      ENDIF.
     WHEN 'REGIS'.
       " 사원 등록
       CALL SCREEN 0200.
-      CLEAR: zsssmd0103-depid, zsssmd0103-lname, zsssmd0103-fname, zsssmd0103-entdt,
-             zsssmd0103-gbdat, zsssmd0103-eid, zsssmd0103-edom, zsssmd0103-telnr,
-             zsssmd0103-postc, zsssmd0103-addre.
+*      CLEAR: zsssmd0103-depid, zsssmd0103-lname, zsssmd0103-fname, zsssmd0103-entdt,
+*             zsssmd0103-gbdat, zsssmd0103-eid, zsssmd0103-edom, zsssmd0103-telnr,
+*             zsssmd0103-postc, zsssmd0103-addre.
+      CLEAR zsssmd0103.
     WHEN 'UPDAT'.
       " 사원 정보 변경
-      CALL SCREEN 0300.
-
+      PERFORM select_row CHANGING gv_subrc.
+      IF gv_subrc EQ 0.
+        MOVE-CORRESPONDING gs_list TO zsssmd0104.
+        MOVE-CORRESPONDING gs_list TO zsssmd0105.
+        CALL SCREEN 0300.
+      ENDIF.
+      CLEAR: gv_first, zsssmd0104, zsssmd0105.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -69,9 +76,27 @@ MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+      " dname 가져오기
+      DATA lv_dname TYPE ztssdept_t-dname.
+      SELECT SINGLE dname
+        FROM ztssdept_t
+        INTO lv_dname
+       WHERE depid EQ zsssmd0105-depid
+         AND langu EQ '3'.
+      zsssmd0105-dname = lv_dname.
+
+      " ednme 가져오기
+      DATA lv_ednme TYPE ztssdom-ednme.
+        SELECT SINGLE ednme
+          FROM ztssdom
+          INTO lv_ednme
+         WHERE edom EQ zsssmd0105-edom.
+        zsssmd0105-ednme = lv_ednme.
+
     WHEN 'UPDATE'.
       " 사원 update
-
+      PERFORM update_emp.
   ENDCASE.
 ENDMODULE.
 

@@ -8,15 +8,16 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0402I0402     16 63192 37  0  0 27121  0G E                              20250914174241																																
+SAPMZSSMM01                             0402I0402     14 87192 37  0  0 27122  0G E                              20250915180257																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-CON5			 61	00	00	00	30	00	  3	  4		  0	  0	  0		 14	U				  1	  1	101									
+CON5			 85	00	00	00	30	00	  1	  4		  0	  0	  0		 14	U				  1	  1	101									
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0402.																																
+MODULE create_display_alv_0402.																																
 *																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0402.																																

@@ -8,22 +8,22 @@ SAPMZSSMD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD01                             0100 0100     26159192 37  0  0 26170  0G E                              20250912172921																																
+SAPMZSSMD01                             0100 0100     26144192 37  0  0 26148  0G E                              20250915184001																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-COND		CHAR	 87	00	00	00	30	00	  2	  3		  0	  0	  0		  5	R				  0	  0	101							사원 검색 조건		
-SUB			 57	00	00	00	30	00	  2	104		  0	  0	  0		 25	B				  1	  1	102									
-ZSSSMD0101-DEPID	2	CHAR	 20	30	00	04	30	00	  3	  6		  0	  0	  0		  0					  0	  0								부서코드	                                                                                                                                                                                                                                                        X	
-ZSSSMD0101-DEPID	C	CHAR	  4	A0	00	84	00	08	  3	 27		  0	  0	  0		 20					  8	  0								____	XDL                                    00	
-ESTAT	0	CHAR	 20	00	00	00	30	00	  5	  6		  0	  0	  0		  0					  0	  0								재직상태		
-ZSSSMD0101-ESTAT_1	C	CHAR	  1	80	00	81	00	08	  5	 27		  0	  0	  0		  0	C				  2	  0	103								X	
-ZSSSMD0101-ESTAT_1	3	CHAR	  4	00	00	01	30	00	  5	 29		  0	  0	  0		  0	C				  0	  0	103							재직		
-ZSSSMD0101-ESTAT_2	C	CHAR	  1	80	00	81	00	08	  5	 41		  0	  0	  0		  0	C				  2	  0	104								X	
-ZSSSMD0101-ESTAT_2	0	CHAR	  4	00	00	01	30	00	  5	 43		  0	  0	  0		  0	C				  0	  0	104							퇴사		
-ZSSSMD0101-ESTAT_3	C	CHAR	  1	80	00	81	00	08	  5	 55		  0	  0	  0		  0	C				  2	  0	105								X	
-ZSSSMD0101-ESTAT_3	0	CHAR	  4	00	00	01	30	00	  5	 57		  0	  0	  0		  0	C				  0	  0	105							휴직		
-CON			 86	00	00	00	30	00	  9	  3		  0	  0	  0		 18	U				  1	  1	106									
+COND		CHAR	 75	00	00	00	30	00	  2	  3		  0	  0	  0		  7	R				  0	  0	101							사원 검색 조건		
+SUB			 57	00	00	00	30	00	  2	 89		  0	  0	  0		 25	B				  1	  1	102									
+ZSSSMD0101-DEPID	2	CHAR	 20	30	00	04	30	00	  4	  7		  0	  0	  0		  0					  0	  0								부서코드	                                                                                                                                                                                                                                                        X	
+ZSSSMD0101-DEPID	C	CHAR	  4	A0	00	84	00	08	  4	 28		  0	  0	  0		 20					  8	  0								____	XDL                                    00	
+ESTAT	0	CHAR	 20	00	00	00	30	00	  6	  7		  0	  0	  0		  0					  0	  0								재직상태		
+ZSSSMD0101-ESTAT_1	C	CHAR	  1	80	00	81	00	08	  6	 28		  0	  0	  0		  0	C				  2	  0	103								X	
+ZSSSMD0101-ESTAT_1	3	CHAR	  4	00	00	01	30	00	  6	 30		  0	  0	  0		  0	C				  0	  0	103							재직		
+ZSSSMD0101-ESTAT_2	C	CHAR	  1	80	00	81	00	08	  6	 42		  0	  0	  0		  0	C				  2	  0	104								X	
+ZSSSMD0101-ESTAT_2	0	CHAR	  4	00	00	01	30	00	  6	 44		  0	  0	  0		  0	C				  0	  0	104							퇴사		
+ZSSSMD0101-ESTAT_3	C	CHAR	  1	80	00	81	00	08	  6	 56		  0	  0	  0		  0	C				  2	  0	105								X	
+ZSSSMD0101-ESTAT_3	0	CHAR	  4	00	00	01	30	00	  6	 58		  0	  0	  0		  0	C				  0	  0	105							휴직		
+CON			 75	00	00	00	30	00	 10	  3		  0	  0	  0		 17	U				  1	  1	106									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
@@ -32,6 +32,6 @@ PROCESS BEFORE OUTPUT.
   CALL SUBSCREEN SUB INCLUDING sy-cprog '0101'.																																
 																																
 PROCESS AFTER INPUT.																																
-*  CALL SUBSCREEN SUB.																																
+  CALL SUBSCREEN SUB.																																
   MODULE exit AT EXIT-COMMAND.																																
   MODULE user_command_0100.																																

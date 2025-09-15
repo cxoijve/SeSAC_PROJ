@@ -1,0 +1,111 @@
+*&---------------------------------------------------------------------*
+*& Include SAPMZSSTEMPTOP                                    Module Pool      SAPMZSS_TEMPLATE
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzss_template.
+
+
+DATA : ok_code  TYPE sy-ucomm,
+       gv_subrc TYPE sy-subrc,
+       gv_dynnr TYPE sy-dynnr.
+
+" ALV Objects 0100L
+DATA   go_con_0100l TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0100l TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0100l TYPE lvc_s_layo.
+DATA : gt_fcat_0100l TYPE lvc_t_fcat,
+       gs_fcat_0100l LIKE LINE OF gt_fcat_0100l.
+DATA : gt_sort_0100l TYPE lvc_t_sort,
+       gs_sort_0100l LIKE LINE OF gt_sort_0100l.
+
+" ALV Objects 0100R
+DATA   go_con_0100r TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0100r TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0100r TYPE lvc_s_layo.
+DATA : gt_fcat_0100r TYPE lvc_t_fcat,
+       gs_fcat_0100r LIKE LINE OF gt_fcat_0100r.
+DATA : gt_sort_0100r TYPE lvc_t_sort,
+       gs_sort_0100r LIKE LINE OF gt_sort_0100r.
+
+
+" Condition 0100
+TABLES zsssmd0201.
+
+" Internal Tables
+" Material Name
+DATA : gt_ztssmat_t TYPE TABLE OF ztssmat_t WITH HEADER LINE.
+
+" Material Type
+DATA : gt_ztssmat TYPE TABLE OF ztssmat WITH HEADER LINE.
+
+" INFO 0100
+DATA : BEGIN OF gs_info_0100.
+DATA matnm TYPE ztssmat_t-matnm.
+INCLUDE TYPE ztssreq.
+DATA : END OF gs_info_0100.
+DATA : gt_info_0100 LIKE TABLE OF gs_info_0100.
+
+" INFO 0100L , " INFO 0100R
+DATA : gt_info_0100l LIKE gt_info_0100,
+       gs_info_0100l LIKE gs_info_0100,
+       gt_info_0100r LIKE gt_info_0100,
+       gs_info_0100r LIKE gs_info_0100.
+
+" 200==========================================================
+" ALV Objects 0200L
+DATA   go_con_0200l TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0200l TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0200l TYPE lvc_s_layo.
+DATA : gt_fcat_0200l TYPE lvc_t_fcat,
+       gs_fcat_0200l LIKE LINE OF gt_fcat_0100l.
+DATA : gt_sort_0200l TYPE lvc_t_sort,
+       gs_sort_0200l LIKE LINE OF gt_sort_0100l.
+
+" ALV Objects 0200R
+DATA   go_con_0200r TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0200r TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0200r TYPE lvc_s_layo.
+DATA : gt_fcat_0200r TYPE lvc_t_fcat,
+       gs_fcat_0200r LIKE LINE OF gt_fcat_0100r.
+DATA : gt_sort_0200r TYPE lvc_t_sort,
+       gs_sort_0200r LIKE LINE OF gt_sort_0100r.
+
+" Condition 0200
+TABLES zsssmd0501.
+
+" Info 200
+DATA : gt_info_0200l LIKE gt_info_0100,
+       gs_info_0200l LIKE gs_info_0100,
+       gt_info_0200r LIKE gt_info_0100,
+       gs_info_0200r LIKE gs_info_0100.
+
+" 300==============================================================
+" ALV Objects 0300L
+DATA   go_con_0300l TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0300l TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0300l TYPE lvc_s_layo.
+DATA : gt_fcat_0300l TYPE lvc_t_fcat,
+       gs_fcat_0300l LIKE LINE OF gt_fcat_0100l.
+DATA : gt_sort_0300l TYPE lvc_t_sort,
+       gs_sort_0300l LIKE LINE OF gt_sort_0100l.
+
+" ALV Objects 0300R
+DATA   go_con_0300r TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0300r TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0300r TYPE lvc_s_layo.
+DATA : gt_fcat_0300r TYPE lvc_t_fcat,
+       gs_fcat_0300r LIKE LINE OF gt_fcat_0100r.
+DATA : gt_sort_0300r TYPE lvc_t_sort,
+       gs_sort_0300r LIKE LINE OF gt_sort_0100r.
+
+" Condition 0300 (수정 불가)
+DATA gs_cond_0300 TYPE zsssmd0501.
+
+" Info 300
+DATA : gt_info_0300l LIKE gt_info_0100,
+       gs_info_0300l LIKE gs_info_0100,
+       gt_info_0300r LIKE gt_info_0100,
+       gs_info_0300r LIKE gs_info_0100.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

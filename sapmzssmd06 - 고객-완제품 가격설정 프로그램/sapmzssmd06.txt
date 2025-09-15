@@ -1,0 +1,28 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSMD06
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE mzssmd06top                             .    " global Data
+
+INCLUDE mzssmd06o01                             .  " PBO-Modules
+INCLUDE mzssmd06i01                             .  " PAI-Modules
+INCLUDE mzssmd06f01                             .  " FORM-Routines
+
+
+LOAD-OF-PROGRAM.
+
+  PERFORM get_all_table_data.
+  PERFORM check_alv_condition.
+  PERFORM get_prdnr_price_data.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> SIXTH SENSE 고객 완제품 가격설정 프로그램
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

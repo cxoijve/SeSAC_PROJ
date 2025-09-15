@@ -1,0 +1,42 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSMD06TOP                                       Module Pool      SAPMZSSMD06
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzssmd06.
+
+DATA : gv_subrc TYPE sy-subrc,
+       ok_code  TYPE sy-ucomm.
+
+TABLES : zsssmd06001,
+         zsssmd06002.
+
+DATA: BEGIN OF gs_prdnr,
+        prdnr TYPE zessprdnr,
+      END OF gs_prdnr.
+DATA gt_prdnr LIKE TABLE OF gs_prdnr.
+
+
+DATA: gt_cstid TYPE RANGE OF zsssmd06002-cstid WITH HEADER LINE,
+      gt_goods TYPE RANGE OF zsssmd06002-prdnr WITH HEADER LINE.
+
+DATA : gt_data LIKE TABLE OF zsssmd06001,
+       gs_data LIKE LINE OF gt_data.
+
+
+
+DATA: gs_layo TYPE lvc_s_layo.
+
+DATA: gt_fval TYPE TABLE OF dd07v,
+      gs_fval LIKE LINE OF gt_fval.
+
+DATA: gt_mstat TYPE TABLE OF dd07v,
+      gs_mstat LIKE LINE OF gt_mstat.
+
+DATA: gt_fcat TYPE lvc_t_fcat,
+      gs_fcat LIKE LINE OF gt_fcat.
+
+DATA: go_con TYPE  REF TO cl_gui_custom_container,
+      go_alv TYPE REF TO cl_gui_alv_grid.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

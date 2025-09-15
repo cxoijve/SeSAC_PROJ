@@ -1,0 +1,235 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD06F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0100 .
+  IF go_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0100 .
+
+  PERFORM set_all_fcat.
+  PERFORM set_alv_layo.
+
+  CALL METHOD go_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMD06001'
+      is_layout                     = gs_layo
+    CHANGING
+      it_outtab                     = gt_data
+      it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_layo .
+  CLEAR gs_layo.
+  gs_layo-cwidth_opt = 'X'.
+  gs_layo-zebra = 'X'.
+  gs_layo-sel_mode = 'A'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALL_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_all_fcat .
+  CLEAR gt_fcat.
+
+*  PERFORM set_fcat USING 'EID' '' '' 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0130   text
+*      -->P_0131   text
+*      -->P_0132   text
+*      -->P_0133   text
+*----------------------------------------------------------------------*
+FORM set_fcat USING VALUE(p_fieldname) TYPE lvc_fname
+                    VALUE(p_col_pos) TYPE lvc_colpos
+                    VALUE(p_coltext) TYPE lvc_txtcol
+                    VALUE(p_no_out) TYPE lvc_noout.
+  CLEAR gs_fcat.
+  gs_fcat-fieldname = p_fieldname .
+  gs_fcat-col_pos = p_col_pos.
+  gs_fcat-coltext = p_coltext.
+  gs_fcat-no_out    = p_no_out.
+  APPEND gs_fcat TO gt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_ALL_TABLE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_all_table_data .
+
+  SELECT matnr
+    FROM ztssmat
+    INTO TABLE gt_prdnr
+    WHERE mtype = 'F'
+      AND DEL <> 'X'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PRDNR_PRICE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_prdnr_price_data .
+
+  SELECT prdnr cstid csprc curky del
+    FROM ztsssacat
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    WHERE cstid IN gt_cstid
+      AND prdnr IN gt_goods.
+
+
+  IF  sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_prdnr_price_data 데이터 없음'.
+  ENDIF.
+
+  PERFORM modify_customer_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_CONDITION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_alv_condition .
+  CLEAR: gt_cstid[],
+         gt_goods[].
+
+  IF zsssmd06002-cstid IS NOT INITIAL.
+    gt_cstid-sign = 'I'.
+    gt_cstid-option = 'EQ'.
+    gt_cstid-low = zsssmd06002-cstid.
+    APPEND gt_cstid.
+  ENDIF.
+
+  IF zsssmd06002-prdnr IS NOT INITIAL.
+    gt_goods-sign = 'I'.
+    gt_goods-option = 'EQ'.
+    gt_goods-low = zsssmd06002-prdnr.
+    APPEND gt_goods.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_customer_data .
+  DATA : ls_data LIKE LINE OF gt_data,
+         ls_info LIKE LINE OF gt_data.
+
+
+*  LOOP AT gt_prdnr INTO gs_prdnr.
+*
+*
+*    LOOP AT gt_data INTO ls_data.
+*      READ TABLE gt_data WITH KEY prdnr = gs_prdnr-prdnr INTO gs_data.
+*
+*      IF sy-subrc <> 0.
+*        ls_info-prdnr = gs_prdnr-prdnr.
+*      ENDIF.
+*    ENDLOOP.
+*  ENDLOOP.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

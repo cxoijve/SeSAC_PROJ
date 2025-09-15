@@ -7,7 +7,7 @@ PROGRAM SAPMZSSMD01.
 " Common
 DATA: ok_code TYPE sy-ucomm,
       gv_subrc TYPE sy-subrc,
-      gv_pernr TYPE ztssemp-pernr.
+      gv_first TYPE abap_bool.      "abap_true = 'X', abap_false = ' '
 
 " Screen 100 - Condition
 TABLES zsssmd0101.
@@ -17,7 +17,7 @@ DATA: BEGIN OF gs_list.
         INCLUDE STRUCTURE zsssmd0102.
 DATA: END OF gs_list,
       gt_list LIKE TABLE OF gs_list.
-*TABLES zsssmd0102.
+TABLES zsssmd0102.
 
 " ALV
 DATA: go_con TYPE REF TO cl_gui_custom_container,
@@ -33,11 +33,19 @@ DATA: END OF gs_det,
       gt_det LIKE TABLE OF gs_det.
 
 " Screen 200
-*DATA: BEGIN OF gs_new.
-*        INCLUDE STRUCTURE zsssmd0103.
-*DATA: END OF gs_new,
-*      gt_new LIKE TABLE OF gs_new.
 TABLES zsssmd0103.
+DATA: gv_tel_1 TYPE c LENGTH 3,    " 전화번호
+      gv_tel_2 TYPE c LENGTH 4,
+      gv_tel_3 TYPE c LENGTH 4.
+
+" Screen 300 - 기존정보
+TABLES zsssmd0104.
+
+" Screen 300 - 변경정보
+TABLES zsssmd0105.
+DATA: gv_tel_4 TYPE c LENGTH 3,    " 전화번호
+      gv_tel_5 TYPE c LENGTH 4,
+      gv_tel_6 TYPE c LENGTH 4.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

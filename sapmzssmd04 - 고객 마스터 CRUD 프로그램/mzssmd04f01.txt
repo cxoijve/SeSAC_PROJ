@@ -208,6 +208,7 @@ FORM set_all_fcat .
   PERFORM set_fcat USING 'EDOM' '' '' 'X'.
   PERFORM set_fcat USING 'EDNME' '' '' 'X'.
   PERFORM set_fcat USING 'EMAIL' '' '이메일' ''.
+  PERFORM set_fcat USING 'CPNME' '' '고객사 담당자' ''.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -416,22 +417,12 @@ ENDFORM.
 FORM check_endda_field USING pv_endda TYPE zessendda
                        CHANGING cv_endda TYPE zessendda.
 
-  IF pv_endda IS NOT INITIAL.
-    IF zsssmd04004-endda >= sy-datum AND zsssmd04004-endda >= zsssmd04003-begda AND zsssmd04004-endda >= pv_endda.
-      cv_endda = zsssmd04004-endda.
-      MESSAGE i999(zmcss) WITH '계약종료일 추가'.
-      LEAVE TO SCREEN 0.
-    ELSE.
-      MESSAGE i999(zmcss) WITH '올바른 계약종료일을 입력해주세요'.
-    ENDIF.
+  IF zsssmd04004-endda >= sy-datum AND zsssmd04004-endda >= zsssmd04003-begda.
+    cv_endda = zsssmd04004-endda.
+    MESSAGE i999(zmcss) WITH '계약종료일 추가'.
+    LEAVE TO SCREEN 0.
   ELSE.
-    IF zsssmd04004-endda >= sy-datum AND zsssmd04004-endda >= zsssmd04003-begda.
-      cv_endda = zsssmd04004-endda.
-      MESSAGE i999(zmcss) WITH '계약종료일 추가'.
-      LEAVE TO SCREEN 0.
-    ELSE.
-      MESSAGE i999(zmcss) WITH '올바른 계약종료일을 입력해주세요'.
-    ENDIF.
+    MESSAGE i999(zmcss) WITH '올바른 계약종료일을 입력해주세요'.
   ENDIF.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -461,17 +452,17 @@ FORM insert_customer_data USING VALUE(pv_endda) TYPE zessendda
 
 
   IF gs_edom-edom1 IS INITIAL.
-
     ls_info-edom = gs_edom-edom2.
-
+    CLEAR gs_edom.
   ELSEIF gs_edom-edom2 IS INITIAL.
-
     ls_info-edom = gs_edom-edom1.
-
+    CLEAR gs_edom.
   ENDIF.
 
 
   MOVE-CORRESPONDING cs_data TO ls_info. "zsssmd04003
+
+  TRANSLATE ls_info-eid TO LOWER CASE.
 
   INSERT ztsscust FROM ls_info.
 
@@ -530,9 +521,9 @@ FORM insert_email_data USING pv_denme TYPE zessednme.
   DATA : lt_info TYPE TABLE OF  ztssdom,
          ls_info LIKE LINE OF lt_info.
 
-
   PERFORM check_insert_ednme_field USING pv_denme "zsssmd04003-ednme
                                    CHANGING gv_subrc.
+
 
   IF gv_subrc = 0.     " 저장된 인터널 테이블에 이메일 데이터가 존재
     gs_edom-edom1 = gs_email-edom.
@@ -542,6 +533,8 @@ FORM insert_email_data USING pv_denme TYPE zessednme.
     PERFORM get_email_num CHANGING lv_num.
     ls_info-ednme = pv_denme. "zsssmd04003-ednme.
     ls_info-edom = lv_num.
+
+    TRANSLATE ls_info-ednme TO LOWER CASE.
 
     gs_edom-edom2 = lv_num.
 
@@ -565,8 +558,10 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM check_insert_ednme_field USING pv_ednme TYPE zsssmd04003-ednme
+FORM check_insert_ednme_field USING VALUE(pv_ednme) TYPE zsssmd04003-ednme
                         CHANGING cv_subrc TYPE sy-subrc.
+
+  TRANSLATE pv_ednme TO LOWER CASE.
 
   READ TABLE gt_email WITH KEY ednme = pv_ednme INTO gs_email.
 
@@ -690,16 +685,19 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM set_update_field .
+FORM set_update_field CHANGING cs_data STRUCTURE zsssmd04006
+                               cs_info STRUCTURE zsssmd04007.
 
-  MOVE-CORRESPONDING gs_data TO zsssmd04006.
-  zsssmd04007-cstid = gs_data-cstid.
+  MOVE-CORRESPONDING gs_data TO cs_data.
+  MOVE-CORRESPONDING cs_data TO cs_info.
 
-  IF zsssmd04006-endda <> '99991231'.
-    zsssmd04007-endda = gs_data-endda.
-    zsssmd04007-begda = gs_data-begda.
-    zsssmd04007-cname = gs_data-cname.
-  ENDIF.
+*  zsssmd04007-cstid = gs_data-cstid.
+*
+*  IF zsssmd04006-endda <> '99991231'.
+*    zsssmd04007-endda = gs_data-endda.
+*    zsssmd04007-begda = gs_data-begda.
+*    zsssmd04007-cname = gs_data-cname.
+*  ENDIF.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -720,13 +718,22 @@ FORM update_customer_data USING VALUE(pv_endda) TYPE zessendda
   PERFORM check_insert_endda_field USING pv_endda    "zsssmd04003-endda
                                    CHANGING cv_endda. "zsssmd04003-endda
 
+  IF zsssmd04007-begda >= zsssmd04007-endda.
+    MESSAGE i999(zmcss) WITH '올바른 계약기간을 입력해주세요'.
+    RETURN.
+  ENDIF.
+
   IF gs_edom-edom1 IS INITIAL.
     ls_info-edom = gs_edom-edom2.
+    CLEAR gs_edom.
   ELSEIF gs_edom-edom2 IS INITIAL.
     ls_info-edom = gs_edom-edom1.
+    CLEAR gs_edom.
   ENDIF.
 
   MOVE-CORRESPONDING cs_data TO ls_info. "zsssmd04003
+
+  TRANSLATE ls_info-eid TO LOWER CASE.
 
   UPDATE ztsscust FROM ls_info.
 

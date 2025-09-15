@@ -1,0 +1,178 @@
+*&---------------------------------------------------------------------*
+*&  Include           SAPMZSSTEMPI01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                   gt_info_0100l
+                                   gt_info_0100r
+                            USING  zsssmd0201.
+
+    WHEN 'C200'.
+
+      " 200번 호출 전에 Clear
+      CLEAR : gt_info_0200l[], gt_info_0200r[], zsssmd0501.
+
+      " 200번 호출
+      CALL SCREEN 200.
+
+      " 200번 호출 하고 Clear
+      CLEAR : gt_info_0200l[], gt_info_0200r[], zsssmd0501.
+
+      " 호출 후 Get info
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                   gt_info_0100l
+                                   gt_info_0100r
+                            USING  zsssmd0201.
+    WHEN 'C300'.
+
+      " 300번 호출 전에 Clear
+      CLEAR : gt_info_0300l[], gt_info_0300r[], gs_cond_0300.
+
+      " 300번 호출
+      CALL SCREEN 300.
+
+      " 300번 호출하고 Clear
+      CLEAR : gt_info_0300l[], gt_info_0300r[], gs_cond_0300.
+
+      " 호출 후 Get info
+      PERFORM get_info_0100 TABLES gt_info_0100
+                                 gt_info_0100l
+                                 gt_info_0100r
+                          USING  zsssmd0201.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+
+      " 완제품 선택
+    WHEN 'FIXITM'.
+
+      CLEAR : gt_info_0200l[], gt_info_0200r[].
+      PERFORM get_matnm TABLES  gt_ztssmat_t
+                        USING   zsssmd0501-matnr
+                                sy-langu
+                        CHANGING zsssmd0501-matnm.
+
+      IF zsssmd0501-matnm IS INITIAL.
+        RETURN.
+      ENDIF.
+
+      "REQ를 통해 Range 변수 및 gs_info_200R 설정 (여기서는 안해도 됨)
+
+      "gs_info_200L에 모든 원자재 리스트 셋업
+      PERFORM get_info_0200l TABLES gt_info_0200l
+                                    gt_info_0200r.
+
+      " 아이템 삽입
+    WHEN 'INSITM'.
+      "gs_info_200L에서 선택된 열들 가져옴
+      "gs_info_200R에 선택된 열 추가
+      "gs_info_200L에 선택된 열 삭제
+      PERFORM select_row_0200l TABLES gt_info_0200l
+                                      gt_info_0200r
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 아이템 삭제
+    WHEN 'CLRITM'.
+      "gs_info_200R에서 선택된 열들 가져옴
+      "gs_info_200L에 선택된 열 추가
+      "gs_info_200R에 선택된 열 삭제
+      PERFORM select_row_0200r TABLES gt_info_0200r
+                                      gt_info_0200l
+                               USING  'ONLY SELECTED'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+      " 모두 삭제
+    WHEN 'CLRALL'.
+      "gs_info_200R에서 선택된 열들 가져옴 (모두 선택)
+      "gs_info_200L에 선택된 열 추가
+      "gs_info_200R에 선택된 열 삭제
+      PERFORM select_row_0200r TABLES gt_info_0200r
+                                      gt_info_0200l
+                               USING  'ALL'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " DB에 레코드 삽입
+    WHEN 'INSERT'.
+
+      PERFORM insert_req TABLES gt_info_0200r
+                         USING  zsssmd0501-matnr
+                         CHANGING gv_subrc.
+
+      " 삽입 완료시 메시지.
+      IF gv_subrc = 0.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+    WHEN 'ENTER'.
+      PERFORM get_matnm TABLES  gt_ztssmat_t
+                   USING   zsssmd0501-matnr
+                           sy-langu
+                   CHANGING zsssmd0501-matnm.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_INSERTABILITY  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_insertability INPUT.
+  PERFORM check_insertability USING zsssmd0501-matnr.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'UPDATE'.
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
