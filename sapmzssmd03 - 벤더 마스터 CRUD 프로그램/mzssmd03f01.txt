@@ -214,7 +214,6 @@ ENDFORM.
 FORM GET_DATA .
 
   PERFORM GET_VEND_DATA. " 벤더 정보 취득
-
   PERFORM MODIFY_DATA.   " 추가 정보 취득
 
 ENDFORM.
@@ -266,6 +265,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM CHECK_DATA_0200  CHANGING PV_SUBRC.
 
+  " 날짜 기본값 설정
   DATA: LV_ENDDA TYPE D.
 
   CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
@@ -330,27 +330,22 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM REGISTER_DATA .
   " 벤더 등록
-  DATA: LT_ZTSSVEND TYPE TABLE OF ZTSSVEND,
-        LS_ZTSSVEND TYPE ZTSSVEND.
+**  DATA: LT_ZTSSVEND TYPE TABLE OF ZTSSVEND,
+**        LS_ZTSSVEND TYPE ZTSSVEND.
 
-  MOVE-CORRESPONDING ZSSSMD0303 TO LS_ZTSSVEND.
+  MOVE-CORRESPONDING ZSSSMD0303 TO GS_ZTSSVEND.
 
   " 채번 기능 추가
-  DATA LV_NUM(7) TYPE N.
-  DATA LV_NUM2(8) TYPE N.
+  " 벤더코드 채번
+  DATA: LV_NUM(7)  TYPE N,
+        LV_NUM2(8) TYPE N.
 
   CALL FUNCTION 'NUMBER_GET_NEXT'
     EXPORTING
       NR_RANGE_NR             = '01'
       OBJECT                  = 'ZNRSSMD02'
-*     QUANTITY                = '1'
-*     SUBOBJECT               = ' '
-*     TOYEAR                  = '0000'
-*     IGNORE_BUFFER           = ' '
-    IMPORTING " 정보 가져와야지
+    IMPORTING " 정보 가져오기
       NUMBER                  = LV_NUM
-*     QUANTITY                =
-*     RETURNCODE              =
     EXCEPTIONS  " M TYPE -> A
       INTERVAL_NOT_FOUND      = 1
       NUMBER_RANGE_NOT_INTERN = 2
@@ -368,40 +363,81 @@ FORM REGISTER_DATA .
 **  WRITE SY-SUBRC.
 **  ROLLBACK WORK.
   LV_NUM2 = '1' && LV_NUM.
-  LS_ZTSSVEND-VENID = LV_NUM2.
+  GS_ZTSSVEND-VENID = LV_NUM2.
 
-  "직접입력일때
+
   IF ZSSSMD0303-EDNME = '0000'.
-    TRANSLATE ZSSSMD0303-NEWEDOM TO LOWER CASE.
 
     SELECT SINGLE EDOM
        FROM ZTSSDOM
-         INTO LS_ZTSSVEND-EDOM
+         INTO GS_ZTSSVEND-EDOM
      WHERE EDNME = ZSSSMD0303-NEWEDOM.
 
     IF SY-SUBRC <> 0.
-      MESSAGE '존재하지 않는 도메인입니다.' TYPE 'S' DISPLAY LIKE 'E'.
-      RETURN.
+      " 신규 도메인 등록 처리 시작
+      DATA: LV_NUM3 TYPE N LENGTH 4.
+      CALL FUNCTION 'NUMBER_GET_NEXT'
+        EXPORTING
+          NR_RANGE_NR = '01'
+          OBJECT      = 'ZNRSSMD07'
+        IMPORTING
+          NUMBER      = LV_NUM3
+        EXCEPTIONS
+          OTHERS      = 8.
+      IF SY-SUBRC <> 0.
+        MESSAGE A000(ZMCSS).
+        RETURN.
+      ENDIF.
+
+      DATA: LS_NEW_DOM TYPE ZTSSDOM.
+      LS_NEW_DOM-EDOM = LV_NUM3.
+      LS_NEW_DOM-EDNME = ZSSSMD0303-NEWEDOM.
+
+      IF ZSSSMD0303-NEWEDOM IS INITIAL.
+        MESSAGE S999(ZMCSS) WITH '도메인을 입력해 주세요.' DISPLAY LIKE 'E'.
+        RETURN.
+      ENDIF.
+
+      " 대문자 -> 소문자로 처리
+      TRANSLATE ZSSSMD0303-EID TO LOWER CASE.
+      TRANSLATE ZSSSMD0303-NEWEDOM TO LOWER CASE.
+
+      INSERT ZTSSDOM FROM LS_NEW_DOM.
+      IF SY-SUBRC <> 0.
+        MESSAGE S999(ZMCSS) WITH '도메인 등록 실패' DISPLAY LIKE 'E'.
+        RETURN.
+      ENDIF.
+
+      GS_ZTSSVEND-EDOM = LV_NUM3.
+      " 신규 등록 완료
+      MESSAGE S999(ZMCSS) WITH '신규 도메인 등록 성공' DISPLAY LIKE 'S'.
+      " 신규 도메인 등록 처리 종료
     ENDIF.
 
   ELSE.
-    " 이메일 도메인 정보 취득
+
+    " 기존 도메인 번호 조회
     SELECT SINGLE EDOM
-       FROM ZTSSDOM
-         INTO LS_ZTSSVEND-EDOM
-     WHERE EDOM = ZSSSMD0303-EDNME.
+      FROM ZTSSDOM
+      INTO GS_ZTSSVEND-EDOM
+      WHERE EDOM = ZSSSMD0303-EDNME.
+
   ENDIF.
 
-  " 인서트
-  INSERT ZTSSVEND FROM LS_ZTSSVEND.
+  " 벤더 정보 인서트
+  INSERT ZTSSVEND FROM GS_ZTSSVEND.
   IF SY-SUBRC <> 0.
     ROLLBACK WORK.
     MESSAGE S999(ZMCSS) WITH '이미 존재하는 벤더입니다.' DISPLAY LIKE 'E'.
   ELSE.
     COMMIT WORK.
     MESSAGE S999(ZMCSS) WITH '등록 성공'.
+
+    PERFORM GET_DATA.
+
     LEAVE TO SCREEN 0.
   ENDIF.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -431,8 +467,8 @@ ENDFORM.
 *      -->P_ES_ROW_NO  text
 *      -->P_E_COLUMN  text
 *----------------------------------------------------------------------*
-FORM GET_DOUBLE_CLICK  USING    P_ES_ROW_NO
-                                P_E_COLUMN.
+FORM GET_DOUBLE_CLICK  USING    P_ROW_NO
+                                P_COLUMN.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -572,6 +608,8 @@ FORM MODIFY_DATA .
 
   LOOP AT GT_DATA INTO GS_DATA.
 
+
+
     IF GS_DATA-POSTC IS NOT INITIAL AND GS_DATA-ADDRE IS NOT INITIAL.
       " 벤더 전체 주소
       GS_DATA-VADDR = '(' && GS_DATA-POSTC && ')' && GS_DATA-ADDRE.
@@ -678,42 +716,108 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM EDIT_DATA .
-  DATA: LS_ZTSSVEND TYPE ZTSSVEND.
+*  DATA: LS_ZTSSVEND TYPE ZTSSVEND.
 
-  MOVE-CORRESPONDING ZSSSMD0303 TO LS_ZTSSVEND.
+  MOVE-CORRESPONDING ZSSSMD0303 TO GS_ZTSSVEND.
 
-  "직접입력일때
   IF ZSSSMD0303-EDNME = '0000'.
-    TRANSLATE ZSSSMD0303-NEWEDOM TO LOWER CASE.
 
     SELECT SINGLE EDOM
        FROM ZTSSDOM
-         INTO LS_ZTSSVEND-EDOM
+         INTO GS_ZTSSVEND-EDOM
      WHERE EDNME = ZSSSMD0303-NEWEDOM.
 
     IF SY-SUBRC <> 0.
-      MESSAGE '존재하지 않는 도메인입니다.' TYPE 'S' DISPLAY LIKE 'E'.
-      RETURN.
+      " 신규 도메인 등록 처리 시작
+      DATA: LV_NUM3 TYPE N LENGTH 4.
+      CALL FUNCTION 'NUMBER_GET_NEXT'
+        EXPORTING
+          NR_RANGE_NR = '01'
+          OBJECT      = 'ZNRSSMD07'
+        IMPORTING
+          NUMBER      = LV_NUM3
+        EXCEPTIONS
+          OTHERS      = 8.
+      IF SY-SUBRC <> 0.
+        MESSAGE A000(ZMCSS).
+        RETURN.
+      ENDIF.
+
+      DATA: LS_NEW_DOM TYPE ZTSSDOM.
+      LS_NEW_DOM-EDOM = LV_NUM3.
+      LS_NEW_DOM-EDNME = ZSSSMD0303-NEWEDOM.
+
+      INSERT ZTSSDOM FROM LS_NEW_DOM.
+      IF SY-SUBRC <> 0.
+        MESSAGE S999(ZMCSS) WITH '도메인 등록 실패' DISPLAY LIKE 'E'.
+        RETURN.
+      ENDIF.
+
+      GS_ZTSSVEND-EDOM = LV_NUM3.
+      " 신규 등록 완료
+      MESSAGE S999(ZMCSS) WITH '신규 도메인 등록 성공' DISPLAY LIKE 'S'.
+      " 신규 도메인 등록 처리 종료
     ENDIF.
 
   ELSE.
-    " 이메일 도메인 정보 취득
+
+    " 기존 도메인 번호 조회
     SELECT SINGLE EDOM
-       FROM ZTSSDOM
-         INTO LS_ZTSSVEND-EDOM
-     WHERE EDOM = ZSSSMD0303-EDNME.
+      FROM ZTSSDOM
+      INTO GS_ZTSSVEND-EDOM
+      WHERE EDOM = ZSSSMD0303-EDNME.
+
+  ENDIF.
+
+  " 대문자 -> 소문자로 처리
+  TRANSLATE ZSSSMD0303-EID TO LOWER CASE.
+  TRANSLATE ZSSSMD0303-NEWEDOM TO LOWER CASE.
+
+  IF ZSSSMD0303-NEWEDOM IS INITIAL.
+    MESSAGE S999(ZMCSS) WITH '도메인을 입력해 주세요.' DISPLAY LIKE 'E'.
+    RETURN.
   ENDIF.
 
 
-  UPDATE ZTSSVEND FROM ZSSSMD0303.
+  " 변경
+  UPDATE ZTSSVEND FROM GS_ZTSSVEND.
   IF SY-SUBRC = 0.
     COMMIT WORK.
     MESSAGE '수정 완료' TYPE 'S'.
+
+    PERFORM GET_DATA.
+    LEAVE TO SCREEN 0.
+
   ELSE.
     ROLLBACK WORK.
     MESSAGE '수정 실패' TYPE 'S' DISPLAY LIKE 'E'.
   ENDIF.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VPNME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD0303_PENID  text
+*      <--P_ZSSSMD0303_VPNME  text
+*----------------------------------------------------------------------*
+FORM GET_VPNME  USING    P_PENID
+                CHANGING P_VPNME.
+  IF GT_EMP IS INITIAL.
+    SELECT *
+      FROM ZTSSEMP
+      INTO CORRESPONDING FIELDS OF TABLE GT_EMP.
+  ENDIF.
+
+  READ TABLE GT_EMP INTO GS_EMP WITH KEY PERNR = ZSSSMD0303-PENID.
+
+  IF SY-SUBRC = 0.
+    ZSSSMD0303-PENID_T = GS_EMP-LNAME && GS_EMP-FNAME.
+    P_VPNME = ZSSSMD0303-PENID_T.
+  ELSE.
+    MESSAGE S999(ZMCSS) WITH '유효하지 않은 담당사원 ID입니다.' DISPLAY LIKE 'E'.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------
