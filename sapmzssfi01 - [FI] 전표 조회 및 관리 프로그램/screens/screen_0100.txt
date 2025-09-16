@@ -8,27 +8,30 @@ SAPMZSSFI01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSFI01                             0100 0100     30123192 37  0  0 30134  0G E                              20250915201525																																
+SAPMZSSFI01                             0100 0100     34123192 37  0  0 34137  0G E                              20250916130822																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_COND		CHAR	123	00	00	00	30	00	  3	  2		  0	  0	  0		  8	R				  0	  0	101									
-ZSSSFI0101-JENUM	2	CHAR	 20	30	00	00	30	00	  5	  6		  0	  0	  0		  0					  0	  0								전표번호	                                                                                                                                                                                                                                                        X	
-ZSSSFI0101-JENUM	C	CHAR	 11	A0	00	80	00	00	  5	 27		  0	  0	  0		  0					 22	  0								___________	                                       00	
-ZSSSFI0101-JTYPE	2	CHAR	 20	30	00	01	30	00	  5	 71		  0	  0	  0		  0					  0	  0								전표 유형	                                                                                                                                                                                                                                                        X	
-ZSSSFI0101-JTYPE	C	CHAR	  2	A0	00	81	00	08	  5	 92		  0	  0	  0		 14					  4	  0								__	XDL                                    00	
-ZSSSFI0101-FYEAR	2	CHAR	 20	30	00	00	30	00	  7	  6		  0	  0	  0		  0					  0	  0								회계연도	                                                                                                                                                                                                                                                        X	
-ZSSSFI0101-FYEAR	N	NUMC	  4	A0	00	80	00	00	  7	 27		  0	  0	  0		  0					  8	  0								____	                                       00	
-ZSSSFI0101-RGDAT	2	CHAR	 20	30	00	00	30	00	  7	 71		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
-ZSSSFI0101-RGDAT	D	DATE	 10	A0	00	80	00	08	  7	 92		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-ZSSSFI0101-RGTOR	2	CHAR	 20	30	00	04	30	00	  8	 71		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSFI0101-RGTOR	C	CHAR	  8	A0	00	84	00	08	  8	 92		  0	  0	  0		  0					 16	  0								________	X                                      00	
-CON			122	00	00	00	30	00	 12	  3		  0	  0	  0		 19	U				  1	  1	102									
+B_COND		CHAR	123	00	00	00	30	00	  2	  2		  0	  0	  0		 10	R				  0	  0	101									
+ZSSSFI0101-JENUM	0	CHAR	 13	30	00	00	30	00	  4	  6		  0	  0	  0		  0					  0	  0								회계전표 번호	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-JENUM	C	CHAR	 11	A0	00	80	00	00	  4	 27		  0	  0	  0		  0					 22	  0								___________	                                       00	
+ZSSSFI0101-JTYPE	2	CHAR	 20	30	00	01	30	00	  4	 71		  0	  0	  0		  0					  0	  0								전표 유형	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-JTYPE	C	CHAR	  2	A0	00	81	00	08	  4	 92		  0	  0	  0		 14					  4	  0								__	XDL                                    00	
+ZSSSFI0101-FYEAR	2	CHAR	 20	30	00	00	30	00	  6	  6		  0	  0	  0		  0					  0	  0								회계연도	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-FYEAR	N	NUMC	  4	A0	00	80	00	00	  6	 27		  0	  0	  0		  0					  8	  0								____	                                       00	
+ZSSSFI0101-RGDATB	0	CHAR	  6	30	00	00	30	00	  7	  6		  0	  0	  0		  0					  0	  0								전기일	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-RGDATB	D	DATE	 10	A0	00	80	00	08	  7	 27		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+ZSSSFI0101-RGDATE	0	CHAR	  3	30	00	00	30	00	  7	 40		  0	  0	  0		  0					  0	  0								~	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-RGDATE	D	DATE	 10	A0	00	80	00	08	  7	 45		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+ZSSSFI0101-RGTOR	2	CHAR	 20	30	00	04	30	00	  9	  6		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
+ZSSSFI0101-RGTOR	C	CHAR	  8	A0	00	84	00	08	  9	 27		  0	  0	  0		  0					 16	  0								________	X                                      00	
+CON			122	00	00	00	30	00	 13	  3		  0	  0	  0		 22	U				  1	  1	102									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE STATUS_0100.																																
   MODULE SET_ALV_0100.																																
+																																
 																																
 *																																
 PROCESS AFTER INPUT.																																

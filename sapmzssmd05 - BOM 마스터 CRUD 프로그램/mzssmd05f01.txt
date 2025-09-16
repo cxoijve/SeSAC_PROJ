@@ -65,6 +65,7 @@ FORM display_alv  TABLES    pt_info
     EXPORTING
       i_structure_name              = pv_sname
       is_layout                     = ps_layo
+      it_toolbar_excluding          = gt_exclude
     CHANGING
       it_outtab                     = pt_info[]
       it_fieldcatalog               = pt_fcat[]
@@ -241,11 +242,11 @@ FORM set_layo  USING    pv_tname
                CHANGING ps_layo TYPE lvc_s_layo.
 
   CASE pv_tname.
-    WHEN '0100L' OR '0100R'.
+    WHEN '0100R'.
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'IT_COL'.
 *      ps_layo-sel_mode = 'A'. "A, B C D
-    WHEN '0200L' OR '0200R' OR '0300L' OR '0300R'.
+    WHEN '0100L' OR '0200L' OR '0200R' OR '0300L' OR '0300R'.
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'IT_COL'.
       ps_layo-sel_mode = 'A'. "A, B C D
@@ -699,6 +700,360 @@ FORM insert_req  TABLES   pt_info_0200r STRUCTURE gs_info_0200r
   MESSAGE i999(zmcss) WITH '<insert_req> 완제품' pv_matnr '의 레시피가 추가되었습니다'.
   pv_subrc = 0.
   COMMIT WORK.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_100L
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row_0100l  TABLES   pt_info_0100l STRUCTURE gs_info_0100l
+                       CHANGING ps_row_0100l LIKE gs_info_0100l
+                                pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, ps_row_0100l.
+
+  DATA : lt_row   TYPE lvc_t_roid,
+         ls_row   LIKE LINE OF lt_row,
+         lv_index TYPE i,
+         lv_tabix TYPE sy-tabix.
+
+
+  CALL METHOD go_alv_0100l->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 1.
+    WHEN OTHERS.
+      MESSAGE i999(zmcss) WITH '<select_row_0100l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      pv_subrc = 4.
+      RETURN.
+  ENDCASE.
+
+  READ TABLE lt_row INDEX 1 INTO ls_row.
+  READ TABLE pt_info_0100l INDEX ls_row-row_id.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<select_row_0100l>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+  ENDIF.
+
+  MOVE-CORRESPONDING  pt_info_0100l TO ps_row_0100l.
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300L  text
+*      -->P_GT_INFO_0300R  text
+*      -->P_LS_ROW_0100L  text
+*      <--P_GS_COND_0300  text
+*----------------------------------------------------------------------*
+FORM get_info_0300  TABLES   pt_info_0300l STRUCTURE gs_info_0300l
+                             pt_info_0300r STRUCTURE gs_info_0300r
+                    USING    VALUE(ps_row_0100l) LIKE gs_info_0100l
+                    CHANGING ps_cond_0300 LIKE gs_cond_0300
+                             pv_info_0300r TYPE i
+                             pv_subrc LIKE sy-subrc.
+
+  CLEAR : ps_cond_0300, pv_info_0300r, pv_subrc.
+
+  DATA lt_ztssmat TYPE TABLE OF ztssmat WITH HEADER LINE.
+
+  " ps_row_0100l 바탕으로 ps_cond_0300 세팅
+  ps_cond_0300-matnr = ps_row_0100l-prdnr.
+  ps_cond_0300-matnm = ps_row_0100l-matnm.
+
+  " 300r 세팅 (REQ 요소)
+  SELECT prdnr rawnr amount meins
+    FROM ztssreq
+    INTO CORRESPONDING FIELDS OF TABLE pt_info_0300r
+    WHERE prdnr = ps_cond_0300-matnr.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '<get_info_0300>' ps_cond_0300-matnr '는 레시피가 없는 자재입니다. 신규 생성해주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  DESCRIBE TABLE pt_info_0300r LINES pv_info_0300r.
+
+  " 300r 이름 세팅
+  LOOP AT pt_info_0300r.
+    PERFORM get_matnm TABLES  gt_ztssmat_t
+                USING   pt_info_0300r-rawnr
+                        sy-langu
+               CHANGING pt_info_0300r-matnm.
+
+
+    MODIFY pt_info_0300r.
+  ENDLOOP.
+
+
+  " 300l 세팅 (모든 원자재 - 300r)
+  SELECT matnr meins
+    FROM ztssmat
+    INTO CORRESPONDING FIELDS OF TABLE lt_ztssmat
+    WHERE del NE 'X'
+    AND mtype EQ 'R'.
+
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<get_info_0300>' '치명적인 에러가 발생했습니다. 자재 마스터에 자재가 없습니다.'.
+  ENDIF.
+
+  LOOP AT lt_ztssmat.
+    CLEAR pt_info_0300r.
+    READ TABLE pt_info_0300r WITH KEY rawnr = lt_ztssmat-matnr.
+    IF sy-subrc <> 0.
+      pt_info_0300l-rawnr = lt_ztssmat-matnr.
+      pt_info_0300l-meins = lt_ztssmat-meins.
+      pt_info_0300l-amount = '1'.
+
+      PERFORM get_matnm TABLES  gt_ztssmat_t
+                        USING   lt_ztssmat-matnr
+                                sy-langu
+                       CHANGING pt_info_0300l-matnm.
+
+      APPEND pt_info_0300l.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0300L
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300L  text
+*      -->P_GT_INFO_0300R  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_row_0300l  TABLES   pt_info_0300l STRUCTURE gs_info_0300l
+                                pt_info_0300r STRUCTURE gs_info_0300r
+                       USING    VALUE(pv_info_0300r) TYPE i
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+
+  DATA : lt_row         TYPE lvc_t_roid,
+         ls_row         LIKE LINE OF lt_row,
+         lv_index       TYPE i,
+         lv_0300r_lines TYPE i,
+         lv_tabix       TYPE sy-tabix,
+         lt_info_0300l  LIKE TABLE OF pt_info_0300l WITH HEADER LINE.
+
+  DESCRIBE TABLE pt_info_0300r LINES lv_0300r_lines.
+
+  CALL METHOD go_alv_0300l->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '<select_row_0300l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      pv_subrc = 4.
+      RETURN.
+    WHEN OTHERS.
+      IF lv_0300r_lines + lv_index > pv_info_0300r. " 총 갯수가 안맞으면 안됨.
+        MESSAGE i999(zmcss) WITH '<select_row_0300l>' '이 완제품은 총' pv_info_0300r '개의 원자재로 구성된 완제품 입니다.'.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0300l INDEX ls_row-row_id.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0300l>' '치명적인 에러가 발생했습니다. 인터널 테이블에서 선택한 열을 찾을 수 없습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    pt_info_0300l-amount = 1.
+    APPEND pt_info_0300l TO pt_info_0300r.
+    APPEND pt_info_0300l TO lt_info_0300l.
+  ENDLOOP.
+
+  LOOP AT lt_info_0300l.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0300l WITH KEY rawnr = lt_info_0300l-rawnr.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0300l>' '치명적인 에러가 발생했습니다. 삭제가 실패했습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    DELETE pt_info_0300l INDEX lv_tabix.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0300R
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300R  text
+*      -->P_GT_INFO_0300L  text
+*      -->P_0284   text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_row_0300r  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
+                                pt_info_0300l STRUCTURE gs_info_0300l
+                       USING    VALUE(pv_clear)
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+
+  IF pv_clear EQ 'ALL'.
+    LOOP AT pt_info_0300r.
+      APPEND pt_info_0300r TO pt_info_0300l.
+    ENDLOOP.
+    CLEAR pt_info_0300r[].
+    RETURN.
+  ENDIF.
+
+  DATA : lt_row        TYPE lvc_t_roid,
+         ls_row        LIKE LINE OF lt_row,
+         lv_index      TYPE i,
+         lv_tabix      TYPE sy-tabix,
+         lt_info_0300r LIKE TABLE OF pt_info_0300r WITH HEADER LINE.
+
+  CALL METHOD go_alv_0300r->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '<select_row_0300r>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      pv_subrc = 4.
+      RETURN.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0300r INDEX ls_row-row_id.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0300r>' '치명적인 에러가 발생했습니다. 인터널 테이블에서 선택한 열을 찾을 수 없습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    APPEND pt_info_0300r TO pt_info_0300l.
+    APPEND pt_info_0300r TO lt_info_0300r.
+  ENDLOOP.
+
+  " 전달 완료, 삭제하기.
+  LOOP AT lt_info_0300r.
+    CLEAR lv_tabix.
+    READ TABLE pt_info_0300r WITH KEY rawnr = lt_info_0300r-rawnr.
+
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<select_row_0300r>' '치명적인 에러가 발생했습니다. 삭제가 실패했습니다.'.
+    ENDIF.
+
+    lv_tabix = sy-tabix.
+    DELETE pt_info_0300r INDEX lv_tabix.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_REQ
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300R  text
+*      -->P_GV_INFO_0300R  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
+                 USING    pv_info_0300r TYPE i
+                          ps_cond_0300 LIKE gs_cond_0300
+                 CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lt_lines        TYPE i,
+         ls_ztssreq      TYPE ztssreq,
+         lv_updatability TYPE i VALUE 0,
+         lt_ztssreq      TYPE TABLE OF ztssreq WITH HEADER LINE,
+         lv_tabix        LIKE sy-tabix.
+
+  DESCRIBE TABLE pt_info_0300r LINES lt_lines.
+  IF lt_lines NE pv_info_0300r.
+    MESSAGE i999(zmcss) WITH '<update_req>' '아이템의 갯수가 맞지 않습니다. 이 완제품은' pv_info_0300r '개의 아이템을 갖습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  SELECT prdnr rawnr amount meins
+    FROM ztssreq
+    INTO CORRESPONDING FIELDS OF TABLE lt_ztssreq
+    WHERE prdnr = ps_cond_0300-matnr.
+
+  LOOP AT pt_info_0300r.
+    READ TABLE lt_ztssreq WITH KEY prdnr = ps_cond_0300-matnr rawnr = pt_info_0300r-rawnr.
+
+    IF sy-subrc <> 0.
+      lv_updatability = '1'.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_updatability NE '1'.
+    MESSAGE i999(zmcss) WITH '<update_req>' '변경 사항이 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  LOOP AT pt_info_0300r.
+    CLEAR : ls_ztssreq, lv_tabix.
+    lv_tabix = sy-tabix.
+
+    MOVE-CORRESPONDING pt_info_0300r TO ls_ztssreq.
+
+    READ TABLE lt_ztssreq INDEX lv_tabix.
+
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE a999(zmcss) WITH '<update_req>' '치명적인 에러가 발생했습니다. 아이템의 갯수가 맞지 않습니다.'.
+    ENDIF.
+
+    UPDATE ztssreq SET rawnr = ls_ztssreq-rawnr amount = ls_ztssreq-amount
+      WHERE prdnr = ps_cond_0300-matnr AND rawnr = lt_ztssreq-rawnr.
+
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH '<update_req>' '변경이 실패했습니다'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+  COMMIT WORK.
+  MESSAGE i999(zmcss) WITH '<update_req> 완제품' ps_cond_0300-matnm '의 레시피를 변경했습니다'.
+  pv_subrc = 0.
+  RETURN.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_EXCLUDE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_EXCLUDE  text
+*----------------------------------------------------------------------*
+FORM set_alv_exclude  CHANGING   pt_exclude LIKE gt_exclude.
+  APPEND cl_gui_alv_grid=>mc_fc_excl_all TO gt_exclude.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

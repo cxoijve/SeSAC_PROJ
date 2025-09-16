@@ -2,5 +2,11 @@
 *&  Include           MZSSMD03C01
 *&---------------------------------------------------------------------*
 
+CLASS LCL_HANDLER IMPLEMENTATION.
+  METHOD ON_DOUBLE_CLICK.
+
+  ENDMETHOD.
+ENDCLASS.
+
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

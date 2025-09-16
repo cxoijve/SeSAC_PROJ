@@ -8,7 +8,7 @@ SAPMZSSMD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD01                             0300 0300     23165192 37  0  0 26175  0G E                              20250915182838																																
+SAPMZSSMD01                             0300 0300     23165192 37  0  0 26176  0G E                              20250916014544																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -50,7 +50,7 @@ ZSSSMD0104-GESCH	2	CHAR	 20	30	00	01	30	00	 11	  6		  0	  0	  0		  0					  0	  0
 ZSSSMD0104-GESCH	C	CHAR	  1	A0	00	81	30	08	 11	 27		  0	  0	  0		  0					  2	  0								_	X                                      00	
 ZSSSMD0104-GESCH_T	C	CHAR	  7	B0	00	80	31	00	 11	 30		  0	  0	  0		  0					 20	  0								_______	                                       00	
 ZSSSMD0105-GESCH	2	CHAR	 20	30	00	01	30	00	 11	 92		  0	  0	  0		  0					  0	  0								성별	                                                                                                                                                                                                                                                        X	
-ZSSSMD0105-GESCH	C	CHAR	  1	A0	00	81	00	08	 11	113		  0	  0	  0		  0					  2	  0								_	X                                      00	
+ZSSSMD0105-GESCH	C	CHAR	  1	A0	00	81	30	08	 11	113		  0	  0	  0		  0					  2	  0								_	X                                      00	
 ZSSSMD0105-GESCH_T	C	CHAR	  5	B0	00	80	31	00	 11	118		  0	  0	  0		  0					 20	  0								_____	                                       00	
 ZSSSMD0104-GBDAT	2	CHAR	 20	30	00	00	30	00	 12	  6		  0	  0	  0		  0					  0	  0								생년월일	                                                                                                                                                                                                                                                        X	
 ZSSSMD0104-GBDAT	D	DATE	 10	A0	00	80	30	08	 12	 27		  0	  0	  0		  0					 16	  0								__________	X                                      00	

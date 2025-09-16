@@ -13,6 +13,10 @@ INCLUDE mzssmd05f01.
 
 LOAD-OF-PROGRAM.
 
+  " alv의 기본 세팅 - Exclude
+  PERFORM set_alv_exclude CHANGING gt_exclude.
+
+
   " alv의 기본 세팅 - 0100L
   PERFORM set_default_alv TABLES    gt_fcat_0100l
                                     gt_sort_0100l
@@ -52,9 +56,6 @@ LOAD-OF-PROGRAM.
 
 *GUI Texts
 *----------------------------------------------------------
-* T100 --> Bills Of Material - 조회
-* T200 --> BOM 신규 생성
-* T300 --> Bills Of Material - & 수정
 * T100 --> Bills Of Material - 조회
 * T200 --> BOM 신규 생성
 * T300 --> Bills Of Material - & 수정

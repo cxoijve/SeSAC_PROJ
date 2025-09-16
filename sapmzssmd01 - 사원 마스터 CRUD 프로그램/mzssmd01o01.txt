@@ -17,10 +17,11 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0100 OUTPUT.
   IF go_con IS INITIAL.
+    PERFORM get_emp_list.     " 프로그램 실행하자마자 ALV에 데이터 표시
     PERFORM create_alv.
-*    PERFORM display_alv.
-  ELSE.
     PERFORM display_alv.
+  ELSE.
+*    PERFORM display_alv.
     PERFORM refresh_alv.
   ENDIF.
 ENDMODULE.
@@ -32,9 +33,6 @@ ENDMODULE.
 MODULE status_0101 OUTPUT.
 *  SET PF-STATUS 'xxxxxxxx'.
 *  SET TITLEBAR 'xxx'.
-*  IF gv_pernr IS NOT INITIAL.
-*    PERFORM get_emp_detail.
-*  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0200  OUTPUT
@@ -45,14 +43,16 @@ MODULE status_0200 OUTPUT.
   SET PF-STATUS 'S200'.
   SET TITLEBAR 'T200' WITH sy-uname.
 
+*  CLEAR gv_first.
   " persg 라디오버튼 - '사원'을 기본값으로 설정
-  IF sy-ucomm IS INITIAL.
+  IF gv_first IS INITIAL.
     CLEAR: zsssmd0103-persg_1, zsssmd0103-persg_2, zsssmd0103-persg_3.
     zsssmd0103-persg_3 = 'X'.
 
     " gesch 라디오버튼 - '남성'을 기본값으로 설정
     CLEAR: zsssmd0103-gesch_1, zsssmd0103-gesch_2.
     zsssmd0103-gesch_1 = 'X'.
+    gv_first = 'X'.   " abap_true
   ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -64,6 +64,7 @@ MODULE status_0300 OUTPUT.
   SET PF-STATUS 'S300'.
   SET TITLEBAR 'T300' WITH sy-uname.
 
+*  CLEAR gv_first.
   " persg 라디오버튼 - 기존 정보로 설정
   IF gv_first IS INITIAL.
     CLEAR: zsssmd0105-persg_1, zsssmd0105-persg_2, zsssmd0105-persg_3.

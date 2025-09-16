@@ -11,7 +11,21 @@ MODULE user_command_0100 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
-*	WHEN .
+    WHEN 'SELL'.
+      PERFORM get_all_table_data.
+      PERFORM get_all_prdnr_data.
+      CALL SCREEN 101 STARTING AT 85 3 ENDING AT 120 26.
+    WHEN 'CHANGE'.
+      PERFORM get_detail_info_100 CHANGING gv_subrc.
+      IF gs_data-del <> 'X'.
+        PERFORM set_update_field.
+        IF gv_subrc IS INITIAL.
+          CALL SCREEN 300.
+        ENDIF.
+      ELSE.
+        MESSAGE i999(zmcss) WITH '현재 판매중인 업체만 선택해 주세요'.
+      ENDIF.
+    WHEN 'ENTER'.
 *	WHEN OTHERS.
   ENDCASE.
 
@@ -29,6 +43,86 @@ MODULE exit INPUT.
     WHEN 'CANC'.
       LEAVE TO SCREEN 0.
 *    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0101  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0101 INPUT.
+
+  CASE ok_code.
+    WHEN 'CHECK'.
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF gv_subrc IS INITIAL.
+        zsssmd06005-prdnr = gs_modal-prdnr.
+        zsssmd06005-curky = 'KRW'.
+        PERFORM get_matched_customer_data USING zsssmd06005-prdnr.
+        CALL SCREEN 200.
+        PERFORM check_alv_condition.
+        PERFORM get_prdnr_price_data.
+        CLEAR : gt_prdnr,
+                gs_prdnr.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ENTER'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SETSELL'.
+
+      PERFORM insert_customer_data.
+
+
+    WHEN 'ENTER'.
+
+
+*      PERFORM INSERT_
+*  	WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0201  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0201 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+*    WHEN .
+*    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
   ENDCASE.
 
 ENDMODULE.

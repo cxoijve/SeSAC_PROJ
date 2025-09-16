@@ -18,9 +18,6 @@ INCLUDE mzssmd01f01                             .  " FORM-Routines
 * T100 --> 사원 프로그램   by &
 * T200 --> 사원 등록   by &
 * T300 --> 사원 정보 변경   by &
-* T100 --> 사원 프로그램   by &
-* T200 --> 사원 등록   by &
-* T300 --> 사원 정보 변경   by &
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

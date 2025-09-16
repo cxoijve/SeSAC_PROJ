@@ -139,7 +139,7 @@ FORM get_emp_list .
            a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
       FROM ztssemp AS a INNER JOIN ztssdept_t AS b
         ON a~depid EQ b~depid
-        INNER JOIN ztssdom AS c
+        LEFT OUTER JOIN ztssdom AS c
         ON a~edom EQ c~edom
       INTO CORRESPONDING FIELDS OF TABLE gt_list
       WHERE a~estat IN lr_estat
@@ -149,7 +149,7 @@ FORM get_emp_list .
            a~gbdat a~postc a~addre a~telnr a~eid a~edom c~ednme a~estat
       FROM ztssemp AS a INNER JOIN ztssdept_t AS b
         ON a~depid EQ b~depid
-        INNER JOIN ztssdom AS c
+        LEFT OUTER JOIN ztssdom AS c
         ON a~edom EQ c~edom
       INTO CORRESPONDING FIELDS OF TABLE gt_list
       WHERE a~depid = zsssmd0101-depid
@@ -198,7 +198,7 @@ FORM modify_emp_list .
   CALL FUNCTION 'GET_DOMAIN_VALUES'
     EXPORTING
       domname         = 'ZDSSGESCH'
-*      text            = 'X'
+*     text            = 'X'
     TABLES
       values_tab      = lt_dom_gs
     EXCEPTIONS
@@ -239,12 +239,14 @@ FORM modify_emp_list .
   ENDIF.
 
   " 5. 이메일 concatenate
-  IF gs_list-eid IS NOT INITIAL AND gs_list-edom IS NOT INITIAL.
-    LOOP AT gt_list INTO gs_list.
+  LOOP AT gt_list INTO gs_list.
+    IF gs_list-eid IS NOT INITIAL AND gs_list-edom IS NOT INITIAL.
       CONCATENATE gs_list-eid '@' gs_list-ednme INTO gs_list-email.
-      MODIFY gt_list FROM gs_list.
-    ENDLOOP.
-  ENDIF.
+    ELSE.
+      CLEAR gs_list-email.
+    ENDIF.
+    MODIFY gt_list FROM gs_list.
+  ENDLOOP.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT
@@ -410,7 +412,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM insert_emp .
   DATA: lv_pernr TYPE char7,   " 신규사번
-        lv_name TYPE ztssemp-fname,
+        lv_name  TYPE ztssemp-fname,
         ls_new   TYPE ztssemp.
 
   CLEAR: lv_pernr, ls_new.
@@ -469,7 +471,6 @@ FORM insert_emp .
     ROLLBACK WORK.
     MESSAGE i999(zmcss) WITH '등록 실패' DISPLAY LIKE 'E'.
   ENDIF.
-  CLEAR: gv_tel_1, gv_tel_2, gv_tel_3.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  REFRESH_ALV
@@ -497,7 +498,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM update_emp .
-  DATA: ls_udt TYPE ztssemp,
+  DATA: ls_udt  TYPE ztssemp,
         lv_name TYPE ztssemp-fname.
   CLEAR ls_udt.
 
@@ -542,14 +543,108 @@ FORM update_emp .
   IF sy-subrc EQ 0.
     COMMIT WORK.
     MESSAGE i999(zmcss) WITH zsssmd0105-pernr lv_name '정보 변경 완료' DISPLAY LIKE 'S'.
-    APPEND ls_udt TO gt_list.
+*    APPEND ls_udt TO gt_list.
     PERFORM get_emp_list.
     PERFORM modify_emp_list.
   ELSE.
     ROLLBACK WORK.
     MESSAGE i999(zmcss) WITH zsssmd0105-pernr lv_name '정보 변경 실패' DISPLAY LIKE 'E'.
   ENDIF.
-  CLEAR: gv_tel_4, gv_tel_5, gv_tel_6.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ENTDT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_entdt USING p_str TYPE any
+                 CHANGING p_subrc.
+
+  CLEAR p_subrc.
+  DATA: lv_min_dt TYPE sy-datum,
+        lv_max_dt TYPE sy-datum.
+  FIELD-SYMBOLS: <fs_entdt> TYPE any.
+
+  ASSIGN COMPONENT 'ENTDT' OF STRUCTURE p_str TO <fs_entdt>.
+  IF <fs_entdt> IS ASSIGNED.
+    lv_min_dt = sy-datum - 2 * 365.
+    lv_max_dt = sy-datum + 30.
+    IF <fs_entdt> < lv_min_dt OR <fs_entdt> > lv_max_dt.
+      MESSAGE i999(zmcss) WITH '입사일은 2년 전부터 한 달 후까지만 입력 가능' DISPLAY LIKE 'E'.
+      p_subrc = 4.
+      RETURN.
+    ELSE.
+      p_subrc = 0.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_TELNR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_telnr USING p_tel1 p_tel2 p_tel3
+                 CHANGING p_subrc.
+
+  CLEAR p_subrc.
+
+  IF strlen( p_tel1 ) <> 3.
+    MESSAGE i999(zmcss) WITH '전화번호 앞자리는 3자리입니다.'.
+    p_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF strlen( p_tel2 ) <> 4.
+    MESSAGE i999(zmcss) WITH '전화번호 가운데 자리는 4자리입니다.'.
+    p_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF strlen( p_tel3 ) <> 4.
+    MESSAGE i999(zmcss) WITH '전화번호 뒷자리는 4자리입니다.'.
+    p_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 모두 정상 입력
+  p_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_AGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_age USING p_entdt TYPE sy-datum
+                     p_gbdat TYPE sy-datum
+               CHANGING p_subrc.
+
+  DATA: lv_year TYPE i.
+
+  p_subrc = 0.
+
+  " 1) 생년월일이 입사일보다 이후인 경우
+  IF p_gbdat > p_entdt.
+    MESSAGE i999(zmcss) WITH '생년월일이 입사일보다 이후일 수 없습니다.' DISPLAY LIKE 'E'.
+    p_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 2) 사원은 최소 20살 이상
+  lv_year = p_entdt(4) - p_gbdat(4).    " 연도 차이 계산
+  IF lv_year < 20.
+    MESSAGE i999(zmcss) WITH '사원의 생년월일을 확인해 주세요.' DISPLAY LIKE 'E'.
+    p_subrc = 4.
+    RETURN.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

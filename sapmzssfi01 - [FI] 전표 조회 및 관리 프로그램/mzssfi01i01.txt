@@ -8,6 +8,14 @@
 *----------------------------------------------------------------------*
 MODULE EXIT INPUT.
 
+  CASE OK_CODE.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  USER_COMMAND_0100  INPUT
@@ -22,17 +30,86 @@ MODULE USER_COMMAND_0100 INPUT.
 
     WHEN 'ENTER'.
 
-    WHEN 'SEARCH'.
 
+    WHEN 'SEARCH'.
+      " 전표 조회
       PERFORM GET_DATA.
 
     WHEN 'REGIST'.
-
+      " 전표 생성
       CALL SCREEN 0200.
+
+    WHEN 'DETAIL'.
+      " 전표 상세조회
+
+
+      " 행 선택 처리
+      DATA: LV_LINE TYPE I.
+
+      PERFORM GET_SELECTED_ROWS CHANGING GT_ROWS.
+
+      DESCRIBE TABLE GT_ROWS LINES LV_LINE.
+      CASE LV_LINE.
+        WHEN '0'.
+          MESSAGE S999(ZMCSS) WITH '수정할 데이터를 선택해주세요.' DISPLAY LIKE 'E'.
+          RETURN.
+        WHEN '1'.
+
+          READ TABLE GT_ROWS INDEX 1 INTO GS_ROWS.
+
+        WHEN OTHERS.
+          MESSAGE S999(ZMCSS) WITH '데이터를 한 행만 선택하세요.' DISPLAY LIKE 'E'.
+          RETURN.
+      ENDCASE.
+
+      CALL SCREEN 0300.
+
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0200 INPUT.
+  TABSTRIP-ACTIVETAB = OK_CODE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0300 INPUT.
+
+  CASE OK_CODE.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ENTER'.
+
 
 
     WHEN OTHERS.
   ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0101  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0101 INPUT.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0102  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0102 INPUT.
 
 ENDMODULE.
 

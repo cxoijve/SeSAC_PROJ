@@ -34,7 +34,7 @@ FORM create_alv USING VALUE(p_con) TYPE c
       OTHERS                      = 6.
   IF sy-subrc <> 0.
     " &에 대한 시스템 오류입니다 담당자 &에게 문의하세요
-    MESSAGE a004(zmcb06) WITH 'sesac-b-06'.
+    MESSAGE a999(zmcss) WITH '시스템 오류입니다. 담당자에게 문의하세요'.
     RETURN.
 *   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
 *              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
@@ -58,10 +58,8 @@ FORM create_alv USING VALUE(p_con) TYPE c
       error_dp_create   = 4
       OTHERS            = 5.
 
-
   IF sy-subrc <> 0.
-    " &에 대한 시스템 오류입니다 담당자 &에게 문의하세요
-*    MESSAGE a004(zmcb06) WITH 'sesac-b-06'.
+    MESSAGE a999(zmcss) WITH '시스템 오류입니다. 담당자에게 문의하세요'.
     RETURN.
   ENDIF.
 
@@ -103,8 +101,7 @@ FORM display_alv USING VALUE(p_name) TYPE c
       too_many_lines                = 3
       OTHERS                        = 4.
   IF sy-subrc <> 0.
-    " ### #####. &# #####
-*    MESSAGE a004(zmcb06) WITH 'sesac-b-06'.
+    MESSAGE a999(zmcss) WITH '시스템 오류입니다. 담당자에게 문의하세요'.
     RETURN.
   ENDIF.
 
@@ -137,14 +134,16 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default .
 
+  " 첫 화면 구성하기
   PERFORM set_first_display CHANGING zsssmm0101.
-
-  PERFORM set_layout_screen CHANGING gs_layo gt_fcat gt_sort.
-  PERFORM set_ranges_ponum USING zsssmm0101-ponum_s zsssmm0101-ponum_e CHANGING gr_ponum.
   PERFORM set_ranges_podat USING zsssmm0101-podat_s zsssmm0101-podat_e CHANGING gr_podat.
-  PERFORM get_po_data CHANGING zsssmm0101.
   PERFORM set_200_display CHANGING zsssmm0103.
-*  PERFORM set_200_item_display CHANGING zsssmm0104.
+
+  PERFORM set_layout_screen.
+  PERFORM set_field_catalog.
+
+  PERFORM get_po_data CHANGING zsssmm0101.
+  PERFORM modify_po_data.
   gv_item_num = gv_item_num + 1.
 
 ENDFORM.
@@ -157,52 +156,21 @@ ENDFORM.
 *      <--P_GT_FCAT  text
 *      <--P_GT_SORT  text
 *----------------------------------------------------------------------*
-FORM set_layout_screen CHANGING  cs_layo TYPE lvc_s_layo
-                              ct_fcat TYPE lvc_t_fcat
-                              ct_sort TYPE lvc_t_sort.
-  " layout ##
-  PERFORM set_layout CHANGING cs_layo.
+FORM set_layout_screen.
+
+  PERFORM set_layout : CHANGING gs_layo,
+                       CHANGING gs_layo2,
+                       CHANGING gs_layo3.
+
+  gs_layo32-cwidth_opt = 'X'.
+  gs_layo32-zebra = 'X'.
 
 
-  gs_layo2-cwidth_opt = 'X'.
-  gs_layo2-zebra = 'X'.
-  gs_layo2-sel_mode = 'A'.
-  gs_layo3-cwidth_opt = 'X'.
-  gs_layo3-zebra = 'X'.
-  gs_layo3-sel_mode = 'A'.
   gs_layo4-cwidth_opt = 'X'.
   gs_layo4-zebra = 'X'.
   gs_layo5-cwidth_opt = 'X'.
   gs_layo5-zebra = 'X'.
 
-
-
-  "field-catalog ##
-  PERFORM set_fcat TABLES ct_fcat.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2 gt_fcat2.
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'COLTEXT' '단가' 'X' CHANGING gs_fcat2 gt_fcat2.
-
-
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'COLTEXT' '총 가격' 'X' CHANGING gs_fcat2 gt_fcat2.
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat4 gt_fcat4,
-                             USING 'COLTEXT' '원가' 'X' CHANGING gs_fcat4 gt_fcat4.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat4 gt_fcat4,
-                             USING 'COLTEXT' '총 가격' 'X' CHANGING gs_fcat4 gt_fcat4.
-
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'VNPRC' '' CHANGING gs_fcat5 gt_fcat5,
-                           USING 'COLTEXT' '자재원가' 'X' CHANGING gs_fcat5 gt_fcat5.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'DEL' '' CHANGING gs_fcat5 gt_fcat5,
-                         USING 'COLTEXT' '삭제 여부' 'X' CHANGING gs_fcat5 gt_fcat5.
-
-  "SORT ##
-*  perform setting_sort tables ct_sort.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -218,25 +186,6 @@ FORM set_layout  CHANGING cs_layo TYPE lvc_s_layo.
   cs_layo-cwidth_opt = 'X'.
   cs_layo-zebra = 'X'.
   cs_layo-sel_mode = 'A'.
-
-ENDFORM.
-*&---------------------------------------------------------------------*
-*&      Form  SET_FCAT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*      -->P_CT_FCAT  text
-*----------------------------------------------------------------------*
-FORM set_fcat  TABLES   t_fcat TYPE lvc_t_fcat.
-
-
-  "고객번호
-*  PERFORM set_fs_field :
-*                      USING 'FIELDNAME' 'INDEX' '' CHANGING t_fcat t_fcat[],
-*                         USING 'COL_POS' 'N' '' CHANGING t_fcat t_fcat[],
-*                         USING 'COLTEXT' '번호'(f00) 'X' CHANGING t_fcat t_fcat[].
-
-
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -285,10 +234,37 @@ ENDFORM.
 FORM get_po_data CHANGING cv_inputs TYPE zsssmm0101.
 
   " 구매 조건에 따른 데이터 가져오기
-  IF cv_inputs-podat_s IS NOT INITIAL AND cv_inputs-venid IS NOT INITIAL.
-    PERFORM get_all_po_datas_by_cond USING gr_ponum gr_podat cv_inputs-venid.
-  ELSEIF  cv_inputs-podat_s IS NOT INITIAL.
-    PERFORM get_po_datas_excp_venid USING gr_ponum gr_podat.
+  DATA : lv_where     TYPE string,
+         lv_date_low  TYPE string,
+         lv_date_high TYPE string,
+         lv_venid     TYPE string.
+
+  IF gr_ponum IS NOT INITIAL.
+    CONCATENATE lv_where 'ponum IN gr_ponum' INTO lv_where SEPARATED BY space.
+  ENDIF.
+
+  IF gr_podat IS NOT INITIAL.
+    IF lv_where IS NOT INITIAL.
+      CONCATENATE lv_where 'AND' INTO lv_where SEPARATED BY space.
+    ENDIF.
+    CONCATENATE lv_where 'podat IN gr_podat' INTO lv_where SEPARATED BY space.
+  ENDIF.
+
+  IF cv_inputs-venid IS NOT INITIAL.
+    IF lv_where IS NOT INITIAL.
+      CONCATENATE lv_where 'AND' INTO lv_where SEPARATED BY space.
+    ENDIF.
+    CONCATENATE lv_where 'venid = cv_inputs-venid' INTO lv_where SEPARATED BY space.
+
+  ENDIF.
+
+  SELECT ponum podat venid dudat stext curky rgdat rgtor
+  INTO CORRESPONDING FIELDS OF TABLE gt_data
+  FROM ztsspoh
+  WHERE (lv_where).
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '일치하는 정보가 존재하지 않습니다!'.
+    RETURN.
   ENDIF.
 
 ENDFORM.
@@ -301,11 +277,13 @@ ENDFORM.
 *      -->P_ZSSSMM0101_PONUM_E  text
 *      <--P_LR_PONUM  text
 *----------------------------------------------------------------------*
-FORM set_ranges_ponum  USING    VALUE(pv_start)
-                          VALUE(pv_end)
+FORM set_ranges_ponum  USING    VALUE(pv_start) TYPE ztsspoi-ponum
+                          VALUE(pv_end) TYPE ztsspoi-ponum
                  CHANGING cv_range LIKE gr_ponum.
 
   DATA : ls_range LIKE LINE OF cv_range.
+
+  CLEAR cv_range.
 
   IF pv_start IS NOT INITIAL AND pv_end IS NOT INITIAL.
 
@@ -321,7 +299,7 @@ FORM set_ranges_ponum  USING    VALUE(pv_start)
 
     CLEAR ls_range.
     ls_range-sign   = 'I'.
-    ls_range-option = 'EQ'.
+    ls_range-option = 'GE'.
     ls_range-low    = pv_start.
     APPEND ls_range TO cv_range.
 
@@ -329,8 +307,8 @@ FORM set_ranges_ponum  USING    VALUE(pv_start)
 
     CLEAR ls_range.
     ls_range-sign   = 'I'.
-    ls_range-option = 'EQ'.
-    ls_range-low    = pv_end.
+    ls_range-option = 'LE'.
+    ls_range-high    = pv_end.
     APPEND ls_range TO cv_range.
 
   ENDIF.
@@ -345,11 +323,13 @@ ENDFORM.
 *      -->P_ZSSSMM0101_PODAT_E  text
 *      <--P_LR_PODAT  text
 *----------------------------------------------------------------------*
-FORM set_ranges_podat USING    VALUE(pv_start)
-                          VALUE(pv_end)
+FORM set_ranges_podat USING    VALUE(pv_start) TYPE sy-datum
+                          VALUE(pv_end) TYPE sy-datum
                  CHANGING cv_range LIKE gr_podat.
 
   DATA : ls_range LIKE LINE OF cv_range.
+
+  CLEAR cv_range.
 
   IF pv_start IS NOT INITIAL AND pv_end IS NOT INITIAL.
 
@@ -366,7 +346,7 @@ FORM set_ranges_podat USING    VALUE(pv_start)
 
     CLEAR ls_range.
     ls_range-sign   = 'I'.
-    ls_range-option = 'EQ'.
+    ls_range-option = 'GT'.
     ls_range-low    = pv_start.
     APPEND ls_range TO cv_range.
 
@@ -374,7 +354,7 @@ FORM set_ranges_podat USING    VALUE(pv_start)
 
     CLEAR ls_range.
     ls_range-sign   = 'I'.
-    ls_range-option = 'EQ'.
+    ls_range-option = 'LE'.
     ls_range-high    = pv_end.
     APPEND ls_range TO cv_range.
 
@@ -391,10 +371,6 @@ ENDFORM.
 FORM set_first_display  CHANGING c_inputs TYPE zsssmm0101.
 
   c_inputs-podat_s = '20240101'.
-*   c_inputs-ponums = '20240101'.
-*  c_inputs-ponum_s = 'P2024000001'.
-
-
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -413,12 +389,13 @@ FORM get_all_po_datas_by_cond  USING    VALUE(pt_ponum) LIKE gr_ponum
   SELECT ponum podat venid dudat stext curky rgdat rgtor
     INTO CORRESPONDING FIELDS OF TABLE gt_data
     FROM ztsspoh
-*    WHERE ponum IN pt_ponum
-    WHERE podat IN pt_podat
+    WHERE ponum IN pt_ponum
+    AND podat IN pt_podat
     AND venid = p_venid.
 
   IF sy-subrc <> 0.
-
+    MESSAGE s999(zmcss) WITH '일치하는 정보가 존재하지 않습니다!'.
+    RETURN.
   ENDIF.
 
 ENDFORM.
@@ -462,33 +439,31 @@ FORM set_number_range .
 
   CALL FUNCTION 'NUMBER_GET_NEXT'
     EXPORTING
-      nr_range_nr = '01'
-      object      = 'ZNRSSMM01'
-*     QUANTITY    = '1'
-*     SUBOBJECT   = ' '
-      toyear      = lv_year
-*     IGNORE_BUFFER                 = ' '
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMM01'
+*     QUANTITY                = '1'
+*     SUBOBJECT               = ' '
+      toyear                  = lv_year
+*     IGNORE_BUFFER           = ' '
     IMPORTING
-      number      = lv_num
-*     QUANTITY    =
-*     RETURNCODE  =
-* EXCEPTIONS
-*     INTERVAL_NOT_FOUND            = 1
-*     NUMBER_RANGE_NOT_INTERN       = 2
-*     OBJECT_NOT_FOUND              = 3
-*     QUANTITY_IS_0                 = 4
-*     QUANTITY_IS_NOT_1             = 5
-*     INTERVAL_OVERFLOW             = 6
-*     BUFFER_OVERFLOW               = 7
-*     OTHERS      = 8
-    .
+      number                  = lv_num
+*     QUANTITY                =
+*     RETURNCODE              =
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
   IF sy-subrc <> 0.
 * Implement suitable error handling here
-*    gv_num = 'P' && lv_year && lv_num.
+    MESSAGE a999(zmcss) WITH '넘버링이 실패했습니다.'.
+    RETURN.
   ENDIF.
-*  gv_num = lv_num.
   gv_po_num = 'P' && lv_year && lv_num.
-*gv_num = lv_num.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -585,6 +560,7 @@ FORM insert_purchase_order CHANGING cv_subrc TYPE sy-subrc.
   DESCRIBE TABLE gt_item LINES lv_cnt.
   IF lv_cnt = 0.
     MESSAGE i999(zmcss) WITH '구매오더 아이템이 있어야 발주 가능합니다!'.
+    cv_subrc = 4.
     RETURN.
   ENDIF.
 
@@ -593,8 +569,8 @@ FORM insert_purchase_order CHANGING cv_subrc TYPE sy-subrc.
 
   IF sy-subrc = 0.
     COMMIT WORK.
-    MESSAGE s999(zmcss) WITH '구매오더가 완료되었습니다!'.
     cv_subrc = sy-subrc.
+    MESSAGE s999(zmcss) WITH '구매오더가 완료되었습니다!'.
   ELSE.
     ROLLBACK WORK.
     cv_subrc = sy-subrc.
@@ -652,7 +628,7 @@ FORM insert_po_item .
     ls_item_data-amount = ls_item-amount.
     ls_item_data-meins = ls_item-meins.
     ls_item_data-plant = ls_item-plant.
-    ls_item_data-poprc = ls_item-poprc.
+    ls_item_data-poprc = ls_item-toprc.
     ls_item_data-curky = ls_item-curky.
     INSERT ztsspoi FROM ls_item_data.
 
@@ -745,7 +721,7 @@ FORM renumber_item .
     <fs_item>-itnum = lv_cnt.
   ENDLOOP.
 
-  gv_item_num = lv_cnt.
+  gv_item_num = lv_cnt + 1.
 
 
 ENDFORM.
@@ -760,12 +736,15 @@ FORM check_required_fields  CHANGING p_head_input TYPE zsssmm0103.
 
   IF p_head_input-podat IS INITIAL.
     MESSAGE e999(zmcss) WITH '구매오더일자를 입력해주세요.'.
+    RETURN.
   ENDIF.
   IF p_head_input-dudat IS INITIAL.
     MESSAGE e999(zmcss) WITH '납기일자를 입력해주세요.'.
+    RETURN.
   ENDIF.
   IF p_head_input-rgtor IS INITIAL.
     MESSAGE e999(zmcss) WITH '발주자를 입력해주세요.'.
+    RETURN.
   ENDIF.
 
 ENDFORM.
@@ -895,7 +874,7 @@ FORM get_mat_name .
   AND langu = sy-langu.
 
   IF sy-subrc <> 0.
-    MESSAGE e999(zmcss) WITH '해당하는 원자재가 존재하지않습니다'.
+    MESSAGE i999(zmcss) WITH '해당하는 원자재가 존재하지않습니다'.
   ENDIF.
 
   zsssmm0104-pname = lv_mat_name.
@@ -912,6 +891,7 @@ ENDFORM.
 FORM get_emp_name USING VALUE(p_pernr) TYPE ztssemp-pernr
                   CHANGING p_emp_name TYPE zsssmm0103-ename.
 
+  CLEAR p_emp_name.
   DATA : BEGIN OF ls_emp_name,
            lname TYPE ztssemp-lname,
            fname TYPE ztssemp-fname,
@@ -922,8 +902,8 @@ FORM get_emp_name USING VALUE(p_pernr) TYPE ztssemp-pernr
     FROM ztssemp
     WHERE pernr = p_pernr.
   IF sy-subrc <> 0.
-    MESSAGE e999(zmcss) WITH '해당하는 사원이 존재하지 않습니다'.
-    RETURN.
+*    MESSAGE s999(zmcss) WITH '해당하는 사원이 존재하지 않습니다'.
+*    RETURN.
   ENDIF.
 
   p_emp_name = ls_emp_name-lname && ls_emp_name-fname.
@@ -938,21 +918,21 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM get_ven_name .
-
+FORM get_ven_name USING VALUE(p_venid) TYPE ztssvend-venid
+                  CHANGING p_name TYPE ztssvend-vname.
 
   DATA : lv_vend_name TYPE ztssvend-vname.
 
   SELECT SINGLE vname
-    INTO lv_vend_name
+    INTO p_name
     FROM ztssvend
-    WHERE venid = zsssmm0103-venid.
-
+    WHERE venid = p_venid.
   IF sy-subrc <> 0.
-    MESSAGE e999(zmcss) WITH '해당하는 벤더사가 존재하지 않습니다.'.
+    MESSAGE s999(zmcss) WITH '해당하는 벤더사가 존재하지 않습니다.'.
     RETURN.
   ENDIF.
-  zsssmm0103-vname = lv_vend_name.
+
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  DELETE_PO_ITEM
@@ -1008,7 +988,7 @@ FORM get_po_item_in_details .
          lv_sum  TYPE i.
 
   LOOP AT gt_item INTO ls_item.
-    lv_sum = lv_sum + ls_item-toprc.
+    lv_sum = lv_sum + ls_item-poprc.
     CLEAR ls_item.
   ENDLOOP.
 
@@ -1045,9 +1025,10 @@ FORM get_po_item_mat_name .
     ENDIF.
 
     ls_item-pname = lv_mat_name.
-    ls_item-toprc = ls_item-amount * ls_item-poprc.
-    lv_tot_price = lv_tot_price + ls_item-toprc.
+*    ls_item-poprc = ls_item-poprc.
+    lv_tot_price = lv_tot_price + ls_item-poprc.
     MODIFY gt_item FROM ls_item.
+    CLEAR ls_item.
   ENDLOOP.
 
   zsssmm0103-toprc = lv_tot_price.
@@ -1074,12 +1055,6 @@ FORM get_vender_info USING VALUE(p_venid) TYPE ztssvend-venid
     MESSAGE i999(zmcss) WITH '일치하는 벤더 정보가 존재하지 않습니다!'.
     RETURN.
   ENDIF.
-
-
-
-
-
-*  MOVE-CORRESPONDING ls_vend TO zsssmm0103.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1219,7 +1194,7 @@ ENDFORM.
 FORM create_display_0302 .
 
   PERFORM create_alv USING 'CON3_1' CHANGING go_con32 go_alv32.
-  PERFORM display_alv USING 'ZSSSMM0104' CHANGING gt_proto_item gs_layo3 gt_fcat3 gt_sort3 go_alv32.
+  PERFORM display_alv USING 'ZSSSMM0104' CHANGING gt_proto_item gs_layo32 gt_fcat3 gt_sort3 go_alv32.
 
 
 ENDFORM.
@@ -1267,6 +1242,412 @@ FORM check_ok_edit_by_gr  USING VALUE(p_ponum) TYPE ztsspoh-ponum
     cv_subrc = 1.
   ENDIF.
 
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FIELD_CATALOG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_field_catalog .
+
+  "field-catalog ##
+  PERFORM set_fs_field : USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2 gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'COLTEXT' '단가' 'X' CHANGING gs_fcat2 gt_fcat2.
+
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'COLTEXT' '총 가격' 'X' CHANGING gs_fcat2 gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat3 gt_fcat3,
+                             USING 'COLTEXT' '거래가격' 'X' CHANGING gs_fcat3 gt_fcat3.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat3 gt_fcat3,
+                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat3 gt_fcat3.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat4 gt_fcat4,
+                             USING 'COLTEXT' '거래가격' 'X' CHANGING gs_fcat4 gt_fcat4.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat4 gt_fcat4,
+                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat4 gt_fcat4.
+
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'VNPRC' '' CHANGING gs_fcat5 gt_fcat5,
+                           USING 'COLTEXT' '자재원가' 'X' CHANGING gs_fcat5 gt_fcat5.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'DEL' '' CHANGING gs_fcat5 gt_fcat5,
+                         USING 'COLTEXT' '삭제 여부' 'X' CHANGING gs_fcat5 gt_fcat5.
+
+*  *  PERFORM set_fs_field :
+*                      USING 'FIELDNAME' 'INDEX' '' CHANGING t_fcat t_fcat[],
+*                         USING 'COL_POS' 'N' '' CHANGING t_fcat t_fcat[],
+*                         USING 'COLTEXT' '번호'(f00) 'X' CHANGING t_fcat t_fcat[].
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_PO_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_po_data .
+
+  DATA : ls_data LIKE LINE OF gt_data.
+
+  LOOP AT gt_data INTO ls_data.
+    PERFORM get_emp_name USING ls_data-rgtor CHANGING ls_data-ename.
+    PERFORM get_vender_name USING ls_data-venid CHANGING ls_data-vname.
+    MODIFY gt_data FROM ls_data.
+    CLEAR ls_data.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDER_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_DATA_VENID  text
+*      <--P_LS_DATA_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_vender_name  USING    VALUE(p_venid) TYPE ztssvend-venid
+                      CHANGING c_vname TYPE ztssvend-vname.
+
+  SELECT SINGLE vname
+    INTO c_vname
+    FROM ztssvend
+    WHERE venid = p_venid.
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '일치하는 정보가 존재하지 않습니다' DISPLAY LIKE 'W'.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  FREE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV  text
+*      -->P_GO_CON  text
+*----------------------------------------------------------------------*
+FORM free_alv  CHANGING co_con TYPE REF TO cl_gui_custom_container
+                        co_alv TYPE REF TO cl_gui_alv_grid.
+
+  CALL METHOD co_alv->free.
+  CALL METHOD co_con->free.
+
+  FREE : co_alv,
+         co_con.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_REQUIRED_FIELDS_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0103  text
+*      -->P_ZSSSMM0104  text
+*----------------------------------------------------------------------*
+FORM check_required_fields_item  USING VALUE(p_item) TYPE zsssmm0104.
+
+  IF p_item-pomnr IS INITIAL.
+    MESSAGE e999(zmcss) WITH '자재코드는 필수값입니다!'.
+    RETURN.
+  ELSEIF p_item-amount IS INITIAL.
+    MESSAGE e999(zmcss) WITH '수량은 필수값입니다!'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_CREATE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMM0103  text
+*----------------------------------------------------------------------*
+FORM init_create  CHANGING p_input TYPE zsssmm0103.
+
+  p_input-curky = 'KRW'.
+  p_input-dudat = sy-datum + 14.
+  p_input-podat = sy-datum.
+  gv_item_num  = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_INIT_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_init_data  CHANGING cv_subrc TYPE sy-subrc.
+
+
+  DATA : lv_rowid     TYPE i,
+         ls_data      LIKE LINE OF gt_data,
+         ls_vend_info LIKE zsssmd0302.
+
+  PERFORM check_pop USING go_alv CHANGING cv_subrc lv_rowid.
+  IF cv_subrc = 0.
+    " GR 여부 체크
+    READ TABLE gt_data INDEX lv_rowid INTO ls_data.
+
+    PERFORM check_ok_edit_by_gr USING ls_data-ponum CHANGING gv_subrc.
+    IF cv_subrc = 1.
+      RETURN.
+    ENDIF.
+
+    PERFORM init_data_edit USING lv_rowid CHANGING ls_data ls_vend_info zsssmm0103.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_DATA_EDIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_data_edit USING VALUE(p_id) TYPE i
+                    CHANGING cs_data LIKE gs_data
+                             cs_vend TYPE zsssmd0302
+                             c_input TYPE zsssmm0103.
+
+  MOVE-CORRESPONDING cs_data TO c_input.
+
+  " 등록자 정보 구하기
+  PERFORM get_emp_name USING c_input-rgtor CHANGING c_input-ename.
+  c_input-rgdat = sy-datum.
+
+  " 벤더 정보 구하기
+  PERFORM get_vender_info USING  c_input-venid CHANGING cs_vend.
+  c_input-vname = cs_vend-vname.
+
+  " PO item 구하기
+  PERFORM get_po_item_in_details.
+
+  " 벤더에 따른 자재정보 가격구하기
+  PERFORM get_price_info_by_vender.
+
+
+  " 수정 시 원본 데이터 지정하기
+  MOVE-CORRESPONDING c_input TO gs_cond_head.
+  gs_cond_head-ename = c_input-ename.
+  WRITE gs_cond_head-toprc  TO gs_cond_head-currency CURRENCY gs_cond_head-curky.
+
+  gt_proto_item = gt_item.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_INIT_DETAIL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_init_detail_data  CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lv_rowid TYPE i,
+         ls_data  LIKE LINE OF gt_data,
+         ls_vend  LIKE zsssmd0302.
+
+  PERFORM check_pop USING go_alv CHANGING gv_subrc lv_rowid.
+
+  IF cv_subrc = 0.
+    READ TABLE gt_data INDEX lv_rowid INTO ls_data.
+
+    " 조회조건 정보
+    MOVE-CORRESPONDING ls_data TO zsssmm0103.
+    PERFORM init_data_detail CHANGING zsssmm0103 zsssmd0302.
+
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_DATA_DETAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMM0103  text
+*      <--P_ZSSSMD0302  text
+*----------------------------------------------------------------------*
+FORM init_data_detail  CHANGING c_info TYPE zsssmm0103
+                                c_ven_info TYPE zsssmd0302.
+
+
+  DATA : ls_vend LIKE zsssmd0302,
+         lv_name TYPE zsssmm0103-ename.
+
+  c_info-curky = 'KRW'.
+
+  " emp, 벤더, 아이템 정보가져오기
+  PERFORM get_emp_name USING c_info-rgtor CHANGING c_info-ename.
+  PERFORM get_po_item_in_details.
+  PERFORM get_vender_info USING zsssmm0103-venid CHANGING ls_vend.
+  c_info-vname = ls_vend-vname.
+
+  " 탭스트립 조회조건 - 벤더 정보 가져오기
+  MOVE-CORRESPONDING ls_vend TO c_ven_info.
+  PERFORM get_emp_name USING c_ven_info-penid CHANGING lv_name.
+  c_ven_info-penid_t = lv_name.
+
+  " 탭스트립 벤더정보 조회하기
+  PERFORM get_email_domain USING ls_vend-edom CHANGING c_ven_info-ednme.
+
+  " 벤더에 따른 가격정보가져오기
+  PERFORM get_price_info_by_vender.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ITEM_MAT_RECORD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_item_mat_record .
+  PERFORM set_items_record.
+  PERFORM get_mat_name.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SEARCH_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM search_datas .
+  PERFORM search_po_all_infos.
+  PERFORM modify_po_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  ENTER_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM enter_datas .
+  DATA : lv_name     TYPE zsssmm0103-ename,
+         lv_ven_name TYPE ztssvend-vname.
+
+  CLEAR : zsssmm0103-ename,
+          zsssmm0103-vname.
+
+  PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING lv_name.
+  zsssmm0103-ename = lv_name.
+  PERFORM get_ven_name USING zsssmm0103-venid CHANGING lv_ven_name.
+  zsssmm0103-vname = lv_ven_name.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_PO_CREATE_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_po_create_display .
+  zsssmm0103-podat = sy-datum.
+  zsssmm0103-dudat = sy-datum + 14.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ITEM_NUM_TO_ONE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_item_num_to_one .
+  gv_item_num = 1.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_EDIT_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_edit_item  USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
+                          CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lv_item_rowid TYPE i,
+         ls_item       LIKE LINE OF gt_item.
+
+
+  PERFORM check_pop USING co_alv CHANGING cv_subrc lv_item_rowid.
+  IF cv_subrc = 0.
+    READ TABLE gt_item INDEX lv_item_rowid INTO ls_item.
+
+    MOVE-CORRESPONDING ls_item TO gs_cond_item.
+    MOVE-CORRESPONDING gs_cond_item TO zsssmm0104.
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_DEL_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_del_item   USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
+                          CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lv_item_rowid TYPE i,
+         ls_del_item   LIKE LINE OF gt_item,
+         l_data        TYPE ztsspoi.
+
+  CLEAR  gs_item.
+
+  PERFORM check_pop USING co_alv CHANGING cv_subrc lv_item_rowid.
+  IF cv_subrc = 0.
+    READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
+    zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
+    gs_item = ls_del_item.
+    DELETE gt_item INDEX lv_item_rowid.
+    PERFORM renumber_item .
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_DELETE_INFOS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_ITEM  text
+*----------------------------------------------------------------------*
+FORM update_delete_infos  USING    VALUE(ps_item) LIKE gs_item.
+
+  UPDATE ztsspoi
+  SET del = 'X'
+  WHERE ponum = ps_item-ponum
+     AND itnum = ps_item-itnum.
+  IF sy-subrc = 0.
+    COMMIT WORK.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
 
 ENDFORM.
 

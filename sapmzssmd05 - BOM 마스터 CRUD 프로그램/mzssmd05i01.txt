@@ -36,8 +36,30 @@ MODULE user_command_0100 INPUT.
     WHEN 'C300'.
 
       " 300번 호출 전에 Clear
-      CLEAR : gt_info_0300l[], gt_info_0300r[], gs_cond_0300.
+      CLEAR : gt_info_0300l[], gt_info_0300r[], gs_cond_0300, gv_info_0300r.
 
+
+      " 열 하나 선택했는가?
+      DATA : ls_row_0100l LIKE gs_info_0100l.
+      PERFORM select_row_0100l TABLES    gt_info_0100l
+                               CHANGING  ls_row_0100l
+                                         gv_subrc.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+
+      " 선택한 열을 바탕으로 300번 cond, l, r 세팅
+      PERFORM get_info_0300 TABLES gt_info_0300l
+                                   gt_info_0300r
+                            USING  ls_row_0100l
+                            CHANGING gs_cond_0300
+                                     gv_info_0300r
+                                     gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
       " 300번 호출
       CALL SCREEN 300.
 
@@ -46,9 +68,9 @@ MODULE user_command_0100 INPUT.
 
       " 호출 후 Get info
       PERFORM get_info_0100 TABLES gt_info_0100
-                                 gt_info_0100l
-                                 gt_info_0100r
-                          USING  zsssmd0201.
+                                   gt_info_0100l
+                                   gt_info_0100r
+                            USING  zsssmd0201.
 
   ENDCASE.
 ENDMODULE.
@@ -145,6 +167,7 @@ MODULE user_command_0200 INPUT.
       IF gv_subrc = 0.
         LEAVE TO SCREEN 0.
       ENDIF.
+
     WHEN 'ENTER'.
       PERFORM get_matnm TABLES  gt_ztssmat_t
                    USING   zsssmd0501-matnr
@@ -170,7 +193,59 @@ MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+
+      " 아이템 삽입
+    WHEN 'INSITM'.
+      "gs_info_300L에서 선택된 열들 가져옴
+      "gs_info_300R에 선택된 열 추가 (이때, 레코드 갯수가 정확히 일치해야함.)
+      "gs_info_300L에 선택된 열 삭제
+      PERFORM select_row_0300l TABLES gt_info_0300l
+                                      gt_info_0300r
+                               USING  gv_info_0300r
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 아이템 삭제
+    WHEN 'CLRITM'.
+      "gs_info_300R에서 선택된 열들 가져옴
+      "gs_info_300L에 선택된 열 추가
+      "gs_info_300R에 선택된 열 삭제
+      PERFORM select_row_0300r TABLES gt_info_0300r
+                                      gt_info_0300l
+                               USING  'ONLY SELECTED'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+      " 모두 삭제
+    WHEN 'CLRALL'.
+      "gs_info_300R에서 선택된 열들 가져옴 (모두 선택)
+      "gs_info_300L에 선택된 열 추가
+      "gs_info_300R에 선택된 열 삭제
+      PERFORM select_row_0300r TABLES gt_info_0300r
+                                      gt_info_0300l
+                               USING  'ALL'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
     WHEN 'UPDATE'.
+      "gt_info_0300r을 기준으로 Update
+      PERFORM update_req TABLES gt_info_0300r
+                         USING  gv_info_0300r
+                                gs_cond_0300
+                         CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
   ENDCASE.
 ENDMODULE.
 

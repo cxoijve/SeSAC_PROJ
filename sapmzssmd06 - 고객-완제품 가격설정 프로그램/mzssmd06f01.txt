@@ -66,14 +66,16 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM display_alv_0100 .
+  DATA: ls_layo TYPE lvc_s_layo.
 
   PERFORM set_all_fcat.
-  PERFORM set_alv_layo.
+  PERFORM set_alv_layo CHANGING ls_layo.
+
 
   CALL METHOD go_alv->set_table_for_first_display
     EXPORTING
       i_structure_name              = 'ZSSSMD06001'
-      is_layout                     = gs_layo
+      is_layout                     = ls_layo
     CHANGING
       it_outtab                     = gt_data
       it_fieldcatalog               = gt_fcat
@@ -97,11 +99,11 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM set_alv_layo .
-  CLEAR gs_layo.
-  gs_layo-cwidth_opt = 'X'.
-  gs_layo-zebra = 'X'.
-  gs_layo-sel_mode = 'A'.
+FORM set_alv_layo CHANGING cv_layo TYPE lvc_s_layo..
+  CLEAR cv_layo.
+  cv_layo-cwidth_opt = 'X'.
+  cv_layo-zebra = 'X'.
+  cv_layo-sel_mode = 'A'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_ALL_FCAT
@@ -151,7 +153,7 @@ FORM get_all_table_data .
     FROM ztssmat
     INTO TABLE gt_prdnr
     WHERE mtype = 'F'
-      AND DEL <> 'X'.
+      AND del <> 'X'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -228,6 +230,413 @@ FORM modify_customer_data .
 *      ENDIF.
 *    ENDLOOP.
 *  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0101 .
+  IF go_con_2 IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con_2
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON_M'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv_2
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con_2
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0101 .
+  DATA: ls_layo TYPE lvc_s_layo.
+
+  PERFORM set_alv_layo CHANGING ls_layo.
+
+  CALL METHOD go_alv_2->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMD06003'
+      is_layout                     = ls_layo
+    CHANGING
+      it_outtab                     = gt_modal
+*     it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_ALL_PRDNR_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_all_prdnr_data .
+
+  SELECT prdnr cstid
+    FROM ztsssacat
+    INTO CORRESPONDING FIELDS OF TABLE gt_modal.
+
+  PERFORM set_prdnr_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_PRDNR_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_prdnr_data .
+  DATA : ls_data LIKE LINE OF gt_prdnr,
+         ls_info LIKE LINE OF gt_prdnr.
+
+  LOOP AT gt_prdnr INTO gs_prdnr.
+
+
+    SELECT SINGLE prdnr
+      FROM ztsssacat
+      INTO CORRESPONDING FIELDS OF ls_data
+      WHERE prdnr = gs_prdnr-prdnr.
+
+    IF sy-subrc <> 0.
+      ls_info-prdnr = gs_prdnr-prdnr.
+      APPEND ls_info TO gt_modal.
+    ENDIF.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DETAIL_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_detail_info  CHANGING pv_subrc.
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no LIKE LINE OF lt_row_no,
+        lv_cnt    TYPE i.
+
+  CLEAR pv_subrc.
+
+  CALL METHOD go_alv_2->get_selected_rows
+    IMPORTING
+*     et_index_rows =
+      et_row_no = lt_row_no.
+
+  "Case 1
+  IF lt_row_no IS INITIAL.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  "Case 2
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+  IF lv_cnt > 1.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  CLEAR ls_row_no.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+
+  READ TABLE gt_modal INDEX ls_row_no-row_id INTO gs_modal.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0200 .
+  IF go_con_3 IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con_3
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON_3'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv_3
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con_3
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0200 .
+  DATA: ls_layo TYPE lvc_s_layo.
+
+  PERFORM set_all_fcat.
+  PERFORM set_alv_layo CHANGING ls_layo.
+  CLEAR ls_layo-sel_mode.
+
+
+  CALL METHOD go_alv_3->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMD06004'
+      is_layout                     = ls_layo
+    CHANGING
+      it_outtab                     = gt_customer
+      it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MATCHED_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_matched_customer_data USING VALUE(pv_prdnr) TYPE zessprdnr.
+
+
+  SELECT prdnr cstid csprc curky
+    FROM ztsssacat
+    INTO CORRESPONDING FIELDS OF TABLE gt_customer
+    WHERE prdnr = pv_prdnr.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_CUSTOMER_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_customer_data .
+  DATA : lt_data TYPE TABLE OF ztsssacat,
+         ls_data LIKE LINE OF lt_data.
+
+  PERFORM check_insert_field CHANGING gv_subrc.
+
+  IF gv_subrc = 0.
+    MESSAGE i999(zmcss) WITH '해당 판매처는 이미 설정되어있습니다'.
+    RETURN.
+  ENDIF.
+
+  MOVE-CORRESPONDING zsssmd06005 TO ls_data.
+
+  INSERT ztsssacat FROM ls_data.
+
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'insert 실패'.
+  ELSE.
+    MESSAGE i999(zmcss) WITH 'insert 성공'.
+    LEAVE TO SCREEN 0.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERT_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_insert_field CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lt_data TYPE TABLE OF ztsssacat,
+         ls_data LIKE LINE OF lt_data.
+
+  SELECT prdnr cstid
+    FROM ztsssacat
+    INTO TABLE lt_data
+    WHERE prdnr = zsssmd06005-prdnr
+      AND cstid = zsssmd06005-cstid.
+
+  IF sy-subrc <> 0.
+    cv_subrc = 4.
+  ELSE.
+    cv_subrc = 0.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DETAIL_INFO_100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_detail_info_100  CHANGING pv_subrc.
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no LIKE LINE OF lt_row_no,
+        lv_cnt    TYPE i.
+
+  CLEAR pv_subrc.
+
+  CALL METHOD go_alv->get_selected_rows
+    IMPORTING
+*     et_index_rows =
+      et_row_no = lt_row_no.
+
+  "Case 1
+  IF lt_row_no IS INITIAL.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  "Case 2
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+  IF lv_cnt > 1.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  CLEAR ls_row_no.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+
+  CLEAR gs_data.
+  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_UPDATE_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_update_field .
+
+  SELECT SINGLE matnm
+    FROM ztssmat_t
+    INTO zsssmd06006-matnm
+    WHERE matnr = gs_data-prdnr
+      AND langu = '3'.
+
+    SELECT SINGLE cname
+      FROM ztsscust
+      INTO zsssmd06006-cname
+      WHERE cstid = gs_data-cstid.
+
+
+      MOVE-CORRESPONDING gs_data TO zsssmd06006.
+      zsssmd06007-matnm =  zsssmd06006-matnm.
+      zsssmd06007-cname =  zsssmd06006-cname.
+      zsssmd06007-prdnr =  zsssmd06006-prdnr.
+      zsssmd06007-cstid =  zsssmd06006-cstid.
+      zsssmd06007-curky =  zsssmd06006-curky.
 
 ENDFORM.
 

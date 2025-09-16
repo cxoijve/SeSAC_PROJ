@@ -8,7 +8,7 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0200 0200     27122192 37  0  0 31128  0G E                              20250915141236																																
+SAPMZSSMM01                             0200 0200     27122192 37  0  0 31128  0G E                              20250916001210																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -41,7 +41,7 @@ PROCESS BEFORE OUTPUT.
   MODULE create_display_alv_0200.																																
 *																																
 PROCESS AFTER INPUT.																																
-  MODULE exit AT EXIT-COMMAND.																																
+  MODULE exit_0200 AT EXIT-COMMAND.																																
   CHAIN.																																
     FIELD zsssmm0103-podat.																																
     FIELD zsssmm0103-venid.																																

@@ -8,7 +8,7 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0300 0300     36147192 37  0  0 36151  0G E                              20250915164148																																
+SAPMZSSMM01                             0300 0300     36149192 37  0  0 36152  0G E                              20250916170023																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -19,11 +19,11 @@ ZSSSMM0103-PONUM	2	CHAR	 20	30	00	04	30	00	  1	 84		  0	  0	  0		  0					  0	  0
 ZSSSMM0103-PONUM	C	CHAR	 11	A0	00	84	30	08	  1	105		  0	  0	  0		  0					 22	  0								___________	X                                      00	
 ZSSSMM0103-PODAT	2	CHAR	 20	30	00	00	30	00	  1	117		  0	  0	  0		  0					  0	  0								구매오더일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-PODAT	D	DATE	 10	A0	00	80	30	08	  1	138		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-I_INFO			146	08	00	00	00	00	  2	  2	J	101	  1	  1		 11	I				 11	117										
+I_INFO			148	08	00	00	00	00	  2	  2	J	101	  1	  1		 11	I				 11	145										
 TAB1		CHAR	 12	00	00	00	30	00	  1	  1	I	101	  1	  1		  0	P				  0	  0	102	SUB						기존헤더정보	                                                                                                                                                                        TAB1	
 TAB2		CHAR	 14	00	00	00	30	00	  1	  2	I	101	  1	  1		  0	P				  0	  0	103	SUB						기존아이템정보	                                                                                                                                                                        TAB2	
-SUB			143	00	C0	00	30	00	  4	  3	I	101	  0	  0		  8	B				  3	  3	104									
-B_INFO		CHAR	147	00	00	00	30	00	 14	  2		  0	  0	  0		  8	R				  0	  0	105							수정가능정보		
+SUB			145	00	C0	00	30	00	  4	  3	I	101	  0	  0		  8	B				  3	  3	104									
+B_INFO		CHAR	149	00	00	00	30	00	 14	  2		  0	  0	  0		  8	R				  0	  0	105							수정가능정보		
 ZSSSMM0103-VENID	2	CHAR	 20	30	00	04	30	00	 15	  4		  0	  0	  0		  0					  0	  0								벤더코드	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-VENID	C	CHAR	  8	A0	00	84	30	08	 15	 25		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSMM0103-VNAME	C	CHAR	 40	A0	02	80	31	00	 15	 34		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
@@ -42,7 +42,7 @@ ZSSSMM0103-STEXT	C	CHAR	 54	B0	02	80	00	00	 20	 25		  0	  0	  0		  0					120	  0
 I_ADD		CHAR	 10	00	00	00	30	00	 22	114		  0	  0	  0		  0	P				  0	  0	106							아이템추가	                                                                                                                                                                        I_ADD	
 I_EDIT		CHAR	 11	00	00	00	30	00	 22	125		  0	  0	  0		  0	P				  0	  0	107							아이템 변경	                                                                                                                                                                        I_EDIT	
 I_DEL		CHAR	 11	00	00	00	30	00	 22	137		  0	  0	  0		  0	P				  0	  0	108							아이템 삭제	                                                                                                                                                                        I_DEL	
-CON3			146	00	00	00	30	00	 23	  2		  0	  0	  0		 14	U				  1	  1	109									
+CON3			149	00	00	00	30	00	 23	  2		  0	  0	  0		 14	U				  1	  1	109									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
@@ -52,7 +52,7 @@ PROCESS BEFORE OUTPUT.
   CALL SUBSCREEN sub INCLUDING sy-cprog gv_dynnr.																																
 *																																
 PROCESS AFTER INPUT.																																
-  MODULE exit AT EXIT-COMMAND.																																
+  MODULE exit_0300 AT EXIT-COMMAND.																																
   CALL SUBSCREEN sub.																																
   CHAIN.																																
     FIELD zsssmm0103-dudat.																																

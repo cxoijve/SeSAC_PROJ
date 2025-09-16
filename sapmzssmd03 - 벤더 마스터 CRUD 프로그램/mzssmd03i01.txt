@@ -30,6 +30,7 @@ MODULE USER_COMMAND_0100 INPUT.
     WHEN 'REGIST'.
 
       PERFORM SET_DATA_0200.
+
       CALL SCREEN 0200.
 
     WHEN 'EDIT'.
@@ -94,7 +95,6 @@ MODULE USER_COMMAND_0200 INPUT.
       LEAVE TO SCREEN 0.
 
     WHEN 'ENTER'.
-
       " 담당사원명 취득
       PERFORM GET_VPNME USING ZSSSMD0303-PENID
                         CHANGING ZSSSMD0303-PENID_T.
@@ -116,6 +116,10 @@ MODULE USER_COMMAND_0200 INPUT.
         MESSAGE S999(ZMCSS) WITH '담당사원, 벤더명, 계약일을 모두 입력해 주세요.'
          DISPLAY LIKE 'E'.
       ENDIF.
+
+
+      PERFORM TRANSLATE_LOWER_CASE.
+
 
 
     WHEN 'REGIST'.
@@ -156,6 +160,18 @@ MODULE USER_COMMAND_0300 INPUT.
           MESSAGE S999(ZMCSS) WITH '구매 부서 사원만 가능합니다. '
          DISPLAY LIKE 'E'.
         ENDIF.
+      ENDIF.
+
+      PERFORM TRANSLATE_LOWER_CASE.
+
+      " 이메일 도메인 직접입력 또는 도메인 5개 중 선택해야 값이 들어오도록
+
+
+      IF NOT ZSSSMD0303-EDNME = '0000'. " ZSSSMD0303-EDOM'. " 직접 입력
+
+        " 직접 입력
+        CLEAR ZSSSMD0303-NEWEDOM.
+
       ENDIF.
 
 

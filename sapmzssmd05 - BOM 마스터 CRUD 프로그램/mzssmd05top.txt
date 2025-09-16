@@ -9,6 +9,11 @@ DATA : ok_code  TYPE sy-ucomm,
        gv_subrc TYPE sy-subrc,
        gv_dynnr TYPE sy-dynnr.
 
+" ALV Objects 공통
+DATA : gt_exclude TYPE ui_functions.
+
+
+
 " ALV Objects 0100L
 DATA   go_con_0100l TYPE REF TO cl_gui_custom_container.
 DATA   go_alv_0100l TYPE REF TO cl_gui_alv_grid.
@@ -106,6 +111,9 @@ DATA : gt_info_0300l LIKE gt_info_0100,
        gs_info_0300l LIKE gs_info_0100,
        gt_info_0300r LIKE gt_info_0100,
        gs_info_0300r LIKE gs_info_0100.
+
+" 300r의 레코드 갯수
+DATA : gv_info_0300r TYPE i.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

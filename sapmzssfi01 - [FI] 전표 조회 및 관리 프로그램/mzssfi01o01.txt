@@ -50,7 +50,7 @@ FORM DISPLAY_ALV_0100 .
 *     IT_EXCEPT_QINFO =
 *     IR_SALV_ADAPTER =
     CHANGING
-      IT_OUTTAB       = GT_DATA
+      IT_OUTTAB       = GT_HDATA
       IT_FIELDCATALOG = GT_FCAT
       IT_SORT         = GT_SORT
 *     IT_FILTER       =
@@ -85,6 +85,63 @@ MODULE SET_ALV_0200 OUTPUT.
   PERFORM SET_SORT.
   PERFORM SET_FCAT.
   PERFORM DISPLAY_ALV_0200.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DYNNR  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SET_DYNNR OUTPUT.
+
+  CASE TABSTRIP-ACTIVETAB.
+    WHEN 'TAB1'.
+      GV_DYNNR = '0101'. " 서브스크린 "
+    WHEN 'TAB2'.
+      GV_DYNNR = '0102'. " 서브스크린 "
+    WHEN OTHERS.
+      GV_DYNNR = '0101'.
+      TABSTRIP-ACTIVETAB = 'TAB1'.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE SET_ALV_0300 OUTPUT.
+  PERFORM CREATE_ALV_0300.
+  PERFORM SET_LAYO.
+  PERFORM SET_SORT.
+  PERFORM SET_FCAT_0300.
+  PERFORM DISPLAY_ALV_0300.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0101 OUTPUT.
+  SET PF-STATUS 'S101'.
+  SET TITLEBAR 'T101'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0102  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0102 OUTPUT.
+  SET PF-STATUS 'S102'.
+  SET TITLEBAR 'T102'.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

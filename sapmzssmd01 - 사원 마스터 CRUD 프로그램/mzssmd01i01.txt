@@ -37,6 +37,7 @@ MODULE user_command_0100 INPUT.
 *      ENDIF.
     WHEN 'REGIS'.
       " 사원 등록
+      CLEAR gv_first.
       CALL SCREEN 0200.
 *      CLEAR: zsssmd0103-depid, zsssmd0103-lname, zsssmd0103-fname, zsssmd0103-entdt,
 *             zsssmd0103-gbdat, zsssmd0103-eid, zsssmd0103-edom, zsssmd0103-telnr,
@@ -44,13 +45,14 @@ MODULE user_command_0100 INPUT.
       CLEAR zsssmd0103.
     WHEN 'UPDAT'.
       " 사원 정보 변경
+      CLEAR gv_first.
       PERFORM select_row CHANGING gv_subrc.
       IF gv_subrc EQ 0.
         MOVE-CORRESPONDING gs_list TO zsssmd0104.
         MOVE-CORRESPONDING gs_list TO zsssmd0105.
         CALL SCREEN 0300.
       ENDIF.
-      CLEAR: gv_first, zsssmd0104, zsssmd0105.
+      CLEAR: zsssmd0104, zsssmd0105.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -61,8 +63,27 @@ ENDMODULE.
 MODULE user_command_0200 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
+      CLEAR: gv_tel_1, gv_tel_2, gv_tel_3.
+      CLEAR: zsssmd0101, zsssmd0102.
       LEAVE TO SCREEN 0.
     WHEN 'SAVE'.
+      " entdt 유효성 검사
+      PERFORM check_entdt USING zsssmd0103
+                          CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " entdt와 gbdat 관계 유효성 검사
+      PERFORM check_age USING zsssmd0103-entdt
+                              zsssmd0103-gbdat
+                        CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " telnr 유효성 검사
+      PERFORM check_telnr USING gv_tel_1 gv_tel_2 gv_tel_3
+                          CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " 모든 검사 통과 시,
       " 사원 insert
       PERFORM insert_emp.
   ENDCASE.
@@ -75,6 +96,8 @@ ENDMODULE.
 MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
+      CLEAR: gv_tel_4, gv_tel_5, gv_tel_6.
+      CLEAR: zsssmd0101, zsssmd0102.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
       " dname 가져오기
@@ -88,13 +111,30 @@ MODULE user_command_0300 INPUT.
 
       " ednme 가져오기
       DATA lv_ednme TYPE ztssdom-ednme.
-        SELECT SINGLE ednme
-          FROM ztssdom
-          INTO lv_ednme
-         WHERE edom EQ zsssmd0105-edom.
-        zsssmd0105-ednme = lv_ednme.
+      SELECT SINGLE ednme
+        FROM ztssdom
+        INTO lv_ednme
+       WHERE edom EQ zsssmd0105-edom.
+      zsssmd0105-ednme = lv_ednme.
 
     WHEN 'UPDATE'.
+      " entdt 유효성 검사
+      PERFORM check_entdt USING zsssmd0105
+                          CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " entdt와 gbdat 관계 유효성 검사
+      PERFORM check_age USING zsssmd0105-entdt
+                              zsssmd0105-gbdat
+                        CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " telnr 유효성 검사
+      PERFORM check_telnr USING gv_tel_4 gv_tel_5 gv_tel_6
+                          CHANGING gv_subrc.
+      IF gv_subrc <> 0. EXIT. ENDIF.
+
+      " 모든 검사 통과 시,
       " 사원 update
       PERFORM update_emp.
   ENDCASE.

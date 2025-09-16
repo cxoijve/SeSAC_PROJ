@@ -8,12 +8,27 @@ DATA : gv_subrc TYPE sy-subrc,
        ok_code  TYPE sy-ucomm.
 
 TABLES : zsssmd06001,
-         zsssmd06002.
+         zsssmd06002,
+         zsssmd06003,
+         zsssmd06004,
+         zsssmd06005,
+         zsssmd06006,
+         zsssmd06007.
 
 DATA: BEGIN OF gs_prdnr,
         prdnr TYPE zessprdnr,
       END OF gs_prdnr.
 DATA gt_prdnr LIKE TABLE OF gs_prdnr.
+
+DATA: BEGIN OF gs_modal,
+        prdnr TYPE zessprdnr,
+        cstid TYPE zesscstid,
+      END OF gs_modal.
+DATA gt_modal LIKE TABLE OF gs_modal.
+
+
+DATA : gt_customer LIKE TABLE OF zsssmd06004,
+       gs_customer LIKE LINE OF gt_customer.
 
 
 DATA: gt_cstid TYPE RANGE OF zsssmd06002-cstid WITH HEADER LINE,
@@ -35,8 +50,12 @@ DATA: gt_mstat TYPE TABLE OF dd07v,
 DATA: gt_fcat TYPE lvc_t_fcat,
       gs_fcat LIKE LINE OF gt_fcat.
 
-DATA: go_con TYPE  REF TO cl_gui_custom_container,
-      go_alv TYPE REF TO cl_gui_alv_grid.
+DATA: go_con   TYPE  REF TO cl_gui_custom_container,
+      go_alv   TYPE REF TO cl_gui_alv_grid,
+      go_con_2 TYPE  REF TO cl_gui_custom_container,
+      go_alv_2 TYPE REF TO cl_gui_alv_grid,
+      go_con_3 TYPE  REF TO cl_gui_custom_container,
+      go_alv_3 TYPE REF TO cl_gui_alv_grid.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

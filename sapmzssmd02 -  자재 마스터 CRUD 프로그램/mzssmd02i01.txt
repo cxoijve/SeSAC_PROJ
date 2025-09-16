@@ -18,10 +18,13 @@ MODULE user_command_0100 INPUT.
                         CHANGING zsssmd0201-matnm.
 
     WHEN 'SEARCH'.
-      PERFORM get_matnm TABLES   gt_ztssmat_t
-                        USING    zsssmd0201-matnr
-                                 sy-langu
-                        CHANGING zsssmd0201-matnm.
+
+      IF zsssmd0201-matnr IS NOT INITIAL.
+        PERFORM get_matnm TABLES   gt_ztssmat_t
+                          USING    zsssmd0201-matnr
+                                   sy-langu
+                          CHANGING zsssmd0201-matnm.
+      ENDIF.
 
       " °Ë»ö
       PERFORM get_info_0100 TABLES gt_info_0100
