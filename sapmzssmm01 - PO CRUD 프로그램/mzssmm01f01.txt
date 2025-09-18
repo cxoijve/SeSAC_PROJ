@@ -1567,6 +1567,7 @@ ENDFORM.
 FORM set_po_create_display .
   zsssmm0103-podat = sy-datum.
   zsssmm0103-dudat = sy-datum + 14.
+  zsssmm0103-curky = 'KRW'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_ITEM_NUM_TO_ONE

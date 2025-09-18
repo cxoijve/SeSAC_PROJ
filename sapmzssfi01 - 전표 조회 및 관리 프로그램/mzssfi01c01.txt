@@ -1,10 +1,19 @@
 *&---------------------------------------------------------------------*
 *&  Include           MZSSMD03C01
 *&---------------------------------------------------------------------*
-
-CLASS LCL_HANDLER IMPLEMENTATION.
+" CLASS
+CLASS LCL_EVENT_HANDLER DEFINITION.
+  PUBLIC SECTION.
+    CLASS-METHODS: ON_DOUBLE_CLICK
+      FOR EVENT DOUBLE_CLICK
+                  OF CL_GUI_ALV_GRID
+      IMPORTING ES_ROW_NO E_COLUMN.
+ENDCLASS.
+CLASS LCL_EVENT_HANDLER IMPLEMENTATION.
   METHOD ON_DOUBLE_CLICK.
+*    MESSAGE i016(pn) WITH e_column-fieldname es_row_no-row_id.
 
+    PERFORM GET_DOUBLE_CLICK USING ES_ROW_NO E_COLUMN.
   ENDMETHOD.
 ENDCLASS.
 

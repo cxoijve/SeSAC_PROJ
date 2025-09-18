@@ -16,11 +16,17 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE SET_ALV_0100 OUTPUT.
+
   PERFORM CREATE_ALV_0100.
+
   PERFORM SET_LAYO.
+
   PERFORM SET_SORT.
+
   PERFORM SET_FCAT.
+
   PERFORM DISPLAY_ALV_0100.
+
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Form  DISPLAY_ALV_0100
@@ -83,7 +89,7 @@ MODULE SET_ALV_0200 OUTPUT.
   PERFORM CREATE_ALV_0200.
   PERFORM SET_LAYO.
   PERFORM SET_SORT.
-  PERFORM SET_FCAT.
+  PERFORM SET_FCAT_0200.
   PERFORM DISPLAY_ALV_0200.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -93,15 +99,15 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE SET_DYNNR OUTPUT.
 
-  CASE TABSTRIP-ACTIVETAB.
-    WHEN 'TAB1'.
-      GV_DYNNR = '0101'. " 서브스크린 "
-    WHEN 'TAB2'.
-      GV_DYNNR = '0102'. " 서브스크린 "
-    WHEN OTHERS.
-      GV_DYNNR = '0101'.
-      TABSTRIP-ACTIVETAB = 'TAB1'.
-  ENDCASE.
+*  CASE TABSTRIP-ACTIVETAB.
+*    WHEN 'TAB1'.
+*      GV_DYNNR = '0101'. " 서브스크린 "
+*    WHEN 'TAB2'.
+*      GV_DYNNR = '0102'. " 서브스크린 "
+*    WHEN OTHERS.
+*      GV_DYNNR = '0101'.
+*      TABSTRIP-ACTIVETAB = 'TAB1'.
+*  ENDCASE.
 
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -119,11 +125,11 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE SET_ALV_0300 OUTPUT.
-  PERFORM CREATE_ALV_0300.
+  PERFORM CREATE_ALV_0200.
   PERFORM SET_LAYO.
   PERFORM SET_SORT.
-  PERFORM SET_FCAT_0300.
-  PERFORM DISPLAY_ALV_0300.
+  PERFORM SET_FCAT_0200.
+  PERFORM DISPLAY_ALV_0200.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0101  OUTPUT
@@ -142,6 +148,35 @@ ENDMODULE.
 MODULE STATUS_0102 OUTPUT.
   SET PF-STATUS 'S102'.
   SET TITLEBAR 'T102'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0210  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0210 OUTPUT.
+  SET PF-STATUS 'S210'.
+  SET TITLEBAR 'T210'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE MODIFY_SCREEN_0200 OUTPUT.
+
+  IF GV_SUB = 'SAVE'.
+**    LOOP AT SCREEN.
+**      IF SCREEN-NAME = ''.
+**        SCREEN-INPUT = 0.
+**      ENDIF.
+**      IF SCREEN-NAME = ''.
+**        SCREEN-INPUT = 0.
+**      ENDIF.
+**      MODIFY SCREEN.
+**    ENDLOOP.
+  ENDIF.
+
 ENDMODULE.
 
 ----------------------------------------------------------------------------------
