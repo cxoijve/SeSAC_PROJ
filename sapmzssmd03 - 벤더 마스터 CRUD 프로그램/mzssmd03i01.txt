@@ -34,32 +34,8 @@ MODULE USER_COMMAND_0100 INPUT.
       CALL SCREEN 0200.
 
     WHEN 'EDIT'.
-      DATA: LV_LINE TYPE I.
 
-      PERFORM GET_SELECTED_ROWS CHANGING GT_ROWS.
-
-      DESCRIBE TABLE GT_ROWS LINES LV_LINE.
-      CASE LV_LINE.
-        WHEN '0'.
-          MESSAGE S999(ZMCSS) WITH '수정할 데이터를 선택해주세요.' DISPLAY LIKE 'E'.
-          RETURN.
-        WHEN '1'.
-
-          READ TABLE GT_ROWS INDEX 1 INTO GS_ROWS.
-
-        WHEN OTHERS.
-          MESSAGE S999(ZMCSS) WITH '데이터를 한 행만 선택하세요.' DISPLAY LIKE 'E'.
-          RETURN.
-      ENDCASE.
-
-
-      READ TABLE GT_DATA INDEX GS_ROWS-INDEX INTO GS_DATA.
-
-**      IF GS_DATA-DEL = 'X'.
-**        GV_FLAG = 'X'.
-**      ELSE.
-**        GV_FLAG = ''.
-**      ENDIF.
+      PERFORM SEL_ROWS.  " 행 선택 처리
 
       PERFORM SET_DATA_0300.
 
