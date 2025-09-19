@@ -18,13 +18,19 @@ MODULE user_command_0100 INPUT.
 
     WHEN 'REGIST'.
       CALL SCREEN 200.
+      PERFORM check_field_condition.
+      PERFORM check_alv_condition.
+      PERFORM get_customer_data.
       CLEAR: zsssmd04003,
              zsssmd04004.
 
     WHEN 'CHANGE'.
       PERFORM get_detail_info CHANGING gv_subrc.
       IF gv_subrc IS INITIAL.
+        PERFORM check_so_customer CHANGING gv_subrc.
+        PERFORM check_sacat_customer CHANGING gv_subrc.
         CALL SCREEN 300.
+        CLEAR gv_subrc.
         PERFORM check_field_condition.
         PERFORM check_alv_condition.
         PERFORM get_customer_data.
@@ -81,11 +87,23 @@ MODULE user_command_0200 INPUT.
       CALL SCREEN 201 STARTING AT 85 3 ENDING AT 120 6.
 
     WHEN 'INSERT'.
-      PERFORM insert_email_data USING zsssmd04003-ednme.
 
-      PERFORM insert_customer_data USING    zsssmd04003-endda
-                                   CHANGING zsssmd04003-endda
-                                            zsssmd04003.
+      DATA : lv_data TYPE string.
+      lv_data = zsssmd04003-ednme.
+
+      FIND REGEX '^[A-Za-z]+\.[A-Za-z]{2,}$' IN lv_data.
+
+      IF  sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH '올바른 이메일형식을 입력해주세요'.
+      ELSE.
+        PERFORM insert_email_data USING zsssmd04003-ednme.
+        PERFORM insert_customer_data USING    zsssmd04003-endda
+                                     CHANGING zsssmd04003-endda
+                                              zsssmd04003.
+
+
+        LEAVE TO SCREEN 0.
+      ENDIF.
   ENDCASE.
 
 ENDMODULE.
@@ -129,6 +147,13 @@ MODULE user_command_0300 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'UPDATE'.
+
+*      PERFORM check_so_customer CHANGING gv_subrc.
+*
+*      IF gv_subrc = 0.
+*        RETURN.
+*      ENDIF.
+
       PERFORM insert_email_data USING zsssmd04007-ednme.
 
       PERFORM update_customer_data USING    zsssmd04007-endda

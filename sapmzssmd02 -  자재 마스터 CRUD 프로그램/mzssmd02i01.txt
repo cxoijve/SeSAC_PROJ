@@ -24,6 +24,8 @@ MODULE user_command_0100 INPUT.
                           USING    zsssmd0201-matnr
                                    sy-langu
                           CHANGING zsssmd0201-matnm.
+      ELSE.
+        CLEAR : zsssmd0201-matnm.
       ENDIF.
 
       " °Ë»ö

@@ -204,6 +204,11 @@ FORM get_info_0100  TABLES   pt_info_0100         STRUCTURE gs_info_0100
   PERFORM set_r_matnr  TABLES pt_r_matnr
                        USING  ps_cond_0100-matnr.
 
+  IF ps_cond_0100-matnr IS NOT INITIAL.
+    CLEAR : pt_r_mtype[], zsssmd0201-mtype.
+  ENDIF.
+
+
   " 자재 마스터 정보를 습득한다.
   SELECT matnr mtype expda meins
     FROM ztssmat

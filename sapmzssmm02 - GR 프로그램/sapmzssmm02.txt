@@ -1,0 +1,19 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSMM02
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE zssmm02top                              .    " global Data
+
+INCLUDE zssmm02o01                              .  " PBO-Modules
+INCLUDE zssmm02i01                              .  " PAI-Modules
+INCLUDE zssmm02f01                              .  " FORM-Routines
+
+LOAD-OF-PROGRAM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

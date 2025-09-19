@@ -8,11 +8,11 @@ SAPMZSSMD04
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD04                             0300 0300     22137192 37  0  0 26147  0G E                              20250915162910																																
+SAPMZSSMD04                             0300 0300     22137192 37  0  0 26147  0G E                              20250917153458																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_3		CHAR	137	00	00	00	30	00	  1	  2		  0	  0	  0		 10	R				  0	  0	103							현재 고객 정보		
+B_BOX_3		CHAR	137	00	00	00	30	00	  1	  2		  0	  0	  0		 10	R				  0	  0	101							현재 고객 정보		
 ZSSSMD04006-CSTID	2	CHAR	 20	30	00	00	30	00	  2	  6		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD04006-CSTID	C	CHAR	  8	A0	00	80	30	00	  2	 27		  0	  0	  0		  0					 16	  0								________	                                       00	
 ZSSSMD04006-CNAME	2	CHAR	 20	30	02	00	30	00	  3	  6		  0	  0	  0		  0					  0	  0								고객 이름	                                                                                                                                                                                                                                                        X	
@@ -35,7 +35,7 @@ ZSSSMD04006-CPNME	2	CHAR	  9	30	02	00	30	00	  8	  6		  0	  0	  0		  0					  0	  
 ZSSSMD04006-CPNME	C	CHAR	 40	A0	02	80	30	00	  8	 27		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
 ZSSSMD04006-PENID	2	CHAR	 10	30	00	00	30	00	  9	  6		  0	  0	  0		  0					  0	  0								우리회사담당자 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD04006-PENID	C	CHAR	  8	A0	00	80	30	00	  9	 27		  0	  0	  0		  0					 16	  0								________	                                       00	
-B_BOX_4		CHAR	137	00	00	00	30	00	 13	  2		  0	  0	  0		 10	R				  0	  0	104							고객 정보 수정		
+B_BOX_4		CHAR	137	00	00	00	30	00	 13	  2		  0	  0	  0		 10	R				  0	  0	102							고객 정보 수정		
 ZSSSMD04007-CSTID	2	CHAR	 20	30	00	04	30	00	 14	  6		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD04007-CSTID	C	CHAR	  8	A0	00	84	31	08	 14	 27		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSMD04007-CNAME	2	CHAR	 20	30	02	00	30	00	 15	  6		  0	  0	  0		  0					  0	  0								고객 이름	                                                                                                                                                                                                                                                        X	
@@ -44,7 +44,7 @@ ZSSSMD04007-BEGDA	2	CHAR	 20	30	00	00	30	00	 15	 78		  0	  0	  0		  0					  0	  
 ZSSSMD04007-BEGDA	D	DATE	 10	A0	00	A0	00	08	 15	 99		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 B_TXT_2	0	CHAR	  1	00	00	00	30	00	 15	111		  0	  0	  0		  0					  0	  0								~		
 ZSSSMD04007-ENDDA	D	DATE	 10	A0	00	80	31	08	 15	114		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-B_BOTTON_1		CHAR	 10	00	00	00	30	00	 15	126		  0	  0	  0		  0	P				  0	  0	101							계약종료일	                                                                                                                                                                        ENDSET	
+B_BOTTON_1		CHAR	 10	00	00	00	30	00	 15	126		  0	  0	  0		  0	P				  0	  0	103							계약종료일	                                                                                                                                                                        ENDSET	
 ZSSSMD04007-POSTC	2	CHAR	 20	30	00	00	30	00	 16	  6		  0	  0	  0		  0					  0	  0								우편번호	                                                                                                                                                                                                                                                        X	
 ZSSSMD04007-POSTC	N	NUMC	  5	A0	00	A0	00	00	 16	 27		  0	  0	  0		  0					 10	  0								_____	                                       00	
 ZSSSMD04007-ADDRE	2	CHAR	 20	30	02	00	30	00	 17	  6		  0	  0	  0		  0					  0	  0								상세주소	                                                                                                                                                                                                                                                        X	
@@ -64,6 +64,8 @@ OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								_
 PROCESS BEFORE OUTPUT.																																
   MODULE get_customer_data.																																
   MODULE status_0300.																																
+  MODULE set_status_0300.																																
+																																
 *																																
 PROCESS AFTER INPUT.																																
   MODULE exit AT EXIT-COMMAND.																																

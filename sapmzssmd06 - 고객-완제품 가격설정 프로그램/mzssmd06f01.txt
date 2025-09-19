@@ -625,18 +625,139 @@ FORM set_update_field .
     WHERE matnr = gs_data-prdnr
       AND langu = '3'.
 
-    SELECT SINGLE cname
-      FROM ztsscust
-      INTO zsssmd06006-cname
-      WHERE cstid = gs_data-cstid.
+  SELECT SINGLE cname
+    FROM ztsscust
+    INTO zsssmd06006-cname
+    WHERE cstid = gs_data-cstid.
 
 
-      MOVE-CORRESPONDING gs_data TO zsssmd06006.
-      zsssmd06007-matnm =  zsssmd06006-matnm.
-      zsssmd06007-cname =  zsssmd06006-cname.
-      zsssmd06007-prdnr =  zsssmd06006-prdnr.
-      zsssmd06007-cstid =  zsssmd06006-cstid.
-      zsssmd06007-curky =  zsssmd06006-curky.
+  MOVE-CORRESPONDING gs_data TO zsssmd06006.
+  zsssmd06007-matnm =  zsssmd06006-matnm.
+  zsssmd06007-cname =  zsssmd06006-cname.
+  zsssmd06007-prdnr =  zsssmd06006-prdnr.
+  zsssmd06007-cstid =  zsssmd06006-cstid.
+  zsssmd06007-curky =  zsssmd06006-curky.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_PRICE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM update_price_data .
+  DATA : lt_data TYPE TABLE OF ztsssacat,
+         ls_data LIKE LINE OF lt_data.
+
+  IF zsssmd06007-csprc = 0.
+    MESSAGE i999(zmcss) WITH '올바른 금액을 입력해주세요'.
+    RETURN.
+  ENDIF.
+
+  ls_data-prdnr = zsssmd06007-prdnr.
+  ls_data-cstid = zsssmd06007-cstid.
+  ls_data-curky = zsssmd06007-curky.
+  ls_data-csprc = zsssmd06007-csprc.
+
+  UPDATE ztsssacat FROM ls_data.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmdss) WITH 'UPDATE 실패'.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '가격이 변경되었습니다'.
+    LEAVE TO SCREEN 0.
+  ENDIF.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_DELETE_FLAG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_delete_flag .
+  DATA : lt_data TYPE TABLE OF ztsssacat,
+         ls_data LIKE LINE OF lt_data.
+
+  MOVE-CORRESPONDING gs_data TO ls_data.
+
+  ls_data-del = 'X'.
+
+  UPDATE ztsssacat FROM ls_data.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_DELETE_FLAG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM update_delete_flag .
+  DATA : lt_data TYPE TABLE OF ztsssacat,
+         ls_data LIKE LINE OF lt_data.
+
+  MOVE-CORRESPONDING gs_data TO ls_data.
+
+  CLEAR ls_data-del.
+
+  UPDATE ztsssacat FROM ls_data.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_SO_SOMNR_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_so_somnr_data CHANGING cv_subrc TYPE sy-subrc.
+  DATA : lt_data TYPE TABLE OF ztsscust,
+         ls_data LIKE LINE OF lt_data,
+         lt_info TYPE TABLE OF ztsssoh,
+         ls_info LIKE LINE OF lt_info,
+         lt_list TYPE TABLE OF ztsssoi,
+         ls_list LIKE LINE OF lt_list.
+
+
+  SELECT sonum
+    FROM ztsssoh
+    INTO CORRESPONDING FIELDS OF TABLE lt_info.
+
+  LOOP AT lt_info INTO ls_info.
+
+    SELECT SINGLE somnr
+      FROM ztsssoi
+      INTO CORRESPONDING FIELDS OF ls_list
+      WHERE sonum = ls_info-sonum.
+
+    APPEND ls_list TO lt_list.
+  ENDLOOP.
+
+  CLEAR ls_list.
+  READ TABLE lt_list WITH KEY somnr = gs_data-prdnr INTO ls_list.
+
+  IF sy-subrc <> 0. "지정한 자재코드가 SO 아이템 테이블에 존재하지 않는다.
+    cv_subrc = 4.
+    MESSAGE s999(zmcss) WITH '수정가능한 자재입니다'.
+  ELSE.
+    cv_subrc = 0.
+    MESSAGE i999(zmcss) WITH '판매오더에 존재하는 자재입니다'.
+  ENDIF.
+
 
 ENDFORM.
 

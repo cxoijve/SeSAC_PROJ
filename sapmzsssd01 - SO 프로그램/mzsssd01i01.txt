@@ -1,0 +1,61 @@
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+      " SO Header 리스트 가져오기
+      IF zssssd0101-sodat_b IS NOT INITIAL AND zssssd0101-sodat_e IS NOT INITIAL.
+        IF zssssd0101-sodat_b > zssssd0101-sodat_e.
+          MESSAGE i999(zmcss) WITH '유효하지 않은 일자 범위입니다.' DISPLAY LIKE 'E'.
+          RETURN.
+          SET CURSOR FIELD 'ZSSSSD0101-SODAT_B'.
+        ENDIF.
+      ENDIF.
+
+      PERFORM get_header_list.
+
+      IF gt_head IS INITIAL.
+        MESSAGE i999(zmcss) WITH '조건에 해당되는 데이터가 존재하지 않습니다.'.
+*        RETURN.
+      ENDIF.
+
+    WHEN 'GOTO2'.
+      CALL SCREEN 0200.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'GOTO3'.
+*      CALL SCREEN 0300.
+
+   ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

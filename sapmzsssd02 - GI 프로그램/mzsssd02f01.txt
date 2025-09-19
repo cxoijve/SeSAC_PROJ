@@ -1,0 +1,1312 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD02F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0082   text
+*      <--P_GO_CON_0200  text
+*      <--P_GO_ALV_0200  text
+*----------------------------------------------------------------------*
+FORM create_alv  USING     VALUE(pv_cname)
+                 CHANGING  po_con TYPE REF TO cl_gui_custom_container
+                           po_alv TYPE REF TO cl_gui_alv_grid.
+
+  CREATE OBJECT po_con
+    EXPORTING
+      container_name              = pv_cname
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'CON_ERROR'.
+  ENDIF.
+
+  CREATE OBJECT po_alv
+    EXPORTING
+      i_parent          = po_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'ALV_ERROR'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200  text
+*      -->P_GT_FCAT_0200  text
+*      -->P_GT_SORT_0200  text
+*      -->P_0108   text
+*      -->P_GS_LAYO_0200  text
+*      -->P_GO_ALV_0200  text
+*----------------------------------------------------------------------*
+FORM display_alv  TABLES    pt_info
+                            pt_fcat STRUCTURE lvc_s_fcat
+                            pt_sort STRUCTURE lvc_s_sort
+                  USING     VALUE(pv_sname)
+                            VALUE(ps_layo) TYPE lvc_s_layo
+                            po_alv TYPE REF TO cl_gui_alv_grid.
+
+  CALL METHOD po_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = pv_sname
+      is_layout                     = ps_layo
+    CHANGING
+      it_outtab                     = pt_info[]
+      it_fieldcatalog               = pt_fcat[]
+      it_sort                       = pt_sort[]
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '<display_alv>' 'DISPLAY_ERR'.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0200  text
+*      -->P_GT_SORT_0200  text
+*      -->P_0016   text
+*      <--P_GS_LAYO_0200  text
+*----------------------------------------------------------------------*
+FORM set_default_alv  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                               pt_sort STRUCTURE lvc_s_sort
+                      USING    VALUE(pv_aflag)
+                      CHANGING ps_layo TYPE lvc_s_layo.
+
+
+  PERFORM set_fcat TABLES pt_fcat
+                   USING  pv_aflag.
+
+  PERFORM set_layo USING    pv_aflag
+                   CHANGING ps_layo.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_pv_aflag  text
+*----------------------------------------------------------------------*
+FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
+               USING    VALUE(pv_aflag).
+
+  CLEAR pt_fcat[].
+  CASE pv_aflag.
+      " 200 Default
+    WHEN '0200'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'GINUM'
+                                   '1'
+                                   '출고 문서 번호',
+                            TABLES pt_fcat
+                            USING  'ISTAT'
+                                   '2'
+                                   '출고 문서 상태 RAW',
+                            TABLES pt_fcat
+                            USING  'ISTAT_T'
+                                   '3'
+                                   '출고 문서 상태',
+                            TABLES pt_fcat
+                            USING  'GIDAT'
+                                   '4'
+                                   '출고일',
+                            TABLES pt_fcat
+                            USING  'STEXT'
+                                   '5'
+                                   '비고',
+                            TABLES pt_fcat
+                            USING  'GITOR'
+                                   '6'
+                                   '출고 문서 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JENUM'
+                                   '7'
+                                   '전표 번호',
+                            TABLES pt_fcat
+                            USING  'FYEAR'
+                                   '8'
+                                   '회계 연도',
+                            TABLES pt_fcat
+                            USING  'JETOR'
+                                   '9'
+                                   '전표 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JEDAT'
+                                   '10'
+                                   '전표 작성일',
+                            TABLES pt_fcat
+                            USING  'SONUM_S'
+                                   '11'
+                                   '판매오더 번호',
+                            TABLES pt_fcat
+                            USING  'SOTOR'
+                                   '12'
+                                   '판매오더 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'SODAT'
+                                   '13'
+                                   '판매오더일',
+                            TABLES pt_fcat
+                            USING  'ENAME'
+                                   '14'
+                                   '사원명',
+                            TABLES pt_fcat
+                            USING  'MATNM_S'
+                                   '15'
+                                   '자재명',
+                            TABLES pt_fcat
+                            USING  'RGDAT'
+                                   '16'
+                                   '출고 문서 등록일'.
+      " 200 검색 조건 - 1
+    WHEN '0200_01'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'GINUM'
+                                   '4'
+                                   '출고 문서 번호',
+                            TABLES pt_fcat
+                            USING  'ISTAT'
+                                   '-1'
+                                   '출고 문서 상태 RAW',
+                            TABLES pt_fcat
+                            USING  'ISTAT_T'
+                                   '6'
+                                   '출고 문서 상태',
+                            TABLES pt_fcat
+                            USING  'GIDAT'
+                                   '5'
+                                   '출고일',
+                            TABLES pt_fcat
+                            USING  'STEXT'
+                                   '7'
+                                   '비고',
+                            TABLES pt_fcat
+                            USING  'GITOR'
+                                   '-1'
+                                   '출고 문서 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JENUM'
+                                   '-1'
+                                   '전표 번호',
+                            TABLES pt_fcat
+                            USING  'FYEAR'
+                                   '-1'
+                                   '회계 연도',
+                            TABLES pt_fcat
+                            USING  'JETOR'
+                                   '-1'
+                                   '전표 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JEDAT'
+                                   '-1'
+                                   '전표 작성일',
+                            TABLES pt_fcat
+                            USING  'SONUM_S'
+                                   '1'
+                                   '판매오더 번호',
+                            TABLES pt_fcat
+                            USING  'SOTOR'
+                                   '-1'
+                                   '판매오더 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'SODAT'
+                                   '2'
+                                   '판매오더일',
+                            TABLES pt_fcat
+                            USING  'ENAME'
+                                   '3'
+                                   '판매 오더 등록자',
+                            TABLES pt_fcat
+                            USING  'MATNM_S'
+                                   '-1'
+                                   '자재명',
+                            TABLES pt_fcat
+                            USING  'RGDAT'
+                                   '-1'
+                                   '출고 문서 등록일'.
+      " 200 검색 조건 - 2
+    WHEN '0200_02'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'GINUM'
+                                   '1'
+                                   '출고 문서 번호',
+                            TABLES pt_fcat
+                            USING  'ISTAT'
+                                   '-1'
+                                   '출고 문서 상태 RAW',
+                            TABLES pt_fcat
+                            USING  'ISTAT_T'
+                                   '3'
+                                   '출고 문서 상태',
+                            TABLES pt_fcat
+                            USING  'GIDAT'
+                                   '2'
+                                   '출고일',
+                            TABLES pt_fcat
+                            USING  'STEXT'
+                                   '5'
+                                   '비고',
+                            TABLES pt_fcat
+                            USING  'GITOR'
+                                   '-1'
+                                   '출고 문서 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JENUM'
+                                   '6'
+                                   '전표 번호',
+                            TABLES pt_fcat
+                            USING  'FYEAR'
+                                   '7'
+                                   '회계 연도',
+                            TABLES pt_fcat
+                            USING  'JETOR'
+                                   '-1'
+                                   '전표 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JEDAT'
+                                   '-1'
+                                   '전표 작성일',
+                            TABLES pt_fcat
+                            USING  'SONUM_S'
+                                   '-1'
+                                   '판매오더 번호',
+                            TABLES pt_fcat
+                            USING  'SOTOR'
+                                   '-1'
+                                   '판매오더 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'SODAT'
+                                   '-1'
+                                   '판매오더일',
+                            TABLES pt_fcat
+                            USING  'ENAME'
+                                   '4'
+                                   '출고 문서 등록자',
+                            TABLES pt_fcat
+                            USING  'MATNM_S'
+                                   '-1'
+                                   '자재명',
+                            TABLES pt_fcat
+                            USING  'RGDAT'
+                                   '-1'
+                                   '출고 문서 등록일'.
+      " 200 검색 조건 - 3
+    WHEN '0200_03'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'GINUM'
+                                   '5'
+                                   '출고 문서 번호',
+                            TABLES pt_fcat
+                            USING  'ISTAT'
+                                   '-1'
+                                   '출고 문서 상태 RAW',
+                            TABLES pt_fcat
+                            USING  'ISTAT_T'
+                                   '6'
+                                   '출고 문서 상태',
+                            TABLES pt_fcat
+                            USING  'GIDAT'
+                                   '7'
+                                   '출고일',
+                            TABLES pt_fcat
+                            USING  'STEXT'
+                                   '8'
+                                   '비고',
+                            TABLES pt_fcat
+                            USING  'GITOR'
+                                   '-1'
+                                   '출고 문서 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JENUM'
+                                   '2'
+                                   '전표 번호',
+                            TABLES pt_fcat
+                            USING  'FYEAR'
+                                   '1'
+                                   '회계 연도',
+                            TABLES pt_fcat
+                            USING  'JETOR'
+                                   '-1'
+                                   '전표 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JEDAT'
+                                   '3'
+                                   '전표 작성일',
+                            TABLES pt_fcat
+                            USING  'SONUM_S'
+                                   '-1'
+                                   '판매오더 번호',
+                            TABLES pt_fcat
+                            USING  'SOTOR'
+                                   '-1'
+                                   '판매오더 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'SODAT'
+                                   '-1'
+                                   '판매오더일',
+                            TABLES pt_fcat
+                            USING  'ENAME'
+                                   '4'
+                                   '전표 등록자',
+                            TABLES pt_fcat
+                            USING  'MATNM_S'
+                                   '-1'
+                                   '자재명',
+                            TABLES pt_fcat
+                            USING  'RGDAT'
+                                   '-1'
+                                   '출고 문서 등록일'.
+      " 200 검색 조건 - 4
+    WHEN '0200_04'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'GINUM'
+                                   '3'
+                                   '출고 문서 번호',
+                            TABLES pt_fcat
+                            USING  'ISTAT'
+                                   '-1'
+                                   '출고 문서 상태 RAW',
+                            TABLES pt_fcat
+                            USING  'ISTAT_T'
+                                   '4'
+                                   '출고 문서 상태',
+                            TABLES pt_fcat
+                            USING  'GIDAT'
+                                   '2'
+                                   '출고일',
+                            TABLES pt_fcat
+                            USING  'STEXT'
+                                   '5'
+                                   '비고',
+                            TABLES pt_fcat
+                            USING  'GITOR'
+                                   '-1'
+                                   '출고 문서 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JENUM'
+                                   '6'
+                                   '전표 번호',
+                            TABLES pt_fcat
+                            USING  'FYEAR'
+                                   '7'
+                                   '회계 연도',
+                            TABLES pt_fcat
+                            USING  'JETOR'
+                                   '-1'
+                                   '전표 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'JEDAT'
+                                   '-1'
+                                   '전표 작성일',
+                            TABLES pt_fcat
+                            USING  'SONUM_S'
+                                   '-1'
+                                   '판매오더 번호',
+                            TABLES pt_fcat
+                            USING  'SOTOR'
+                                   '-1'
+                                   '판매오더 등록자 번호',
+                            TABLES pt_fcat
+                            USING  'SODAT'
+                                   '-1'
+                                   '판매오더일',
+                            TABLES pt_fcat
+                            USING  'ENAME'
+                                   '8'
+                                   '출고 문서 등록자',
+                            TABLES pt_fcat
+                            USING  'MATNM_S'
+                                   '1'
+                                   '자재명',
+                            TABLES pt_fcat
+                            USING  'RGDAT'
+                                   '-1'
+                                   '출고 문서 등록일'.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_0197   text
+*      -->P_0198   text
+*      -->P_0199   text
+*----------------------------------------------------------------------*
+FORM modify_fcat  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                  USING    VALUE(pv_fieldname)
+                           VALUE(pv_colpos)
+                           VALUE(pv_coltext).
+
+  CLEAR : pt_fcat.
+
+  pt_fcat-fieldname = pv_fieldname.
+
+  CASE pv_colpos.
+    WHEN '-1'.
+      pt_fcat-no_out = 'X'.
+
+    WHEN OTHERS.
+      pt_fcat-col_pos = pv_colpos.
+      pt_fcat-coltext = pv_coltext.
+  ENDCASE.
+
+  APPEND pt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_pv_aflag  text
+*      <--P_PS_LAYO  text
+*----------------------------------------------------------------------*
+FORM set_layo  USING    VALUE(pv_aflag)
+               CHANGING ps_layo TYPE lvc_s_layo.
+
+  CASE pv_aflag.
+    WHEN '0200'.
+      ps_layo-cwidth_opt = 'X'.
+      ps_layo-ctab_fname = 'IT_COL'.
+      ps_layo-sel_mode = 'A'. "A, B C D
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0200  text
+*      -->P_ZSSSSD0201  text
+*      -->P_ZSSSSD0202  text
+*      -->P_ZSSSSD0203  text
+*      -->P_ZSSSSD0204  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0200  TABLES   pt_fcat_0200 STRUCTURE lvc_s_fcat
+                    USING    VALUE(ps_cond_0101) TYPE zssssd0201
+                             VALUE(ps_cond_0102) TYPE zssssd0202
+                             VALUE(ps_cond_0103) TYPE zssssd0203
+                             VALUE(ps_cond_0104) TYPE zssssd0204.
+
+  IF ps_cond_0101 IS NOT INITIAL.
+    PERFORM set_fcat TABLES gt_fcat_0200
+                     USING  '0200_01'.
+
+  ELSEIF ps_cond_0102 IS NOT INITIAL.
+    PERFORM set_fcat TABLES gt_fcat_0200
+                     USING  '0200_02'.
+
+  ELSEIF ps_cond_0103 IS NOT INITIAL.
+    PERFORM set_fcat TABLES gt_fcat_0200
+                     USING  '0200_03'.
+
+  ELSEIF ps_cond_0104 IS NOT INITIAL.
+    PERFORM set_fcat TABLES gt_fcat_0200
+                     USING  '0200_04'.
+  ELSE.
+    " Default
+    PERFORM set_fcat TABLES gt_fcat_0200
+                     USING  '0200'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200  text
+*      -->P_ZSSSSD0201  text
+*      -->P_ZSSSSD0202  text
+*      -->P_ZSSSSD0203  text
+*      -->P_ZSSSSD0204  text
+*----------------------------------------------------------------------*
+FORM get_info_0200  TABLES   pt_info_0200 STRUCTURE gs_info_0200
+                    USING    VALUE(ps_cond_0101) TYPE zssssd0201
+                             VALUE(ps_cond_0102) TYPE zssssd0202
+                             VALUE(ps_cond_0103) TYPE zssssd0203
+                             VALUE(ps_cond_0104) TYPE zssssd0204
+                    CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_info_0200[].
+  DATA : lv_subrc LIKE sy-subrc.
+
+  IF ps_cond_0101 IS NOT INITIAL.
+
+    " 판매 오더로 출고 조회
+    PERFORM get_gi_with_so TABLES pt_info_0200
+                           CHANGING lv_subrc.
+
+  ELSEIF ps_cond_0102 IS NOT INITIAL.
+
+    " 출고 문서로 출고 조회
+    PERFORM get_gi_with_gi TABLES pt_info_0200
+                           CHANGING lv_subrc.
+
+  ELSEIF ps_cond_0103 IS NOT INITIAL.
+
+  ELSEIF ps_cond_0104 IS NOT INITIAL.
+
+  ELSE.
+    " Default
+    MESSAGE a999(zmcss) WITH '<get_info_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+  ENDIF.
+
+  IF lv_subrc <> 0.
+    " I message
+    MESSAGE i999(zmcss) WITH '검색 조건에 해당하는 데이터가 없습니다'.
+    pv_subrc = 4.
+    RETURN .
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GI_WITH_SO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0200  text
+*----------------------------------------------------------------------*
+FORM get_gi_with_so  TABLES   pt_info_0200 STRUCTURE gs_info_0200
+                     CHANGING pv_subrc LIKE sy-subrc.
+  CLEAR pv_subrc.
+
+  DATA : BEGIN OF ls_soh.
+  DATA : sonum TYPE zesssonum,
+         sodat TYPE zesssodat,
+         rgtor TYPE zessrgtor.
+  DATA : END OF ls_soh.
+  DATA lt_soh LIKE TABLE OF ls_soh WITH HEADER LINE.
+
+  DATA : BEGIN OF ls_gii.
+  DATA : ginum TYPE zessginum,
+         giseq TYPE zessgiseq,
+         itnum TYPE zesssoitn,
+         del   TYPE zessdel.
+  DATA : END OF ls_gii.
+  DATA lt_gii LIKE TABLE OF ls_gii WITH HEADER LINE.
+
+  DATA ls_gih TYPE ztssgih.
+
+  DATA : BEGIN OF ls_soh_gii.
+  DATA : sonum TYPE zesssonum,
+         sodat TYPE zesssodat,
+         sotor TYPE zessrgtor,
+         ginum TYPE zessginum,
+         giseq TYPE zessgiseq,
+         itnum TYPE zesssoitn,
+         del   TYPE zessdel.
+  DATA : END OF ls_soh_gii.
+  DATA lt_soh_gii LIKE TABLE OF ls_soh_gii WITH HEADER LINE.
+
+  DATA : lv_tabix LIKE sy-tabix,
+         lv_subrc LIKE sy-subrc.
+
+  " 1. 조건에 맞는 SOH 정보 받아오기.
+  SELECT sonum sodat rgtor
+    FROM ztsssoh
+    INTO CORRESPONDING FIELDS OF TABLE lt_soh
+    WHERE sonum IN gr_sonum_0101
+    AND   sodat IN gr_datum_0101
+    AND   rgtor IN gr_rgtor_0101.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 2. SOH 번호를 가진 모든 GII를 가져오기
+  LOOP AT lt_soh.
+    CLEAR lt_gii[].
+
+    SELECT ginum giseq itnum del
+      FROM ztssgii
+      INTO CORRESPONDING FIELDS OF TABLE lt_gii
+      WHERE sonum = lt_soh-sonum
+      AND del NE 'X'.
+
+    IF sy-subrc = 0.
+      LOOP AT lt_gii.
+        CLEAR lt_soh_gii.
+
+        lt_soh_gii-sonum = lt_soh-sonum.
+        lt_soh_gii-sodat = lt_soh-sodat.
+        lt_soh_gii-sotor = lt_soh-rgtor.
+        lt_soh_gii-ginum = lt_gii-ginum.
+        lt_soh_gii-giseq = lt_gii-giseq.
+        lt_soh_gii-itnum = lt_gii-itnum.
+        lt_soh_gii-del = lt_gii-del.
+
+        APPEND lt_soh_gii.
+      ENDLOOP.
+    ENDIF.
+  ENDLOOP.
+
+  IF lt_soh_gii IS INITIAL.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 3. 이 GII 들의 GIH 정보를 찾아오기.
+  LOOP AT lt_soh_gii.
+    CLEAR : ls_gih, lv_tabix.
+
+    " 이미 있는 SONUM이면 "외 " 를 추가해야 함.
+    READ TABLE pt_info_0200 WITH KEY ginum = lt_soh_gii-ginum.
+
+    " 이미 있는 SONUM - 외 추가
+    IF sy-subrc = 0.
+      lv_tabix = sy-tabix.
+
+      CONCATENATE pt_info_0200-sonum_s '외' INTO pt_info_0200-sonum_s.
+      MODIFY pt_info_0200 INDEX sy-tabix.
+
+    ELSE.
+      SELECT SINGLE *
+      FROM ztssgih
+      INTO CORRESPONDING FIELDS OF ls_gih
+      WHERE ginum = lt_soh_gii-ginum.
+
+      MOVE-CORRESPONDING ls_gih TO pt_info_0200.
+
+      pt_info_0200-gitor = ls_gih-rgtor.
+      pt_info_0200-sotor = lt_soh_gii-sotor.
+      pt_info_0200-sodat = lt_soh_gii-sodat.
+      pt_info_0200-sonum_s = lt_soh_gii-sonum.
+
+      APPEND pt_info_0200.
+    ENDIF.
+  ENDLOOP.
+
+  PERFORM modify_gi_with_so   TABLES   pt_info_0200
+                              CHANGING lv_subrc.
+
+  IF lv_subrc = 0.
+    pv_subrc = 0.
+  ELSE.
+    pv_subrc = 4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_RANGE_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSSD0201  text
+*      -->P_ZSSSSD0202  text
+*      -->P_ZSSSSD0203  text
+*      -->P_ZSSSSD0204  text
+*----------------------------------------------------------------------*
+FORM set_range_0200  USING   VALUE(ps_cond_0101) TYPE zssssd0201
+                             VALUE(ps_cond_0102) TYPE zssssd0202
+                             VALUE(ps_cond_0103) TYPE zssssd0203
+                             VALUE(ps_cond_0104) TYPE zssssd0204
+                     CHANGING pv_subrc LIKE sy-subrc.
+  CLEAR pv_subrc.
+
+  " 판매 오더 레인지 세팅
+  IF ps_cond_0101 IS NOT INITIAL.
+
+    CLEAR : gr_datum_0101[], gr_rgtor_0101[], gr_sonum_0101[].
+
+    IF ps_cond_0101-begda IS NOT INITIAL
+      AND ps_cond_0101-endda IS NOT INITIAL.
+      gr_datum_0101-sign = 'I'.
+      gr_datum_0101-option = 'BT'.
+      gr_datum_0101-low = ps_cond_0101-begda.
+      gr_datum_0101-high = ps_cond_0101-endda.
+      APPEND gr_datum_0101.
+    ENDIF.
+
+    IF ps_cond_0101-rgtor IS NOT INITIAL.
+      gr_rgtor_0101-sign = 'I'.
+      gr_rgtor_0101-option = 'EQ'.
+      gr_rgtor_0101-low = ps_cond_0101-rgtor.
+      gr_rgtor_0101-high = ''.
+      APPEND gr_rgtor_0101.
+    ENDIF.
+
+    IF ps_cond_0101-sonum IS NOT INITIAL.
+      gr_sonum_0101-sign = 'I'.
+      gr_sonum_0101-option = 'EQ'.
+      gr_sonum_0101-low = ps_cond_0101-sonum.
+      gr_sonum_0101-high = ''.
+      APPEND gr_sonum_0101.
+
+      CLEAR : gr_datum_0101[], gr_rgtor_0101[].
+      "CLEAR : zssssd0201-begda, zssssd0201-endda, zssssd0201-rgtor, zssssd0201-rname.
+    ENDIF.
+
+    " 출고 오더 레인지 세팅
+  ELSEIF ps_cond_0102 IS NOT INITIAL.
+
+    CLEAR : gr_gidat_0102[], gr_ginum_0102[], gr_istat_0102[], gr_rgtor_0102[].
+
+    IF ps_cond_0102-begda IS NOT INITIAL
+      AND ps_cond_0102-endda IS NOT INITIAL.
+
+      gr_gidat_0102-sign = 'I'.
+      gr_gidat_0102-option = 'BT'.
+      gr_gidat_0102-low = ps_cond_0102-begda.
+      gr_gidat_0102-high = ps_cond_0102-endda.
+      APPEND gr_gidat_0102.
+    ENDIF.
+
+    IF ps_cond_0102-rgtor IS NOT INITIAL.
+      gr_rgtor_0102-sign = 'I'.
+      gr_rgtor_0102-option = 'EQ'.
+      gr_rgtor_0102-low = ps_cond_0102-rgtor.
+      gr_rgtor_0102-high = ''.
+      APPEND gr_rgtor_0102.
+    ENDIF.
+
+    IF ps_cond_0102-gidone EQ 'X'
+      OR ps_cond_0102-bidone EQ 'X'
+      OR ps_cond_0102-apdone EQ 'X'.
+
+      gr_istat_0102-sign = 'I'.
+      gr_istat_0102-option = 'EQ'.
+      gr_istat_0102-low = 'A'.
+      gr_istat_0102-high = ''.
+      APPEND gr_istat_0102.
+    ENDIF.
+
+    IF ps_cond_0102-giundone EQ 'X'.
+      gr_istat_0102-sign = 'I'.
+      gr_istat_0102-option = 'EQ'.
+      gr_istat_0102-low = ''.
+      gr_istat_0102-high = ''.
+      APPEND gr_istat_0102.
+    ENDIF.
+
+    IF ps_cond_0102-ginum IS NOT INITIAL.
+      gr_ginum_0102-sign = 'I'.
+      gr_ginum_0102-option = 'EQ'.
+      gr_ginum_0102-low = ps_cond_0102-ginum.
+      gr_ginum_0102-high = ''.
+      APPEND gr_ginum_0102.
+
+      CLEAR : gr_gidat_0102[], gr_istat_0102[], gr_rgtor_0102[].
+    ENDIF.
+
+    " 출고 전표 레인지 세팅
+  ELSEIF ps_cond_0103 IS NOT INITIAL.
+
+
+    " 자재 번호 레인지 세팅
+  ELSEIF ps_cond_0104 IS NOT INITIAL.
+
+
+    " 검색 조건을 입력하세요.
+  ELSE.
+    MESSAGE a999(zmcss) WITH '<set_range_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+  ENDIF.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_COND_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSSD0201  text
+*      -->P_ZSSSSD0202  text
+*      -->P_ZSSSSD0203  text
+*      -->P_ZSSSSD0204  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
+                              VALUE(ps_cond_0102) TYPE zssssd0202
+                              VALUE(ps_cond_0103) TYPE zssssd0203
+                              VALUE(ps_cond_0104) TYPE zssssd0204
+                     CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA lv_subrc LIKE sy-subrc.
+
+  " 판매 오더 검색 조건 검증
+  IF ps_cond_0101 IS NOT INITIAL.
+    " 검색 조건 1 - 판매 오더일 기간 및 등록자
+    IF ps_cond_0101-begda IS NOT INITIAL
+      AND ps_cond_0101-endda IS NOT INITIAL
+      AND ps_cond_0101-rgtor IS NOT INITIAL.
+
+      " 날짜 검증
+      PERFORM check_datum USING    ps_cond_0101-begda
+                                   ps_cond_0101-endda
+                          CHANGING lv_subrc.
+      IF lv_subrc <> 0.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+
+      " 사원의 부서 검증 - 판매 부서 (D004)이니?
+      PERFORM check_dept USING ps_cond_0101-rgtor
+                               'D004'
+                         CHANGING lv_subrc.
+
+      IF lv_subrc <> 0.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+
+    ELSEIF ps_cond_0101-sonum IS NOT INITIAL.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '<ps_cond_0101>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    " 출고 오더 검색 조건 검증
+  ELSEIF ps_cond_0102 IS NOT INITIAL.
+
+    IF ps_cond_0102-begda IS NOT INITIAL
+      AND ps_cond_0102-endda IS NOT INITIAL
+      AND ps_cond_0102-rgtor IS NOT INITIAL.
+
+      " 날짜 검증
+      PERFORM check_datum USING    ps_cond_0102-begda
+                                   ps_cond_0102-endda
+                          CHANGING lv_subrc.
+      IF lv_subrc <> 0.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+
+      " 사원의 부서 검증 - 물류 부서 (D003)이니?
+      PERFORM check_dept USING ps_cond_0102-rgtor
+                               'D003'
+                         CHANGING lv_subrc.
+
+      IF lv_subrc <> 0.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+
+    ELSEIF ps_cond_0102-ginum IS NOT INITIAL.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '<ps_cond_0102>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+
+    " 출고 전표 검색 조건 검증
+  ELSEIF ps_cond_0103 IS NOT INITIAL.
+
+
+    " 자재 번호 검색 조건 검증
+  ELSEIF ps_cond_0104 IS NOT INITIAL.
+
+
+    " 검색 조건을 입력하세요.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '<check_cond_0100>' '검색 조건이 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_DATUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_COND_0101_BEGDA  text
+*      -->P_PS_COND_0101_ENDDA  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_datum  USING    VALUE(pv_begda) TYPE datum
+                           VALUE(pv_endda) TYPE datum
+                  CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  " 조건 1. begda는 endda보다 작아야 한다.
+  IF pv_begda > pv_endda.
+    pv_subrc = 4.
+    MESSAGE s999(zmcss) WITH '시작일은 종료일보다 작아야 합니다.'.
+    RETURN.
+  ENDIF.
+
+  " 조건 2. 지금은 모르겠네, 생각 나면 해야지.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_DEPT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_COND_0101_RGTOR  text
+*      -->P_1119   text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_dept  USING    VALUE(pv_pernr) TYPE zesspernr
+                          VALUE(pv_depid) TYPE zessdepid
+                 CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : ls_dept  TYPE ztssdept_t,
+         lv_dname TYPE zessdname.
+
+  SELECT SINGLE dname
+    FROM ztssdept_t
+    INTO lv_dname
+    WHERE depid = pv_depid
+    AND langu = sy-langu.
+
+  SELECT SINGLE a~depid b~dname
+    FROM ztssemp AS a
+    INNER JOIN ztssdept_t AS b
+    ON a~depid EQ b~depid
+    INTO CORRESPONDING FIELDS OF ls_dept
+    WHERE a~pernr = pv_pernr
+    AND b~langu = sy-langu.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<check_dept>' '치명적인 에러, 사원이 존재하지 않습니다'.
+  ENDIF.
+
+  IF ls_dept-depid NE pv_depid.
+    MESSAGE i999(zmcss) WITH '<check_dept>' lv_dname '부서의 사원만 조회가 가능합니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_GI_WITH_SO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0200  text
+*      <--P_PV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM modify_gi_with_so  TABLES   pt_info_0200 STRUCTURE gs_info_0200
+                        CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : ls_ztssemp TYPE ztssemp,
+         lv_subrc   TYPE sy-subrc.
+
+  LOOP AT pt_info_0200.
+    CLEAR ls_ztssemp.
+
+    " ISTAT Domain Fixed Value
+    PERFORM get_domain_fixed_value TABLES   gt_dd07v
+                                   USING    pt_info_0200-istat
+                                            'ZDSSISTAT'
+                                   CHANGING pt_info_0200-istat_t.
+
+    " Employee Name
+    PERFORM get_emp TABLES gt_ztssemp
+                    USING pt_info_0200-sotor
+                    CHANGING ls_ztssemp
+                             lv_subrc.
+
+    IF lv_subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<modify_gi_with_so>' '사원 정보가 없습니다'.
+    ENDIF.
+
+    CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
+
+    MODIFY pt_info_0200.
+  ENDLOOP.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUES
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_DD07V  text
+*      -->P_0015   text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_values  TABLES   pt_dd07v STRUCTURE gt_dd07v
+                              USING    VALUE(pv_domname).
+  DATA : lt_dd07v TYPE TABLE OF dd07v.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = pv_domname
+    TABLES
+      values_tab      = lt_dd07v
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<get_domain_fixed_values>' 'FATAL ERROR'.
+  ENDIF.
+
+  APPEND LINES OF lt_dd07v TO pt_dd07v.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_DD07V  text
+*      -->P_PT_INFO_0200_ISTAT  text
+*      -->P_1678   text
+*      <--P_PT_INFO_0200_ISTAT_T  text
+*      <--P_ENDLOOP  text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_value  TABLES   pt_dd07v STRUCTURE dd07v
+                             USING    VALUE(pv_domval_l)
+                                      VALUE(pv_domname)
+                             CHANGING pv_ddtext.
+
+  READ TABLE pt_dd07v WITH KEY domvalue_l = pv_domval_l domname = pv_domname.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<get_domain_fixed_value>' 'Fatal Error'.
+  ENDIF.
+
+  pv_ddtext = pt_dd07v-ddtext.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_ZTSSEMP  text
+*      -->P_PT_INFO_0200_SOTOR  text
+*      <--P_LS_ZTSSEMP  text
+*----------------------------------------------------------------------*
+FORM get_emp  TABLES   pt_ztssemp STRUCTURE ztssemp
+              USING    VALUE(pv_pernr)
+              CHANGING ps_ztssemp TYPE ztssemp
+                       pv_subrc LIKE gv_subrc.
+
+  CLEAR pv_subrc.
+
+  READ TABLE pt_ztssemp WITH KEY pernr = pv_pernr.
+
+  IF sy-subrc = 0.
+    MOVE-CORRESPONDING pt_ztssemp TO ps_ztssemp.
+    pv_subrc = 0.
+    RETURN.
+  ENDIF.
+
+  SELECT SINGLE *
+    FROM ztssemp
+    INTO CORRESPONDING FIELDS OF pt_ztssemp
+    WHERE pernr = pv_pernr.
+
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '<get_emp>' '사원 정보가 없습니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  MOVE-CORRESPONDING pt_ztssemp TO ps_ztssemp.
+  APPEND pt_ztssemp.
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GI_WITH_GI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0200  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_gi_with_gi  TABLES   pt_info_0200 STRUCTURE gs_info_0200
+                     CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_info_0200[].
+
+  DATA : lt_gih  TYPE TABLE OF ztssgih WITH HEADER LINE,
+         lt_sivi TYPE TABLE OF ztsssivi WITH HEADER LINE,
+         lt_sivh TYPE TABLE OF ztsssivh WITH HEADER LINE.
+
+  DATA : lv_subrc LIKE sy-subrc.
+
+  " 1. 조건을 만족하는 모든 GIH 찾기
+  SELECT *
+    FROM ztssgih
+    INTO CORRESPONDING FIELDS OF TABLE lt_gih
+    WHERE ginum IN gr_ginum_0102
+    AND gidat IN gr_gidat_0102
+    AND istat IN gr_istat_0102
+    AND rgtor IN gr_rgtor_0102.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 청구 완료
+  IF zssssd0202-bidone = 'X'.
+    CLEAR lt_sivi[].
+
+    " 청구 된거 찾기
+    LOOP AT lt_gih.
+      SELECT SINGLE binum ginum
+        FROM ztsssivi
+        INTO CORRESPONDING FIELDS OF lt_sivi
+        WHERE ginum = lt_gih-ginum.
+
+      " 청구 된거 아니면 Append
+      IF sy-subrc <> 0.
+        lt_sivi-ginum = lt_gih-ginum.
+        APPEND lt_sivi.
+      ENDIF.
+    ENDLOOP.
+
+    " 청구 안된거 싹 제거
+    LOOP AT lt_sivi.
+      DELETE lt_gih WHERE ginum = lt_sivi-ginum.
+    ENDLOOP.
+
+    IF lt_gih IS INITIAL.
+      MESSAGE i999(zmcss) WITH '<get_gi_with_gi>' '조건에 맞는 데이터 중, 미청구 데이터를 삭제한 결과 데이터가 없습니다'.
+      pv_subrc = 4.
+    ENDIF.
+
+    " 수금 완료
+  ELSEIF zssssd0202-apdone = 'X'.
+
+    CLEAR lt_sivi[].
+    " 청구 된거 찾기
+    LOOP AT lt_gih.
+      SELECT SINGLE binum ginum
+        FROM ztsssivi
+        INTO CORRESPONDING FIELDS OF lt_sivi
+        WHERE ginum = lt_gih-ginum.
+
+      " 청구 된거 아니면 Append
+      IF sy-subrc <> 0.
+        lt_sivi-ginum = lt_gih-ginum.
+        APPEND lt_sivi.
+
+        " 청구 된거더라고 지급 안된거면 Append
+      ELSE.
+        SELECT SINGLE binum arnum arfyr
+          FROM ztsssivh
+          INTO CORRESPONDING FIELDS OF lt_sivh
+          WHERE binum = lt_sivi-binum.
+
+        " 지급 된거 아니면 Append
+        IF sy-subrc <> 0.
+          lt_sivi-ginum = lt_gih-ginum.
+          APPEND lt_sivi.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+    " 청구 안된거 싹 제거
+    LOOP AT lt_sivi.
+      DELETE lt_gih WHERE ginum = lt_sivi-ginum.
+    ENDLOOP.
+
+    IF lt_gih IS INITIAL.
+      MESSAGE i999(zmcss) WITH '<get_gi_with_gi>' '조건에 맞는 데이터 중, 미수금 데이터를 삭제한 결과 데이터가 없습니다'.
+      pv_subrc = 4.
+    ENDIF.
+  ENDIF.
+
+  " 결과 데이터를 바탕으로 pt_info_200 구성
+  LOOP AT lt_gih.
+    MOVE-CORRESPONDING lt_gih TO pt_info_0200.
+
+    pt_info_0200-gitor = lt_gih-rgtor.
+
+    APPEND pt_info_0200.
+  ENDLOOP.
+
+  PERFORM modify_gi_with_gi TABLES pt_info_0200
+                            CHANGING lv_subrc.
+
+  IF lv_subrc = 0.
+    pv_subrc = 0.
+    RETURN.
+  ELSE.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_GI_WITH_GI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0200  text
+*----------------------------------------------------------------------*
+FORM modify_gi_with_gi  TABLES   pt_info_0200 STRUCTURE gs_info_0200
+                        CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : ls_ztssemp TYPE ztssemp,
+         lv_subrc   TYPE sy-subrc.
+
+  LOOP AT pt_info_0200.
+    CLEAR ls_ztssemp.
+
+    " ISTAT Domain Fixed Value
+    PERFORM get_domain_fixed_value TABLES   gt_dd07v
+                                   USING    pt_info_0200-istat
+                                            'ZDSSISTAT'
+                                   CHANGING pt_info_0200-istat_t.
+
+    " Employee Name
+    PERFORM get_emp TABLES gt_ztssemp
+                    USING pt_info_0200-gitor
+                    CHANGING ls_ztssemp
+                             lv_subrc.
+
+    IF lv_subrc <> 0.
+      MESSAGE a999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+    ENDIF.
+
+    CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
+
+    MODIFY pt_info_0200.
+  ENDLOOP.
+
+  pv_subrc = 0.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

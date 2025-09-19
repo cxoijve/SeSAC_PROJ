@@ -1,0 +1,225 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMM03F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0200 .
+  IF go_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0200 .
+
+*  PERFORM set_all_fcat.
+  PERFORM set_alv_layo.
+
+
+  CALL METHOD go_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMM03002'
+      is_layout                     = gs_layo
+    CHANGING
+      it_outtab                     = gt_data
+*     it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_layo .
+  CLEAR gs_layo.
+  gs_layo-cwidth_opt = 'X'.
+  gs_layo-zebra = 'X'.
+  gs_layo-sel_mode = 'A'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_IV_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_iv_data.
+
+  IF zsssmm03001-check = 'X'.
+
+  ENDIF.
+
+  SELECT ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
+    FROM ztssmivh
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    WHERE rgdat IN gt_date
+      AND apnum IN gt_apnum.
+
+
+  IF  sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '데이터 없음'.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_CONDITION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_alv_condition .
+  CLEAR : gt_data[],
+          gt_apnum[].
+
+
+  IF zsssmm03001-begda IS NOT INITIAL.
+    gt_date-sign = 'I'.
+    gt_date-option = 'BT'.
+    gt_date-low = zsssmm03001-begda.
+    gt_date-high = zsssmm03001-endda.
+    APPEND gt_date.
+  ENDIF.
+
+  IF zsssmm03001-check = 'X'.
+    gt_apnum-sign = 'I'.
+    gt_apnum-option = 'NE'.
+    gt_apnum-low = ''.
+    CLEAR gt_apnum-high.
+    APPEND gt_apnum.
+  ELSE.
+    gt_apnum-sign = 'I'.
+    gt_apnum-option = 'EQ'.
+    gt_apnum-low = ''.
+    CLEAR gt_apnum-high.
+    APPEND gt_apnum.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_value .
+
+  zsssmm03001-endda = '99991231'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_TABLES_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_tables_data .
+
+  SELECT pernr
+    FROM ztssemp
+    INTO TABLE gt_pernr
+    WHERE depid = 'D003'
+      AND estat = '1'.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_TABLES_DATA 실패'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_TAB1_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_tab1_field .
+
+  IF zsssmm03001-rgtor IS NOT INITIAL.
+    READ TABLE gt_pernr WITH KEY zsssmm03001-rgtor INTO gs_pernr.
+
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '올바른 담당사원을 입력해주세요'.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -92,6 +92,22 @@ MODULE status_0400 OUTPUT.
   SET PF-STATUS 'S400'.
   SET TITLEBAR 'T400'.
 ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_status_0300 OUTPUT.
+  IF gv_subrc = 4.
+
+    LOOP AT SCREEN.
+      IF screen-name = 'ZSSSMD04007-CNAME'.
+        screen-input = 0.
+        MODIFY SCREEN.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

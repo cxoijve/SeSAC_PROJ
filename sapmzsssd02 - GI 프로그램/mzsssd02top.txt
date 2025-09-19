@@ -1,0 +1,63 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSSD02TOP                                       Module Pool      SAPMZSSSD02
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzsssd02.
+
+" Common Variables
+DATA : ok_code  LIKE sy-ucomm,
+       gv_subrc LIKE sy-subrc,
+       gv_dynnr LIKE sy-dynnr.
+
+" Itab
+DATA : gt_dd07v   TYPE TABLE OF dd07v WITH HEADER LINE,
+       gt_ztssemp TYPE TABLE OF ztssemp WITH HEADER LINE.
+
+" 100 ======================================
+
+" Tab strip 100
+CONTROLS ts_0100 TYPE TABSTRIP.
+
+" Condition 101 - 판매 오더 번호
+TABLES zssssd0201.
+
+" Range 101
+DATA : gr_sonum_0101 TYPE RANGE OF zssssd0201-sonum WITH HEADER LINE,
+       gr_rgtor_0101 TYPE RANGE OF zssssd0201-rgtor WITH HEADER LINE,
+       gr_datum_0101 TYPE RANGE OF datum WITH HEADER LINE.
+
+" Condition 102 - 출고 문서 번호
+TABLES zssssd0202.
+
+" Range 102
+DATA : gr_gidat_0102 TYPE RANGE OF datum WITH HEADER LINE,
+       gr_rgtor_0102 TYPE RANGE OF zssssd0202-rgtor WITH HEADER LINE,
+       gr_istat_0102 TYPE RANGE OF zssssd0202-istat WITH HEADER LINE,
+       gr_ginum_0102 TYPE RANGE OF zssssd0202-ginum WITH HEADER LINE.
+
+" Condition 103 - 출고 전표 번호
+TABLES zssssd0203.
+
+" Condition 104 - 자재 번호
+TABLES zssssd0204.
+
+
+" 200 ======================================
+
+" ALV Objects 0200
+DATA   go_con_0200 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0200 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0200 TYPE lvc_s_layo.
+DATA : gt_fcat_0200 TYPE lvc_t_fcat,
+       gs_fcat_0200 LIKE LINE OF gt_fcat_0200.
+DATA : gt_sort_0200 TYPE lvc_t_sort,
+       gs_sort_0200 LIKE LINE OF gt_sort_0200.
+
+" Info 0200
+DATA : BEGIN OF gs_info_0200.
+    INCLUDE TYPE zssssd0205.
+DATA : END OF gs_info_0200.
+DATA gt_info_0200 LIKE TABLE OF gs_info_0200.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

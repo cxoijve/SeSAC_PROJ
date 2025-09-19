@@ -1,0 +1,38 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSSD02
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE mzsssd02top                             .  " global Data
+
+INCLUDE mzsssd02o01                             .  " PBO-Modules
+INCLUDE mzsssd02i01                             .  " PAI-Modules
+INCLUDE mzsssd02f01                             .  " FORM-Routines
+
+LOAD-OF-PROGRAM.
+
+  " domain Fixed Value 세팅
+  PERFORM get_domain_fixed_values TABLES gt_dd07v
+                                  USING  'ZDSSISTAT'.
+
+  " alv의 기본 세팅 - 0200
+  PERFORM set_default_alv TABLES    gt_fcat_0200
+                                    gt_sort_0200
+                          USING     '0200'
+                          CHANGING  gs_layo_0200.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> 출고 문서 조회 - 검색 조건
+* T105 --> 검색조건 테스트 스크린
+* T200 --> 출고 문서 조회
+* T100 --> 출고 문서 조회 - 검색 조건
+* T105 --> 검색조건 테스트 스크린
+* T200 --> 출고 문서 조회
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

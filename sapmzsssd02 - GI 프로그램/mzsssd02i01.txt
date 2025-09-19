@@ -1,0 +1,114 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD02I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CASE ok_code.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+    WHEN 'SEARCH'.
+
+      PERFORM check_cond_0100 USING   zssssd0201
+                                      zssssd0202
+                                      zssssd0203
+                                      zssssd0204
+                             CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 검색 조건을 바탕으로 Range 변수 세팅.
+      PERFORM set_range_0200 USING zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204
+                             CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 검색 조건을 바탕으로 데이터 쿼리
+      PERFORM get_info_0200 TABLES gt_info_0200
+                            USING  zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204
+                            CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
+      PERFORM set_fcat_0200 TABLES gt_fcat_0200
+                            USING  zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204.
+
+      " 검색조건 테스트 스크린
+      " CALL SCREEN 105.
+
+      CALL SCREEN 200.
+
+
+      " 검색 조건 클리어
+      CLEAR : zssssd0201, zssssd0202, zssssd0203, zssssd0204.
+
+      " Screen 200번의 ALV Field Catalog 클리어
+
+      " Screen 200번의 데이터 클리어
+
+    WHEN 'T101' OR 'T102' OR 'T103' OR 'T104'.
+      " 검색 조건 클리어
+      CLEAR : zssssd0201, zssssd0202, zssssd0203, zssssd0204.
+      ts_0100-activetab = ok_code.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0105  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0105 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

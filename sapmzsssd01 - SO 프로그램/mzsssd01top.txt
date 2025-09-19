@@ -1,0 +1,29 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSSD01TOP                                       Module Pool      SAPMZSSSD01
+*&
+*&---------------------------------------------------------------------*
+PROGRAM SAPMZSSSD01.
+
+" Common
+DATA: ok_code TYPE sy-ucomm,
+      gv_subrc TYPE sy-subrc.
+
+" Screen 100 - Condition
+TABLES zssssd0101.
+
+" Screen 100 - ALV
+DATA: BEGIN OF gs_head.
+        INCLUDE STRUCTURE zssssd0102.
+DATA: END OF gs_head,
+      gt_head LIKE TABLE OF gs_head.
+TABLES zssssd0102.
+
+" ALV (100)
+DATA: go_con1 TYPE REF TO cl_gui_custom_container,
+      go_alv1  TYPE REF TO cl_gui_alv_grid,
+      gs_layo1 TYPE lvc_s_layo,
+      gt_fcat1 TYPE lvc_t_fcat,
+      gs_fcat1 LIKE LINE OF gt_fcat1.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

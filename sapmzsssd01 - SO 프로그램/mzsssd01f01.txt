@@ -1,0 +1,252 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD01F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv USING p_connm
+                CHANGING c_con TYPE REF TO cl_gui_custom_container
+                         c_alv TYPE REF TO cl_gui_alv_grid.
+
+  IF c_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT c_con
+    EXPORTING
+      container_name              = p_connm
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  CREATE OBJECT c_alv
+    EXPORTING
+      i_parent          = c_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv USING p_strnm
+                 CHANGING c_alv TYPE REF TO cl_gui_alv_grid
+                          c_layo TYPE lvc_s_layo
+                          c_tab
+                          c_fcat TYPE lvc_t_fcat.
+
+  PERFORM set_layo CHANGING gs_layo1.
+  PERFORM set_fcat.
+*  PERFORM set_sort.
+*  PERFORM set_light.
+
+  CALL METHOD c_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = p_strnm
+      is_layout                     = c_layo
+    CHANGING
+      it_outtab                     = c_tab
+      it_fieldcatalog               = c_fcat
+*     it_sort                       = gt_sort
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_layo CHANGING c_layo TYPE lvc_s_layo.
+  CLEAR c_layo.
+  c_layo-cwidth_opt = 'A'.
+  c_layo-zebra = 'X'.
+  c_layo-sel_mode = 'A'.
+*  c_layo-excp_fname = 'LIGHT'.
+*  c_layo-excp_led = 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_HEADER_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_header_list .
+  " Range 변수 - 판매오더일
+  DATA: lr_dat    TYPE RANGE OF ztsssoh-sodat,
+        ls_dat    LIKE LINE OF lr_dat,
+        lt_item   TYPE TABLE OF ztsssoi,
+        ls_item   LIKE LINE OF lt_item,
+        lv_sum    TYPE ztssgii-amount,
+        lv_all_gi TYPE abap_bool,
+        lv_any_gi TYPE abap_bool,
+        lv_stat   TYPE c LENGTH 1.
+
+  CLEAR: lr_dat, ls_dat.
+
+  ls_dat-sign = 'I'.
+  ls_dat-option = 'BT'.     " 무조건 하나의 range row를 만들어 놓음. (입력 안 하면 전체 범위)
+
+  " 판매오더일 필터링
+  IF zssssd0101-sodat_b IS INITIAL.
+    ls_dat-low = '00010101'.
+  ELSE.
+    ls_dat-low = zssssd0101-sodat_b.
+  ENDIF.
+
+  IF zssssd0101-sodat_e IS INITIAL.
+    ls_dat-high = '99991231'.
+  ELSE.
+    ls_dat-high = zssssd0101-sodat_e.
+  ENDIF.
+
+  APPEND ls_dat TO lr_dat.
+  CLEAR ls_dat.
+
+  " 판매오더일, 고객코드 조회조건
+  CLEAR gs_head.
+  IF zssssd0101-cstid IS INITIAL.
+    SELECT a~sonum a~sodat a~cstid b~cname a~dudat a~stext
+           a~curky a~rgdat a~rgtor
+      FROM ztsssoh AS a INNER JOIN ztsscust AS b
+        ON a~cstid = b~cstid
+      INTO TABLE gt_head
+     WHERE a~sodat IN lr_dat.
+  ELSE.
+    SELECT a~sonum a~sodat a~cstid b~cname a~dudat a~stext
+           a~curky a~rgdat a~rgtor
+      FROM ztsssoh AS a INNER JOIN ztsscust AS b
+        ON a~cstid = b~cstid
+      INTO TABLE gt_head
+     WHERE a~sodat IN lr_dat
+       AND a~cstid = zssssd0101-cstid.
+  ENDIF.
+
+  " 출고여부 조회조건
+  LOOP AT gt_head INTO gs_head.
+    CLEAR: lv_all_gi, lv_any_gi, lv_stat.
+    lv_all_gi = abap_true.      " 처음엔 전체 출고 완료로 가정 ->루프 돌다가 하나라도 덜 출고되면 false로 바뀜
+    lv_any_gi = abap_false.     " 처음엔 전체 출고 미완료로 가정 ->루프 돌다가 출고 수량이 있으면 true로 바뀜
+
+    SELECT *
+      FROM ztsssoi
+      INTO TABLE lt_item
+     WHERE sonum = gs_head-sonum.
+
+    LOOP AT lt_item INTO ls_item.
+
+      SELECT SUM( amount )
+        FROM ztssgii
+        INTO lv_sum
+       WHERE sonum = ls_item-sonum
+         AND itnum = ls_item-itnum.
+
+      IF lv_sum EQ 0. " 미출고
+        lv_all_gi = ''.    " (False로 값 변경)
+      ELSEIF lv_sum < ls_item-amount. " 부분출고
+        lv_all_gi = ''.
+        lv_any_gi = 'X'.   " (True로 값 변경)
+      ELSE. " 출고
+        lv_any_gi = 'X'.   " (True로 값 변경)
+      ENDIF.
+    ENDLOOP.
+
+    lv_stat = ''.   " Y 출고 완료 / M 부분 출고 / N 미출고
+    IF lv_all_gi = 'X'.
+      lv_stat = 'Y'.
+    ELSEIF lv_any_gi = 'X'.
+      lv_stat = 'M'.
+    ELSE.
+      lv_stat = 'N'.
+    ENDIF.
+
+    " 체크박스 필터링
+    IF zssssd0101-gichk_y <> 'X'
+       AND zssssd0101-gichk_m <> 'X'
+       AND zssssd0101-gichk_n <> 'X'.
+      CONTINUE.
+    ENDIF.
+
+    " 선택한 체크박스와 SO 상태가 일치하지 않으면 삭제
+    IF ( lv_stat = 'Y' AND zssssd0101-gichk_y <> 'X' )
+       OR ( lv_stat = 'M' AND zssssd0101-gichk_m <> 'X' )
+       OR ( lv_stat = 'N' AND zssssd0101-gichk_n <> 'X' ).
+      DELETE gt_head INDEX sy-tabix.
+    ENDIF.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv .
+  CALL METHOD go_alv1->refresh_table_display
+    EXCEPTIONS
+      finished = 1
+      OTHERS   = 2.
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat .
+  CLEAR gt_fcat1.
+
+  gs_fcat1-fieldname = 'CSTID'.
+  gs_fcat1-coltext = '고객코드'.
+  APPEND gs_fcat1 TO gt_fcat1.
+  CLEAR gs_fcat1.
+
+  gs_fcat1-fieldname = 'CNAME'.
+  gs_fcat1-coltext = '고객명'.
+  APPEND gs_fcat1 TO gt_fcat1.
+  CLEAR gs_fcat1.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
