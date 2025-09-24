@@ -90,10 +90,19 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE SET_ALV_0200 OUTPUT.
+
   PERFORM CREATE_ALV_0200.
+
   PERFORM SET_LAYO.
+
   PERFORM SET_SORT.
+
   PERFORM SET_FCAT_0200.
+
+  PERFORM SET_EVENT_0200.
+
+  PERFORM EVENT_OPTION_0200.
+
   PERFORM DISPLAY_ALV_0200.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -181,6 +190,32 @@ MODULE MODIFY_SCREEN_0200 OUTPUT.
 **    ENDLOOP.
   ENDIF.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE MODIFY_SCREEN_0100 OUTPUT.
+  LOOP AT SCREEN.
+    IF SCREEN-NAME = 'B_BUTTON2'.
+      IF GV_FLAG = 'X'.
+        SCREEN-ACTIVE = 1.
+      ELSE.
+        SCREEN-ACTIVE = 0.
+      ENDIF.
+    ENDIF.
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0110  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE STATUS_0110 OUTPUT.
+  SET PF-STATUS 'S110'.
+  SET TITLEBAR 'T110'.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

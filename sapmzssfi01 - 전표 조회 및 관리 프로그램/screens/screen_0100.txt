@@ -8,7 +8,7 @@ SAPMZSSFI01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSFI01                             0100 0100     34124192 37  0  0 34141  0G E                              20250919212205																																
+SAPMZSSFI01                             0100 0100     34124192 37  0  0 34142  0G E                              20250923104338																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -29,13 +29,14 @@ ZSSSFI0101-JENUM	0	CHAR	 13	30	00	00	30	00	  7	  6		  0	  0	  0		  0					  0	  0
 ZSSSFI0101-JENUM	C	CHAR	 11	A0	00	84	00	08	  7	 27		  0	  0	  0		  0					 22	  0								___________	X                                      00	
 B_INFO		CHAR	124	00	00	00	30	00	 10	  2		  0	  0	  0		 25	R				  0	  0	103							전표 헤더 조회 결과		
 B_BUTTON		CHAR	 14	00	00	00	30	00	 11	  3		  0	  0	  0		  0	P				  0	  0	104							전표 헤더 변경	                                                                                                                                                                        HINFO	
-CON			122	00	00	00	30	00	 12	  3		  0	  0	  0		 22	U				  1	  1	105									
+B_BUTTON2		CHAR	  9	00	00	00	30	00	 11	 18		  0	  0	  0		  0	P				  0	  0	105			GR1				변경 완료	                                                                                                                                                                        UPDATE	
+CON			122	00	00	00	30	00	 12	  3		  0	  0	  0		 22	U				  1	  1	106									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE STATUS_0100.																																
   MODULE SET_ALV_0100.																																
-																																
+  MODULE MODIFY_SCREEN_0100.																																
 																																
 																																
 *																																
