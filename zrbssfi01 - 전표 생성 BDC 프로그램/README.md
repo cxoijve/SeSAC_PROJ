@@ -1,5 +1,5 @@
 # 엑셀 업로드 및 BDC 전표 생성 프로그램
- - Test용 SAP_FI_BDC.xlsx 파일 업로드 후 실행(F8)
+- Test용 SAP_FI_BDC.xlsx 파일 업로드 후 실행(F8)
 <img width="681" height="119" alt="IMG 1" src="https://github.com/user-attachments/assets/400b97fe-e0b7-421f-9dea-f7b330f19f04" />
 - ALV로 데이터 입력값 시각화
 <img width="1374" height="383" alt="IMG 2" src="https://github.com/user-attachments/assets/c84744bc-3afc-46a2-bc08-ea69d0d08124" />
