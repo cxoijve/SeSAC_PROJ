@@ -1,0 +1,28 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMM02C01
+*&---------------------------------------------------------------------*
+
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD handle_toolbar .
+
+    PERFORM handle_toolbar USING e_object.
+
+  ENDMETHOD.
+
+  METHOD handle_toolbar_item_remove.
+
+    PERFORM handle_toolbar_item_remove USING e_object.
+
+  ENDMETHOD.
+
+  METHOD handle_user_command.
+
+    PERFORM handle_user_command USING e_ucomm.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

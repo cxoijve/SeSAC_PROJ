@@ -8,13 +8,13 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0104I0104      4 72192 37  0  0 27122  0G E                              20250919112754																																
+SAPMZSSSD02                             0104I0104      4 76192 37  0  0 27123  0G E                              20250924100629																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 B104_01		CHAR	 76	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							자재 코드 및 출고일로 조회		
 ZSSSSD0204-MATNR	2	CHAR	 20	30	00	04	30	00	  2	  4		  0	  0	  0		  0					  0	  0								자재 코드	                                                                                                                                                                                                                                                        X	
-ZSSSSD0204-MATNR	C	CHAR	  8	A0	00	84	00	08	  2	 25		  0	  0	  0		  0					 16	  0								________	X                                      00	
+ZSSSSD0204-MATNR	C	CHAR	  8	A0	00	84	00	08	  2	 25		  0	  0	  0		  0					 16	  0			ZSHSSSD0204					________	X                                      00	
 ZSSSSD0204-MATNM	C	CHAR	 40	A0	02	80	31	00	  2	 36		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
 ZSSSSD0204-BEGDA	2	CHAR	 20	30	00	00	30	00	  3	  4		  0	  0	  0		  0					  0	  0								출고일	                                                                                                                                                                                                                                                        X	
 ZSSSSD0204-BEGDA	D	DATE	 10	A0	00	80	00	08	  3	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	

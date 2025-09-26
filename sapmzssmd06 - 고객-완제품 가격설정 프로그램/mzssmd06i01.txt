@@ -51,7 +51,7 @@ MODULE user_command_0100 INPUT.
         IF gv_subrc = 0.
           RETURN.
         ENDIF.
-        IF gs_data-del <> 0.
+        IF gs_data-del <> 'X'.
           MESSAGE i999(zmcss) WITH '활성화된 데이터를 선택해주세요'.
         ENDIF.
         CALL SCREEN 301 STARTING AT 30 2 ENDING AT 80 5.

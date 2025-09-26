@@ -9,6 +9,14 @@
 MODULE status_0100 OUTPUT.
   SET PF-STATUS 'S100'.
   SET TITLEBAR 'T100' WITH sy-uname.
+
+  " 체크박스 기본값
+  IF gv_first IS INITIAL.
+    zssssd0101-gichk_y = 'X'.
+    zssssd0101-gichk_m = 'X'.
+    zssssd0101-gichk_n = 'X'.
+    gv_first = abap_true.
+  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0100  OUTPUT
@@ -17,10 +25,18 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0100 OUTPUT.
   IF go_con1 IS INITIAL.
-    PERFORM get_header_list.     " 프로그램 실행하자마자 ALV에 데이터 표시
+    PERFORM get_header_list.     " 실행하자마자 ALV에 데이터 표시
     PERFORM create_alv USING 'CON1'
                        CHANGING go_con1
                                 go_alv1.
+
+    PERFORM set_layo CHANGING gs_layo1.
+    gs_layo1-excp_fname = 'LIGHT'.
+    gs_layo1-excp_led = 'X'.
+
+    PERFORM set_fcat1.
+*    PERFORM set_sort.
+    PERFORM delete_toolbar.
 
     PERFORM display_alv USING 'ZSSSSD0102'
                         CHANGING go_alv1
@@ -28,7 +44,8 @@ MODULE set_alv_0100 OUTPUT.
                                  gt_head
                                  gt_fcat1.
   ELSE.
-    PERFORM refresh_alv.
+*      PERFORM get_header_list.
+    PERFORM refresh_alv CHANGING go_alv1.
   ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -39,6 +56,145 @@ ENDMODULE.
 MODULE status_0200 OUTPUT.
   SET PF-STATUS 'S200'.
   SET TITLEBAR 'T200' WITH sy-uname.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0200 OUTPUT.
+  IF go_con2 IS INITIAL.
+*    CLEAR gt_item.
+*    PERFORM get_item_list CHANGING gt_item.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM set_toprc USING gt_item
+*                      CHANGING zssssd0103.
+
+    PERFORM create_alv USING 'CON2'
+                       CHANGING go_con2
+                                go_alv2.
+
+    PERFORM set_layo CHANGING gs_layo2.
+*    PERFORM set_sort.
+*    PERFORM set_light.
+
+    " 값에 0 붙여주는 FM. 근데 itnum은 이미 numc타입에다가 0이 붙어있으므로 필드카탈로그 설정만 해줘도 ok
+*    LOOP AT gt_item INTO gs_item.
+*      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+*        EXPORTING
+*          input  = gs_item-itnum
+*        IMPORTING
+*          output = gs_item-itnum.
+*      MODIFY gt_item FROM gs_item INDEX sy-tabix.
+*    ENDLOOP.
+
+    PERFORM set_fcat2.
+    gs_layo2-edit = ''.   " edit off
+
+    PERFORM display_alv USING 'ZSSSSD0104'
+                        CHANGING go_alv2
+                                 gs_layo2
+                                 gt_item
+                                 gt_fcat2.
+  ELSE.
+*    PERFORM get_item_list CHANGING gt_item.
+*    PERFORM set_toprc.
+    PERFORM refresh_alv CHANGING go_alv2.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_TAB_0201  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_tab OUTPUT.
+  CASE ts_info-activetab.
+    WHEN 'TAB1'.
+      gv_dynnr = '0201'.
+      PERFORM get_cust_info.
+    WHEN 'TAB2'.
+      gv_dynnr = '0202'.
+      PERFORM get_cust_mat.
+    WHEN OTHERS.
+      gv_dynnr = '0201'.
+      PERFORM get_cust_info.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0202  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0202 OUTPUT.
+  IF go_con3 IS INITIAL.
+*    PERFORM get_cust_mat.     " 실행하자마자 ALV에 데이터 표시
+    PERFORM create_alv USING 'CON3'
+                       CHANGING go_con3
+                                go_alv3.
+
+    PERFORM set_layo CHANGING gs_layo3.
+
+*    PERFORM set_fcat.
+*    PERFORM set_sort.
+*    PERFORM set_light.
+
+    PERFORM display_alv USING 'ZSSSSD0106'
+                        CHANGING go_alv3
+                                 gs_layo3
+                                 gt_mat
+                                 gt_fcat3.
+  ELSE.
+*    PERFORM get_cust_mat.
+    PERFORM refresh_alv CHANGING go_alv3.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300' WITH sy-uname.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0300 OUTPUT.
+  IF go_con4 IS INITIAL.
+    PERFORM get_item_list CHANGING gt_item_udt.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM set_toprc.
+    PERFORM create_alv USING 'CON4'
+                       CHANGING go_con4
+                                go_alv4.
+
+    PERFORM set_layo CHANGING gs_layo4.
+    gs_layo4-edit = ''.      " ALV edit - 전체 edit off
+
+    PERFORM set_fcat4.
+*    PERFORM set_sort.
+*    PERFORM set_light.
+
+    PERFORM display_alv USING 'ZSSSSD0104'
+                        CHANGING go_alv4
+                                 gs_layo4
+                                 gt_item_udt
+                                 gt_fcat4.
+  ELSE.
+*    PERFORM get_item_list CHANGING gt_item_chg.
+*    PERFORM set_toprc.
+    PERFORM refresh_alv CHANGING go_alv4.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0301  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0301 OUTPUT.
+  SET PF-STATUS 'S301'.
+  SET TITLEBAR 'T301'.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

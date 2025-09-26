@@ -1,0 +1,153 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSMM02TOP                                       Module Pool      SAPMZSSMM02
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzssmm02.
+
+" 공통변수
+DATA : ok_code  TYPE sy-ucomm,
+       gv_subrc TYPE sy-subrc,
+       gv_dynnr TYPE sy-dynnr.
+
+*-------------------------------------------------------*
+* 100번 스크린 - 입고프로그램  ALV
+*-------------------------------------------------------*
+
+" 탭 스트립
+CONTROLS t_info TYPE TABSTRIP.
+
+* ALV
+DATA:
+  go_dock     TYPE REF TO cl_gui_docking_container,
+*  go_custom   TYPE REF TO cl_gui_custom_container,
+  go_split    TYPE REF TO cl_gui_splitter_container,
+  go_split2   TYPE REF TO cl_gui_splitter_container,
+*  go_con1     TYPE REF TO cl_gui_container,
+*  go_con2     TYPE REF TO cl_gui_container,
+  go_con3     TYPE REF TO cl_gui_container,
+  go_con4     TYPE REF TO cl_gui_container,
+*  go_alv2     TYPE REF TO cl_gui_alv_grid,
+  go_alv3     TYPE REF TO cl_gui_alv_grid,
+  go_alv4     TYPE REF TO cl_gui_alv_grid,
+*  go_alv5     TYPE REF TO cl_gui_alv_grid,
+  go_document TYPE REF TO cl_dd_document,
+  gs_exclude  TYPE ui_func,
+  gt_exclude  TYPE ui_functions.
+
+
+* ALV Layout, field catalog, sort.
+*DATA : gs_layo TYPE lvc_s_layo,
+*       gt_fcat TYPE lvc_t_fcat,
+*       gs_fcat TYPE lvc_s_fcat,
+*       gt_sort TYPE lvc_t_sort,
+*       gs_sort TYPE lvc_s_sort.
+*
+
+
+*-------------------------------------------------------*
+* 100번 스크린 - 조회조건관련 & 라디오버튼
+*-------------------------------------------------------*
+TABLES : zsssmm0210.
+DATA : gs_cond TYPE zsssmm0210.
+
+DATA : gr_grdat TYPE RANGE OF ztssgrh-grdat.
+
+DATA: gv_radio1 TYPE c VALUE 'X',  " 기본 선택
+      gv_radio2 TYPE c.
+DATA : gv_screen(1).
+DATA : gv_radio_screen(1).
+
+*-------------------------------------------------------*
+* 100번 스크린 - 구매오더 화면 조회
+*-------------------------------------------------------*
+
+* PO 화면 조회
+DATA : go_custom TYPE REF TO cl_gui_custom_container,
+       go_con    TYPE REF TO cl_gui_container,
+       go_alv    TYPE REF TO cl_gui_alv_grid.
+
+" PO 화면 조회 alv의 layout, Field Catalog.
+DATA : gs_layo TYPE lvc_s_layo,
+       gt_fcat TYPE lvc_t_fcat,
+       gs_fcat TYPE lvc_s_fcat.
+
+" 입고되지 않은 PO 문서 데이터
+DATA : BEGIN OF gs_podata,
+         light,
+         icon   LIKE icon-name,
+         it_col TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0212.
+DATA : END OF gs_podata,
+gt_podata LIKE TABLE OF gs_podata.
+
+
+DATA : go_custom2 type ref to cl_gui_custom_container,
+       go_con5 type REF TO cl_gui_container,
+       go_alv5 type ref to cl_gui_alv_grid.
+
+*-------------------------------------------------------*
+* 100번 스크린 - 입고 화면 조회
+*-------------------------------------------------------*
+" 입고 아이템
+DATA : gv_seqnum TYPE i.
+
+DATA : BEGIN OF gs_gri,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+         meins  TYPE ztssgri-meins,
+       END OF gs_gri,
+       gt_gri LIKE TABLE OF gs_gri.
+
+* GR 할 수 있는 구매오더 item 화면 조회
+DATA : go_con2 TYPE REF TO cl_gui_container,
+       go_alv2 TYPE REF TO cl_gui_alv_grid.
+
+" GR 화면 조회 alv의 layout, Field Catalog.
+DATA : gs_layo2 TYPE lvc_s_layo,
+       gt_fcat2 TYPE lvc_t_fcat,
+       gs_fcat2 TYPE lvc_s_fcat.
+
+DATA : gs_layo3 type lvc_s_layo.
+
+DATA : BEGIN OF gs_item,
+         color(4).
+    INCLUDE TYPE zsssmm0213.
+DATA : END OF gs_item,
+gt_item LIKE TABLE OF gs_item.
+
+
+* Event Handler Class
+*CLASS lcl_handler DEFINITION.
+*  PUBLIC SECTION.
+*
+*    CLASS-METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+*      IMPORTING es_row_no e_column_id.
+*
+*    CLASS-METHODS on_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
+*      IMPORTING e_object.
+*
+*    CLASS-METHODS on_user_command FOR EVENT user_command OF cl_gui_alv_grid
+*      IMPORTING e_ucomm.
+*
+**    CLASS-METHODS on_data_changed FOR EVENT data_changed OF cl_gui_alv_grid
+**      IMPORTING er_data_changed e_ucomm.
+*
+*ENDCLASS.
+
+
+CLASS lcl_event_handler DEFINITION FINAL.
+  PUBLIC SECTION.
+    CLASS-METHODS :
+      handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
+        IMPORTING
+            e_object,
+      handle_toolbar_item_remove FOR EVENT toolbar OF cl_gui_alv_grid
+        IMPORTING
+            e_object,
+      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -8,7 +8,7 @@ SAPMZSSMD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD01                             0101I0101     25 65192 37  0  0 25148  0G E                              20250915183824																																
+SAPMZSSMD01                             0101I0101     25 65192 37  0  0 25149  0G E                              20250926110024																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -35,7 +35,7 @@ ZSSSMD0102-EMAIL	C	CHAR	 30	B0	00	80	30	00	 13	 27		  0	  0	  0		  0					200	  0
 ZSSSMD0102-TELNR	2	CHAR	 20	30	00	00	30	00	 14	  6		  0	  0	  0		  0					  0	  0								전화번호	                                                                                                                                                                                                                                                        X	
 ZSSSMD0102-TELNR	C	CHAR	 20	A0	00	80	30	00	 14	 27		  0	  0	  0		  0					 40	  0								____________________	                                       00	
 ZSSSMD0102-POSTC	2	CHAR	 20	30	00	00	30	00	 16	  6		  0	  0	  0		  0					  0	  0								우편번호	                                                                                                                                                                                                                                                        X	
-ZSSSMD0102-POSTC	N	NUMC	  8	B0	00	80	30	00	 16	 27		  0	  0	  0		  0					 10	  0								________	                                       00	
+GV_POSTC	C	CHAR	  8	80	00	80	30	00	 16	 27		  0	  0	  0		  0					 10	  0								________		
 ZSSSMD0102-ADDRE	2	CHAR	 20	30	02	00	30	00	 17	  6		  0	  0	  0		  0					  0	  0								상세주소	                                                                                                                                                                                                                                                        X	
 ZSSSMD0102-ADDRE	C	CHAR	 30	B0	02	80	30	00	 17	 27		  0	  0	  0		  0					200	  0								______________________________	                                       00	
 ZSSSMD0102-ESTAT	2	CHAR	 20	30	00	01	30	00	 19	  6		  0	  0	  0		  0					  0	  0								재직상태	                                                                                                                                                                                                                                                        X	

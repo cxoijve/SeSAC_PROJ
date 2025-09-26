@@ -66,6 +66,40 @@ MODULE create_alv OUTPUT.
                             CHANGING  go_con_0200
                                       go_alv_0200.
       ENDIF.
+    WHEN '0300'.
+      IF go_con_0300 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0300'
+                            CHANGING  go_con_0300
+                                      go_alv_0300.
+
+        CREATE OBJECT go_handler_0300.
+        PERFORM set_alv_handler USING go_alv_0300
+                                      go_handler_0300.
+
+
+        PERFORM create_alv_cprotocol TABLES gt_fcat_0300
+                                     USING  go_alv_0300
+                                            go_cprotocol_0300.
+
+      ENDIF.
+    WHEN '0302'.
+      IF go_con_0302 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0302'
+                            CHANGING  go_con_0302
+                                      go_alv_0302.
+      ENDIF.
+    WHEN '0303'.
+      IF go_con_0303 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0303'
+                            CHANGING  go_con_0303
+                                      go_alv_0303.
+      ENDIF.
+    WHEN '0500'.
+      IF go_con_0500 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0500'
+                            CHANGING  go_con_0500
+                                      go_alv_0500.
+      ENDIF.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -83,9 +117,144 @@ MODULE display_alv OUTPUT.
                                      gt_sort_0200
                              USING   'zssssd0205'
                                      gs_layo_0200
-                                     go_alv_0200.
+                                     go_alv_0200
+                                     'NOT_EXCLUDE'.
+      ENDIF.
+    WHEN '0300'.
+      IF go_con_0300 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0300
+                                     gt_fcat_0300
+                                     gt_sort_0300
+                             USING   'zssssd0206'
+                                     gs_layo_0300
+                                     go_alv_0300
+                                     'EXCLUDE'.
+      ENDIF.
+    WHEN '0302'.
+      IF go_con_0302 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0302
+                                     gt_fcat_0302
+                                     gt_sort_0302
+                             USING   ''
+                                     gs_layo_0302
+                                     go_alv_0302
+                                     'EXCLUDE'.
+      ENDIF.
+    WHEN '0303'.
+      IF go_con_0303 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0303
+                                     gt_fcat_0303
+                                     gt_sort_0303
+                             USING   ''
+                                     gs_layo_0303
+                                     go_alv_0303
+                                     'EXCLUDE'.
+      ENDIF.
+    WHEN '0500'.
+      IF go_con_0500 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0500
+                                     gt_fcat_0500
+                                     gt_sort_0500
+                             USING   'ztssgii'
+                                     gs_layo_0500
+                                     go_alv_0500
+                                     'NOT_EXCLUDE'.
       ENDIF.
   ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0500 OUTPUT.
+  SET PF-STATUS 'S500'.
+  SET TITLEBAR 'T500' WITH gs_info_0500h-ginum.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0301  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0301 OUTPUT.
+  SET PF-STATUS 'S301'.
+  SET TITLEBAR 'T301'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0302  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0302 OUTPUT.
+  SET PF-STATUS 'S302'.
+  SET TITLEBAR 'T302'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0303  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0303 OUTPUT.
+  SET PF-STATUS 'S303'.
+  SET TITLEBAR 'T303'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0999  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0999 OUTPUT.
+  SET PF-STATUS 'S999'.
+  SET TITLEBAR 'T999' WITH '경고'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_EXIT_MSG  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_exit_msg OUTPUT.
+  CLEAR : gv_exit_msg, gv_canc_msg.
+  CLEAR : gv_exit.
+  CASE sy-dynnr.
+    WHEN '0100'.
+      gv_exit_msg = '프로그램을 종료하시겠습니까?'.
+      gv_canc_msg = '프로그램을 종료하시겠습니까?'.
+    WHEN '0200'.
+      gv_exit_msg = '프로그램을 종료하시겠습니까?'.
+    WHEN '0300'.
+      gv_exit_msg = '프로그램을 종료하시겠습니까? 미 저장 내역은 삭제됩니다.'.
+      gv_canc_msg = '신규 출고 생성을 취소하시겠습니까?'.
+    WHEN '0500'.
+      gv_exit_msg = '프로그램을 종료하시겠습니까?'.
+    WHEN OTHERS.
+      MESSAGE a999(zmcss) WITH 'NO ENTRY'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0998  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0998 OUTPUT.
+  SET PF-STATUS 'S998'.
+  SET TITLEBAR 'T998'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0300 OUTPUT.
+  PERFORM modify_screen_0300.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

@@ -7,11 +7,44 @@ PROGRAM sapmzsssd02.
 " Common Variables
 DATA : ok_code  LIKE sy-ucomm,
        gv_subrc LIKE sy-subrc,
-       gv_dynnr LIKE sy-dynnr.
+       gv_dynnr LIKE sy-dynnr,
+       gv_canc_msg TYPE string, "캔슬 메시지
+       gv_exit_msg TYPE string, "종료 메시지
+       gv_exit. "확인 여부
+
+" ALV Objects 공통
+DATA : gt_exclude TYPE ui_functions.
+
+" ALV Handler
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING es_row_no e_column_id.
+
+    CLASS-METHODS on_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
+      IMPORTING e_object.
+
+    CLASS-METHODS on_user_command FOR EVENT user_command OF cl_gui_alv_grid
+      IMPORTING e_ucomm.
+
+    CLASS-METHODS on_data_changed FOR EVENT data_changed OF cl_gui_alv_grid
+      IMPORTING er_data_changed e_ucomm.
+
+ENDCLASS.
 
 " Itab
-DATA : gt_dd07v   TYPE TABLE OF dd07v WITH HEADER LINE,
-       gt_ztssemp TYPE TABLE OF ztssemp WITH HEADER LINE.
+DATA : gt_dd07v     TYPE TABLE OF dd07v WITH HEADER LINE,
+       gt_ztssemp   TYPE TABLE OF ztssemp WITH HEADER LINE,
+       gt_ztssstrg  TYPE TABLE OF ztssstrg WITH HEADER LINE,
+       gt_ztssplant TYPE TABLE OF ztssplant WITH HEADER LINE.
+
+TYPES : BEGIN OF ts_mat,
+          matnm TYPE zessmatnm,
+          langu TYPE spras.
+    INCLUDE TYPE ztssmat.
+TYPES : END OF ts_mat.
+DATA : gt_ztssmat TYPE TABLE OF ts_mat WITH HEADER LINE.
 
 " 100 ======================================
 
@@ -38,9 +71,17 @@ DATA : gr_gidat_0102 TYPE RANGE OF datum WITH HEADER LINE,
 " Condition 103 - 출고 전표 번호
 TABLES zssssd0203.
 
+" Range 103
+DATA : gr_jenum_0103 TYPE RANGE OF zessjenum WITH HEADER LINE,
+       gr_fyear_0103 TYPE RANGE OF zessfyear WITH HEADER LINE,
+       gr_rgtor_0103 TYPE RANGE OF zessrgtor WITH HEADER LINE,
+       gr_jedat_0103 TYPE RANGE OF datum WITH HEADER LINE.
+
 " Condition 104 - 자재 번호
 TABLES zssssd0204.
 
+" Range 104
+DATA : gr_gidat_0104 TYPE RANGE OF datum WITH HEADER LINE.
 
 " 200 ======================================
 
@@ -49,15 +90,144 @@ DATA   go_con_0200 TYPE REF TO cl_gui_custom_container.
 DATA   go_alv_0200 TYPE REF TO cl_gui_alv_grid.
 DATA : gs_layo_0200 TYPE lvc_s_layo.
 DATA : gt_fcat_0200 TYPE lvc_t_fcat,
-       gs_fcat_0200 LIKE LINE OF gt_fcat_0200.
+       gs_fcat_0200 TYPE lvc_s_fcat.
 DATA : gt_sort_0200 TYPE lvc_t_sort,
-       gs_sort_0200 LIKE LINE OF gt_sort_0200.
+       gs_sort_0200 TYPE lvc_s_sort.
 
 " Info 0200
 DATA : BEGIN OF gs_info_0200.
     INCLUDE TYPE zssssd0205.
 DATA : END OF gs_info_0200.
 DATA gt_info_0200 LIKE TABLE OF gs_info_0200.
+
+" Row 0200
+DATA : gv_ginum_0200 TYPE zessginum.
+
+" 300 ========================================
+" ALV Objects 0300
+DATA   go_con_0300 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0300 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0300 TYPE lvc_s_layo.
+DATA : gt_fcat_0300 TYPE lvc_t_fcat,
+       gs_fcat_0300 TYPE lvc_s_fcat.
+DATA : gt_sort_0300 TYPE lvc_t_sort,
+       gs_sort_0300 TYPE lvc_s_sort.
+
+" Info 0300
+DATA : BEGIN OF gs_info_0300.
+    INCLUDE TYPE zssssd0206.
+DATA : END OF gs_info_0300.
+DATA gt_info_0300 LIKE TABLE OF gs_info_0300.
+
+" Header 0300
+TABLES zssssd0207.
+
+" Handler 0300
+DATA : go_handler_0300 TYPE REF TO lcl_handler.
+DATA : go_cprotocol_0300 TYPE REF TO cl_alv_changed_data_protocol.
+
+
+" 302 ========================================
+" ALV Objects 0302
+DATA   go_con_0302 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0302 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0302 TYPE lvc_s_layo.
+DATA : gt_fcat_0302 TYPE lvc_t_fcat,
+       gs_fcat_0302 TYPE lvc_s_fcat.
+DATA : gt_sort_0302 TYPE lvc_t_sort,
+       gs_sort_0302 TYPE lvc_s_sort.
+
+" Condition 0302
+TABLES : zssssd0209.
+
+" Info 0302
+DATA : BEGIN OF gs_info_0302.
+DATA : sonum TYPE zesssonum,
+       itnum TYPE c LENGTH 3,
+       somnr TYPE zesssomnr,
+       matnm TYPE zessmatnm,
+       udamt TYPE zessamount,
+       meins TYPE zessmeins,
+       cname TYPE zesscname,
+       dudat TYPE zessdudat,
+       plant TYPE zessplant,
+       pname TYPE zesspname.
+DATA : END OF gs_info_0302.
+DATA gt_info_0302 LIKE TABLE OF gs_info_0302.
+
+
+" 303 ========================================
+" ALV Objects 0303
+DATA   go_con_0303 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0303 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0303 TYPE lvc_s_layo.
+DATA : gt_fcat_0303 TYPE lvc_t_fcat,
+       gs_fcat_0303 TYPE lvc_s_fcat.
+DATA : gt_sort_0303 TYPE lvc_t_sort,
+       gs_sort_0303 TYPE lvc_s_sort.
+
+" Condition 0303
+TABLES zssssd0208.
+
+" Range 0303
+DATA : gr_cstid_0303 TYPE RANGE OF zesscstid WITH HEADER LINE.
+
+" Info 0302
+DATA : BEGIN OF gs_info_0303.
+DATA : cname TYPE zesscname,
+       dudat TYPE zessdudat,
+       sonum TYPE zesssonum,
+       itnum TYPE c LENGTH 3,
+       somnr TYPE zesssomnr,
+       matnm TYPE zessmatnm,
+       udamt TYPE zessamount,
+       meins TYPE zessmeins,
+       plant TYPE zessplant,
+       pname TYPE zesspname.
+DATA : END OF gs_info_0303.
+DATA gt_info_0303 LIKE TABLE OF gs_info_0303.
+
+" 500 ========================================
+
+" ALV Objects 0500
+DATA   go_con_0500 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0500 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0500 TYPE lvc_s_layo.
+DATA : gt_fcat_0500 TYPE lvc_t_fcat,
+       gs_fcat_0500 TYPE lvc_s_fcat.
+DATA : gt_sort_0500 TYPE lvc_t_sort,
+       gs_sort_0500 TYPE lvc_s_sort.
+
+" Info 0500 Header
+DATA : BEGIN OF gs_info_0500h.
+DATA : istat_t TYPE ddtext,
+       ename   TYPE zessename,
+       binum   TYPE zessbinum,
+       bjnum   TYPE zessjenum,
+       bifyr   TYPE zessfyear,
+       arnum   TYPE zessarnum,
+       arfyr   TYPE zessfyear,
+       gi_t    TYPE c LENGTH 20,
+       bi_t    TYPE c LENGTH 20,
+       ar_t    TYPE c LENGTH 20.
+    INCLUDE TYPE ztssgih.
+DATA : END OF gs_info_0500h.
+
+" Info 0500
+DATA : BEGIN OF gs_info_0500.
+DATA : somnr   TYPE zesssomnr,
+       matnm   TYPE zessmatnm,
+       stonm   TYPE zessstonm,
+       giseq_c TYPE c LENGTH 3,
+       itnum_c TYPE c LENGTH 3.
+    INCLUDE TYPE ztssgii.
+DATA : END OF gs_info_0500.
+DATA : gt_info_0500 LIKE TABLE OF gs_info_0500.
+
+" Icon 500
+DATA : icon_gi_t_0500 TYPE icons-text,
+       icon_bi_t_0500 TYPE icons-text,
+       icon_ar_t_0500 TYPE icons-text.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

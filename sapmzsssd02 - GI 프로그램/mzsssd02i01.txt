@@ -26,6 +26,12 @@ MODULE user_command_0100 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
+    WHEN 'M300'.
+
+      CALL SCREEN 300.
+
+      CLEAR : zssssd0207 , gt_info_0300.
+
     WHEN 'SEARCH'.
 
       PERFORM check_cond_0100 USING   zssssd0201
@@ -62,6 +68,12 @@ MODULE user_command_0100 INPUT.
 
       " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
       PERFORM set_fcat_0200 TABLES gt_fcat_0200
+                            USING  zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204.
+
+      PERFORM set_sort_0200 TABLES gt_sort_0200
                             USING  zssssd0201
                                    zssssd0202
                                    zssssd0203
@@ -107,6 +119,306 @@ MODULE user_command_0200 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+
+    WHEN 'M500'.
+
+      " 라인 하나 골랐는지 체크
+      PERFORM select_row_0200 TABLES gt_info_0200
+                              CHANGING gv_ginum_0200
+                                       gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      " 라인 하나에 대한 세부 정보 쿼리
+      PERFORM get_info_0500 TABLES gt_info_0500
+                            USING gv_ginum_0200
+                            CHANGING gs_info_0500h
+                                     gv_subrc.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      IF gv_ginum_0200 IS INITIAL.
+        MESSAGE i999(zmcss) WITH '미출고 문서입니다'.
+        RETURN.
+      ENDIF.
+
+      CALL SCREEN 500.
+
+      " gt_info_500 클리어
+      CLEAR : gv_ginum_0200, gs_info_0500h, gt_info_0500[].
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0500  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0500 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+    WHEN 'ISSUE'.
+
+
+      PERFORM check_gii_availability_pai TABLES gt_info_0300
+                                        CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CASE gv_subrc.
+          WHEN '4'.
+            MESSAGE i999(zmcss) WITH '출고 아이템에 문제가 있습니다.'.
+            RETURN.
+          WHEN '5'.
+            MESSAGE i999(zmcss) WITH '출고 아이템이 없습니다.'.
+        ENDCASE.
+      ENDIF.
+
+      " Invalid : gv_subrc = 4
+      " No Line : gv_subrc = 5
+      PERFORM check_gih_availability USING zssssd0207
+                                     CHANGING gv_subrc.
+
+
+
+      CASE gv_subrc.
+        WHEN '0'. " 라인 아이템이 있는 상태
+
+          PERFORM insert_gi_with_items TABLES gt_info_0300
+                                       CHANGING zssssd0207
+                                                gv_subrc.
+
+          IF gv_subrc = 0.
+            MESSAGE i999(zmcss) WITH '입고 문서' zssssd0207-ginum '가 생성되었습니다'.
+            LEAVE TO SCREEN 0.
+
+          ENDIF.
+
+        WHEN '4'. " INVALID
+          RETURN.
+        WHEN '5'. " 라인 아이템이 없는 상태*
+*          PERFORM INSERT_GI_WITHOUT_ITEMS USING zssssd0207.
+
+          " GI HEADER 완성 : ISTAT : ,
+          " 채번 및 INSERT
+
+        WHEN OTHERS.
+          MESSAGE a999(zmcss) WITH '<ISSUE>' 'UNKNOWN ERROR'.
+      ENDCASE.
+
+
+    WHEN 'INSITM'. " 아이템 추가
+
+      CALL SCREEN 301 STARTING AT 5 3 ENDING AT 35 3.
+
+    WHEN 'DELITM'. " 아이템 삭제
+
+      " Row 선택 및 삭제
+      PERFORM delete_info_0300 TABLES gt_info_0300
+                               USING  'SELECTED'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        MESSAGE s999(zmcss) WITH '선택한 아이템이 삭제되었습니다'.
+      ENDIF.
+
+    WHEN 'CLRITM'. " 아이템 초기화
+
+      PERFORM delete_info_0300 TABLES gt_info_0300
+                               USING  'ALL'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        MESSAGE s999(zmcss) WITH '모든 아이템이 삭제되었습니다'.
+      ENDIF.
+      " Row 삭제
+
+  ENDCASE.
+
+  IF gt_info_0300 IS NOT INITIAL.
+    PERFORM set_giseq TABLES gt_info_0300.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0301  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0301 INPUT.
+  CASE ok_code.
+
+    WHEN 'BYSO'. "SO로 선택
+      SET SCREEN 0.
+      CALL SCREEN 302 STARTING AT 5 3 ENDING AT 100 25.
+
+      "0302 조건 Clear
+      CLEAR : gt_info_0302[], zssssd0209.
+
+    WHEN 'BYCUS'. "고객으로 선택
+      SET SCREEN 0.
+      CALL SCREEN 303 STARTING AT 5 3 ENDING AT 100 25.
+
+      "0303 조건 Clear
+      CLEAR : gt_info_0303[], zssssd0208.
+
+    WHEN 'CANCEL'.
+      SET SCREEN 0.
+      MESSAGE s999(zmcss) WITH '사용자가 액션을 취소하였습니다.'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0302  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0302 INPUT.
+  CASE ok_code.
+
+    WHEN 'SEARCH'.
+      CLEAR gt_info_0302[].
+
+      "CHECK CONDITION 0302.
+      IF zssssd0209-sonum IS INITIAL.
+        MESSAGE i999(zmcss) WITH '검색 조건을 입력해 주십시오'.
+        RETURN.
+      ENDIF.
+
+      "QUERY
+      PERFORM get_so_with_so TABLES gt_info_0302
+                             CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CASE gv_subrc.
+          WHEN '4'.
+            MESSAGE i999(zmcss) WITH '조회 결과가 없습니다'.
+          WHEN '5'.
+            MESSAGE i999(zmcss) WITH '이미 해당 판매오더에 대한 출고 아이템을 추가 하였습니다.'.
+        ENDCASE.
+        RETURN.
+      ENDIF.
+
+    WHEN 'CANCEL'.
+      SET SCREEN 0.
+      MESSAGE s999(zmcss) WITH '사용자가 액션을 취소하였습니다.'.
+
+    WHEN 'CONTINUE'.
+      PERFORM set_0300_from_0302 CHANGING gv_subrc.
+
+      IF gv_subrc = 0.
+        SET SCREEN 0.
+        MESSAGE s999(zmcss) WITH '출고 수량은 판매오더의 잔여 출고 수량으로 자동 설정됩니다.'.
+      ENDIF.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0303  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0303 INPUT.
+  CASE ok_code.
+    WHEN 'SEARCH'.
+
+      CLEAR gt_info_0303[].
+
+      " CHECK CONDITION 0303
+      PERFORM check_cond_0303 USING zssssd0208
+                              CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+
+      " QUERY
+      PERFORM get_so_with_cust TABLES gt_info_0303
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CASE gv_subrc.
+          WHEN '4'.
+            MESSAGE i999(zmcss) WITH '조회 결과가 없습니다'.
+          WHEN '5'.
+            MESSAGE i999(zmcss) WITH '이미 해당 판매오더에 대한 출고 아이템을 추가 하였습니다.'.
+        ENDCASE.
+        RETURN.
+      ENDIF.
+
+    WHEN 'CANCEL'.
+      SET SCREEN 0.
+      MESSAGE s999(zmcss) WITH '사용자가 액션을 취소하였습니다.'.
+
+    WHEN 'CONTINUE'.
+      PERFORM set_0300_from_0303 CHANGING gv_subrc.
+      IF gv_subrc = 0.
+        SET SCREEN 0.
+        MESSAGE s999(zmcss) WITH '출고 수량은 판매오더의 잔여 출고 수량으로 자동 설정됩니다.'.
+      ENDIF.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_WITH_WARNING  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_with_warning INPUT.
+  CASE ok_code.
+    WHEN 'CANC'.
+      " 취소 모달
+      PERFORM canc.
+
+    WHEN 'EXIT'.
+      " 종료 모달
+      PERFORM exit.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0999  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0999 INPUT.
+  CASE ok_code.
+    WHEN 'CONFIRM'.
+      SET SCREEN 0.
+      gv_exit = 'X'.
+    WHEN 'DENY'.
+      SET SCREEN 0.
+      CLEAR gv_exit.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0998  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0998 INPUT.
+  CASE ok_code.
+    WHEN 'CONFIRM'.
+      SET SCREEN 0.
+      gv_exit = 'X'.
+    WHEN 'DENY'.
+      SET SCREEN 0.
+      CLEAR gv_exit.
   ENDCASE.
 ENDMODULE.
 

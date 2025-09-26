@@ -8,10 +8,20 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0102I0102      0  0192 37  0  0 27120  0G E                              20250919112903																																
+SAPMZSSMM03                             0102I0102      2 66192 37  0  0 27123  0G E                              20250923102932																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
+ZSSSMM03003-BEGDA	0	CHAR	  8	30	00	00	30	00	  1	  3		  0	  0	  0		  0					  0	  0								GR등록일	                                                                                                                                                                                                                                                        X	
+ZSSSMM03003-BEGDA	D	DATE	 10	A0	00	80	00	08	  1	 24		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+B_TXT_1	0	CHAR	  1	00	00	00	30	00	  1	 36		  0	  0	  0		  0					  0	  0								~		
+ZSSSMM03003-ENDDA	D	DATE	 10	A0	00	80	00	08	  1	 39		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+B_TXT_2	0	CHAR	  9	00	00	00	30	00	  1	 57		  0	  0	  0		  0					  0	  0								IV 완료		
+ZSSSMM03003-CHECK	C	CHAR	  1	A0	00	80	00	00	  1	 67		  0	  0	  0		  0	C				  2	  0	101							_	                                       00	
+ZSSSMM03003-RGTOR	0	CHAR	 20	30	00	04	30	00	  2	  3		  0	  0	  0		  0					  0	  0								GR등록자	                                                                                                                                                                                                                                                        X	
+ZSSSMM03003-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 24		  0	  0	  0		  0					 16	  0			ZSHSSMM01					________	X                                      00	
+B_TXT_3	0	CHAR	  9	00	00	00	30	00	  2	 57		  0	  0	  0		  0					  0	  0								IV 미완료		
+ZSSSMM03003-CHEKE	C	CHAR	  1	A0	00	80	00	00	  2	 67		  0	  0	  0		  0	C				  2	  0	102							_	                                       00	
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

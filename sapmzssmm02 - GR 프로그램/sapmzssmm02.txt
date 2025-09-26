@@ -7,13 +7,22 @@
 *&---------------------------------------------------------------------*
 
 
-INCLUDE zssmm02top                              .    " global Data
+INCLUDE mzssmm02top                             .    " global Data
+INCLUDE mzssmm02c01                             .  " Class
 
-INCLUDE zssmm02o01                              .  " PBO-Modules
-INCLUDE zssmm02i01                              .  " PAI-Modules
-INCLUDE zssmm02f01                              .  " FORM-Routines
+INCLUDE mzssmm02o01                             .  " PBO-Modules
+INCLUDE mzssmm02i01                             .  " PAI-Modules
+INCLUDE mzssmm02f01                             .  " FORM-Routines
+
 
 LOAD-OF-PROGRAM.
+
+  PERFORM set_default.
+  PERFORM set_datas.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> 입고프로그램
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

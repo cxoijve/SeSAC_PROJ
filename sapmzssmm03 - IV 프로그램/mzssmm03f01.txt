@@ -66,7 +66,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM display_alv_0200 .
 
-*  PERFORM set_all_fcat.
+
   PERFORM set_alv_layo.
 
 
@@ -76,7 +76,7 @@ FORM display_alv_0200 .
       is_layout                     = gs_layo
     CHANGING
       it_outtab                     = gt_data
-*     it_fieldcatalog               = gt_fcat
+      it_fieldcatalog               = gt_fcat
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -96,11 +96,19 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM set_alv_layo .
+FORM set_alv_layo.
   CLEAR gs_layo.
   gs_layo-cwidth_opt = 'X'.
   gs_layo-zebra = 'X'.
-  gs_layo-sel_mode = 'A'.
+  IF sy-dynnr = '0300'.
+
+  ELSEIF sy-dynnr = '0200'.
+    gs_layo-sel_mode = 'A'.
+
+  ELSEIF sy-dynnr = '0400'.
+    gs_layo-sel_mode = 'A'.
+  ENDIF.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_IV_DATA
@@ -110,23 +118,35 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM get_iv_data.
+FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
-  IF zsssmm03001-check = 'X'.
-
-  ENDIF.
 
   SELECT ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
     FROM ztssmivh
     INTO CORRESPONDING FIELDS OF TABLE gt_data
     WHERE rgdat IN gt_date
-      AND apnum IN gt_apnum.
+      AND rgtor IN gt_rgtor.
 
 
   IF  sy-subrc <> 0.
     MESSAGE i999(zmcss) WITH '데이터 없음'.
+  ENDIF.
+
+  IF zsssmm03001-check NE '' AND zsssmm03001-cheke EQ ''.
+    DELETE gt_data WHERE apnum EQ ''.
+
+  ELSEIF zsssmm03001-check EQ '' AND zsssmm03001-cheke NE ''.
+    DELETE gt_data WHERE apnum NE ''.
+
+  ELSEIF zsssmm03001-check EQ '' AND zsssmm03001-cheke EQ ''.
+    MESSAGE i999(zmcss) WITH '올바른 조건을 입력해주세요'.
+    CLEAR gt_data.
+    cv_subrc = 4.
+  ELSEIF zsssmm03001-check NE '' AND zsssmm03001-cheke NE ''.
 
   ENDIF.
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -138,8 +158,12 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM check_alv_condition .
-  CLEAR : gt_data[],
-          gt_apnum[].
+  CLEAR : gt_date[],
+          gt_apnum[],
+          gt_rgtor[],
+          gt_apdat[],
+          gt_grdat[],
+          gt_grtor[].
 
 
   IF zsssmm03001-begda IS NOT INITIAL.
@@ -148,6 +172,13 @@ FORM check_alv_condition .
     gt_date-low = zsssmm03001-begda.
     gt_date-high = zsssmm03001-endda.
     APPEND gt_date.
+  ENDIF.
+
+  IF zsssmm03001-rgtor IS NOT INITIAL.
+    gt_rgtor-sign = 'I'.
+    gt_rgtor-option = 'EQ'.
+    gt_rgtor-low = zsssmm03001-rgtor.
+    APPEND gt_rgtor.
   ENDIF.
 
   IF zsssmm03001-check = 'X'.
@@ -164,6 +195,35 @@ FORM check_alv_condition .
     APPEND gt_apnum.
   ENDIF.
 
+  IF zsssmm03004-begda IS NOT INITIAL.
+    gt_apdat-sign = 'I'.
+    gt_apdat-option = 'BT'.
+    gt_apdat-low = zsssmm03004-begda.
+    gt_apdat-high = zsssmm03004-endda.
+    APPEND gt_apdat.
+  ENDIF.
+
+  IF zsssmm03004-rgtor IS NOT INITIAL.
+    gt_aptor-sign = 'I'.
+    gt_aptor-option = 'EQ'.
+    gt_aptor-low = zsssmm03004-rgtor.
+    APPEND gt_aptor.
+  ENDIF.
+
+  IF zsssmm03003-begda IS NOT INITIAL.
+    gt_grdat-sign = 'I'.
+    gt_grdat-option = 'BT'.
+    gt_grdat-low = zsssmm03003-begda.
+    gt_grdat-high = zsssmm03003-endda.
+    APPEND gt_grdat.
+  ENDIF.
+
+  IF zsssmm03003-rgtor IS NOT INITIAL.
+    gt_grtor-sign = 'I'.
+    gt_grtor-option = 'EQ'.
+    gt_grtor-low = zsssmm03003-rgtor.
+    APPEND gt_grtor.
+  ENDIF.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -192,13 +252,17 @@ FORM get_tables_data .
 
   SELECT pernr
     FROM ztssemp
-    INTO TABLE gt_pernr
+    INTO TABLE gt_logi
     WHERE depid = 'D003'
       AND estat = '1'.
 
-  IF sy-subrc <> 0.
-    MESSAGE i999(zmcss) WITH 'GET_TABLES_DATA 실패'.
-  ENDIF.
+
+  SELECT pernr
+    FROM ztssemp
+    INTO TABLE gt_finan
+    WHERE depid = 'D001'
+      AND estat = '1'.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -209,15 +273,892 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM check_tab1_field .
+FORM check_tab1_field CHANGING cv_subrc TYPE sy-subrc.
+
+  IF zsssmm03001-endda IS INITIAL AND zsssmm03001-begda IS INITIAL.
+
+  ELSEIF zsssmm03001-endda IS INITIAL OR zsssmm03001-begda IS INITIAL.
+    MESSAGE s999(zmcss) WITH '올바른 기간을 입력해주세요'.
+    cv_subrc = 4.
+  ENDIF.
 
   IF zsssmm03001-rgtor IS NOT INITIAL.
-    READ TABLE gt_pernr WITH KEY zsssmm03001-rgtor INTO gs_pernr.
+    READ TABLE gt_logi WITH KEY zsssmm03001-rgtor INTO gs_logi.
 
     IF sy-subrc <> 0.
+      cv_subrc = 4.
       MESSAGE i999(zmcss) WITH '올바른 담당사원을 입력해주세요'.
     ENDIF.
   ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_TAB3_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_tab3_field CHANGING cv_subrc TYPE sy-subrc.
+
+  IF zsssmm03004-endda IS INITIAL AND zsssmm03004-begda IS INITIAL .
+
+  ELSEIF zsssmm03004-endda IS INITIAL OR zsssmm03004-begda IS INITIAL.
+    MESSAGE s999(zmcss) WITH '올바른 기간을 입력해주세요'.
+    cv_subrc = 4.
+  ENDIF.
+
+
+  IF zsssmm03004-rgtor IS NOT INITIAL.
+    READ TABLE gt_finan WITH KEY pernr = zsssmm03004-rgtor INTO gs_finan.
+
+    IF sy-subrc <> 0.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '올바른 사원을 입력해주세요'.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_AP_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_ap_data .
+  DATA : lt_data TYPE TABLE OF zsssmm03002,
+         ls_data LIKE LINE OF lt_data.
+
+  DATA : BEGIN OF ls_apinf,
+           rgdat TYPE zessrgdat,
+           rgtor TYPE zessrgtor,
+         END OF ls_apinf.
+  DATA lt_apinf LIKE TABLE OF ls_apinf.
+
+
+  CLEAR gt_data.
+
+  SELECT ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
+           FROM ztssmivh
+           INTO CORRESPONDING FIELDS OF TABLE lt_data
+           WHERE apnum NE ''.
+
+  LOOP AT  lt_data INTO ls_data.
+    SELECT SINGLE rgdat rgtor
+      FROM ztssjeh
+      INTO CORRESPONDING FIELDS OF ls_apinf
+      WHERE jenum = ls_data-apnum
+        AND rgdat IN gt_apdat
+        AND rgtor IN gt_aptor.
+
+
+    IF sy-subrc IS INITIAL.
+      ls_data-apdat = ls_apinf-rgdat.
+      ls_data-aptor = ls_apinf-rgtor.
+      APPEND ls_data TO gt_data.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_TAB2_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_tab2_field CHANGING cv_subrc TYPE sy-subrc.
+
+  IF zsssmm03003-endda IS INITIAL AND zsssmm03003-begda IS INITIAL.
+
+  ELSEIF zsssmm03003-endda IS INITIAL OR zsssmm03003-begda IS INITIAL.
+    MESSAGE s999(zmcss) WITH '올바른 기간을 입력해주세요'.
+    cv_subrc = 4.
+  ENDIF.
+
+
+  IF zsssmm03003-rgtor IS NOT INITIAL.
+    READ TABLE gt_logi WITH KEY pernr = zsssmm03003-rgtor INTO gs_logi.
+
+    IF sy-subrc <> 0.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '올바른 사원을 입력해주세요'.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
+  DATA : lt_data TYPE TABLE OF zsssmm03002,
+         ls_data LIKE LINE OF lt_data,
+         lt_list TYPE TABLE OF zsssmm03002,
+         ls_list LIKE LINE OF lt_list.
+
+  DATA : BEGIN OF ls_ivnum,
+           ivnum TYPE zessivnum,
+         END OF ls_ivnum.
+  DATA lt_ivnum LIKE TABLE OF ls_ivnum.
+
+  DATA :BEGIN OF ls_grnum,
+          grnum TYPE zessgrnum,
+          rgdat TYPE zessrgdat,
+          rgtor TYPE zessrgtor,
+        END OF ls_grnum.
+  DATA lt_grnum LIKE TABLE OF ls_grnum.
+
+  CLEAR : gt_data,
+          gs_data.
+
+  SELECT grnum rgdat rgtor
+    FROM ztssgrh
+    INTO TABLE lt_grnum
+    WHERE rstat = 'A'
+      AND rgtor IN gt_grtor
+      AND rgdat IN gt_grdat.
+
+  LOOP AT lt_grnum INTO ls_grnum.
+
+
+    SELECT SINGLE ivnum
+      FROM ztssmivi
+      INTO ls_ivnum
+      WHERE grnum = ls_grnum-grnum.
+
+    IF  sy-subrc <> 0.
+      ls_list-grnum = ls_grnum-grnum.
+      ls_list-grdat = ls_grnum-rgdat.
+      ls_list-grtor = ls_grnum-rgtor.
+      APPEND ls_list TO gt_data.
+    ELSE.
+      SELECT SINGLE ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
+      FROM ztssmivh
+      INTO CORRESPONDING FIELDS OF ls_data
+      WHERE ivnum = ls_ivnum-ivnum.
+
+      ls_data-grnum = ls_grnum-grnum.
+      ls_data-grdat = ls_grnum-rgdat.
+      ls_data-grtor = ls_grnum-rgtor.
+      APPEND ls_data TO gt_data.
+    ENDIF.
+
+  ENDLOOP.
+
+  IF zsssmm03003-check NE '' AND zsssmm03003-cheke EQ ''.
+    DELETE gt_data WHERE ivnum EQ ''.
+  ELSEIF zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
+    DELETE gt_data WHERE ivnum NE ''.
+  ELSEIF zsssmm03003-check EQ '' AND zsssmm03003-cheke EQ ''.
+    MESSAGE i999(zmcss) WITH '올바른 조건을 입력해주세요'.
+    CLEAR gt_data.
+    cv_subrc = 4.
+  ELSEIF zsssmm03003-check NE '' AND zsssmm03003-cheke NE ''.
+
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FIELD_CATALOG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_field_catalog .
+  CLEAR gt_fcat.
+
+
+
+  IF my_tab-activetab = 'TAB2'. "GR 조회창 IV 완료
+    PERFORM set_fcat USING 'APTOR' '' '' 'X'.
+    PERFORM set_fcat USING 'APDAT' '' '' 'X'.
+    PERFORM set_fcat USING 'APNUM' '' '' 'X'.
+    PERFORM set_fcat USING 'APFYR' '' '' 'X'.
+
+  ELSEIF my_tab-activetab = 'TAB2' AND zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
+    PERFORM set_fcat USING 'APTOR' '' '' 'X'.
+    PERFORM set_fcat USING 'APDAT' '' '' 'X'.
+    PERFORM set_fcat USING 'IVDAT' '' '' 'X'.
+    PERFORM set_fcat USING 'JENUM' '' '' 'X'.
+    PERFORM set_fcat USING 'FYEAR' '' '' 'X'.
+    PERFORM set_fcat USING 'APNUM' '' '' 'X'.
+    PERFORM set_fcat USING 'APFYR' '' '' 'X'.
+    PERFORM set_fcat USING 'TOPRC' '' '' 'X'.
+    PERFORM set_fcat USING 'STEXT' '' '' 'X'.
+    PERFORM set_fcat USING 'CURKY' '' '' 'X'.
+    PERFORM set_fcat USING 'RGTOR' '' '' 'X'.
+
+  ELSEIF my_tab-activetab = 'TAB3'. "AP 조회창
+    PERFORM set_fcat USING 'APNUM' '1' '' ''.
+    PERFORM set_fcat USING 'APFYR' '2' '' ''.
+    PERFORM set_fcat USING 'APTOR' '' 'AP등록자' ''.
+    PERFORM set_fcat USING 'APDAT' '' 'AP등록일' ''.
+
+    PERFORM set_fcat USING 'GRNUM' '' '' 'X'.
+    PERFORM set_fcat USING 'GRTOR' '' '' 'X'.
+    PERFORM set_fcat USING 'GRDAT' '' '' 'X'.
+
+  ELSEIF my_tab-activetab = 'TAB1'. " IV 조회창
+    PERFORM set_fcat USING 'APTOR' '' '' 'X'.
+    PERFORM set_fcat USING 'APDAT' '' '' 'X'.
+    PERFORM set_fcat USING 'GRNUM' '' '' 'X'.
+    PERFORM set_fcat USING 'GRTOR' '' '' 'X'.
+    PERFORM set_fcat USING 'GRDAT' '' '' 'X'.
+    PERFORM set_fcat USING 'APNUM' '' '' 'X'.
+    PERFORM set_fcat USING 'APFYR' '' '' 'X'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat USING VALUE(p_fieldname) TYPE lvc_fname
+                    VALUE(p_col_pos) TYPE lvc_colpos
+                    VALUE(p_coltext) TYPE lvc_txtcol
+                    VALUE(p_no_out) TYPE lvc_noout.
+  CLEAR gs_fcat.
+  gs_fcat-fieldname = p_fieldname .
+  gs_fcat-col_pos = p_col_pos.
+  gs_fcat-coltext = p_coltext.
+  gs_fcat-no_out    = p_no_out.
+  APPEND gs_fcat TO gt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DETAIL_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_detail_info  CHANGING pv_subrc.
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no LIKE LINE OF lt_row_no,
+        lv_cnt    TYPE i.
+
+  CLEAR pv_subrc.
+
+  CALL METHOD go_alv->get_selected_rows
+    IMPORTING
+*     et_index_rows =
+      et_row_no = lt_row_no.
+
+  "Case 1
+  IF lt_row_no IS INITIAL.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  "Case 2
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+  IF lv_cnt > 1.
+    pv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  CLEAR ls_row_no.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+
+  CLEAR gs_data.
+  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BUTTON
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_button .
+
+  READ TABLE gt_data INDEX 1 INTO gs_data.
+
+  IF gs_data-grtor NE '' AND gs_data-ivnum NE ''. "GR 조회창 IV 완료
+
+
+  ELSEIF gs_data-grtor NE '' AND gs_data-ivnum EQ ''. "GR 조회창 IV 미완료
+
+
+  ELSEIF gs_data-aptor NE ''. "AP 조회창
+
+
+  ELSE. " IV 조회창
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_gr_item TABLES ct_data STRUCTURE ztssgri
+                 USING VALUE(pv_grnum) TYPE zessgrnum.
+
+  SELECT grnum grseq ponum itnum stoid amount meins del
+    FROM ztssgri
+    INTO CORRESPONDING FIELDS OF TABLE ct_data
+    WHERE grnum = pv_grnum
+      AND del EQ ''.
+
+  IF  sy-subrc <> 0 .
+    MESSAGE i999(zmcss) WITH 'GR 데이터가 존재하지 않음'.
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_IV_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_iv_data .
+  DATA : lt_data TYPE TABLE OF ztssmivi,
+         ls_data LIKE LINE OF lt_data.
+  DATA : lt_list TYPE TABLE OF ztssmivh,
+         ls_list LIKE LINE OF lt_list.
+
+  DATA : BEGIN OF ls_menu,
+           pomnr TYPE zesspomnr, "자재코드
+           venid TYPE zessvenid,
+           vnprc TYPE zessvnprc,
+         END OF ls_menu.
+  DATA lt_menu LIKE TABLE OF ls_menu.
+
+
+  LOOP AT gt_gri INTO gs_gri.
+    MOVE-CORRESPONDING gs_gri TO ls_data.
+
+
+    PERFORM get_pomnr_data USING gs_gri-ponum
+                                 gs_gri-itnum
+                        CHANGING ls_menu-pomnr.
+
+    PERFORM get_venid_data USING gs_gri-ponum
+                        CHANGING ls_menu-venid.
+
+    PERFORM get_vnprs_data USING ls_menu-pomnr
+                                 ls_menu-venid
+                        CHANGING ls_menu-vnprc.
+
+    ls_data-ivprc =  gs_gri-amount * ls_menu-vnprc.
+    ls_data-curky = 'KRW'.
+    ls_data-ivseq = sy-tabix.
+    APPEND ls_data TO gt_mivi.
+  ENDLOOP.
+
+  CLEAR: ls_list,
+         lt_list.
+  LOOP AT gt_mivi INTO gs_mivi.
+    ls_list-toprc = ls_list-toprc + gs_mivi-ivprc.
+    ls_list-curky = 'KRW'.
+
+    MOVE-CORRESPONDING ls_list TO gs_mivh.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_POMNR_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_pomnr_data USING VALUE(pv_ponum) TYPE zessponum
+                          VALUE(pv_itnum) TYPE zesspoitn
+                        CHANGING cv_pomnr TYPE zesspomnr.
+  SELECT SINGLE pomnr
+    FROM ztsspoi
+    INTO cv_pomnr
+    WHERE ponum = pv_ponum
+      AND itnum = pv_itnum.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_POMNR_DATA 실패'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENID_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_GRI_PONUM  text
+*      <--P_LS_MENU_VENID  text
+*----------------------------------------------------------------------*
+FORM get_venid_data  USING VALUE(pv_ponum) TYPE zessponum
+                     CHANGING cv_venid TYPE zessvenid.
+
+  SELECT SINGLE venid
+  FROM ztsspoh
+  INTO cv_venid
+  WHERE ponum = pv_ponum.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_VENID_DAT 실패'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VNPRS_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_vnprs_data USING VALUE(pv_pomnr) TYPE zesspomnr
+                          VALUE(pv_venid) TYPE zessvenid
+                        CHANGING cv_vnprc TYPE zessvnprc.
+
+
+  SELECT SINGLE vnprc
+  FROM ztssprcat
+  INTO cv_vnprc
+  WHERE rawnr = pv_pomnr
+   AND  venid = pv_venid.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_vnprs_data 실패'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0300 .
+  IF go_con_3 IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con_3
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON_3'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv_3
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con_3
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0300 .
+  DATA: ls_layo TYPE lvc_s_layo.
+
+  PERFORM set_alv_layo.
+
+
+  CALL METHOD go_alv_3->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMM03005'
+      is_layout                     = gs_layo
+    CHANGING
+      it_outtab                     = gt_gri
+*     it_fieldcatalog               =
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_IV_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_iv_data .
+  DATA : lv_ivnum TYPE zessivnum,
+         lv_fyear TYPE zessfyear.
+
+  PERFORM set_iv_number CHANGING lv_ivnum.
+
+  LOOP AT gt_mivi INTO gs_mivi.
+    gs_mivi-ivnum = lv_ivnum.
+    MODIFY gt_mivi FROM gs_mivi.
+  ENDLOOP.
+
+  gs_mivh-ivnum = lv_ivnum.
+  gs_mivh-jenum = gs_jeh-jenum.
+  gs_mivh-fyear = sy-datum+0(4).
+  gs_mivh-rgdat = sy-datum.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_IV_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_iv_field CHANGING cv_subrc TYPE sy-subrc.
+
+  IF zsssmm03007-ivdat < zsssmm03006-grdat.
+    cv_subrc = 4.
+    MESSAGE i999(zmcss) WITH '입고일보다 이른 날짜 입니다'.
+  ENDIF.
+
+  IF zsssmm03007-rgtor IS NOT INITIAL.
+    READ TABLE gt_logi WITH KEY zsssmm03007-rgtor INTO gs_logi.
+
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '올바른 담당사원을 입력해주세요'.
+      cv_subrc = 4.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_JEPOST_IV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_jepost_iv .
+
+  CLEAR gs_jei.
+  gs_jei-jeseq = '001'.
+  gs_jei-debit = gs_mivh-toprc.
+  gs_jei-glacc = '910000'.
+  APPEND gs_jei TO gt_jei.
+
+  CLEAR gs_jei.
+  gs_jei-jeseq = '002'.
+  gs_jei-credit = gs_mivh-toprc.
+  gs_jei-glacc = '240000'.
+  APPEND gs_jei TO gt_jei.
+
+  gs_jeh-rgdat = sy-datum.
+  gs_jeh-jtype = 'KR'.
+
+
+  CALL SCREEN 310 STARTING AT 85 3 ENDING AT 166 6.
+
+
+
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FI_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_DATA  text
+*      <--P_LS_LIST  text
+*----------------------------------------------------------------------*
+FORM set_fi_data.
+  DATA : BEGIN OF ls_jeset,
+           jenum TYPE zessjenum,
+           fyear TYPE zessfyear,
+         END OF ls_jeset.
+  DATA lt_jeset LIKE TABLE OF ls_jeset.
+
+
+  PERFORM set_fi_number CHANGING ls_jeset-jenum
+                                 ls_jeset-fyear.
+
+  LOOP AT gt_jei INTO gs_jei.
+    gs_jei-jenum = ls_jeset-jenum.
+    gs_jei-fyear = ls_jeset-fyear.
+    gs_jei-curky = 'KRW'.
+
+    MODIFY gt_jei FROM gs_jei.
+  ENDLOOP.
+
+  gs_jeh-jenum = ls_jeset-jenum.
+  gs_jeh-fyear = ls_jeset-fyear.
+  gs_jeh-stext = zsssmm03008-stext.
+  gs_jeh-rgtor = zsssmm03008-rgtor.
+  gs_jeh-curky = 'KRW'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_MSCREEN_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_mscreen_field USING VALUE(pv_rgtor) TYPE zessrgtor
+                         CHANGING cv_subrc TYPE sy-subrc.
+
+  IF pv_rgtor IS NOT INITIAL.
+    READ TABLE gt_finan WITH KEY pernr = pv_rgtor INTO gs_finan.
+
+    IF sy-subrc <> 0.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '올바른 사원을 입력해주세요'.
+    ENDIF.
+  ELSEIF pv_rgtor IS INITIAL.
+    cv_subrc = 4.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FI_NUMBER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fi_number CHANGING cv_num TYPE c
+                            cv_year TYPE n.
+  DATA: lv_num(6)   TYPE n.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSFI01'
+      toyear                  = sy-datum+0(4)
+    IMPORTING
+      number                  = lv_num
+    EXCEPTIONS  " M TYPE -> A
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc IS INITIAL.
+    cv_num = 'J' && sy-datum+0(4) && lv_num.
+    cv_year = sy-datum+0(4).
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_IV_NUMBER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_iv_number CHANGING cv_num TYPE c.
+
+  DATA : lv_num  TYPE n LENGTH 6,
+         lv_char TYPE c LENGTH 11.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMM03'
+*     QUANTITY                = '1'
+*     SUBOBJECT               = ' '
+      toyear                  = sy-datum+0(4)
+*     IGNORE_BUFFER           = ' '
+    IMPORTING
+      number                  = lv_num
+*     QUANTITY                =
+*     RETURNCODE              =
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc IS INITIAL.
+    cv_num = 'V' && sy-datum+0(4) && lv_num.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_HEADER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_gr_header .
+
+  SELECT SINGLE grnum rstat grdat jenum fyear stext rgdat rgtor
+     FROM ztssgrh
+     INTO CORRESPONDING FIELDS OF zsssmm03006
+     WHERE grnum = gs_data-grnum.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'GET_GR_HEADER 실패'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0400 .
+  IF go_con_4 IS NOT INITIAL. RETURN. ENDIF.
+  CREATE OBJECT go_con_4
+    EXPORTING
+*     parent                      =
+      container_name              = 'CON_4'
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT go_alv_4
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con_4
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_0400 .
+  PERFORM set_alv_layo.
+
+
+  CALL METHOD go_alv_4->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = 'ZSSSMM03006'
+      is_layout                     = gs_layo
+*      it_toolbar_excluding          = gv_tbex
+    CHANGING
+      it_outtab                     = gt_grh
+      it_fieldcatalog               = gt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+
 
 ENDFORM.
 

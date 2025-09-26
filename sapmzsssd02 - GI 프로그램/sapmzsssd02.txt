@@ -1,3 +1,4 @@
+
 *&---------------------------------------------------------------------*
 *& Module Pool       SAPMZSSSD02
 *&
@@ -12,6 +13,7 @@ INCLUDE mzsssd02top                             .  " global Data
 INCLUDE mzsssd02o01                             .  " PBO-Modules
 INCLUDE mzsssd02i01                             .  " PAI-Modules
 INCLUDE mzsssd02f01                             .  " FORM-Routines
+INCLUDE mzsssd02c01                             .  " CLASS-Implementations
 
 LOAD-OF-PROGRAM.
 
@@ -19,20 +21,54 @@ LOAD-OF-PROGRAM.
   PERFORM get_domain_fixed_values TABLES gt_dd07v
                                   USING  'ZDSSISTAT'.
 
+  " 공통 세팅 : exclude (ALV위에 툴바)
+  PERFORM set_alv_exclude CHANGING gt_exclude.
+
   " alv의 기본 세팅 - 0200
-  PERFORM set_default_alv TABLES    gt_fcat_0200
-                                    gt_sort_0200
-                          USING     '0200'
-                          CHANGING  gs_layo_0200.
+  PERFORM set_default_alv : TABLES    gt_fcat_0200
+                                      gt_sort_0200
+                            USING     '0200'
+                            CHANGING  gs_layo_0200,
+
+                            TABLES    gt_fcat_0300
+                                      gt_sort_0300
+                            USING     '0300'
+                            CHANGING  gs_layo_0300,
+
+                            TABLES    gt_fcat_0302
+                                      gt_sort_0302
+                            USING     '0302'
+                            CHANGING  gs_layo_0302,
+
+                            TABLES    gt_fcat_0303
+                                      gt_sort_0303
+                            USING     '0303'
+                            CHANGING  gs_layo_0303,
+
+                            TABLES    gt_fcat_0500
+                                      gt_sort_0500
+                            USING     '0500'
+                            CHANGING  gs_layo_0500.
 
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 출고 문서 조회 - 검색 조건
 * T105 --> 검색조건 테스트 스크린
 * T200 --> 출고 문서 조회
-* T100 --> 출고 문서 조회 - 검색 조건
-* T105 --> 검색조건 테스트 스크린
-* T200 --> 출고 문서 조회
+* T300 --> 신규 출고 생성
+* T301 --> 출고 아이템 추가 - 추가 경로 선택
+* T302 --> 판매 오더로 출고 아이템 선택
+* T303 --> 고객 정보로 출고 아이템 선택
+* T500 --> 출고 문서 & 상세 조회
+* T998 --> 프로그램 종료
+* T999 --> &
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: PN
+*016   & & & &
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -1,0 +1,115 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD02C01
+*&---------------------------------------------------------------------*
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+    MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' e_column_id-fieldname es_row_no-row_id.
+  ENDMETHOD.
+
+  METHOD on_toolbar.
+    DATA ls_button TYPE stb_button.
+    ls_button-butn_type = '3'. "Separator
+    APPEND ls_button TO e_object->mt_toolbar.
+
+    CLEAR ls_button.
+    ls_button-function = 'ENDEDIT'.
+    ls_button-icon = icon_change.
+    ls_button-butn_type = '0'.
+    ls_button-text = '입력 완료'.
+    APPEND ls_button TO e_object->mt_toolbar.
+  ENDMETHOD.
+
+  METHOD on_user_command.
+    DATA: lt_row_no TYPE lvc_t_roid,
+          ls_row_no LIKE LINE OF lt_row_no.
+
+    CASE e_ucomm.
+      WHEN 'ENDEDIT'.
+        MESSAGE s000(ymc00) WITH '변경 사항이 반영되었습니다'.
+        CALL METHOD cl_gui_cfw=>set_new_ok_code
+          EXPORTING
+            new_code = 'ENTER'.
+    ENDCASE.
+  ENDMETHOD.
+
+  METHOD on_data_changed.
+    DATA ls_cell LIKE LINE OF er_data_changed->mt_good_cells.
+
+    DATA ls_info_0300 LIKE gs_info_0300.
+
+    DATA : lv_msgamount TYPE string,
+           lv_msgstoid  TYPE string,
+           lv_msgmatnm  TYPE string.
+
+    LOOP AT er_data_changed->mt_good_cells INTO ls_cell.
+      CASE ls_cell-fieldname.
+        WHEN 'AMOUNT'.
+
+          READ TABLE gt_info_0300 INTO ls_info_0300 INDEX ls_cell-row_id.
+
+          er_data_changed->get_cell_value(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_fieldname = ls_cell-fieldname
+            IMPORTING
+              e_value = ls_info_0300-amount
+          ).
+
+          " ERROR CHECK
+          PERFORM check_gii_availability USING ls_info_0300
+                                         CHANGING lv_msgamount
+                                                  lv_msgstoid
+                                                  lv_msgmatnm
+                                                  gv_subrc.
+          IF gv_subrc <> 0.
+            CASE gv_subrc.
+              WHEN '4'.
+                er_data_changed->add_protocol_entry(
+                 EXPORTING
+                   i_msgid = 'ZMCSS'
+                   i_msgno = '301'
+                   i_msgty = 'E'
+                   i_fieldname = ls_cell-fieldname
+                   i_row_id = ls_cell-row_id
+                 ).
+              WHEN '5'.
+                er_data_changed->add_protocol_entry(
+                 EXPORTING
+                   i_msgid = 'ZMCSS'
+                   i_msgno = '302'
+                   i_msgty = 'E'
+                   i_msgv1 = lv_msgamount
+                   i_fieldname = ls_cell-fieldname
+                   i_row_id = ls_cell-row_id
+                 ).
+              WHEN '6'.
+                er_data_changed->add_protocol_entry(
+                  EXPORTING
+                    i_msgid = 'ZMCSS'
+                    i_msgno = '303'
+                    i_msgty = 'E'
+                    i_msgv1 = lv_msgstoid
+                    i_msgv2 = lv_msgmatnm
+                    i_msgv3 = lv_msgamount
+                    i_fieldname = ls_cell-fieldname
+                    i_row_id = ls_cell-row_id
+                  ).
+            ENDCASE.
+            CONTINUE.
+          ENDIF.
+
+          er_data_changed->modify_cell(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_tabix = ls_cell-tabix
+              i_fieldname = ls_cell-fieldname
+              i_value = ls_info_0300-amount
+          ).
+      ENDCASE.
+    ENDLOOP.
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

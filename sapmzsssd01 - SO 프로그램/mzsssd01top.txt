@@ -2,28 +2,116 @@
 *& Include MZSSSD01TOP                                       Module Pool      SAPMZSSSD01
 *&
 *&---------------------------------------------------------------------*
-PROGRAM SAPMZSSSD01.
+PROGRAM sapmzsssd01.
 
 " Common
-DATA: ok_code TYPE sy-ucomm,
-      gv_subrc TYPE sy-subrc.
+DATA: ok_code  TYPE sy-ucomm,
+      gv_subrc TYPE sy-subrc,
+      gv_dynnr TYPE sy-dynnr,
+      gv_first TYPE abap_bool,
+      gt_toolbar TYPE ui_functions.
 
 " Screen 100 - Condition
 TABLES zssssd0101.
 
 " Screen 100 - ALV
-DATA: BEGIN OF gs_head.
-        INCLUDE STRUCTURE zssssd0102.
-DATA: END OF gs_head,
-      gt_head LIKE TABLE OF gs_head.
+DATA: BEGIN OF gs_head,
+        light.
+    INCLUDE STRUCTURE zssssd0102.
+DATA: it_col TYPE lvc_t_scol,
+      stat TYPE char1,        " Y/M/N 출고 여부 저장
+      END OF gs_head,
+      gt_head LIKE TABLE OF gs_head,
+      gv_stat TYPE c LENGTH 1,
+      gs_col LIKE LINE OF gs_head-it_col.
 TABLES zssssd0102.
 
 " ALV (100)
-DATA: go_con1 TYPE REF TO cl_gui_custom_container,
+DATA: go_con1  TYPE REF TO cl_gui_custom_container,
       go_alv1  TYPE REF TO cl_gui_alv_grid,
       gs_layo1 TYPE lvc_s_layo,
       gt_fcat1 TYPE lvc_t_fcat,
       gs_fcat1 LIKE LINE OF gt_fcat1.
+
+" Screen 200 - Header
+TABLES zssssd0103.
+
+" Screen 200 - ALV (Item)
+DATA: BEGIN OF gs_item.
+    INCLUDE STRUCTURE zssssd0104.
+DATA: END OF gs_item,
+      gt_item LIKE TABLE OF gs_item.
+TABLES zssssd0104.
+
+" ALV (200)
+DATA: go_con2  TYPE REF TO cl_gui_custom_container,
+      go_alv2  TYPE REF TO cl_gui_alv_grid,
+      gs_layo2 TYPE lvc_s_layo,
+      gt_fcat2 TYPE lvc_t_fcat,
+      gs_fcat2 LIKE LINE OF gt_fcat2.
+
+" Screen 201, 202 - Tabstrip
+CONTROLS ts_info TYPE TABSTRIP.
+
+" SubScreen 201
+TABLES zssssd0105.
+DATA gv_postc TYPE char5.
+
+" Screen 202 - ALV
+DATA: BEGIN OF gs_mat.
+    INCLUDE STRUCTURE zssssd0106.
+DATA: END OF gs_mat,
+      gt_mat LIKE TABLE OF gs_mat.
+TABLES zssssd0106.
+
+" ALV (202)
+DATA: go_con3  TYPE REF TO cl_gui_custom_container,
+      go_alv3  TYPE REF TO cl_gui_alv_grid,
+      gs_layo3 TYPE lvc_s_layo,
+      gt_fcat3 TYPE lvc_t_fcat,
+      gs_fcat3 LIKE LINE OF gt_fcat3.
+
+" Sceen 300 - Header
+DATA: gs_head_udt TYPE zssssd0103,
+      gt_head_udt LIKE TABLE OF gs_head_udt.
+
+" Screen 300 - ALV (Item)
+DATA: BEGIN OF gs_item_udt.
+        INCLUDE STRUCTURE zssssd0104.
+DATA: END OF gs_item_udt,
+      gt_item_udt LIKE TABLE OF gs_item_udt.
+
+" ALV (300)
+DATA: go_con4  TYPE REF TO cl_gui_custom_container,
+      go_alv4  TYPE REF TO cl_gui_alv_grid,
+      gs_layo4 TYPE lvc_s_layo,
+      gt_fcat4 TYPE lvc_t_fcat,
+      gs_fcat4 LIKE LINE OF gt_fcat4.
+
+TYPES: lv_row_id TYPE i,
+       lv_fname TYPE char10,
+       lv_value TYPE char255.
+
+TYPES: BEGIN OF lvc_s_modc,
+         row_id    TYPE lv_row_id,     " 행 번호
+         fieldname TYPE lv_fname,      " 필드 이름
+         value_new TYPE lv_value,      " 변경된 값
+         value_old TYPE lv_value,      " 이전 값
+       END OF lvc_s_modc.
+TYPES: lvc_t_modc TYPE STANDARD TABLE OF lvc_s_modc WITH DEFAULT KEY.
+
+" SubScreen 301
+DATA: BEGIN OF gs_item_ist.
+        INCLUDE STRUCTURE zssssd0104.
+DATA: END OF gs_item_ist,
+      gt_item_ist LIKE TABLE OF gs_item_ist.
+DATA gv_itnum TYPE char3.
+
+DATA: BEGIN OF gs_sacat,
+        somnr TYPE ztsssacat-prdnr,
+        csprc TYPE ztsssacat-csprc,
+      END OF gs_sacat,
+      gt_sacat LIKE TABLE OF gs_sacat.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

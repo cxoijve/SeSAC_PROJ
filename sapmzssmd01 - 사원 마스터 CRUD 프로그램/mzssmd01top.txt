@@ -18,6 +18,7 @@ DATA: BEGIN OF gs_list.
 DATA: END OF gs_list,
       gt_list LIKE TABLE OF gs_list.
 TABLES zsssmd0102.
+DATA gv_postc TYPE char5.
 
 " ALV
 DATA: go_con TYPE REF TO cl_gui_custom_container,

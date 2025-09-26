@@ -11,16 +11,62 @@ MODULE user_command_0100 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
-    WHEN 'TAB1' OR 'TAB2'.
+    WHEN 'TAB1' OR 'TAB2' OR 'TAB3'.
       my_tab-activetab = ok_code.
+      CLEAR : zsssmm03001,
+              zsssmm03003,
+              zsssmm03004.
     WHEN 'SEARCH'.
       IF my_tab-activetab = 'TAB1'.
         PERFORM get_tables_data.
-        PERFORM check_tab1_field.
+
+        PERFORM check_tab1_field CHANGING gv_subrc.
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+
         PERFORM check_alv_condition.
-        PERFORM get_iv_data.
+        PERFORM get_iv_data CHANGING gv_subrc.
+        IF gv_subrc = 4.
+          RETURN.
+        ENDIF.
+        PERFORM set_field_catalog.
+        PERFORM set_button.
         CALL SCREEN 200.
         CLEAR zsssmm03001.
+
+      ELSEIF my_tab-activetab = 'TAB2'.
+        PERFORM get_tables_data.
+        PERFORM check_tab2_field CHANGING gv_subrc.
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+        PERFORM check_alv_condition.
+        PERFORM get_gr_data CHANGING gv_subrc.
+        IF gv_subrc = 4.
+          CLEAR zsssmm03003.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+        PERFORM set_field_catalog.
+        CALL SCREEN 200.
+        CLEAR zsssmm03003.
+
+      ELSEIF my_tab-activetab = 'TAB3'.
+        PERFORM get_tables_data.
+        PERFORM check_tab3_field CHANGING gv_subrc.
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+
+        PERFORM check_alv_condition.
+        PERFORM get_ap_data.
+        PERFORM set_field_catalog.
+        CALL SCREEN 200.
+        CLEAR zsssmm03004.
       ENDIF.
     WHEN 'ENTER'.
 
@@ -53,7 +99,125 @@ MODULE user_command_0200 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'REGIST'.
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+        CLEAR : gv_subrc,
+                gt_gri,
+                gt_mivi,
+                gs_mivi,
+                gs_mivh.
+
+        IF  gs_data-ivnum NE ''.
+          MESSAGE i999(zmcss) WITH 'IV 미완료된 데이터를 선택해주세요'.
+          RETURN.
+        ENDIF.
+
+        PERFORM get_gr_item TABLES gt_gri
+                            USING gs_data-grnum.
+        PERFORM get_gr_header.
+
+        PERFORM insert_iv_data.
+
+        CALL SCREEN 300.
+      ENDIF.
     WHEN 'CHANGE'.
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+
+        SELECT SINGLE ivnum jenum fyear stext rgtor rgdat
+          FROM ztssmivh
+          INTO CORRESPONDING FIELDS OF zsssmm03011
+          WHERE ivnum = gs_data-ivnum.
+
+        CALL SCREEN 400.
+      ENDIF.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      CLEAR : gv_subrc,
+              gt_gri,
+              gt_mivi,
+              gs_mivi,
+              gs_mivh.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+
+    WHEN 'ADDSET'.
+      PERFORM check_iv_field CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        RETURN.
+      ENDIF.
+
+      MOVE-CORRESPONDING zsssmm03007 TO gs_mivh.
+      PERFORM set_jepost_iv.
+    WHEN 'INSERT'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0310  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0310 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'.
+      PERFORM get_tables_data.
+      PERFORM check_mscreen_field USING zsssmm03008-rgtor
+                                  CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        RETURN.
+      ENDIF.
+
+      PERFORM set_fi_data.
+      PERFORM set_iv_data.
+
+      LOOP AT gt_jei INTO gs_jei.
+        INSERT ztssjei FROM gs_jei.
+      ENDLOOP.
+
+      INSERT ztssjeh FROM gs_jeh.
+
+      LOOP AT gt_mivi INTO gs_mivi.
+        INSERT ztssmivi FROM gs_mivi.
+      ENDLOOP.
+
+      INSERT ztssmivh FROM gs_mivh.
+
+      IF sy-subrc IS INITIAL.
+
+      ENDIF.
+
+    WHEN 'CANC'.
+      CLEAR : gs_jei,
+              gt_jei,
+              gs_jeh,
+              gt_jeh.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0400  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0400 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
   ENDCASE.
 
 ENDMODULE.

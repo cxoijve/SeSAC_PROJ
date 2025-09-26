@@ -16,7 +16,24 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE status_0200 OUTPUT.
-  SET PF-STATUS 'S200'.
+
+
+  CLEAR gt_excl.
+
+  IF my_tab-activetab = 'TAB1'.
+    APPEND 'REGIST' TO gt_excl.
+    APPEND 'GRTAIL' TO gt_excl.
+
+  ELSEIF my_tab-activetab = 'TAB2'.
+    APPEND 'CHANGE' TO gt_excl.
+
+  ELSEIF my_tab-activetab = 'TAB3'.
+    APPEND 'REGIST' TO gt_excl.
+    APPEND 'CHANGE' TO gt_excl.
+    APPEND 'GRTAIL' TO gt_excl.
+  ENDIF.
+
+  SET PF-STATUS 'S200' EXCLUDING gt_excl.
   SET TITLEBAR 'T200'.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -40,9 +57,11 @@ MODULE fill_dynnr OUTPUT.
       gv_dynnr = '0101'.
     WHEN 'TAB2'.
       gv_dynnr = '0102'.
+    WHEN 'TAB3'.
+      gv_dynnr = '0103'.
     WHEN OTHERS.
-      my_tab-activetab = 'TAB1'.
-      gv_dynnr = '0101'.
+      my_tab-activetab = 'TAB2'.
+      gv_dynnr = '0102'.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -53,6 +72,51 @@ ENDMODULE.
 MODULE set_alv_0200 OUTPUT.
   PERFORM create_alv_0200.
   PERFORM display_alv_0200.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0300 OUTPUT.
+  PERFORM create_alv_0300.
+  PERFORM display_alv_0300.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0310  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0310 OUTPUT.
+  SET PF-STATUS 'S310'.
+  SET TITLEBAR 'T310'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0400 OUTPUT.
+  SET PF-STATUS 'S400'.
+  SET TITLEBAR 'T400'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0400 OUTPUT.
+  PERFORM create_alv_0400.
+  PERFORM display_alv_0400.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

@@ -1,0 +1,1549 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMM02F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+    WHEN 'SEARCH'.
+      " 입고 안 된 po문서 가져오기
+      PERFORM get_not_gr_po_datas.
+      PERFORM modify_po_datas TABLES gt_podata.
+      SORT gt_podata BY dudat ASCENDING.
+
+    WHEN 'TAB1' OR 'TAB2'.
+      IF ok_code = 'TAB1'. gv_screen = 1. ELSE. gv_screen = 0. ENDIF.
+      t_info-activetab = ok_code.
+
+    WHEN 'RA1'.
+      IF gv_radio1 = 'X'.
+        gv_radio_screen  = 0.
+      ELSEIF gv_radio2 = 'X'.
+        gv_radio_screen  = 1.
+
+      ENDIF.
+*    WHEN 'I_ADD'.
+*      MESSAGE i999(zmcss) WITH '아이템 체크!'.
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0030   text
+*      <--P_GO_CON  text
+*      <--P_GO_ALV  text
+*----------------------------------------------------------------------*
+FORM create_alv  USING    VALUE(p_0030)
+                 CHANGING p_go_con
+                          p_go_alv.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0100.
+
+  IF go_dock IS INITIAL.
+    PERFORM init_alv.
+*  PERFORM create_alv USING 'CON' CHANGING go_con go_alv.
+  ELSE.
+
+  ENDIF.
+
+*  PERFORM display_alv USING 'ZSSSMM0213' CHANGING gt_item gs_layo3 gt_fcat3 gt_sort3 go_alv3.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv .
+
+  PERFORM create_obj  USING 'CON' CHANGING go_custom.
+  PERFORM set_split.
+  PERFORM set_alv.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DOCKING
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_docking .
+
+  CREATE OBJECT go_custom
+    EXPORTING
+*     parent                      =     " Parent container
+      container_name              = 'CON'  " Name of the Screen CustCtrl Name to Link Container To
+*     style                       =     " Windows Style Attributes Applied to this Container
+*     lifetime                    = LIFETIME_DEFAULT    " Lifetime
+*     repid                       =     " Screen to Which this Container is Linked
+*     dynnr                       =     " Report To Which this Container is Linked
+*     no_autodef_progid_dynnr     =     " Don't Autodefined Progid and Dynnr?
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+*  MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*             WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_document
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_document .
+  CREATE OBJECT go_document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+  " To add text
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text         = '입고 미완료 PO조회'
+      sap_fontsize = cl_dd_area=>medium
+      sap_emphasis = cl_dd_area=>strong.
+
+  CALL METHOD go_document->new_line.
+
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text         = '입고 예정 아이템 설정'
+      sap_fontsize = cl_dd_area=>small
+      sap_emphasis = cl_dd_area=>strong.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_alv
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_alv .
+
+  PERFORM create_alv_0102 USING go_con CHANGING go_alv.
+  PERFORM create_alv_0102 USING go_con3 CHANGING go_alv2.
+  PERFORM create_alv_0102 USING go_con4 CHANGING go_alv3.
+
+  SET HANDLER : lcl_event_handler=>handle_toolbar FOR go_alv,
+                lcl_event_handler=>handle_user_command FOR go_alv.
+  SET HANDLER : lcl_event_handler=>handle_toolbar_item_remove FOR go_alv2.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_split
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_split .
+
+  PERFORM create_obj_split USING go_custom 1 2 CHANGING go_split.
+  PERFORM set_row_split.
+  PERFORM make_container_by_obj USING 1 1 CHANGING go_split go_con.
+  PERFORM make_container_by_obj USING 1 2 CHANGING go_split go_con2.
+
+  CREATE OBJECT go_split2
+    EXPORTING
+      parent  = go_con2
+      rows    = 2
+*     WIDTH   = 2000
+      columns = 1.
+
+  CALL METHOD go_split2->set_row_height
+    EXPORTING
+      id     = 2        " 첫 번째 행
+      height = 58.      " 50%
+
+
+  PERFORM make_container_by_obj USING 1 1 CHANGING go_split2 go_con3.
+  PERFORM make_container_by_obj USING 2 1 CHANGING go_split2 go_con4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default .
+
+  PERFORM set_display.
+  PERFORM set_range_of_grdat USING zsssmm0210-grdat_s zsssmm0210-grdat_e CHANGING gr_grdat.
+  PERFORM set_layout.
+  PERFORM set_field_catalog.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_display .
+
+  " 검색조회 라디오 버튼 설정
+  gv_radio_screen = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_RANGE_OF_GRDAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0210_GRDAT_S  text
+*      -->P_ZSSSMM0210_GRDAT_E  text
+*      <--P_GR_GRDAT  text
+*----------------------------------------------------------------------*
+FORM set_range_of_grdat  USING    VALUE(pv_start) TYPE sy-datum
+                                  VALUE(pv_end) TYPE sy-datum
+                         CHANGING cv_range LIKE gr_grdat.
+
+  DATA : ls_range LIKE LINE OF cv_range.
+
+  CLEAR cv_range.
+
+  IF pv_start IS NOT INITIAL AND pv_end IS NOT INITIAL.
+
+    CLEAR ls_range.
+    ls_range-sign = 'I'.
+    ls_range-option = 'BT'.
+    ls_range-low = pv_start.
+    ls_range-high = pv_end.
+    APPEND ls_range TO cv_range.
+
+  ELSEIF pv_start IS NOT INITIAL.
+
+    CLEAR ls_range.
+    ls_range-sign   = 'I'.
+    ls_range-option = 'GT'.
+    ls_range-low    = pv_start.
+    APPEND ls_range TO cv_range.
+
+  ELSEIF pv_end IS NOT INITIAL.
+
+    CLEAR ls_range.
+    ls_range-sign   = 'I'.
+    ls_range-option = 'LE'.
+    ls_range-high    = pv_end.
+    APPEND ls_range TO cv_range.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_datas .
+
+  " 입고 안 된 po문서 가져오기
+  PERFORM get_not_gr_po_datas.
+  PERFORM modify_po_datas TABLES gt_podata.
+  SORT gt_podata BY dudat ASCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_NOT_GR_PO_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_not_gr_po_datas .
+
+  DATA : lv_where TYPE string.
+
+  PERFORM get_info_by_ponum USING zsssmm0210-ponum.
+  PERFORM get_info_by_vendor USING zsssmm0210-vname zsssmm0210-venid.
+  PERFORM get_sum_po_gr.
+
+*  LOOP AT gt_gri INTO gs_gri.
+*    DELETE gt_podata WHERE ponum = gs_gri-ponum
+*                     AND itnum = gs_gri-itnum.
+*  ENDLOOP.
+
+  WRITE : '/'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_BY_PONUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0210_PONUM  text
+*----------------------------------------------------------------------*
+FORM get_info_by_ponum  USING VALUE(p_ponum) TYPE zsssmm0210-ponum.
+
+  DATA : lv_powhere    TYPE string,
+         lv_cond_ponum TYPE ztsspoi-ponum.
+
+  IF p_ponum IS NOT INITIAL.
+    lv_cond_ponum = zsssmm0210-ponum.
+    CONCATENATE lv_powhere 'ponum eq lv_cond_ponum' INTO lv_powhere SEPARATED BY space.
+  ENDIF.
+
+  SELECT ponum itnum
+    INTO CORRESPONDING FIELDS OF TABLE gt_gri
+    FROM ztssgri
+    WHERE (lv_powhere).
+*  IF sy-subrc <> 0.
+*
+*  ENDIF.
+  DATA : lv_amount TYPE i.
+  DATA : ls_gri LIKE LINE OF gt_gri.
+
+  DATA : ls_poinfo LIKE LINE OF gt_gri,
+         lt_poinfo LIKE TABLE OF ls_poinfo.
+  DATA : ls_grinfo LIKE LINE OF gt_gri,
+         lt_grinfo LIKE TABLE OF ls_grinfo.
+
+*  LOOP AT gt_gri INTO ls_gri.
+*
+*    SELECT ponum itnum amount meins
+*      INTO CORRESPONDING FIELDS OF TABLE lt_grinfo
+*      FROM ztssgri
+*      WHERE ponum = ls_gri-ponum
+*      AND   itnum = ls_gri-itnum.
+*
+*    LOOP AT lt_grinfo INTO ls_grinfo.
+*
+*      SELECT ponum itnum amount meins
+*        INTO CORRESPONDING FIELDS OF TABLE lt_poinfo
+*        FROM ztsspoi
+*        WHERE ponum = ls_grinfo-ponum
+*        AND   itnum = ls_grinfo-itnum.
+*
+*    ENDLOOP.
+**    ENDLOOP.
+**
+**    SELECT ponum itnum amount meins
+**      INTO CORRESPONDING FIELDS OF TABLE lt_poinfo
+**      FROM ztsspoi
+**      WHERE ponum = ls_gri-ponum
+**      AND   itnum = ls_gri-itnum.
+**
+**    LOOP AT lt_poinfo INTO ls_poinfo.
+**
+**      SELECT ponum itnum amount meins
+**        INTO CORRESPONDING FIELDS OF TABLE lt_grinfo
+**        FROM ztssgri
+**        WHERE ponum = ls_gri-ponum
+**        AND   itnum = ls_gri-itnum.
+**
+**      LOOP AT lt_grinfo INTO ls_grinfo.
+**
+**
+**
+**      ENDLOOP.
+**
+**    ENDLOOP.
+*
+*
+**      IF ls_gri-amount <> lv_amount.
+**
+**      ENDIF.
+**
+*
+*  ENDLOOP.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_BY_VENDOR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0210_VNAME  text
+*      -->P_ZSSSMM0210_VENID  text
+*----------------------------------------------------------------------*
+FORM get_info_by_vendor  USING    VALUE(p_vname) TYPE zsssmm0210-vname
+                                  VALUE(p_venid) TYPE zsssmm0210-venid.
+
+  DATA : lv_where      TYPE string,
+         lv_cond_venid TYPE ztssvend-venid.
+
+  IF p_vname IS NOT INITIAL.
+    PERFORM find_vendor_name USING p_vname CHANGING lv_cond_venid.
+    CONCATENATE lv_where 'venid eq lv_cond_venid' INTO lv_where SEPARATED BY space.
+  ENDIF.
+
+  SELECT ponum podat venid dudat stext rgtor
+    INTO CORRESPONDING FIELDS OF TABLE gt_podata
+    FROM ztsspoh
+    WHERE (lv_where).
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  FIND_VENDOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_VNAME  text
+*      <--P_LV_COND_VENID  text
+*----------------------------------------------------------------------*
+FORM find_vendor_name  USING VALUE(p_name) TYPE ztssvend-vname
+                       CHANGING c_venid TYPE ztssvend-venid.
+
+  DATA : lv_vname TYPE ztssvend-vname.
+
+  lv_vname = '%' && p_name && '%'.
+
+  SELECT SINGLE venid
+  INTO c_venid
+  FROM ztssvend
+  WHERE vname LIKE  lv_vname.
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH '일치하는 벤더사가 존재하지 않습니다.' DISPLAY LIKE 'W'.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0102
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0102 .
+
+  IF go_custom IS INITIAL.
+
+    PERFORM init_alv.
+    PERFORM display_alv_grid.
+
+  ELSE.
+    PERFORM refresh_alv.
+
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLACY_ALV_GRID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM displacy_alv_grid .
+
+
+  go_alv2->set_table_for_first_display(
+    EXPORTING
+*      i_buffer_active               =     " Buffering Active
+*      i_bypassing_buffer            =     " Switch Off Buffer
+*      i_consistency_check           =     " Starting Consistency Check for Interface Error Recognition
+      i_structure_name              =  'ZSSSMM0212'   " Internal Output Table Structure Name
+*      is_variant                    =     " Layout
+*      i_save                        =     " Save Layout
+*      i_default                     = 'X'    " Default Display Variant
+      is_layout                     =   gs_layo   " Layout
+*      is_print                      =     " Print Control
+*      it_special_groups             =     " Field Groups
+*      it_toolbar_excluding          =     " Excluded Toolbar Standard Functions
+*      it_hyperlink                  =     " Hyperlinks
+*      it_alv_graphics               =     " Table of Structure DTC_S_TC
+*      it_except_qinfo               =     " Table for Exception Quickinfo
+*      ir_salv_adapter               =     " Interface ALV Adapter
+    CHANGING
+      it_outtab                     =  gt_podata   " Output Table
+      it_fieldcatalog               =  gt_fcat   " Field Catalog
+*      it_sort                       =     " Sort Criteria
+*      it_filter                     =     " Filter Criteria
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4
+  ).
+  IF sy-subrc <> 0.
+*   MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+
+*  go_alv3->set_table_for_first_display(
+*    EXPORTING
+**      i_buffer_active               =     " Buffering Active
+**      i_bypassing_buffer            =     " Switch Off Buffer
+**      i_consistency_check           =     " Starting Consistency Check for Interface Error Recognition
+*      i_structure_name              =  'ZSSSMM0213'   " Internal Output Table Structure Name
+**      is_variant                    =     " Layout
+**      i_save                        =     " Save Layout
+**      i_default                     = 'X'    " Default Display Variant
+*      is_layout                     =   gs_layo2  " Layout
+**      is_print                      =     " Print Control
+**      it_special_groups             =     " Field Groups
+**      it_toolbar_excluding          =     " Excluded Toolbar Standard Functions
+**      it_hyperlink                  =     " Hyperlinks
+**      it_alv_graphics               =     " Table of Structure DTC_S_TC
+**      it_except_qinfo               =     " Table for Exception Quickinfo
+**      ir_salv_adapter               =     " Interface ALV Adapter
+*    CHANGING
+*      it_outtab                     =  gt_item   " Output Table
+**      it_fieldcatalog               =     " Field Catalog
+**      it_sort                       =     " Sort Criteria
+**      it_filter                     =     " Filter Criteria
+**    EXCEPTIONS
+**      invalid_parameter_combination = 1
+**      program_error                 = 2
+**      too_many_lines                = 3
+**      others                        = 4
+*  ).
+*  IF sy-subrc <> 0.
+**   MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+**              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+*  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0101 .
+
+
+
+  IF go_dock IS INITIAL.
+*    PERFORM init_alv.
+    PERFORM init_alv_101.
+    PERFORM set_split_101.
+    PERFORM set_alv_101.
+*    PERFORM set_alv.
+  ELSE.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_101 .
+  CREATE OBJECT go_dock
+    EXPORTING
+*     parent                      =
+      repid                       = sy-repid
+      dynnr                       = sy-dynnr
+      side                        = cl_gui_docking_container=>dock_at_left
+      extension                   = 500
+*     style                       =
+*     lifetime                    = lifetime_default
+*     caption                     =
+*     metric                      = 0
+*     ratio                       =
+*     no_autodef_progid_dynnr     =
+*     name                        =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SPLIT_101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_split_101 .
+  CREATE OBJECT go_split2
+    EXPORTING
+      parent  = go_dock
+      rows    = 1
+*     WIDTH   = 2000
+      columns = 2.
+
+  CALL METHOD go_split2->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_con4.
+
+  CALL METHOD go_split2->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_con4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_101 .
+  CREATE OBJECT go_alv4
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con3
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+
+  CREATE OBJECT go_alv5
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con4
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_GRID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_grid .
+
+  PERFORM make_exclude_btn.
+
+  go_alv->set_table_for_first_display(
+     EXPORTING
+*      i_buffer_active               =     " Buffering Active
+*      i_bypassing_buffer            =     " Switch Off Buffer
+*      i_consistency_check           =     " Starting Consistency Check for Interface Error Recognition
+       i_structure_name              =  'ZSSSMM0212'   " Internal Output Table Structure Name
+*      is_variant                    =     " Layout
+*      i_save                        =  'A'   " Save Layout
+*      i_default                     = 'X'    " Default Display Variant
+       is_layout                     =   gs_layo " Layout
+*      is_print                      =     " Print Control
+*      it_special_groups             =     " Field Groups
+      it_toolbar_excluding          =    gt_exclude   " Excluded Toolbar Standard Functions
+*      it_hyperlink                  =     " Hyperlinks
+*      it_alv_graphics               =     " Table of Structure DTC_S_TC
+*      it_except_qinfo               =     " Table for Exception Quickinfo
+*      ir_salv_adapter               =     " Interface ALV Adapter
+     CHANGING
+       it_outtab                     =   gt_podata   " Output Table
+      it_fieldcatalog               =    gt_fcat " Field Catalog
+*      it_sort                       =     " Sort Criteria
+*      it_filter                     =     " Filter Criteria
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4
+   ).
+  IF sy-subrc <> 0.
+*   MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+*
+  go_alv2->set_table_for_first_display(
+    EXPORTING
+*      i_buffer_active               =     " Buffering Active
+*      i_bypassing_buffer            =     " Switch Off Buffer
+*      i_consistency_check           =     " Starting Consistency Check for Interface Error Recognition
+      i_structure_name              =  'ZSSSMM0215'   " Internal Output Table Structure Name
+*      is_variant                    =     " Layout
+*      i_save                        =     " Save Layout
+*      i_default                     = 'X'    " Default Display Variant
+      is_layout                     =   gs_layo2 " Layout
+*      is_print                      =     " Print Control
+*      it_special_groups             =     " Field Groups
+      it_toolbar_excluding          =   gt_exclude" Excluded Toolbar Standard Functions
+*      it_hyperlink                  =     " Hyperlinks
+*      it_alv_graphics               =     " Table of Structure DTC_S_TC
+*      it_except_qinfo               =     " Table for Exception Quickinfo
+*      ir_salv_adapter               =     " Interface ALV Adapter
+    CHANGING
+      it_outtab                     =  gt_item   " Output Table
+      it_fieldcatalog               =  gt_fcat2   " Field Catalog
+*      it_sort                       =     " Sort Criteria
+*      it_filter                     =     " Filter Criteria
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4
+  ).
+  IF sy-subrc <> 0.
+*   MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  go_alv3->set_table_for_first_display(
+  EXPORTING
+*      i_buffer_active               =     " Buffering Active
+*      i_bypassing_buffer            =     " Switch Off Buffer
+*      i_consistency_check           =     " Starting Consistency Check for Interface Error Recognition
+    i_structure_name              =  'ZSSSMM0215'   " Internal Output Table Structure Name
+*      is_variant                    =     " Layout
+*      i_save                        =     " Save Layout
+*      i_default                     = 'X'    " Default Display Variant
+    is_layout                     =   gs_layo3 " Layout
+*      is_print                      =     " Print Control
+*      it_special_groups             =     " Field Groups
+    it_toolbar_excluding          =   gt_exclude" Excluded Toolbar Standard Functions
+*      it_hyperlink                  =     " Hyperlinks
+*      it_alv_graphics               =     " Table of Structure DTC_S_TC
+*      it_except_qinfo               =     " Table for Exception Quickinfo
+*      ir_salv_adapter               =     " Interface ALV Adapter
+  CHANGING
+    it_outtab                     =  gt_item   " Output Table
+    it_fieldcatalog               =  gt_fcat2   " Field Catalog
+*      it_sort                       =     " Sort Criteria
+*      it_filter                     =     " Filter Criteria
+  EXCEPTIONS
+    invalid_parameter_combination = 1
+    program_error                 = 2
+    too_many_lines                = 3
+    OTHERS                        = 4
+).
+  IF sy-subrc <> 0.
+*   MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*              WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYOUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layo-cwidth_opt = 'X'.
+  gs_layo-sel_mode = 'A'.
+  gs_layo-grid_title = '입고 대기 구매오더 리스트'.
+  gs_layo-info_fname = 'COLOR'.
+  gs_layo-zebra = 'X'.
+  gs_layo-ctab_fname = 'IT_COL'.
+  gs_layo-excp_fname = 'LIGHT'.
+  gs_layo-excp_led = 'X'.
+
+  gs_layo2-cwidth_opt = 'X'.
+  gs_layo2-sel_mode = 'A'.
+  gs_layo2-grid_title = '입고 가능 구매오더 아이템'.
+  gs_layo2-no_rowins = 'X'.
+
+  gs_layo3-cwidth_opt = 'X'.
+  gs_layo3-sel_mode = 'A'.
+  gs_layo3-grid_title = '입고 확정 구매오더 아이템'.
+  gs_layo3-no_rowins = 'X'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_TOOLBAR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_OBJECT  text
+*----------------------------------------------------------------------*
+FORM handle_toolbar USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set.
+
+  DATA ls_toolbar TYPE stb_button.
+
+
+  ls_toolbar-butn_type = 3.
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+  ls_toolbar-function  = 'I_ADD'.
+  ls_toolbar-butn_type = 0.
+  ls_toolbar-text      = TEXT-b01.
+  ls_toolbar-icon      = icon_workflow_activity.
+  ls_toolbar-quickinfo = TEXT-b01.
+
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_SUM_PO_GR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_sum_po_gr .
+  TYPES: BEGIN OF ty_sum,
+           ponum  TYPE ztsspoi-ponum,
+           itnum  TYPE ztsspoi-itnum,
+           amount TYPE ztsspoi-amount,
+         END OF ty_sum.
+
+  DATA: lt_poi_raw TYPE STANDARD TABLE OF ztsspoi,
+        ls_poi_raw LIKE LINE OF lt_poi_raw,
+        lt_gri_raw TYPE STANDARD TABLE OF ztssgri,
+        ls_gri_raw LIKE LINE OF lt_gri_raw,
+        lt_po_sum  TYPE STANDARD TABLE OF ty_sum,
+        lt_gr_sum  TYPE STANDARD TABLE OF ty_sum,
+        ls_po_sum  TYPE ty_sum,
+        ls_gr_sum  TYPE ty_sum.
+
+
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_poi_raw
+    FROM ztsspoi.
+
+  LOOP AT lt_poi_raw INTO ls_poi_raw.
+    CLEAR ls_po_sum.
+    ls_po_sum-ponum  = ls_poi_raw-ponum.
+    ls_po_sum-itnum  = ls_poi_raw-itnum.
+    ls_po_sum-amount = ls_poi_raw-amount.
+    COLLECT ls_po_sum INTO lt_po_sum.
+  ENDLOOP.
+
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_gri_raw
+    FROM ztssgri.
+
+  LOOP AT lt_gri_raw INTO ls_gri_raw.
+    CLEAR ls_gr_sum.
+    ls_gr_sum-ponum  = ls_gri_raw-ponum.
+    ls_gr_sum-itnum  = ls_gri_raw-itnum.
+    ls_gr_sum-amount = ls_gri_raw-amount.
+    COLLECT ls_gr_sum INTO lt_gr_sum.
+  ENDLOOP.
+
+  DATA : ls_podata LIKE LINE OF gt_podata.
+
+  LOOP AT lt_po_sum INTO ls_po_sum.
+    READ TABLE lt_gr_sum INTO ls_gr_sum
+         WITH KEY ponum = ls_po_sum-ponum
+                  itnum = ls_po_sum-itnum.
+
+    IF sy-subrc <> 0.
+      LOOP AT gt_podata INTO ls_podata.
+        ls_podata-light = '1'.
+        MODIFY gt_podata FROM ls_podata.
+        CLEAR ls_podata.
+      ENDLOOP.
+
+    ELSEIF ls_gr_sum-amount = ls_po_sum-amount.
+      DELETE gt_podata WHERE ponum = ls_po_sum-ponum.
+    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+      LOOP AT gt_podata INTO ls_podata.
+        ls_podata-light = '2'.
+        MODIFY gt_podata FROM ls_podata.
+        CLEAR ls_podata.
+      ENDLOOP.
+
+    ELSE.
+    ENDIF.
+  ENDLOOP.
+
+  WRITE : /.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_PO_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_PODATA  text
+*----------------------------------------------------------------------*
+FORM modify_po_datas  TABLES t_data STRUCTURE gs_podata.
+
+  LOOP AT t_data.
+    PERFORM display_po_status_by_dudat USING t_data-dudat CHANGING t_data-light t_data.
+    PERFORM get_vendor_name USING t_data-venid CHANGING t_data-vname.
+    PERFORM get_emp_name USING t_data-rgtor CHANGING t_data-ename.
+
+    MODIFY t_data.
+    CLEAR t_data.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_PO_STATUS_BY_DUDAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_DUDAT  text
+*      <--P_T_DATA_LIGHT  text
+*      <--P_T_DATA  text
+*----------------------------------------------------------------------*
+FORM display_po_status_by_dudat  USING VALUE(pv_dudat) TYPE ztsspoh-dudat
+                                 CHANGING cv_light
+                                          cs_data LIKE gs_podata.
+
+  DATA : lv_dudat     TYPE ztsspoh-dudat,
+         lv_dudat_ten TYPE sy-datum.
+  DATA ls_col TYPE lvc_s_scol.
+
+  lv_dudat = sy-datum.
+  lv_dudat_ten = sy-datum + 10.
+
+  IF pv_dudat < lv_dudat.
+    cv_light = '1'.
+    ls_col-fname = 'DUDAT'.
+    ls_col-color-col = '6'.
+    ls_col-color-int = '1'.
+    ls_col-color-inv = '0'.
+    APPEND ls_col TO cs_data-it_col.
+    CLEAR ls_col.
+  ELSEIF pv_dudat < lv_dudat_ten.
+    cv_light = '2'.
+    ls_col-fname = 'DUDAT'.
+    ls_col-color-col = '5'.
+    ls_col-color-int = '1'.
+    ls_col-color-inv = '1'.
+    APPEND ls_col TO cs_data-it_col.
+    CLEAR ls_col.
+  ELSE.
+    cv_light = '3'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_VENID  text
+*      <--P_T_DATA_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_vendor_name  USING    p_venid TYPE ztssvend-venid
+                      CHANGING c_vname TYPE ztssvend-vname.
+
+  SELECT SINGLE vname
+    INTO c_vname
+    FROM ztssvend
+    WHERE venid = p_venid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_RGTOR  text
+*      <--P_T_DATA_ENAME  text
+*----------------------------------------------------------------------*
+FORM get_emp_name  USING    p_empid TYPE ztssemp-pernr
+                   CHANGING c_ename TYPE zsssmm0211-ename.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE ztssemp-lname,
+           fname TYPE ztssemp-fname,
+         END OF ls_name,
+         lv_fname TYPE zsssmm0211-ename.
+
+  SELECT SINGLE lname fname
+    INTO CORRESPONDING FIELDS OF ls_name
+    FROM ztssemp
+    WHERE pernr = p_empid.
+
+  lv_fname = ls_name-lname && ls_name-fname.
+  c_ename = lv_fname.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_USER_COMMAND
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_UCOMM  text
+*----------------------------------------------------------------------*
+FORM handle_user_command  USING    pv_ucomm TYPE sy-ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'I_ADD'.
+*      MESSAGE i999(zmcss) WITH '아이템을 확인하세요!'.
+      PERFORM add_item_data.
+      PERFORM refresh_alv.
+
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  ADD_ITEM_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM add_item_data .
+
+  DATA : lv_rowid TYPE i,
+         ls_data  LIKE LINE OF gt_podata.
+
+  PERFORM check_pop_item_data USING go_alv CHANGING gv_subrc lv_rowid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_ITEM_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV2  text
+*      <--P_CV_SUBRC  text
+*      <--P_LV_ROWID  text
+*----------------------------------------------------------------------*
+FORM check_pop_item_data  USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
+                          CHANGING cv_subrc TYPE sy-subrc
+                                 cv_rowid TYPE i.
+
+  DATA : lt_row_no  TYPE lvc_t_roid,
+         ls_row_no  LIKE LINE OF lt_row_no,
+         lv_cnt     TYPE i,
+         lv_tab_cnt TYPE i.
+  DATA : lv_venid      TYPE ztssvend-venid,
+         lv_temp_venid TYPE ztssvend-venid.
+  DATA : lt_item     LIKE gt_item,
+         ls_item     LIKE LINE OF lt_item,
+         lt_all_item LIKE gt_item.
+
+  " 중복 체크
+  DATA : lv_duplicate_found TYPE abap_bool.
+
+  CLEAR cv_subrc.
+  CLEAR ls_row_no.
+
+  CALL METHOD co_alv->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row_no.
+
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+
+  IF lv_cnt = 0.
+    cv_subrc = 4.
+    MESSAGE s999(zmcss) WITH '1개이상 선택해주세요-벤더사 확인요망!' gs_podata-ponum DISPLAY LIKE 'W'.
+    RETURN.
+  ENDIF.
+
+
+  LOOP AT lt_row_no INTO ls_row_no.
+    READ TABLE gt_podata INDEX ls_row_no-row_id INTO gs_podata.
+
+    READ TABLE gt_item INTO ls_item WITH KEY ponum = gs_podata-ponum.
+    IF sy-subrc = 0.
+      lv_duplicate_found = abap_true.
+      MESSAGE s999(zmcss) WITH '이미 추가된 PO 번호입니다:' gs_podata-ponum DISPLAY LIKE 'W'.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+
+  DESCRIBE TABLE lt_row_no LINES lv_tab_cnt.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+  cv_rowid = ls_row_no-row_id.
+  READ TABLE gt_podata INDEX cv_rowid INTO gs_podata.
+
+  SELECT SINGLE venid
+  INTO lv_venid
+    FROM ztsspoh
+    WHERE ponum = gs_podata-ponum.
+
+  IF gt_item IS NOT INITIAL.
+    READ TABLE gt_item INTO ls_item INDEX 1.
+    IF ls_item-venid <> lv_venid.
+      MESSAGE s999(zmcss) WITH '같은 벤더사일 때만 아이템에 추가가능합니다!' DISPLAY LIKE 'W'.
+      RETURN.
+    ENDIF.
+  ENDIF.
+
+
+  SELECT ponum itnum pomnr amount meins plant poprc curky
+    INTO CORRESPONDING FIELDS OF TABLE lt_item
+    FROM ztsspoi
+    WHERE ponum = gs_podata-ponum.
+
+  IF lv_tab_cnt > 1.
+    lv_tab_cnt = lv_tab_cnt - 1.
+    lv_cnt = 2.
+
+    DO lv_tab_cnt TIMES.
+      READ TABLE lt_row_no INDEX lv_cnt INTO ls_row_no.
+      cv_rowid = ls_row_no-row_id.
+      READ TABLE gt_podata INDEX cv_rowid INTO gs_podata.
+
+      SELECT SINGLE venid
+      INTO lv_temp_venid
+        FROM ztsspoh
+        WHERE ponum = gs_podata-ponum.
+
+      IF lv_temp_venid <> lv_venid.
+        MESSAGE s999(zmcss) WITH '같은 벤더사일 때만 아이템에 추가가능합니다!' DISPLAY LIKE 'W'.
+        CONTINUE.
+      ENDIF.
+      SELECT ponum itnum pomnr amount meins plant poprc curky
+       INTO CORRESPONDING FIELDS OF TABLE lt_all_item
+       FROM ztsspoi
+       WHERE ponum = gs_podata-ponum.
+
+
+
+      APPEND LINES OF lt_all_item TO lt_item.
+      CLEAR lt_all_item.
+
+      lv_cnt = lv_cnt + 1.
+
+*      gs_podata-light = '@0A@'.
+*      gs_podata-icon = icon_okay.
+      MODIFY gt_podata FROM gs_podata INDEX ls_row_no-row_id.
+    ENDDO.
+  ENDIF.
+
+  APPEND LINES OF lt_item TO gt_item.
+
+  DATA : lv_amount TYPE ztssgri-amount.
+
+  LOOP AT gt_item INTO ls_item.
+
+    IF ls_item-venid IS INITIAL.
+      ls_item-venid = lv_venid.
+    ENDIF.
+    PERFORM get_vendor_name USING ls_item-venid CHANGING ls_item-vname.
+    PERFORM get_mat_name USING ls_item-pomnr CHANGING ls_item-matnm.
+
+    SELECT SINGLE amount
+      INTO lv_amount
+      FROM ztssgri
+      WHERE ponum = ls_item-ponum
+      AND itnum = ls_item-itnum.
+
+
+    ls_item-grseq = gv_seqnum + 1.
+    gv_seqnum = gv_seqnum + 1.
+
+
+    ls_item-grqty = lv_amount.
+    ls_item-reqty = ls_item-amount - lv_amount.
+    IF ls_item-reqty = 0.
+      ls_item-rstat_t = '입고완료'.
+    ELSEIF ls_item-grqty > 0.
+      ls_item-rstat_t = '부분입고'.
+    ELSE.
+      ls_item-rstat_t = '입고대기'.
+    ENDIF.
+    MODIFY gt_item FROM ls_item.
+    CLEAR : lv_amount.
+  ENDLOOP.
+
+  cv_rowid = ls_row_no-row_id.
+
+  WRITE : '/'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv .
+
+  go_alv->refresh_table_display(
+  i_soft_refresh = 'X'
+*  is_stable = 'X'
+  ).
+  IF sy-subrc <> 0.
+* MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  go_alv2->refresh_table_display(
+    i_soft_refresh = 'X'
+*  is_stable = 'X'
+).
+  IF sy-subrc <> 0.
+* MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+*            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+*  go_alv3->refresh_table_display(
+*  i_soft_refresh = 'X'
+*   ).
+*  IF sy-subrc <> 0.
+** MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+**            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+*  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FIELD_CATALOG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_field_catalog .
+
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'LIGHT' '' CHANGING gs_fcat gt_fcat,
+                         USING 'COLTEXT' '상태' '' CHANGING gs_fcat  gt_fcat,
+                         USING 'ICON' 'X' '' CHANGING gs_fcat  gt_fcat,
+                         USING 'OUTPUTLEN' '4' 'X' CHANGING gs_fcat  gt_fcat.
+
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'POMNR' '' CHANGING gs_fcat2 gt_fcat2,
+                           USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'VENID' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'DUDAT' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'PLANT' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+  PERFORM set_fs_field : USING 'FIELDNAME' 'DEL' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat2 gt_fcat2,
+                       USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'CURKY' '' CHANGING gs_fcat2 gt_fcat2,
+                       USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'GRQTY' '' CHANGING gs_fcat2 gt_fcat2,
+                          USING 'COLTEXT' '입고완료수량' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'REQTY' '' CHANGING gs_fcat2 gt_fcat2,
+                         USING 'COLTEXT' '입고가능수량' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+  PERFORM set_fs_field : USING 'FIELDNAME' 'ORQTY' '' CHANGING gs_fcat2 gt_fcat2,
+                           USING 'EDIT' 'X' '' CHANGING gs_fcat2 gt_fcat2,
+                           USING 'COLTEXT' '입고수량' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'STOID' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'EDIT' 'X' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '창고' 'X' CHANGING gs_fcat2  gt_fcat2.
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'ORQTY' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'EDIT' 'X' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '입고수량' 'X' CHANGING gs_fcat2  gt_fcat2.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FS_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_1886   text
+*      -->P_1887   text
+*      -->P_1888   text
+*      <--P_GS_FCAT  text
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM set_fs_field USING     VALUE(p_input)
+                            VALUE(p_val)
+                            VALUE(p_flag)
+                   CHANGING cs_fcat TYPE lvc_s_fcat
+                            ct_fcat TYPE lvc_t_fcat.
+  DATA : lv_field(40).
+  FIELD-SYMBOLS <fs>.
+
+  lv_field = 'CS_FCAT-' && p_input.
+  ASSIGN (lv_field) TO <fs>.
+  IF p_val = 'N'.
+    READ TABLE ct_fcat INTO cs_fcat WITH KEY fieldname = p_input.
+    <fs> = sy-tabix + 1.
+  ELSE.
+    <fs> = p_val.
+  ENDIF.
+
+  UNASSIGN <fs>.
+  IF p_flag = 'X'.
+    APPEND cs_fcat TO ct_fcat.
+    CLEAR cs_fcat.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MAKE_EXCLUDE_BTN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM make_exclude_btn .
+
+
+  REFRESH gt_exclude.
+  DATA : ls_excl TYPE ui_func,
+         lt_excl TYPE ui_functions.
+
+  ls_excl = cl_gui_alv_grid=>mc_fc_excl_all.
+  APPEND ls_excl TO gt_exclude.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_OBJ
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CUSTOM  text
+*      -->P_0096   text
+*----------------------------------------------------------------------*
+FORM create_obj  USING VALUE(p_con)
+                 CHANGING co_obj TYPE REF TO cl_gui_custom_container.
+
+  CREATE OBJECT co_obj
+    EXPORTING
+      container_name              = p_con  " Name of the Screen CustCtrl Name to Link Container To
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '알 수 없는 에러입니다.'.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_OBJ_SPLIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CUSTOM  text
+*      -->P_1      text
+*      -->P_2      text
+*      <--P_GO_SPLIT  text
+*----------------------------------------------------------------------*
+FORM create_obj_split  USING    VALUE(po_obj) TYPE REF TO cl_gui_custom_container
+                                VALUE(p_1) TYPE i
+                                VALUE(p_2) TYPE i
+                       CHANGING co_split TYPE REF TO cl_gui_splitter_container.
+
+  CREATE OBJECT co_split
+    EXPORTING
+      parent  = po_obj
+      rows    = p_1
+*     WIDTH   = 2000
+      columns = p_2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MAKE_CONTAINER_BY_OBJ
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CON1  text
+*      -->P_1      text
+*      -->P_1      text
+*      <--P_GO_SPLIT  text
+*----------------------------------------------------------------------*
+FORM make_container_by_obj  USING   VALUE(p_1) TYPE i
+                                    VALUE(p_2) TYPE i
+                            CHANGING co_split TYPE REF TO cl_gui_splitter_container
+                                     co_obj TYPE REF TO cl_gui_container.
+
+  CALL METHOD co_split->get_container
+    EXPORTING
+      row       = p_1
+      column    = p_2
+    RECEIVING
+      container = co_obj.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0102
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CON  text
+*      <--P_GO_ALV  text
+*----------------------------------------------------------------------*
+FORM create_alv_0102  USING    VALUE(po_con) TYPE REF TO cl_gui_container
+                      CHANGING co_alv TYPE REF TO cl_gui_alv_grid.
+
+
+  CREATE OBJECT co_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = po_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MAT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_ITEM_POMNR  text
+*      <--P_LS_ITEM_MATNM  text
+*----------------------------------------------------------------------*
+FORM get_mat_name  USING    p_matid TYPE ztssmat-matnr
+                   CHANGING c_mname TYPE ztssmat_t-matnm.
+  SELECT SINGLE matnm
+     INTO c_mname
+     FROM ztssmat_t
+     WHERE matnr = p_matid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_TOOLBAR_ITEM_REMOVE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_OBJECT  text
+*----------------------------------------------------------------------*
+FORM handle_toolbar_item_remove   USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set.
+
+  DATA ls_toolbar TYPE stb_button.
+
+  ls_toolbar-butn_type = 3.
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+  ls_toolbar-function  = 'I_DEL'.
+  ls_toolbar-butn_type = 0.
+  ls_toolbar-text      = TEXT-b02.
+  ls_toolbar-icon      = icon_incomplete.
+  ls_toolbar-quickinfo = TEXT-b02.
+
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+
+  ls_toolbar-butn_type = 3.
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+  ls_toolbar-function  = 'I_ALL_DEL'.
+  ls_toolbar-butn_type = 0.
+  ls_toolbar-text      = TEXT-b03.
+  ls_toolbar-icon      = icon_system_modus_delete.
+  ls_toolbar-quickinfo = TEXT-b03.
+
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+  CLEAR  ls_toolbar.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ROW_SPLIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_row_split .
+
+  CALL METHOD go_split->set_row_height
+    EXPORTING
+      id     = 1        " 첫 번째 행
+      height = 30.      " 50%
+
+  CALL METHOD go_split->set_column_width
+    EXPORTING
+      id    = 1        " 첫 번째 행
+      width = 40.      " 50%
+
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

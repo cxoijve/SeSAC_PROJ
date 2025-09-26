@@ -9,17 +9,57 @@ DATA : gv_subrc TYPE sy-subrc,
        gv_dynnr TYPE sy-dynnr.
 
 TABLES : zsssmm03001,
-         zsssmm03002.
+         zsssmm03002,
+         zsssmm03003,
+         zsssmm03004,
+         zsssmm03005,
+         zsssmm03006,
+         zsssmm03007,
+         zsssmm03008,
+         zsssmm03009,
+         zsssmm03010,
+         zsssmm03011,
+         zsssmm03012,
+         zsssmm03013.
 
-DATA : gt_date  TYPE RANGE OF sy-datum WITH HEADER LINE,
-       gt_apnum TYPE RANGE OF zessapnum WITH HEADER LINE.
+DATA : gt_date  TYPE RANGE OF sy-datum  WITH HEADER LINE,
+       gt_apnum TYPE RANGE OF zessapnum WITH HEADER LINE,
+       gt_rgtor TYPE RANGE OF zessrgtor WITH HEADER LINE,
+       gt_apdat TYPE RANGE OF sy-datum  WITH HEADER LINE,
+       gt_aptor TYPE RANGE OF zessrgtor WITH HEADER LINE,
+       gt_grtor TYPE RANGE OF zessrgtor WITH HEADER LINE,
+       gt_grdat TYPE RANGE OF zessrgdat WITH HEADER LINE.
 
-DATA : BEGIN OF gs_pernr,
+DATA : gt_gri TYPE TABLE OF ztssgri,
+       gs_gri LIKE LINE OF gt_gri,
+       gt_grh TYPE TABLE OF zsssmm03006,
+       gs_grh LIKE LINE OF gt_grh.
+
+DATA : gt_mivi TYPE TABLE OF ztssmivi,
+       gs_mivi LIKE LINE OF gt_mivi,
+       gt_mivh TYPE TABLE OF ztssmivh,
+       gs_mivh LIKE LINE OF gt_mivh.
+
+DATA : gt_mivi_2 LIKE TABLE OF zsssmm03012,
+       gs_mivi_2 LIKE LINE OF gt_mivi_2.
+
+DATA : gt_jei TYPE TABLE OF ztssjei,
+       gs_jei LIKE LINE OF gt_jei,
+       gt_jeh TYPE TABLE OF ztssjeh,
+       gs_jeh LIKE LINE OF gt_jeh.
+
+DATA : BEGIN OF gs_logi,
          pernr TYPE zesspernr,
-       END OF gs_pernr.
-DATA : gt_pernr LIKE TABLE OF gs_pernr.
+       END OF gs_logi.
+DATA : gt_logi LIKE TABLE OF gs_logi.
+
+DATA : BEGIN OF gs_finan,
+         pernr TYPE zesspernr,
+       END OF gs_finan.
+DATA : gt_finan LIKE TABLE OF gs_finan.
 
 CONTROLS my_tab TYPE TABSTRIP.
+CONTROLS my_tab_2 TYPE TABSTRIP.
 
 DATA : gt_data TYPE TABLE OF zsssmm03002,
        gs_data LIKE LINE OF gt_data.
@@ -35,8 +75,16 @@ DATA : gt_mstat TYPE TABLE OF dd07v,
 DATA : gt_fcat TYPE lvc_t_fcat,
        gs_fcat LIKE LINE OF gt_fcat.
 
-DATA : go_con TYPE  REF TO cl_gui_custom_container,
-       go_alv TYPE REF TO cl_gui_alv_grid.
+DATA : go_con   TYPE  REF TO cl_gui_custom_container,
+       go_alv   TYPE REF TO cl_gui_alv_grid,
+       go_con_3 TYPE  REF TO cl_gui_custom_container,
+       go_alv_3 TYPE REF TO cl_gui_alv_grid,
+       go_con_4 TYPE  REF TO cl_gui_custom_container,
+       go_alv_4 TYPE REF TO cl_gui_alv_grid.
+
+DATA : gt_excl TYPE ui_functions.
+DATA : gs_toolbar TYPE stb_button.
+DATA : gv_tbex TYPE ui_functions.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

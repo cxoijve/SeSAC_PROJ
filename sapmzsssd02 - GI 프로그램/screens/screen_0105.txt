@@ -8,12 +8,12 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0105 0105     16100192 37  0  0 27121  0G E                              20250917154429																																
+SAPMZSSSD02                             0105 0105     16100192 37  0  0 27121  0G E                              20250925185148																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B105_01		CHAR	 49	00	00	00	30	00	  1	  2		  0	  0	  0		  8	R				  0	  0	106							Condition 101		
-B105_02		CHAR	 50	00	00	00	30	00	  1	 52		  0	  0	  0		  8	R				  0	  0	107							Condition 102		
+B105_01		CHAR	 49	00	00	00	30	00	  1	  2		  0	  0	  0		  8	R				  0	  0	101							Condition 101		
+B105_02		CHAR	 50	00	00	00	30	00	  1	 52		  0	  0	  0		  8	R				  0	  0	102							Condition 102		
 ZSSSSD0201-SONUM	2	CHAR	 20	30	00	04	30	00	  2	  4		  0	  0	  0		  0					  0	  0								판매오더 번호	                                                                                                                                                                                                                                                        X	
 ZSSSSD0201-SONUM	C	CHAR	 11	A0	00	84	30	08	  2	 25		  0	  0	  0		  0					 22	  0								___________	X                                      00	
 ZSSSSD0202-GINUM	2	CHAR	 20	30	00	04	30	00	  2	 54		  0	  0	  0		  0					  0	  0								출고 문서 번호	                                                                                                                                                                                                                                                        X	
@@ -32,16 +32,16 @@ T105_01	0	CHAR	  1	00	00	00	30	00	  5	 36		  0	  0	  0		  0					  0	  0								~
 ZSSSSD0201-ENDDA	D	DATE	 10	A0	00	80	30	08	  5	 38		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSSD0202-BEGDA	2	CHAR	 20	30	00	00	30	00	  5	 54		  0	  0	  0		  0					  0	  0								출고일	                                                                                                                                                                                                                                                        X	
 ZSSSSD0202-BEGDA	D	DATE	 10	A0	00	80	30	08	  5	 75		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-T105_04	C	CHAR	  1	00	00	00	30	00	  5	 87		  0	  0	  0		  0					  0	  0								~		
+T105_04	0	CHAR	  1	00	00	00	30	00	  5	 87		  0	  0	  0		  0					  0	  0								~		
 ZSSSSD0202-ENDDA	D	DATE	 10	A0	00	80	30	08	  5	 90		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSSD0202-ISTAT	2	CHAR	 20	30	00	01	30	00	  6	 54		  0	  0	  0		  0					  0	  0								출고 문서 상태	                                                                                                                                                                                                                                                        X	
 ZSSSSD0202-ISTAT	C	CHAR	 23	B0	00	81	30	18	  6	 75		  0	  0	  0		 25					  2	  0								_______________________	XDL K                                  00	
-ZSSSSD0202-BIDONE	C	CHAR	  1	A0	00	80	30	00	  7	 54		  0	  0	  0		  0	C				  2	  0	101							_	                                       00	
-ZSSSSD0202-BIDONE	0	CHAR	  9	30	00	00	30	00	  7	 56		  0	  0	  0		  0	C				  0	  0	101							청구 완료		
-ZSSSSD0202-APDONE	C	CHAR	  1	A0	00	80	30	00	  7	 75		  0	  0	  0		  0	C				  2	  0	102							_	                                       00	
-ZSSSSD0202-APDONE	0	CHAR	  9	30	00	00	30	00	  7	 77		  0	  0	  0		  0	C				  0	  0	102							정산 완료		
-B105_03		CHAR	 49	00	00	00	30	00	 10	  2		  0	  0	  0		  7	R				  0	  0	103							Condition 103		
-B105_04		CHAR	 50	00	00	00	30	00	 10	 52		  0	  0	  0		  7	R				  0	  0	104							Condition 104		
+ZSSSSD0202-BIDONE	C	CHAR	  1	A0	00	80	30	00	  7	 54		  0	  0	  0		  0	C				  2	  0	103							_	                                       00	
+ZSSSSD0202-BIDONE	0	CHAR	  9	30	00	00	30	00	  7	 56		  0	  0	  0		  0	C				  0	  0	103							청구 완료		
+ZSSSSD0202-APDONE	C	CHAR	  1	A0	00	80	30	00	  7	 75		  0	  0	  0		  0	C				  2	  0	104							_	                                       00	
+ZSSSSD0202-APDONE	0	CHAR	  9	30	00	00	30	00	  7	 77		  0	  0	  0		  0	C				  0	  0	104							정산 완료		
+B105_03		CHAR	 49	00	00	00	30	00	 10	  2		  0	  0	  0		  7	R				  0	  0	105							Condition 103		
+B105_04		CHAR	 50	00	00	00	30	00	 10	 52		  0	  0	  0		  7	R				  0	  0	106							Condition 104		
 ZSSSSD0203-JENUM	2	CHAR	 20	30	00	04	30	00	 11	  5		  0	  0	  0		  0					  0	  0								전표번호	                                                                                                                                                                                                                                                        X	
 ZSSSSD0203-JENUM	C	CHAR	 11	A0	00	84	30	08	 11	 26		  0	  0	  0		  0					 22	  0								___________	X                                      00	
 ZSSSSD0204-MATNR	2	CHAR	 20	30	00	04	30	00	 11	 55		  0	  0	  0		  0					  0	  0								자재 코드	                                                                                                                                                                                                                                                        X	
@@ -66,7 +66,8 @@ OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								_
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0105.																																
+  MODULE set_exit_msg.																																
 																																
 PROCESS AFTER INPUT.																																
-  MODULE exit AT EXIT-COMMAND.																																
+  MODULE exit_with_warning AT EXIT-COMMAND.																																
   MODULE user_command_0105.																																

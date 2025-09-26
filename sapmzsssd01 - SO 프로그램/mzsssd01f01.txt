@@ -58,15 +58,11 @@ FORM display_alv USING p_strnm
                           c_tab
                           c_fcat TYPE lvc_t_fcat.
 
-  PERFORM set_layo CHANGING gs_layo1.
-  PERFORM set_fcat.
-*  PERFORM set_sort.
-*  PERFORM set_light.
-
   CALL METHOD c_alv->set_table_for_first_display
     EXPORTING
       i_structure_name              = p_strnm
       is_layout                     = c_layo
+      it_toolbar_excluding          = gt_toolbar
     CHANGING
       it_outtab                     = c_tab
       it_fieldcatalog               = c_fcat
@@ -93,8 +89,6 @@ FORM set_layo CHANGING c_layo TYPE lvc_s_layo.
   c_layo-cwidth_opt = 'A'.
   c_layo-zebra = 'X'.
   c_layo-sel_mode = 'A'.
-*  c_layo-excp_fname = 'LIGHT'.
-*  c_layo-excp_led = 'X'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_HEADER_LIST
@@ -111,14 +105,14 @@ FORM get_header_list .
         lt_item   TYPE TABLE OF ztsssoi,
         ls_item   LIKE LINE OF lt_item,
         lv_sum    TYPE ztssgii-amount,
+        lv_count  TYPE i,
         lv_all_gi TYPE abap_bool,
-        lv_any_gi TYPE abap_bool,
-        lv_stat   TYPE c LENGTH 1.
+        lv_any_gi TYPE abap_bool.
 
   CLEAR: lr_dat, ls_dat.
 
   ls_dat-sign = 'I'.
-  ls_dat-option = 'BT'.     " 무조건 하나의 range row를 만들어 놓음. (입력 안 하면 전체 범위)
+  ls_dat-option = 'BT'.     " 하나의 range row 기본 생성 (입력 안 하면 전체 범위)
 
   " 판매오더일 필터링
   IF zssssd0101-sodat_b IS INITIAL.
@@ -143,70 +137,129 @@ FORM get_header_list .
            a~curky a~rgdat a~rgtor
       FROM ztsssoh AS a INNER JOIN ztsscust AS b
         ON a~cstid = b~cstid
-      INTO TABLE gt_head
+      INTO CORRESPONDING FIELDS OF TABLE gt_head
      WHERE a~sodat IN lr_dat.
   ELSE.
     SELECT a~sonum a~sodat a~cstid b~cname a~dudat a~stext
            a~curky a~rgdat a~rgtor
       FROM ztsssoh AS a INNER JOIN ztsscust AS b
         ON a~cstid = b~cstid
-      INTO TABLE gt_head
+      INTO CORRESPONDING FIELDS OF TABLE gt_head
      WHERE a~sodat IN lr_dat
        AND a~cstid = zssssd0101-cstid.
   ENDIF.
 
   " 출고여부 조회조건
   LOOP AT gt_head INTO gs_head.
-    CLEAR: lv_all_gi, lv_any_gi, lv_stat.
+    CLEAR: lv_all_gi, lv_any_gi.
     lv_all_gi = abap_true.      " 처음엔 전체 출고 완료로 가정 ->루프 돌다가 하나라도 덜 출고되면 false로 바뀜
     lv_any_gi = abap_false.     " 처음엔 전체 출고 미완료로 가정 ->루프 돌다가 출고 수량이 있으면 true로 바뀜
 
+    REFRESH lt_item.
     SELECT *
       FROM ztsssoi
       INTO TABLE lt_item
      WHERE sonum = gs_head-sonum.
 
     LOOP AT lt_item INTO ls_item.
+      CLEAR: lv_sum, lv_count.
 
-      SELECT SUM( amount )
+      SELECT SUM( amount ) COUNT( * )
         FROM ztssgii
-        INTO lv_sum
+        INTO (lv_sum, lv_count)
        WHERE sonum = ls_item-sonum
          AND itnum = ls_item-itnum.
 
-      IF lv_sum EQ 0. " 미출고
-        lv_all_gi = ''.    " (False로 값 변경)
-      ELSEIF lv_sum < ls_item-amount. " 부분출고
-        lv_all_gi = ''.
-        lv_any_gi = 'X'.   " (True로 값 변경)
-      ELSE. " 출고
-        lv_any_gi = 'X'.   " (True로 값 변경)
+*      IF lv_sum EQ 0 OR lv_count EQ 0. " 미출고
+*        lv_all_gi = ''.    " (False로 값 변경)
+*      ELSEIF lv_sum < ls_item-amount. " 부분출고
+*        lv_all_gi = ''.
+*        lv_any_gi = 'X'.   " (True로 값 변경)
+*      ELSE. " 출고
+*        lv_any_gi = 'X'.   " (True로 값 변경)
+*      ENDIF.
+
+      IF lv_count = 0 OR lv_sum = 0.
+        " 레코드 없음 or 출고수량 0 → 미출고
+        lv_all_gi = abap_false.
+      ELSEIF lv_sum >= ls_item-amount.
+        " 완전히 출고 → lv_all_gi는 그대로, lv_any_gi = true
+        lv_any_gi = abap_true.
+      ELSE.
+        " 0 < 출고수량 < 주문수량 → 부분출고
+        lv_all_gi = abap_false.
+        lv_any_gi = abap_true.
       ENDIF.
     ENDLOOP.
 
-    lv_stat = ''.   " Y 출고 완료 / M 부분 출고 / N 미출고
-    IF lv_all_gi = 'X'.
-      lv_stat = 'Y'.
-    ELSEIF lv_any_gi = 'X'.
-      lv_stat = 'M'.
+    gv_stat = ''.   " Y 출고 완료 / M 부분 출고 / N 미출고
+    IF lv_all_gi = abap_true.
+      gv_stat = 'Y'.
+    ELSEIF lv_any_gi = abap_true.
+      gv_stat = 'M'.
     ELSE.
-      lv_stat = 'N'.
+      gv_stat = 'N'.
     ENDIF.
 
     " 체크박스 필터링
-    IF zssssd0101-gichk_y <> 'X'
-       AND zssssd0101-gichk_m <> 'X'
-       AND zssssd0101-gichk_n <> 'X'.
-      CONTINUE.
-    ENDIF.
+*    IF zssssd0101-gichk_y <> 'X'
+*       AND zssssd0101-gichk_m <> 'X'
+*       AND zssssd0101-gichk_n <> 'X'.
+*      CONTINUE.
+*    ENDIF.
 
-    " 선택한 체크박스와 SO 상태가 일치하지 않으면 삭제
-    IF ( lv_stat = 'Y' AND zssssd0101-gichk_y <> 'X' )
-       OR ( lv_stat = 'M' AND zssssd0101-gichk_m <> 'X' )
-       OR ( lv_stat = 'N' AND zssssd0101-gichk_n <> 'X' ).
+*    " 선택한 체크박스와 SO 상태가 일치하지 않으면 삭제
+    IF ( gv_stat = 'Y' AND zssssd0101-gichk_y <> 'X' )
+       OR ( gv_stat = 'M' AND zssssd0101-gichk_m <> 'X' )
+       OR ( gv_stat = 'N' AND zssssd0101-gichk_n <> 'X' ).
       DELETE gt_head INDEX sy-tabix.
+*      CONTINUE.
+    ELSE.
+      " 신호등 세팅
+      CASE gv_stat.
+        WHEN 'Y'. gs_head-light = '3'.
+        WHEN 'M'. gs_head-light = '2'.
+        WHEN 'N'. gs_head-light = '1'.
+      ENDCASE.
+      gs_head-stat = gv_stat.
+      MODIFY gt_head FROM gs_head INDEX sy-tabix.
     ENDIF.
 
+    " 신호등
+*    IF gv_stat = 'Y'.
+*      gs_head-light = '3'.
+*    ELSEIF gv_stat = 'M'.
+*      gs_head-light = '2'.
+*    ELSE.
+*      gs_head-light = '1'.
+*    ENDIF.
+
+*    CASE gv_stat.
+*      WHEN 'Y'. gs_head-light = '3'.
+*      WHEN 'M'. gs_head-light = '2'.
+*      WHEN 'N'. gs_head-light = '1'.
+*    ENDCASE.
+*    MODIFY gt_head FROM gs_head INDEX sy-tabix.
+
+    " 납품일 Cell color 설정
+    IF gv_stat = 'M' OR gv_stat = 'N'.      " 부분출고, 미출고만 처리
+      DATA(lv_day) = gs_head-dudat - sy-datum.
+      IF gs_head-dudat < sy-datum.
+        gs_col-fname = 'DUDAT'.
+        gs_col-color-col = '6'.
+        gs_col-color-int = '1'.
+        gs_col-color-inv = '0'.
+        APPEND gs_col TO gs_head-it_col.
+        CLEAR gs_col.
+      ELSEIF lv_day <= 5.
+        gs_col-fname = 'DUDAT'.
+        gs_col-color-col = '2'.
+        gs_col-color-int = '1'.
+        gs_col-color-inv = '0'.
+        APPEND gs_col TO gs_head-it_col.
+        CLEAR gs_col.
+      ENDIF.
+    ENDIF.
   ENDLOOP.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -217,8 +270,8 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM refresh_alv .
-  CALL METHOD go_alv1->refresh_table_display
+FORM refresh_alv CHANGING c_alv TYPE REF TO cl_gui_alv_grid..
+  CALL METHOD c_alv->refresh_table_display
     EXCEPTIONS
       finished = 1
       OTHERS   = 2.
@@ -234,7 +287,7 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM set_fcat .
+FORM set_fcat1.
   CLEAR gt_fcat1.
 
   gs_fcat1-fieldname = 'CSTID'.
@@ -246,6 +299,353 @@ FORM set_fcat .
   gs_fcat1-coltext = '고객명'.
   APPEND gs_fcat1 TO gt_fcat1.
   CLEAR gs_fcat1.
+
+  gs_fcat1-fieldname = 'LIGHT'.
+  gs_fcat1-coltext = '출고 현황'.
+  APPEND gs_fcat1 TO gt_fcat1.
+  CLEAR gs_fcat1.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row CHANGING c_subrc.
+  CLEAR gs_head.
+
+  DATA: lt_rows TYPE lvc_t_row,
+        ls_rows LIKE LINE OF lt_rows,
+        lv_cnt  TYPE sy-tabix.
+
+  CALL METHOD go_alv1->get_selected_rows
+    IMPORTING
+      et_index_rows = lt_rows.
+*     et_row_no     =
+  DESCRIBE TABLE lt_rows LINES lv_cnt.
+
+  CASE lv_cnt.
+    WHEN '1'.
+      c_subrc = 0.      " True
+      READ TABLE lt_rows INDEX 1 INTO ls_rows.
+      CLEAR gs_head.
+      READ TABLE gt_head INDEX ls_rows-index INTO gs_head.
+    WHEN OTHERS.
+      c_subrc = 4.      " False
+      MESSAGE i999(zmcss) WITH '한 개의 레코드를 선택해 주세요.'.
+      EXIT.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_ITEM_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_item_list CHANGING c_item.
+  DATA: lt_item TYPE zssssd0104_t,
+        ls_item LIKE LINE OF lt_item.
+
+  CLEAR lt_item.
+  SELECT a~sonum a~itnum a~somnr b~matnm a~amount a~meins
+         a~soprc a~curky a~plant
+    FROM ztsssoi AS a INNER JOIN ztssmat_t AS b
+      ON a~somnr EQ b~matnr
+    INTO CORRESPONDING FIELDS OF TABLE lt_item
+   WHERE a~sonum EQ zssssd0103-sonum
+     AND b~langu EQ '3'.
+
+  MOVE lt_item TO c_item.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CUST_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_cust_info .
+  DATA: ls_cust TYPE ztsscust,
+        ls_emp  TYPE ztssemp,
+        ls_dom  TYPE ztssdom.
+
+  " 고객 select
+  SELECT SINGLE *
+    FROM ztsscust
+    INTO ls_cust
+   WHERE cstid EQ zssssd0103-cstid.
+
+  IF sy-subrc EQ 0.
+    " zssssd0105에 데이터 매핑
+    MOVE-CORRESPONDING ls_cust TO zssssd0105.
+    gv_postc = ls_cust-postc.
+    zssssd0105-postc = gv_postc.
+    zssssd0105-eid1 = ls_cust-eid.
+    zssssd0105-edom1 = ls_cust-edom.
+
+    " 이메일 도메인명 select - 고객 사원
+    SELECT SINGLE ednme
+      FROM ztssdom
+      INTO zssssd0105-ednme1
+     WHERE edom EQ ls_cust-edom.
+
+    IF ls_cust-penid IS NOT INITIAL.
+      " 담당사원 select
+      SELECT SINGLE *
+        FROM ztssemp
+        INTO ls_emp
+       WHERE pernr EQ ls_cust-penid.
+
+      IF sy-subrc EQ 0.
+        " zssssd0105에 데이터 매핑
+        zssssd0105-lname = ls_emp-lname.
+        zssssd0105-fname = ls_emp-fname.
+        zssssd0105-persg = ls_emp-persg.
+        zssssd0105-eid2 = ls_emp-eid.
+        zssssd0105-edom2 = ls_emp-edom.
+
+        " 이메일 도메인명 select - 우리 사원
+        SELECT SINGLE ednme
+          FROM ztssdom
+          INTO zssssd0105-ednme2
+         WHERE edom EQ ls_emp-edom.
+      ENDIF.
+    ENDIF.
+  ENDIF.
+
+  DATA: ls_dom_sg TYPE dd07v,
+        lt_dom_sg TYPE TABLE OF dd07v.
+
+  " 직급 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSPERSG'
+    TABLES
+      values_tab      = lt_dom_sg
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  READ TABLE lt_dom_sg WITH KEY domvalue_l = zssssd0105-persg INTO ls_dom_sg.
+  IF sy-subrc EQ 0.
+    zssssd0105-persg_t = ls_dom_sg-ddtext.
+  ENDIF.
+
+  " 사원명 concatenate
+  IF zssssd0105-lname IS NOT INITIAL AND zssssd0105-fname IS NOT INITIAL.
+    CONCATENATE zssssd0105-lname zssssd0105-fname INTO zssssd0105-ename.
+  ENDIF.
+
+  " 이메일 concatenate
+  IF zssssd0105-eid1 IS NOT INITIAL AND zssssd0105-edom1 IS NOT INITIAL.
+    CONCATENATE zssssd0105-eid1 '@' zssssd0105-ednme1 INTO zssssd0105-email1.
+  ENDIF.
+  IF zssssd0105-eid2 IS NOT INITIAL AND zssssd0105-edom2 IS NOT INITIAL.
+    CONCATENATE zssssd0105-eid2 '@' zssssd0105-ednme2 INTO zssssd0105-email2.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CUST_MAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_cust_mat .
+  CLEAR gt_mat.
+  SELECT a~prdnr b~matnm a~csprc a~curky
+    FROM ztsssacat AS a INNER JOIN ztssmat_t AS b
+      ON a~prdnr EQ b~matnr
+    INTO TABLE gt_mat
+   WHERE a~cstid EQ zssssd0103-cstid
+     AND b~langu EQ '3'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TOPRC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_toprc USING p_item
+               CHANGING c_head TYPE zssssd0103.
+
+  DATA: lt_item LIKE TABLE OF gs_item,
+        lv_tot  TYPE ztsssoi-soprc,
+        ls_item LIKE LINE OF gt_item.
+
+  CLEAR lv_tot.
+  MOVE p_item TO lt_item.
+
+  LOOP AT lt_item INTO ls_item.
+    lv_tot = lv_tot + ( ls_item-soprc * ls_item-amount ).
+  ENDLOOP.
+  c_head-toprc = lv_tot.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM update_info .
+  DATA: lt_chg TYPE lvc_t_modc,       " ALV 변경된 셀 데이터
+        ls_chg TYPE lvc_s_modc.
+
+  " 헤더 update
+  UPDATE ztsssoh
+     SET dudat = gs_head_udt-dudat
+         stext = gs_head_udt-stext
+     WHERE sonum = gs_head_udt-sonum.
+
+  " ALV 변경사항 반영
+  CALL METHOD go_alv4->check_changed_data.
+
+  " 아이템 update
+  LOOP AT gt_item_udt INTO DATA(ls_item_db).
+    UPDATE ztsssoi
+      SET somnr = ls_item_db-somnr
+          amount = ls_item_db-amount
+          plant = ls_item_db-plant
+      WHERE sonum = ls_item_db-sonum
+        AND itnum = ls_item_db-itnum.
+  ENDLOOP.
+
+  IF sy-subrc EQ 0.
+    COMMIT WORK.
+    MESSAGE i999(zmcss) WITH '판매오더' gs_head_udt-sonum '변경 성공' DISPLAY LIKE 'S'.
+*    LEAVE TO SCREEN 0100.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '판매오더' gs_head_udt-sonum '변경 실패' DISPLAY LIKE 'E'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT4
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat4 .
+  CLEAR gt_fcat4.
+
+*  gs_fcat4-fieldname = 'SOMNR'.
+*  gs_fcat4-edit = 'X'.
+*  gs_fcat4-f4availabl = 'X'.      " F4 도움말 허용
+*  APPEND gs_fcat4 TO gt_fcat4.
+*  CLEAR gs_fcat4.
+
+  CLEAR gt_fcat2.
+
+  gs_fcat4-fieldname = 'ITNUM'.
+  gs_fcat4-outputlen = 3.
+  gs_fcat4-lzero = 'X'.           " 타입 n에 0 붙여줌
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+
+*  gs_fcat4-fieldname = 'MATNM'.
+*  gs_fcat4-edit = 'X'.
+*  APPEND gs_fcat4 TO gt_fcat4.
+*  CLEAR gs_fcat4.
+
+  gs_fcat4-fieldname = 'AMOUNT'.
+  gs_fcat4-edit = 'X'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+
+*  gs_fcat4-fieldname = 'SOPRC'.
+*  gs_fcat4-edit = 'X'.
+*  APPEND gs_fcat4 TO gt_fcat4.
+*  CLEAR gs_fcat4.
+
+  gs_fcat4-fieldname = 'PLANT'.
+  gs_fcat4-edit = 'X'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELETE_TOOLBAR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM delete_toolbar .
+  APPEND cl_gui_alv_grid=>mc_fc_excl_all TO gt_toolbar.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat2 .
+  CLEAR gt_fcat2.
+
+  gs_fcat2-fieldname = 'ITNUM'.
+  gs_fcat2-outputlen = 3.
+  gs_fcat2-lzero = 'X'.           " 타입 n에 0 붙여줌
+  APPEND gs_fcat2 TO gt_fcat2.
+  CLEAR gs_fcat2.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MAT_F4
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_mat_f4 USING p_cstid.
+  SELECT prdnr csprc
+    FROM ztsssacat
+    INTO CORRESPONDING FIELDS OF TABLE gt_sacat
+   WHERE cstid = p_cstid.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ITEM_IST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_item_ist .
+  DATA: lv_max_itn TYPE ztsssoi-itnum,
+        lv_itn     TYPE ztsssoi-itnum.
+
+  " 판매오더 번호 세팅
+  gs_item_ist-sonum = gs_head_udt-sonum.
+
+  " 아이템 번호 최대값 찾기
+  LOOP AT gt_item_udt INTO gs_item_udt WHERE sonum = gs_item_ist-sonum.
+    IF gs_item_udt-itnum > lv_max_itn.
+      lv_max_itn = gs_item_udt-itnum.
+    ENDIF.
+  ENDLOOP.
+
+  " 다음 아이템 번호 세팅
+  lv_itn = lv_max_itn + 1.
+
+  gv_itnum = lv_itn.
+  gs_item_ist-itnum = gv_itnum.
+
+  " 단위, 통화 세팅
+  gs_item_ist-meins = 'EA'.
+  gs_item_ist-curky = 'KRW'.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

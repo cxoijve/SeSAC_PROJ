@@ -38,7 +38,16 @@ MODULE user_command_0100 INPUT.
       ENDIF.
 
     WHEN 'GOTO2'.
-      CALL SCREEN 0200.
+      PERFORM select_row CHANGING gv_subrc.
+      IF gv_subrc EQ 0.
+        MOVE-CORRESPONDING gs_head TO zssssd0103.
+        PERFORM get_item_list CHANGING gt_item.
+        PERFORM set_toprc USING gt_item
+                          CHANGING zssssd0103.
+        CALL SCREEN 0200.
+        ts_info-activetab = 'TAB1'.
+        PERFORM get_header_list.
+      ENDIF.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -49,12 +58,105 @@ ENDMODULE.
 MODULE user_command_0200 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
+      PERFORM refresh_alv CHANGING go_alv1.
       LEAVE TO SCREEN 0.
+    WHEN 'TAB1'.
+      ts_info-activetab = 'TAB1'.
+    WHEN 'TAB2'.
+      ts_info-activetab = 'TAB2'.
     WHEN 'GOTO3'.
-*      CALL SCREEN 0300.
+      IF zssssd0103-stat EQ 'N'.    " 미출고된 SO만 수정 가능
+        MOVE-CORRESPONDING zssssd0103 TO gs_head_udt.
+*        PERFORM get_mat_f4 USING gs_head_udt-cstid.
+        CALL SCREEN 0300.
+        CLEAR: gs_head_udt. "zssssd0103, zssssd0104.
+        PERFORM get_header_list.
+      ELSEIF zssssd0103-stat EQ 'Y'.     " 출고
+        MESSAGE i999(zmcss) WITH '출고가 완료된 판매오더는 변경이 불가합니다.' DISPLAY LIKE 'E'.
+*        RETURN.
+      ELSE.   " 부분출고
+        MESSAGE i999(zmcss) WITH '출고가 진행된 판매오더는 변경이 불가합니다.' DISPLAY LIKE 'E'.
+*        RETURN.
+      ENDIF.
+  ENDCASE.
 
-   ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      " Screen 200에 반영
+      MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
+*      MOVE-CORRESPONDING gs_item_udt TO gs_item.
+*      PERFORM refresh_alv CHANGING go_alv2.
+      " Screen 100에 반영
+      MOVE-CORRESPONDING gs_head_udt TO zssssd0102.
+      LEAVE TO SCREEN 0.
+    WHEN 'UPDATE'.
+      " 아이템 변경 Update
+      PERFORM update_info.
+      PERFORM get_item_list CHANGING gt_item_udt.
+      PERFORM set_toprc USING gt_item_udt
+                        CHANGING gs_head_udt.
 
+      " Screen 200에 반영
+      MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
+      gt_item = gt_item_udt.
+      IF go_alv2 IS BOUND.
+        PERFORM refresh_alv CHANGING go_alv2.
+      ENDIF.
+    WHEN 'APPEND'.
+      " 아이템 추가
+      PERFORM set_item_ist.
+      CALL SCREEN 301 STARTING AT 10 5
+                        ENDING AT 70 15.
+
+*    WHEN 'DELETE'.
+*      CALL SCREEN 302 STARTING AT 10 5
+*                        ENDING AT 70 15.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0301  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0301 INPUT.
+  CASE ok_code.
+    WHEN 'ADD'.
+      " 추가
+    WHEN 'CANC'.
+      " 취소
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SH_SACAT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE sh_sacat INPUT.
+  " 현재 고객코드 가져오기
+  DATA(lv_cstid) = gs_head_udt-cstid.
+
+  " 고객별 허용 자재 조회
+  PERFORM get_mat_f4 USING lv_cstid.
+
+  " F4 팝업 호출
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield    = 'SOMNR'       " 화면 필드 이름
+      dynpprog    = sy-repid
+      dynpnr      = sy-dynnr
+      dynprofield = 'SOMNR'
+    TABLES
+      value_tab   = gt_sacat
+    EXCEPTIONS
+      OTHERS      = 1.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

@@ -30,6 +30,8 @@ MODULE user_command_0100 INPUT.
       " 사원 상세정보 가져오기
       PERFORM select_row CHANGING gv_subrc.
       MOVE-CORRESPONDING gs_list TO zsssmd0102.
+      gv_postc = gs_list-postc.
+      zsssmd0102-postc = gv_postc.
 *      PERFORM get_emp_detail.
 *      READ TABLE gt_list WITH KEY pernr = gs_list-pernr INTO gs_list.
 *      IF sy-subrc EQ 0.
@@ -49,6 +51,8 @@ MODULE user_command_0100 INPUT.
       PERFORM select_row CHANGING gv_subrc.
       IF gv_subrc EQ 0.
         MOVE-CORRESPONDING gs_list TO zsssmd0104.
+        gv_postc = gs_list-postc.
+        zsssmd0104-postc = gv_postc.
         MOVE-CORRESPONDING gs_list TO zsssmd0105.
         CALL SCREEN 0300.
       ENDIF.
