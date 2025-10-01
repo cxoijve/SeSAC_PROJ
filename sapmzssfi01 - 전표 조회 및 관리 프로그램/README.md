@@ -5,9 +5,11 @@
 
 - 버튼 클릭 시 ALV EDIT 기능 구현
   - '변경' 버튼 누르면 편집 모드 활성화
-    - <img width="838" height="834" alt="img4" src="https://github.com/user-attachments/assets/c818ea54-eed8-4ac0-9ea1-b21d174bd816" />
+    - <img width="1027" height="830" alt="img4" src="https://github.com/user-attachments/assets/09f1db87-9be0-4393-9135-183c20986aa6" />
+
   - '완료' 버튼 누르면 조회 모드 활성화
-    - <img width="846" height="833" alt="img5" src="https://github.com/user-attachments/assets/9ff220c8-a83f-41ef-9ee0-3bb8673c9ac0" />
+    - <img width="1023" height="825" alt="img5" src="https://github.com/user-attachments/assets/466b2737-d0ab-4294-9936-310dd465d64a" />
+
 
 - 대량 전표 생성을 위한 엑셀 업로드 기능 추가
   - CALL TRANSACTION 'ZRBSSFI01'. 구문을 통해 엑셀 업로드 프로그램으로 이동  ([zrbssfi01 - 전표 생성 BDC 프로그램](https://github.com/cxoijve/SeSAC_PROJ/tree/main/zrbssfi01%20-%20%EC%A0%84%ED%91%9C%20%EC%83%9D%EC%84%B1%20BDC%20%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8))
