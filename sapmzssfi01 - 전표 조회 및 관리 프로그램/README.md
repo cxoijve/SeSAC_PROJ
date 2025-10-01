@@ -1,7 +1,7 @@
 # 전표 조회 및 관리 프로그램
 ### 조회 화면(Screen 0100)
-- '전기일' 조건에 따른 조회 결과
-  - <img width="820" height="822" alt="img1" src="https://github.com/user-attachments/assets/3575bcc5-6d4b-445a-8ab7-5fec0f021cd8" />
+- 입력 조건에 따른 조회 결과
+  - <img width="1027" height="830" alt="img1" src="https://github.com/user-attachments/assets/29e750ed-abe1-433f-9906-7b1425102baa" />
 
 - 버튼 클릭 시 ALV EDIT 기능 구현
   - '변경' 버튼 누르면 편집 모드 활성화
@@ -21,10 +21,11 @@
 
 ### 상세조회 화면(Screen 0300)
 - 조회 결과 화면에서 한 행 선택 후 상세조회 클릭
-  - <img width="835" height="836" alt="img2" src="https://github.com/user-attachments/assets/87112607-1fe7-4afd-940d-f8180f7e1b15" />
+  - <img width="1019" height="827" alt="img2" src="https://github.com/user-attachments/assets/79966b01-d27b-4540-a75e-cbc08890634b" />
 
 -  선택한 헤더-라인아이템 정보 상세조회
-  - <img width="965" height="674" alt="img3" src="https://github.com/user-attachments/assets/9cc8a32b-f14d-4630-80ab-ed36cfa714ec" />
+  -  <img width="961" height="675" alt="img3" src="https://github.com/user-attachments/assets/3293fdf3-a6d6-4b8c-a579-59c50be7c5db" />
+
 
 ### 생성 화면(Screen 0200)
 - 조회 화면에서 생성 클릭
