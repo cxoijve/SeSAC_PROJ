@@ -9,15 +9,31 @@ CLASS lcl_handler IMPLEMENTATION.
 
   METHOD on_toolbar.
     DATA ls_button TYPE stb_button.
-    ls_button-butn_type = '3'. "Separator
-    APPEND ls_button TO e_object->mt_toolbar.
+    CASE sy-dynnr.
+      WHEN '0300'.
+        ls_button-butn_type = '3'. "Separator
+        APPEND ls_button TO e_object->mt_toolbar.
 
-    CLEAR ls_button.
-    ls_button-function = 'ENDEDIT'.
-    ls_button-icon = icon_change.
-    ls_button-butn_type = '0'.
-    ls_button-text = '입력 완료'.
-    APPEND ls_button TO e_object->mt_toolbar.
+        CLEAR ls_button.
+        ls_button-function = 'ENDEDIT'.
+        ls_button-icon = icon_change.
+        ls_button-butn_type = '0'.
+        ls_button-text = '입력 완료'.
+        APPEND ls_button TO e_object->mt_toolbar.
+      WHEN '0500'.
+        IF gv_eflag_0500 EQ 'X'.
+          ls_button-butn_type = '3'. "Separator
+          APPEND ls_button TO e_object->mt_toolbar.
+
+          CLEAR ls_button.
+          ls_button-function = 'ENDEDIT'.
+          ls_button-icon = icon_change.
+          ls_button-butn_type = '0'.
+          ls_button-text = '입력 완료'.
+          APPEND ls_button TO e_object->mt_toolbar.
+        ENDIF.
+    ENDCASE.
+
   ENDMETHOD.
 
   METHOD on_user_command.
@@ -36,7 +52,7 @@ CLASS lcl_handler IMPLEMENTATION.
   METHOD on_data_changed.
     DATA ls_cell LIKE LINE OF er_data_changed->mt_good_cells.
 
-    DATA ls_info_0300 LIKE gs_info_0300.
+    DATA ls_info TYPE zssssd0206.
 
     DATA : lv_msgamount TYPE string,
            lv_msgstoid  TYPE string,
@@ -45,19 +61,24 @@ CLASS lcl_handler IMPLEMENTATION.
     LOOP AT er_data_changed->mt_good_cells INTO ls_cell.
       CASE ls_cell-fieldname.
         WHEN 'AMOUNT'.
-
-          READ TABLE gt_info_0300 INTO ls_info_0300 INDEX ls_cell-row_id.
+          CASE gv_eflag_0500.
+            WHEN 'X'. " 수정 임.
+              READ TABLE gt_info_0500 INTO ls_info INDEX ls_cell-row_id.
+            WHEN ''. " 수정 아님
+              READ TABLE gt_info_0300 INTO ls_info INDEX ls_cell-row_id.
+            WHEN OTHERS.
+          ENDCASE.
 
           er_data_changed->get_cell_value(
             EXPORTING
               i_row_id = ls_cell-row_id
               i_fieldname = ls_cell-fieldname
             IMPORTING
-              e_value = ls_info_0300-amount
+              e_value = ls_info-amount
           ).
 
           " ERROR CHECK
-          PERFORM check_gii_availability USING ls_info_0300
+          PERFORM check_gii_availability USING ls_info
                                          CHANGING lv_msgamount
                                                   lv_msgstoid
                                                   lv_msgmatnm
@@ -70,6 +91,7 @@ CLASS lcl_handler IMPLEMENTATION.
                    i_msgid = 'ZMCSS'
                    i_msgno = '301'
                    i_msgty = 'E'
+                   i_msgv1 = ls_info-giseq
                    i_fieldname = ls_cell-fieldname
                    i_row_id = ls_cell-row_id
                  ).
@@ -79,7 +101,8 @@ CLASS lcl_handler IMPLEMENTATION.
                    i_msgid = 'ZMCSS'
                    i_msgno = '302'
                    i_msgty = 'E'
-                   i_msgv1 = lv_msgamount
+                   i_msgv1 = ls_info-giseq
+                   i_msgv2 = lv_msgamount
                    i_fieldname = ls_cell-fieldname
                    i_row_id = ls_cell-row_id
                  ).
@@ -89,9 +112,10 @@ CLASS lcl_handler IMPLEMENTATION.
                     i_msgid = 'ZMCSS'
                     i_msgno = '303'
                     i_msgty = 'E'
-                    i_msgv1 = lv_msgstoid
-                    i_msgv2 = lv_msgmatnm
-                    i_msgv3 = lv_msgamount
+                    i_msgv1 = ls_info-giseq
+                    i_msgv2 = lv_msgstoid
+                    i_msgv3 = lv_msgmatnm
+                    i_msgv4 = lv_msgamount
                     i_fieldname = ls_cell-fieldname
                     i_row_id = ls_cell-row_id
                   ).
@@ -104,7 +128,7 @@ CLASS lcl_handler IMPLEMENTATION.
               i_row_id = ls_cell-row_id
               i_tabix = ls_cell-tabix
               i_fieldname = ls_cell-fieldname
-              i_value = ls_info_0300-amount
+              i_value = ls_info-amount
           ).
       ENDCASE.
     ENDLOOP.

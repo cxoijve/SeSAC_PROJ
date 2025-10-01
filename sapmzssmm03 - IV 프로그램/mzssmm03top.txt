@@ -4,9 +4,11 @@
 *&---------------------------------------------------------------------*
 PROGRAM sapmzssmm03.
 
-DATA : gv_subrc TYPE sy-subrc,
-       ok_code  TYPE sy-ucomm,
-       gv_dynnr TYPE sy-dynnr.
+DATA : gv_subrc    TYPE sy-subrc,
+       gv_subrc_de TYPE sy-subrc,
+       ok_code     TYPE sy-ucomm,
+       gv_dynnr    TYPE sy-dynnr,
+       gv_eflag    TYPE c.
 
 TABLES : zsssmm03001,
          zsssmm03002,
@@ -20,7 +22,11 @@ TABLES : zsssmm03001,
          zsssmm03010,
          zsssmm03011,
          zsssmm03012,
-         zsssmm03013.
+         zsssmm03013,
+         zsssmm03014,
+         zsssmm03015,
+         zsssmm03016,
+         zsssmm03017.
 
 DATA : gt_date  TYPE RANGE OF sy-datum  WITH HEADER LINE,
        gt_apnum TYPE RANGE OF zessapnum WITH HEADER LINE,
@@ -35,6 +41,9 @@ DATA : gt_gri TYPE TABLE OF ztssgri,
        gt_grh TYPE TABLE OF zsssmm03006,
        gs_grh LIKE LINE OF gt_grh.
 
+DATA : gt_gri_2 LIKE TABLE OF zsssmm03005,
+       gs_gri_2 LIKE LINE OF gt_gri_2.
+
 DATA : gt_mivi TYPE TABLE OF ztssmivi,
        gs_mivi LIKE LINE OF gt_mivi,
        gt_mivh TYPE TABLE OF ztssmivh,
@@ -47,6 +56,17 @@ DATA : gt_jei TYPE TABLE OF ztssjei,
        gs_jei LIKE LINE OF gt_jei,
        gt_jeh TYPE TABLE OF ztssjeh,
        gs_jeh LIKE LINE OF gt_jeh.
+
+DATA : gt_jei_2 TYPE TABLE OF ztssjei,
+       gs_jei_2 LIKE LINE OF gt_jei_2,
+       gt_jeh_2 TYPE TABLE OF ztssjeh,
+       gs_jeh_2 LIKE LINE OF gt_jeh_2.
+
+DATA : gt_jei_3 TYPE TABLE OF ztssjei,
+       gs_jei_3 LIKE LINE OF gt_jei_3,
+       gt_jeh_3 TYPE TABLE OF ztssjeh,
+       gs_jeh_3 LIKE LINE OF gt_jeh_3.
+
 
 DATA : BEGIN OF gs_logi,
          pernr TYPE zesspernr,
@@ -80,11 +100,24 @@ DATA : go_con   TYPE  REF TO cl_gui_custom_container,
        go_con_3 TYPE  REF TO cl_gui_custom_container,
        go_alv_3 TYPE REF TO cl_gui_alv_grid,
        go_con_4 TYPE  REF TO cl_gui_custom_container,
-       go_alv_4 TYPE REF TO cl_gui_alv_grid.
+       go_alv_4 TYPE REF TO cl_gui_alv_grid,
+       go_con_5 TYPE  REF TO cl_gui_custom_container,
+       go_alv_5 TYPE REF TO cl_gui_alv_grid,
+       go_con_6 TYPE  REF TO cl_gui_custom_container,
+       go_alv_6 TYPE REF TO cl_gui_alv_grid.
 
 DATA : gt_excl TYPE ui_functions.
 DATA : gs_toolbar TYPE stb_button.
 DATA : gv_tbex TYPE ui_functions.
+
+
+* Handler Class
+*CLASS lcl_handler DEFINITION.
+*  PUBLIC SECTION.
+*    METHODS on_double_click FOR EVENT double_click OF cl_gui_alv_grid
+*      IMPORTING e_column es_row_no.
+*ENDCLASS.
+*DATA go_handler TYPE REF TO lcl_handler.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

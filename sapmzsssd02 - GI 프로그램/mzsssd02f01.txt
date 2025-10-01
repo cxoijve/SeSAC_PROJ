@@ -501,57 +501,27 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             USING  'PNAME' '1' '플랜트명'.
     WHEN '0500'.
       PERFORM modify_fcat : TABLES pt_fcat
-                            USING  'GINUM'
-                                    '-1'
-                                    '출고 문서 번호',
+                            USING  'SOMNR' '4' '자재 코드',
                             TABLES pt_fcat
-                            USING  'GISEQ_C'
-                                    '1'
-                                    '아이템 번호',
+                            USING  'GINUM' '-1' '미노출',
                             TABLES pt_fcat
-                            USING  'GISEQ'
-                                    '-1'
-                                    '아이템 번호',
+                            USING  'GISEQ' '1' '아이템',
                             TABLES pt_fcat
-                            USING  'SONUM'
-                                    '2'
-                                    '판매 오더 번호',
+                            USING  'SONUM' '2' '판매오더',
                             TABLES pt_fcat
-                            USING  'ITNUM_C'
-                                    '3'
-                                    '판매 오더 아이템 번호',
+                            USING  'ITNUM' '3' '판매오더 아이템',
                             TABLES pt_fcat
-                            USING  'ITNUM'
-                                    '-1'
-                                    '판매 오더 아이템 번호',
+                            USING  'MATNM' '4' '자재명',
                             TABLES pt_fcat
-                            USING  'SOMNR'
-                                    '-1'
-                                    '자재 코드',
+                            USING  'AMOUNT' '5' '출고량',
                             TABLES pt_fcat
-                            USING  'matnm'
-                                    '5'
-                                    '자재명',
+                            USING  'MEINS' '6' '단위',
                             TABLES pt_fcat
-                            USING  'STOID'
-                                    '-1'
-                                    '창고 코드',
+                            USING  'STOID' '7' '창고코드',
                             TABLES pt_fcat
-                            USING  'STONM'
-                                    '8'
-                                    '창고명',
-                            TABLES pt_fcat
-                            USING  'AMOUNT'
-                                    '6'
-                                    '수량',
-                            TABLES pt_fcat
-                            USING  'MEINS'
-                                    '7'
-                                    '단위',
-                            TABLES pt_fcat
-                            USING  'DEL'
-                                    '-1'
-                                    '삭제 플래그'.
+                            USING  'STONM' '8' '창고명'.
+
+      PERFORM set_fcat_0500 TABLES gt_fcat_0500.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -596,11 +566,11 @@ FORM set_layo  USING    VALUE(pv_aflag)
                CHANGING ps_layo TYPE lvc_s_layo.
 
   CASE pv_aflag.
-    WHEN '0200' OR '0500' OR '0302' OR '0303' .
+    WHEN '0200' OR '0302' OR '0303' .
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'IT_COL'.
       ps_layo-sel_mode = 'A'. "A, B C D
-    WHEN '0300'. " Edits
+    WHEN '0300' OR '0500'. " Edits
       ps_layo-cwidth_opt = 'X'.
       ps_layo-sel_mode = 'A'. "A, B C D
       ps_layo-no_rowins = 'X'. "Standard Edit X
@@ -694,7 +664,9 @@ FORM get_info_0200  TABLES   pt_info_0200 STRUCTURE gs_info_0200
 
   ELSE.
     " Default
-    MESSAGE a999(zmcss) WITH '<get_info_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+    MESSAGE i999(zmcss) WITH '<get_info_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   IF lv_subrc <> 0.
@@ -1073,7 +1045,9 @@ FORM set_range_0200  USING   VALUE(ps_cond_0101) TYPE zssssd0201
 
     " 검색 조건을 입력하세요.
   ELSE.
-    MESSAGE a999(zmcss) WITH '<set_range_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+    MESSAGE i999(zmcss) WITH '<set_range_0200>' '치명적인 에러, 검색 조건이 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   pv_subrc = 0.
@@ -1126,7 +1100,7 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
 
     ELSEIF ps_cond_0101-sonum IS NOT INITIAL.
     ELSE.
-      MESSAGE i999(zmcss) WITH '<ps_cond_0101>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      MESSAGE i999(zmcss) WITH '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
       pv_subrc = 4.
       RETURN.
     ENDIF.
@@ -1159,7 +1133,7 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
 
     ELSEIF ps_cond_0102-ginum IS NOT INITIAL.
     ELSE.
-      MESSAGE i999(zmcss) WITH '<ps_cond_0102>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      MESSAGE i999(zmcss) WITH '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
       pv_subrc = 4.
       RETURN.
     ENDIF.
@@ -1193,7 +1167,7 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
       AND ps_cond_0103-fyear IS NOT INITIAL.
 
     ELSE.
-      MESSAGE i999(zmcss) WITH '<ps_cond_0103>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      MESSAGE i999(zmcss) WITH '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
       pv_subrc = 4.
       RETURN.
 
@@ -1215,7 +1189,7 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
         RETURN.
       ENDIF.
     ELSE.
-      MESSAGE i999(zmcss) WITH '<ps_cond_0104>' '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
+      MESSAGE i999(zmcss) WITH '검색 조건에 누락이 있습니다.' '각 검색조건 중 하나를 선택하여 필수 정보를 기입해 주십시오'.
       pv_subrc = 4.
       RETURN.
       " 통과
@@ -1224,7 +1198,7 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
 
     " 검색 조건을 입력하세요.
   ELSE.
-    MESSAGE i999(zmcss) WITH '<check_cond_0100>' '검색 조건이 없습니다.'.
+    MESSAGE i999(zmcss) WITH '검색 조건이 없습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -1286,20 +1260,21 @@ FORM check_dept  USING    VALUE(pv_pernr) TYPE zesspernr
     ON a~depid EQ b~depid
     INTO CORRESPONDING FIELDS OF ls_dept
     WHERE a~pernr = pv_pernr
+    AND a~estat = '1'
     AND b~langu = sy-langu.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<check_dept>' '치명적인 에러, 사원이 존재하지 않습니다'.
-  ENDIF.
-
-  IF ls_dept-depid NE pv_depid.
-    MESSAGE i999(zmcss) WITH '<check_dept>' lv_dname '부서의 사원만 가능합니다'.
+    MESSAGE i999(zmcss) WITH '재직 중인' pv_pernr '사원이 존재하지 않습니다'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
+  IF ls_dept-depid NE pv_depid.
+    MESSAGE i999(zmcss) WITH lv_dname '부서의 사원만 가능합니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
   pv_subrc = 0.
-
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  MODIFY_GI_WITH_SO
@@ -1334,7 +1309,9 @@ FORM modify_gi_with_so  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_gi_with_so>' '사원 정보가 없습니다'.
+      MESSAGE i999(zmcss) WITH '<modify_gi_with_so>' '사원 정보가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
@@ -1346,7 +1323,9 @@ FORM modify_gi_with_so  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                     CHANGING ls_mat
                              lv_subrc.
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_gi_with_so>' '자재 정보가 없습니다'.
+      MESSAGE i999(zmcss) WITH '<modify_gi_with_so>' '자재 정보가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     pt_info_0200-matnm = ls_mat-matnm.
@@ -1621,7 +1600,9 @@ FORM modify_gi_with_gi  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+      MESSAGE i999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
@@ -1693,7 +1674,9 @@ FORM get_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
       AND fyear = lt_jeh-fyear.
 
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<get_gi_with_je>' '치명적인 에러가 발생했습니다. 전표에 해당하는 출고 문서가 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<get_gi_with_je>' '치명적인 에러가 발생했습니다. 전표에 해당하는 출고 문서가 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lt_jeh_gih-jedat = lt_jeh-rgdat.
@@ -1715,7 +1698,9 @@ FORM get_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                             CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<get_gi_with_je>' '데이터를 불러오는 중 치명적인 에러가 발생했습니다'.
+    MESSAGE i999(zmcss) WITH '<get_gi_with_je>' '데이터를 불러오는 중 치명적인 에러가 발생했습니다'.
+    pv_subrc = 0.
+    RETURN.
   ENDIF.
 
   pv_subrc = 0.
@@ -1752,7 +1737,9 @@ FORM modify_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+      MESSAGE i999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
@@ -1864,7 +1851,9 @@ FORM get_gi_with_mat  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<get_gi_with_mat>' '자재 정보를 찾을 수 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<get_gi_with_mat>' '자재 정보를 찾을 수 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
     pt_info_0200-matnm = ls_mat-matnm.
     APPEND pt_info_0200.
@@ -1874,7 +1863,9 @@ FORM get_gi_with_mat  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<get_gi_with_mat>' '데이터를 불러오는 중 치명적인 에러가 발생했습니다'.
+    MESSAGE i999(zmcss) WITH '<get_gi_with_mat>' '데이터를 불러오는 중 치명적인 에러가 발생했습니다'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
 ENDFORM.
@@ -1955,7 +1946,9 @@ FORM modify_gi_with_mat  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_gi_with_mat>' '사원 정보가 없습니다'.
+      MESSAGE i999(zmcss) WITH '<modify_gi_with_mat>' '사원 정보가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
@@ -2017,7 +2010,6 @@ FORM select_row_0200  TABLES   pt_info_0200 STRUCTURE gs_info_0200
          ls_row   LIKE LINE OF lt_row,
          lv_index TYPE i.
 
-
   CALL METHOD go_alv_0200->get_selected_rows
     IMPORTING
       et_row_no = lt_row.
@@ -2041,14 +2033,14 @@ FORM select_row_0200  TABLES   pt_info_0200 STRUCTURE gs_info_0200
   READ TABLE pt_info_0200 INDEX ls_row-row_id.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<select_row_0200>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+    MESSAGE i999(zmcss) WITH '<select_row_0200>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   MOVE pt_info_0200-ginum TO pv_ginum_0200.
   IF pv_ginum_0200 IS INITIAL.
-    MESSAGE i999(zmcss) WITH '<select_row_0200>' '미출고 사항입니다.'.
-    pv_subrc = 4.
-    RETURN.
+    MESSAGE s999(zmcss) WITH '<select_row_0200>' '미출고 문서 입니다.'.
   ENDIF.
 
   pv_subrc = 0.
@@ -2081,7 +2073,9 @@ FORM get_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500
     WHERE ginum = pv_ginum.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<get_info_0500>' '헤더 정보를 찾을 수 없습니다.'.
+    MESSAGE i999(zmcss) WITH '<get_info_0500>' '헤더 정보를 찾을 수 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   "1-1) 헤더 정보를 바탕으로 IV 정보 쿼리
@@ -2117,9 +2111,12 @@ FORM get_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500
                   USING    ps_info_0500h-rgtor
                   CHANGING ls_emp
                            lv_subrc.
+  CONCATENATE ls_emp-lname ls_emp-fname INTO ps_info_0500h-ename.
 
   IF lv_subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<get_info_0500>' '사원 정보를 찾을 수 없습니다'.
+    MESSAGE i999(zmcss) WITH '<get_info_0500>' '사원 정보를 찾을 수 없습니다'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   "1-4)  istat_t
@@ -2167,17 +2164,18 @@ FORM get_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500
   ENDIF.
 
   "2. 라인 아이템 정보 쿼리.
-  SELECT ginum giseq sonum itnum stoid amount meins del
+  SELECT ginum giseq sonum itnum stoid amount meins
     FROM ztssgii
     INTO CORRESPONDING FIELDS OF TABLE pt_info_0500
     WHERE ginum = pv_ginum
     AND del NE 'X'.
 
   IF sy-subrc <> 0.
-    MESSAGE i999(zmcss) WITH '<get_info_0500>' '출고 미완료인 문서입니다.'.
+    MESSAGE s999(zmcss) WITH '출고 미 완료인 문서입니다.'.
   ENDIF.
 
-  PERFORM modify_info_0500 TABLES pt_info_0500.
+  PERFORM modify_info_0500 TABLES pt_info_0500
+                           CHANGING lv_subrc.
 
   pv_subrc = 0.
 ENDFORM.
@@ -2217,7 +2215,9 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      -->P_PT_INFO_0500  text
 *----------------------------------------------------------------------*
-FORM modify_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500.
+FORM modify_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500
+                       CHANGING pv_subrc LIKE sy-subrc.
+  CLEAR pv_subrc.
 
   DATA : lv_subrc LIKE sy-subrc,
          ls_mat   TYPE ts_mat,
@@ -2234,7 +2234,9 @@ FORM modify_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500.
       AND del NE 'X'.
 
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_info_0500>' '자재가 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<modify_info_0500>' '자재가 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     " 창고명
@@ -2243,7 +2245,9 @@ FORM modify_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500.
                      CHANGING ls_strg
                               lv_subrc.
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_info_0500>' '창고가 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<modify_info_0500>' '창고가 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     pt_info_0500-stonm = ls_strg-stonm.
@@ -2256,15 +2260,20 @@ FORM modify_info_0500  TABLES   pt_info_0500 STRUCTURE gs_info_0500.
                              lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<modify_info_0500>' '자재명이 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<modify_info_0500>' '자재명이 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
+    pt_info_0500-somnr = ls_mat-matnr.
     pt_info_0500-matnm = ls_mat-matnm.
-    pt_info_0500-giseq_c = pt_info_0500-giseq.
-    pt_info_0500-itnum_c = pt_info_0500-itnum.
+    pt_info_0500-giseq = pt_info_0500-giseq.
+    pt_info_0500-itnum = pt_info_0500-itnum.
 
     MODIFY pt_info_0500.
   ENDLOOP.
+
+  pv_subrc = 0.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_STRG
@@ -2450,6 +2459,7 @@ ENDFORM.
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
 FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
+                                pt_info STRUCTURE zssssd0206
                        CHANGING pv_subrc LIKE sy-subrc.
   " 고객 코드로 SOH - SOI 찾기.
   TYPES : BEGIN OF ts_cst.
@@ -2546,7 +2556,9 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
     " 빈거 채우기
     READ TABLE lt_cst WITH KEY cstid = lt_soh-cstid.
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss).
+      MESSAGE i999(zmcss) WITH 'NO CSTID!'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
     lt_soh-cname = lt_cst-cname.
     MODIFY lt_soh.
@@ -2583,7 +2595,9 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
     CLEAR : ls_mat, lv_subrc, ls_plant.
     READ TABLE lt_soh WITH KEY sonum = lt_soi-sonum.
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '자재가 없습니다'.
+      MESSAGE i999(zmcss) WITH '자재가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lt_soi-cstid = lt_soh-cstid.
@@ -2596,7 +2610,9 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
                     CHANGING  ls_mat
                               lv_subrc.
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '자재명이 없습니다'.
+      MESSAGE i999(zmcss) WITH '자재명이 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lt_soi-matnm = ls_mat-matnm.
@@ -2608,7 +2624,9 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
                                lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '플랜트가 없습니다'.
+      MESSAGE i999(zmcss) WITH '플랜트가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lt_soi-pname = ls_plant-pname.
@@ -2640,7 +2658,9 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
       lt_soi_gii-gidone = '부분 완료'.
       APPEND lt_soi_gii.
     ELSE.
-      MESSAGE a999(zmcss) WITH 'ZTSSGII INVALID VALUE'.
+      MESSAGE i999(zmcss) WITH 'ZTSSGII INVALID VALUE'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
   ENDLOOP.
 
@@ -2649,10 +2669,10 @@ FORM get_so_with_cust  TABLES   pt_info_0303 STRUCTURE gs_info_0303
     RETURN.
   ENDIF.
 
-  DATA: ls_info_0300 LIKE LINE OF gt_info_0300.
+  DATA: ls_info TYPE zssssd0206.
   LOOP AT lt_soi_gii.
-    CLEAR ls_info_0300.
-    READ TABLE gt_info_0300 INTO ls_info_0300 WITH KEY sonum = lt_soi_gii-sonum itnum = lt_soi_gii-itnum.
+    CLEAR ls_info.
+    READ TABLE pt_info INTO ls_info WITH KEY sonum = lt_soi_gii-sonum itnum = lt_soi_gii-itnum.
     IF sy-subrc <> 0.
       MOVE-CORRESPONDING lt_soi_gii TO pt_info_0303.
       APPEND pt_info_0303.
@@ -2714,6 +2734,8 @@ ENDFORM.
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
 FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
+                              pt_info STRUCTURE zssssd0206
+                     USING    VALUE(ps_cond_0302) TYPE zssssd0209
                      CHANGING pv_subrc LIKE sy-subrc.
   TYPES : BEGIN OF ts_cst.
   TYPES : cstid TYPE zesscstid,
@@ -2756,7 +2778,7 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
 
   CLEAR pv_subrc.
 
-  IF zssssd0209-sonum IS INITIAL.
+  IF ps_cond_0302-sonum IS INITIAL.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -2766,7 +2788,7 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
     INNER JOIN ztsscust AS b
     ON a~cstid = b~cstid
     INTO CORRESPONDING FIELDS OF ls_soh
-    WHERE sonum = zssssd0209-sonum.
+    WHERE sonum = ps_cond_0302-sonum.
 
   IF sy-subrc <> 0.
     pv_subrc = 4.
@@ -2798,7 +2820,9 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
                     CHANGING  ls_mat
                               lv_subrc.
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '자재명이 없습니다'.
+      MESSAGE i999(zmcss) WITH '자재명이 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
     lt_soi-matnm = ls_mat-matnm.
 
@@ -2809,7 +2833,9 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
                                lv_subrc.
 
     IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '플랜트가 없습니다'.
+      MESSAGE i999(zmcss) WITH '플랜트가 없습니다'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lt_soi-pname = ls_plant-pname.
@@ -2838,7 +2864,9 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
       lt_soi_gii-gidone = '부분 완료'.
       APPEND lt_soi_gii.
     ELSE.
-      MESSAGE a999(zmcss) WITH 'ZTSSGII INVALID VALUE'.
+      MESSAGE i999(zmcss) WITH 'ZTSSGII INVALID VALUE'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
   ENDLOOP.
 
@@ -2852,7 +2880,7 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
 
     CLEAR ls_info_0300.
 
-    READ TABLE gt_info_0300 INTO ls_info_0300 WITH KEY sonum = lt_soi_gii-sonum itnum = lt_soi_gii-itnum.
+    READ TABLE pt_info INTO ls_info_0300 WITH KEY sonum = lt_soi_gii-sonum itnum = lt_soi_gii-itnum.
     IF sy-subrc <> 0.
       MOVE-CORRESPONDING lt_soi_gii TO pt_info_0302.
       APPEND pt_info_0302.
@@ -2927,25 +2955,27 @@ ENDFORM.
 *      -->P_LT_INFO_0300  text
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM set_info_0300_from_0302  TABLES   pt_info_0302 STRUCTURE gs_info_0302
-                                       pt_info_0300 STRUCTURE gs_info_0300
+FORM set_info_zssssd0206_from_0302  TABLES   pt_info_0302 STRUCTURE gs_info_0302
+                                       pt_info STRUCTURE zssssd0206
                               CHANGING pv_subrc LIKE sy-subrc.
 
-  CLEAR : pv_subrc, pt_info_0300[].
+  CLEAR : pv_subrc, pt_info[].
 
   IF pt_info_0302[] IS INITIAL.
-    MESSAGE a999(zmcss) WITH '<300 to 302>' '빈 인터널테이블'.
+    MESSAGE i999(zmcss) WITH '<sd0206 to 302>' '빈 인터널테이블'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   LOOP AT pt_info_0302.
-    MOVE-CORRESPONDING pt_info_0302 TO pt_info_0300.
-    pt_info_0300-amount = pt_info_0302-udamt.
+    MOVE-CORRESPONDING pt_info_0302 TO pt_info.
+    pt_info-amount = pt_info_0302-udamt.
 
     " 임시
-    pt_info_0300-stoid = 'SL02'.
-    pt_info_0300-stonm = '제 1 완제품 공장'.
+    pt_info-stoid = 'SL02'.
+    pt_info-stonm = '제 1 완제품 창고'.
 
-    APPEND pt_info_0300.
+    APPEND pt_info.
   ENDLOOP.
 
   pv_subrc = 0.
@@ -2986,7 +3016,9 @@ FORM select_row_0302  TABLES   pt_info_0302 STRUCTURE gs_info_0302
   LOOP AT lt_row.
     READ TABLE pt_info_0302 INDEX lt_row-row_id.
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<select_row_0302>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<select_row_0302>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     APPEND pt_info_0302 TO plt_info_0302.
@@ -3029,7 +3061,9 @@ FORM select_row_0303  TABLES   pt_info_0303 STRUCTURE gs_info_0303
   LOOP AT lt_row.
     READ TABLE pt_info_0303 INDEX lt_row-row_id.
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<select_row_0303>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<select_row_0303>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     APPEND pt_info_0303 TO plt_info_0303.
@@ -3046,25 +3080,27 @@ ENDFORM.
 *      -->P_LT_INFO_0300  text
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM set_info_0300_from_0303  TABLES   pt_info_0303 STRUCTURE gs_info_0303
-                                       pt_info_0300 STRUCTURE gs_info_0300
-                              CHANGING pv_subrc LIKE sy-subrc.
+FORM set_info_zssssd0206_from_0303  TABLES   pt_info_0303 STRUCTURE gs_info_0303
+                                             pt_info STRUCTURE zssssd0206
+                                    CHANGING pv_subrc LIKE sy-subrc.
 
-  CLEAR : pv_subrc, pt_info_0300[].
+  CLEAR : pv_subrc, pt_info[].
 
   IF pt_info_0303[] IS INITIAL.
-    MESSAGE a999(zmcss) WITH '<300 to 303>' '빈 인터널테이블'.
+    MESSAGE i999(zmcss) WITH '<sd0206 to 303>' '빈 인터널테이블'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   LOOP AT pt_info_0303.
-    MOVE-CORRESPONDING pt_info_0303 TO pt_info_0300.
-    pt_info_0300-amount = pt_info_0303-udamt.
+    MOVE-CORRESPONDING pt_info_0303 TO pt_info.
+    pt_info-amount = pt_info_0303-udamt.
 
     "임시
-    pt_info_0300-stoid = 'SL02'.
-    pt_info_0300-stonm = '제 1 완제품 공장'.
+    pt_info-stoid = 'SL02'.
+    pt_info-stonm = '제 1 완제품 창고'.
 
-    APPEND pt_info_0300.
+    APPEND pt_info.
   ENDLOOP.
 
   pv_subrc = 0.
@@ -3077,11 +3113,12 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM set_0300_from_0303  CHANGING pv_subrc.
+FORM set_zssssd0206_from_0303  TABLES pt_info STRUCTURE zssssd0206
+                               CHANGING pv_subrc LIKE sy-subrc.
 
   CLEAR pv_subrc.
 
-  DATA : lt_info_0300 LIKE TABLE OF gs_info_0300, " 넘겨줄 애
+  DATA : lt_info      LIKE TABLE OF zssssd0206, " 넘겨줄 애
          lt_info_0303 LIKE TABLE OF gs_info_0303. " 고른 애
   DATA : lv_subrc LIKE sy-subrc.
 
@@ -3094,16 +3131,16 @@ FORM set_0300_from_0303  CHANGING pv_subrc.
     RETURN.
   ENDIF.
 
-  PERFORM set_info_0300_from_0303 TABLES lt_info_0303
-                                         lt_info_0300
-                                  CHANGING lv_subrc.
+  PERFORM set_info_zssssd0206_from_0303 TABLES lt_info_0303
+                                               lt_info
+                                       CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
-  APPEND LINES OF lt_info_0300 TO gt_info_0300.
+  APPEND LINES OF lt_info TO pt_info.
 
   pv_subrc = 0.
 ENDFORM.
@@ -3114,9 +3151,12 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM set_0300_from_0302  CHANGING pv_subrc LIKE sy-subrc.
+FORM set_zssssd0206_from_0302 TABLES pt_info STRUCTURE zssssd0206
+                              CHANGING pv_subrc LIKE sy-subrc.
 
-  DATA : lt_info_0300 LIKE TABLE OF gs_info_0300, " 넘겨줄 애
+  CLEAR : pv_subrc.
+
+  DATA : lt_info      LIKE TABLE OF zssssd0206, " 넘겨줄 애
          lt_info_0302 LIKE TABLE OF gs_info_0302. " 고른 애
   DATA : lv_subrc LIKE sy-subrc.
 
@@ -3129,16 +3169,16 @@ FORM set_0300_from_0302  CHANGING pv_subrc LIKE sy-subrc.
     RETURN.
   ENDIF.
 
-  PERFORM set_info_0300_from_0302 TABLES lt_info_0302
-                                         lt_info_0300
-                                  CHANGING lv_subrc.
+  PERFORM set_info_zssssd0206_from_0302 TABLES lt_info_0302
+                                               lt_info
+                                        CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
-  APPEND LINES OF lt_info_0300 TO gt_info_0300.
+  APPEND LINES OF lt_info TO pt_info.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_GISEQ
@@ -3147,19 +3187,21 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      -->P_GT_INFO_0300  text
 *----------------------------------------------------------------------*
-FORM set_giseq  TABLES   pt_info_0300 STRUCTURE gs_info_0300.
+FORM set_giseq  TABLES   pt_info STRUCTURE zssssd0206
+                USING    VALUE(pv_stseq) TYPE i.
 
-  DATA : lv_giseq TYPE n LENGTH 3 VALUE '001'.
+  DATA : lv_giseq TYPE n LENGTH 3.
+  lv_giseq = pv_stseq.
+  LOOP AT pt_info.
 
-  LOOP AT pt_info_0300.
-    pt_info_0300-giseq = lv_giseq.
+    pt_info-giseq = lv_giseq.
     lv_giseq = lv_giseq + 1.
 
     IF lv_giseq EQ '999'.
       MESSAGE a999(zmcss) WITH 'MAXIMUM GISEQ REACHED'.
     ENDIF.
 
-    MODIFY pt_info_0300 TRANSPORTING giseq.
+    MODIFY pt_info TRANSPORTING giseq.
   ENDLOOP.
 
 ENDFORM.
@@ -3214,25 +3256,27 @@ ENDFORM.
 *      -->P_GT_INFO_0300  text
 *      -->P_0266   text
 *----------------------------------------------------------------------*
-FORM delete_info_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
-                       USING    VALUE(pv_eflag)
-                       CHANGING pv_subrc LIKE sy-subrc.
+FORM delete_info_zssssd0206  TABLES   pt_info STRUCTURE zssssd0206
+                             USING    VALUE(pv_eflag)
+                                      po_alv TYPE REF TO cl_gui_alv_grid
+                             CHANGING pv_subrc LIKE sy-subrc.
 
   CLEAR pv_subrc.
 
   IF pv_eflag = 'ALL'.
-    CLEAR pt_info_0300[].
+    CLEAR pt_info[].
     pv_subrc = 0.
     RETURN.
   ENDIF.
 
   " SELECT ROW
-  DATA : lt_info_0300 LIKE TABLE OF gs_info_0300 WITH HEADER LINE,
-         lv_subrc     LIKE sy-subrc.
+  DATA : lt_info  LIKE TABLE OF zssssd0206 WITH HEADER LINE,
+         lv_subrc LIKE sy-subrc.
 
-  PERFORM select_row_0300 TABLES pt_info_0300
-                                 lt_info_0300
-                          CHANGING lv_subrc.
+  PERFORM select_row_zssssd0206 TABLES   pt_info
+                                         lt_info
+                                USING    po_alv
+                                CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
     pv_subrc = 4.
@@ -3240,8 +3284,8 @@ FORM delete_info_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
   ENDIF.
 
   " DELETED SELECTED ROW
-  LOOP AT lt_info_0300.
-    DELETE pt_info_0300 WHERE giseq = lt_info_0300-giseq.
+  LOOP AT lt_info.
+    DELETE pt_info WHERE giseq = lt_info-giseq.
   ENDLOOP.
 
   pv_subrc = 0.
@@ -3256,17 +3300,18 @@ ENDFORM.
 *      -->P_LT_INFO_0300  text
 *      <--P_LV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM select_row_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
-                               plt_info_0300 STRUCTURE gs_info_0300
-                      CHANGING pv_subrc LIKE sy-subrc.
+FORM select_row_zssssd0206   TABLES   pt_info STRUCTURE zssssd0206
+                                      plt_info STRUCTURE zssssd0206
+                             USING    po_alv TYPE REF TO cl_gui_alv_grid
+                             CHANGING pv_subrc LIKE sy-subrc.
 
-  CLEAR : pv_subrc, plt_info_0300[].
+  CLEAR : pv_subrc, plt_info[].
 
   DATA : lt_row   TYPE lvc_t_roid WITH HEADER LINE,
          ls_row   LIKE LINE OF lt_row,
          lv_index TYPE i.
 
-  CALL METHOD go_alv_0300->get_selected_rows
+  CALL METHOD po_alv->get_selected_rows
     IMPORTING
       et_row_no = lt_row[].
 
@@ -3280,12 +3325,14 @@ FORM select_row_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
   ENDCASE.
 
   LOOP AT lt_row.
-    READ TABLE pt_info_0300 INDEX lt_row-row_id.
+    READ TABLE pt_info INDEX lt_row-row_id.
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<select_row_0300>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      MESSAGE i999(zmcss) WITH '<select_row_zssssd0206>' '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
-    APPEND pt_info_0300 TO plt_info_0300.
+    APPEND pt_info TO plt_info.
   ENDLOOP.
 
   pv_subrc = 0.
@@ -3300,56 +3347,100 @@ ENDFORM.
 *      -->P_LS_INFO_0300_STOID  text
 *      <--P_GV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM check_gii_availability  USING    VALUE(ps_info_0300) LIKE gs_info_0300
+FORM check_gii_availability  USING    VALUE(ps_info) LIKE zssssd0206
                             CHANGING    pv_msgamount TYPE string
                                         pv_msgstoid  TYPE string
                                         pv_msgmatnm  TYPE string
                                         pv_subrc LIKE sy-subrc.
 
   CLEAR : pv_subrc.
-  DATA : lv_subrc    LIKE sy-subrc,
-         ls_ztsssoi  TYPE ztsssoi,
-         lv_availamt TYPE zessamount.
+  DATA : lv_subrc      LIKE sy-subrc,
+         ls_ztsssoi    TYPE ztsssoi,
+         lv_doamt      TYPE zessamount, "GI Done SO Amount
+         lv_edamt      TYPE zessamount, "Edit Line's Amount
+         ls_zssssd0206 TYPE zssssd0206,
+         lv_availamt   TYPE zessamount.
 
   " 1. 출고량은 0이어선 안된다.
-  IF ps_info_0300-amount EQ 0.
+  IF ps_info-amount EQ 0.
     " 출고량은 0일수 없습니다.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
-  " 2. 출고량은 SO량을 넘어선 안된다.
-  PERFORM get_so USING ps_info_0300-sonum
-                       ps_info_0300-itnum
+  " 2. 출고량은 잔여 SO량을 넘어선 안된다.
+  PERFORM get_so USING ps_info-sonum
+                       ps_info-itnum
                  CHANGING ls_ztsssoi
                           lv_subrc.
 
   IF lv_subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<CHECK_GI_AVAIL>' 'SOI UNKNOWN'.
+    MESSAGE i999(zmcss) WITH '<CHECK_GI_AVAIL>' 'SOI UNKNOWN'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
-  IF ps_info_0300-amount > ls_ztsssoi-amount.
-    pv_msgamount = ls_ztsssoi-amount.
+  PERFORM get_so_doamt USING ps_info-sonum
+                             ps_info-itnum
+                       CHANGING lv_doamt
+                                lv_subrc.
+
+  " 단, 기존의 SO를 수정하려는 경우, 수정하려는 아이템들의 수량만큼은 다시 더해줘야 된다.
+  IF gv_eflag_0500 = 'X'. " 수정중
+
+    LOOP AT gt_info_o_0500 INTO ls_zssssd0206.
+      IF ls_zssssd0206-sonum EQ ps_info-sonum
+        AND ls_zssssd0206-itnum EQ ps_info-itnum.
+
+        lv_edamt = lv_edamt + ls_zssssd0206-amount.
+        CLEAR ls_zssssd0206.
+      ENDIF.
+    ENDLOOP.
+
+    lv_doamt = lv_doamt - lv_edamt.
+  ENDIF.
+
+  IF ps_info-amount > ls_ztsssoi-amount - lv_doamt.
+    pv_msgamount = ls_ztsssoi-amount - lv_doamt.
     " '판매 오더 수량보다 초과 출고할 수 없습니다. 판매오더 수량 : [' && ls_ztsssoi-amount && 'EA]'.
     pv_subrc = 5.
     RETURN.
   ENDIF.
 
   " 3. 출고량을 수용할 만큼의 총 재고량이 창고에 있어야 한다.
-  PERFORM get_avail_stock USING ps_info_0300-somnr
-                                ps_info_0300-stoid
+  PERFORM get_avail_stock USING ps_info-somnr
+                                ps_info-stoid
                           CHANGING lv_availamt
                                    lv_subrc.
 
   IF lv_subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<CHECK_GI_AVAIL>' 'MAT UNKNOWN'.
+    MESSAGE i999(zmcss) WITH '<CHECK_GI_AVAIL>' 'MAT UNKNOWN'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
-  IF ps_info_0300-amount > lv_availamt.
+  " 단, 기존의 SO를 수정하려는 경우, 수정하려는 아이템들의 수량만큼은 다시 더해줘야 한다.
+  CLEAR : ls_zssssd0206, lv_edamt.
+
+  IF gv_eflag_0500 = 'X'. " 수정중
+
+    LOOP AT gt_info_o_0500 INTO ls_zssssd0206.
+      IF ls_zssssd0206-somnr EQ ps_info-somnr
+        AND ls_zssssd0206-stoid EQ ps_info-stoid.
+
+        lv_edamt = lv_edamt + ls_zssssd0206-amount.
+        CLEAR ls_zssssd0206.
+      ENDIF.
+    ENDLOOP.
+
+    lv_availamt = lv_availamt + lv_edamt.
+  ENDIF.
+
+  IF ps_info-amount > lv_availamt.
 
     pv_msgamount = lv_availamt.
-    pv_msgstoid  = ps_info_0300-stoid.
-    pv_msgmatnm  = ps_info_0300-matnm.
+    pv_msgstoid  = ps_info-stoid.
+    pv_msgmatnm  = ps_info-matnm.
 
 *    pv_errmsg = '재고량이 부족합니다. ['
 *    && ps_info_0300-stoid && '] 창고의 [' && ps_info_0300-matnm && '] 가용재고 : [' && lv_availamt && 'EA]'.
@@ -3375,7 +3466,8 @@ FORM get_so  USING    VALUE(pv_sonum) TYPE zesssonum
                       pv_subrc LIKE sy-subrc.
 
   CLEAR pv_subrc.
-  DATA lv_itnum TYPE zesssoitn.
+  DATA : lv_itnum TYPE zesssoitn,
+         lv_doamt TYPE zessamount. " GI Done Amount
 
   lv_itnum = pv_itnum.
 
@@ -3456,7 +3548,9 @@ FORM get_avail_stock  USING    VALUE(pv_matnr) TYPE zessmatnr
   ENDLOOP.
 
   IF pv_availamt < 0.
-    MESSAGE a999(zmcss) WITH '<get_avail_stock>' 'MINUS STOCK'.
+    MESSAGE i999(zmcss) WITH '<get_avail_stock>' 'MINUS STOCK'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   pv_subrc = 0.
@@ -3489,12 +3583,13 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM check_gii_availability_pai TABLES pt_info_0300 STRUCTURE gs_info_0300
-                               CHANGING pv_subrc LIKE sy-subrc.
+FORM check_gii_availability_pai TABLES pt_info STRUCTURE zssssd0206
+                                USING po_cprotocol TYPE REF TO cl_alv_changed_data_protocol
+                                CHANGING pv_subrc LIKE sy-subrc.
 
   CLEAR : pv_subrc.
 
-  DATA : ls_info_0300 LIKE gs_info_0300.
+  DATA : ls_info LIKE zssssd0206.
   DATA : lv_msgamount TYPE string,
          lv_msgstoid  TYPE string,
          lv_msgmatnm  TYPE string.
@@ -3503,27 +3598,27 @@ FORM check_gii_availability_pai TABLES pt_info_0300 STRUCTURE gs_info_0300
   DATA : lv_subrc LIKE sy-subrc,
          lv_eflag.
 
-  IF pt_info_0300[] IS INITIAL.
+  IF pt_info[] IS INITIAL.
     pv_subrc = 5.
     RETURN.
   ENDIF.
 
-  LOOP AT pt_info_0300 INTO ls_info_0300.
+  LOOP AT pt_info INTO ls_info.
     CLEAR : lv_msgamount, lv_msgstoid, lv_msgmatnm, lv_subrc.
 
     " ERROR CHECK
-    PERFORM check_gii_availability USING ls_info_0300
-                                  CHANGING lv_msgamount
-                                           lv_msgstoid
-                                           lv_msgmatnm
-                                           lv_subrc.
+    PERFORM check_gii_availability USING    ls_info
+                                   CHANGING lv_msgamount
+                                            lv_msgstoid
+                                            lv_msgmatnm
+                                            lv_subrc.
 
     IF lv_subrc <> 0.
       lv_eflag = 'X'.
 
       CASE lv_subrc.
         WHEN '4'.
-          go_cprotocol_0300->add_protocol_entry(
+          po_cprotocol->add_protocol_entry(
            EXPORTING
              i_msgid = 'ZMCSS'
              i_msgno = '301'
@@ -3532,7 +3627,7 @@ FORM check_gii_availability_pai TABLES pt_info_0300 STRUCTURE gs_info_0300
              i_row_id = sy-tabix
            ).
         WHEN '5'.
-          go_cprotocol_0300->add_protocol_entry(
+          po_cprotocol->add_protocol_entry(
            EXPORTING
              i_msgid = 'ZMCSS'
              i_msgno = '302'
@@ -3542,7 +3637,7 @@ FORM check_gii_availability_pai TABLES pt_info_0300 STRUCTURE gs_info_0300
              i_row_id = sy-tabix
            ).
         WHEN '6'.
-          go_cprotocol_0300->add_protocol_entry(
+          po_cprotocol->add_protocol_entry(
             EXPORTING
               i_msgid = 'ZMCSS'
               i_msgno = '303'
@@ -3557,10 +3652,8 @@ FORM check_gii_availability_pai TABLES pt_info_0300 STRUCTURE gs_info_0300
     ENDIF.
   ENDLOOP.
 
-
-
   IF lv_eflag = 'X'.
-    CALL METHOD go_cprotocol_0300->display_protocol.
+    CALL METHOD po_cprotocol->display_protocol.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -3584,8 +3677,7 @@ FORM check_gih_availability  USING    ps_header_0300 TYPE zssssd0207
   DATA : lv_subrc LIKE sy-subrc.
 
   IF ps_header_0300-rgtor IS INITIAL
-    OR ps_header_0300-gidat IS INITIAL
-    OR ( gt_info_0300[] IS NOT INITIAL AND ps_header_0300-jetor IS INITIAL ).
+    OR ps_header_0300-gidat IS INITIAL.
 
     MESSAGE i999(zmcss) WITH '출고 문서의 필수 정보를 입력해 주십시오'.
     pv_subrc = 4.
@@ -3594,14 +3686,8 @@ FORM check_gih_availability  USING    ps_header_0300 TYPE zssssd0207
 
   IF ps_header_0300-stext IS INITIAL.
     MESSAGE i999(zmcss) WITH '비고가 공백입니다. 자동으로 채워집니다.'.
-
     PERFORM set_stext TABLES gt_info_0300
-                      USING ps_header_0300
-                            'NOSTEXT'.
-  ELSE.
-    PERFORM set_stext TABLES gt_info_0300
-                      USING ps_header_0300
-                           'STEXT'.
+                      USING ps_header_0300.
   ENDIF.
 
   " 물류부서(D003)의 사람만 GI를 적을 수 있다.
@@ -3614,17 +3700,6 @@ FORM check_gih_availability  USING    ps_header_0300 TYPE zssssd0207
     RETURN.
   ENDIF.
 
-  IF ps_header_0300-jetor IS NOT INITIAL.
-    " 회계부서(D003)의 사람만 JE를 적을 수 있다.
-    PERFORM check_dept USING  ps_header_0300-jetor
-                              'D001'
-                      CHANGING lv_subrc.
-
-    IF lv_subrc <> 0.
-      pv_subrc = 4.
-      RETURN.
-    ENDIF.
-  ENDIF.
 
   " Header의 출고일은 Item중 가장 늦은 아이템의 SO 일보다 늦어야 한다.
   PERFORM check_gidat TABLES gt_info_0300
@@ -3647,45 +3722,49 @@ ENDFORM.
 *      -->P_PS_HEADER_0300_GIDAT  text
 *      <--P_LV_SUBRC  text
 *----------------------------------------------------------------------*
-FORM check_gidat  TABLES   pt_info_0300 STRUCTURE gs_info_0300
+FORM check_gidat  TABLES   pt_info STRUCTURE zssssd0206
                   USING    VALUE(pv_gidat) LIKE sy-datum
                   CHANGING pv_subrc LIKE sy-subrc.
   CLEAR pv_subrc.
 
   DATA : lr_sonum TYPE RANGE OF zesssonum WITH HEADER LINE.
-  DATA : ls_lastso LIKE ztsssoh.
+  DATA : lt_lastso LIKE TABLE OF ztsssoh WITH HEADER LINE.
 
-  IF pt_info_0300[] IS INITIAL.
+  IF pt_info[] IS INITIAL.
     " Line Item이 없는 상태.
     pv_subrc = 5.
     RETURN.
   ENDIF.
 
-  LOOP AT pt_info_0300.
-    READ TABLE lr_sonum WITH KEY low = pt_info_0300-sonum.
+  LOOP AT pt_info.
+    READ TABLE lr_sonum WITH KEY low = pt_info-sonum.
     IF sy-subrc <> 0.
 
       lr_sonum-sign = 'I'.
       lr_sonum-option = 'EQ'.
-      lr_sonum-low = pt_info_0300-sonum.
+      lr_sonum-low = pt_info-sonum.
       lr_sonum-high = ''.
 
       APPEND lr_sonum.
     ENDIF.
   ENDLOOP.
 
-  SELECT SINGLE sonum sodat
+  SELECT sonum sodat
     FROM ztsssoh
-    INTO CORRESPONDING FIELDS OF ls_lastso
-    WHERE sonum IN lr_sonum
-    AND sodat = ( SELECT MAX( sodat ) FROM ztsssoh ).
+    INTO CORRESPONDING FIELDS OF TABLE lt_lastso
+    WHERE sonum IN lr_sonum.
+
+  SORT lt_lastso BY sodat DESCENDING.
+  READ TABLE lt_lastso INDEX 1.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<check_gidat>' 'SONUM UNKNOWN'.
+    MESSAGE i999(zmcss) WITH '<check_gidat>' 'SONUM UNKNOWN'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
-  IF pv_gidat < ls_lastso-sodat.
-    MESSAGE i304(zmcss) WITH ls_lastso-sodat ls_lastso-sonum.
+  IF pv_gidat < lt_lastso-sodat.
+    MESSAGE i304(zmcss) WITH lt_lastso-sodat lt_lastso-sonum.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -3700,18 +3779,15 @@ ENDFORM.
 *      -->P_GT_INFO_0300  text
 *      <--P_PS_HEADER_0300_STEXT  text
 *----------------------------------------------------------------------*
-FORM set_stext  TABLES pt_info_0300 STRUCTURE gs_info_0300
-                USING ps_header_0300 TYPE zssssd0207
-                      VALUE(pv_sflag) TYPE string.
+FORM set_stext  TABLES pt_info_0300 STRUCTURE zssssd0206
+                USING ps_header_0300 TYPE zssssd0207.
 
 
-  DATA : ls_ztssemp   TYPE ztssemp,
-         ls_ztssemp_2 TYPE ztssemp,
-         lv_ename     TYPE string,
-         lv_jenam     TYPE string,
-         lv_subrc     LIKE sy-subrc,
-         lv_itcnt     TYPE i,
-         lv_citcnt    TYPE string.
+  DATA : ls_ztssemp TYPE ztssemp,
+         lv_ename   TYPE string,
+         lv_subrc   LIKE sy-subrc,
+         lv_itcnt   TYPE i,
+         lv_citcnt  TYPE string.
 
   PERFORM get_emp TABLES gt_ztssemp
                   USING  ps_header_0300-rgtor
@@ -3723,27 +3799,10 @@ FORM set_stext  TABLES pt_info_0300 STRUCTURE gs_info_0300
 
   CONCATENATE  ls_ztssemp-lname ls_ztssemp-fname INTO lv_ename.
 
-  IF ps_header_0300-jetor IS NOT INITIAL.
-    PERFORM get_emp TABLES gt_ztssemp
-                    USING  ps_header_0300-jetor
-                    CHANGING ls_ztssemp_2
-                             lv_subrc.
-    IF lv_subrc <> 0.
-      MESSAGE a999(zmcss) WITH '<set_stext>' 'NO JE EMPLOYEE'.
-    ENDIF.
 
-    CONCATENATE  ls_ztssemp_2-lname ls_ztssemp_2-fname INTO lv_jenam.
-  ENDIF.
-
-
-
-  IF pv_sflag = 'STEXT'.
-    CONCATENATE ps_header_0300-stext '의 출고전표' INTO ps_header_0300-jstxt.
-    RETURN.
-  ENDIF.
 
   IF pt_info_0300[] IS INITIAL.
-    CONCATENATE ps_header_0300-gidat ' 일자 출고 By_' lv_ename INTO ps_header_0300-stext.
+    CONCATENATE ps_header_0300-gidat '일자 출고 By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
     "ps_header_0300-stext = ps_header_0300-gidat && ' 일자 출고 By ' && lv_ename.
     RETURN.
   ENDIF.
@@ -3753,12 +3812,10 @@ FORM set_stext  TABLES pt_info_0300 STRUCTURE gs_info_0300
 
   CASE lv_itcnt.
     WHEN '1'.
-      CONCATENATE ps_header_0300-gidat ' 일자 출고_' pt_info_0300-matnm 'By_' lv_ename INTO ps_header_0300-stext.
-      CONCATENATE ps_header_0300-gidat ' 일자 출고 전표_'  pt_info_0300-matnm  'By_' lv_jenam INTO ps_header_0300-jstxt.
+      CONCATENATE ps_header_0300-gidat '일자 출고' pt_info_0300-matnm 'By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
     WHEN OTHERS.
       lv_citcnt = lv_itcnt - 1.
-      CONCATENATE ps_header_0300-gidat ' 일자 출고_' pt_info_0300-matnm ' 외' lv_citcnt '건 By_' lv_ename INTO ps_header_0300-stext.
-      CONCATENATE ps_header_0300-gidat ' 일자 출고 전표_'  pt_info_0300-matnm ' 외' lv_citcnt '건 By_' lv_jenam INTO ps_header_0300-jstxt.
+      CONCATENATE ps_header_0300-gidat '일자 출고' pt_info_0300-matnm '외' lv_citcnt '건 By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
 *        ps_header_0300-stext =
 *    ps_header_0300-gidat && '일자 출고 :' && pt_info_0300-matnm && '외' && lv_itcnt && '건 By' && lv_ename.
   ENDCASE.
@@ -3816,19 +3873,8 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM modify_screen_0300 .
-  LOOP AT SCREEN.
 
-    CASE screen-group1.
-      WHEN 'JET'.
-        IF gt_info_0300[] IS INITIAL.
-          CLEAR : zssssd0207-jenam, zssssd0207-jetor, zssssd0207-jstxt.
-          screen-input = '0'.
-        ELSE.
-          screen-input = '1'.
-        ENDIF.
-    ENDCASE.
-    MODIFY SCREEN.
-  ENDLOOP.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INSERT_GI_WITH_ITEMS
@@ -3861,11 +3907,13 @@ FORM insert_gi_with_items  TABLES   pt_info_0300 STRUCTURE gs_info_0300
 
   IF lv_subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'INSERT 실패!'.
+    MESSAGE i999(zmcss) WITH 'INSERT 실패!'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
-  ps_gih_0300-jenum = ls_gih-jenum.
-  ps_gih_0300-stext = ls_gih-stext.
+  ps_gih_0300-jenum = ls_jeh-jenum.
+  ps_gih_0300-fyear = ls_jeh-fyear.
   ps_gih_0300-istat = 'A'.
 
   PERFORM insert_gi TABLES lt_gii
@@ -3876,19 +3924,28 @@ FORM insert_gi_with_items  TABLES   pt_info_0300 STRUCTURE gs_info_0300
 
   IF lv_subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'INSERT 실패!'.
+    MESSAGE i999(zmcss) WITH 'INSERT 실패!'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
+
 
   PERFORM insert_ware TABLES lt_ware
                              pt_info_0300
-                      USING  ps_gih_0300
+                      USING  ls_gih
                       CHANGING lv_subrc.
 
   IF lv_subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'INSERT 실패!'.
+    MESSAGE i999(zmcss) WITH 'INSERT 실패!'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
+  MESSAGE s999(zmcss) WITH '출고 문서' ls_gih-ginum '가 생성되었습니다'.
+  gv_ginum_0300 = ls_gih-ginum.
+
+  pv_subrc = 0.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INSERT_JE
@@ -3906,7 +3963,7 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
                 CHANGING ps_jeh TYPE ztssjeh
                          pv_subrc LIKE sy-subrc.
 
-  CLEAR : pv_subrc, pt_jei, ps_jeh.
+  CLEAR : pv_subrc, pt_jei[], ps_jeh.
 
   " FI Header 채번.
   DATA: lv_num(6)   TYPE n,
@@ -3938,11 +3995,9 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
     MESSAGE a999(zmcss) WITH 'INSERT_JE' '채번 오류'.
   ENDIF.
 
-  ps_jeh-jtype = 'WE'.
-  ps_jeh-stext = ps_gih_0300-jstxt.
+  ps_jeh-jtype = 'WA'.
   ps_jeh-curky = 'KRW'.
   ps_jeh-rgdat = sy-datum.
-  ps_jeh-rgtor = ps_gih_0300-jetor.
 
   DATA : lv_cstid TYPE zesscstid,
          lv_ivprc TYPE zessivprc,
@@ -3959,7 +4014,9 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
       WHERE sonum EQ pt_gii_0300-sonum.
 
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH 'INSERT_JE' '고객 정보 조회 실패'.
+      MESSAGE i999(zmcss) WITH 'INSERT_JE' '고객 정보 조회 실패'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
     " 구매가 찾기
     SELECT SINGLE csprc
@@ -3969,7 +4026,9 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
       AND cstid = lv_cstid.
 
     IF sy-subrc <> 0.
-      MESSAGE a999(zmcss) WITH 'INSERT_JE' '가격 정보 조회 실패'.
+      MESSAGE i999(zmcss) WITH 'INSERT_JE' '가격 정보 조회 실패'.
+      pv_subrc = 4.
+      RETURN.
     ENDIF.
 
     lv_ivprc = lv_ivprc + ( lv_csprc * pt_gii_0300-amount ).
@@ -3991,23 +4050,26 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
   pt_jei-fyear = ps_jeh-fyear.
   pt_jei-jeseq = '002'.
   pt_jei-curky = 'KRW'.
-  pt_jei-debit = lv_ivprc.
+  pt_jei-credit = lv_ivprc.
   pt_jei-glacc = '310000'.
 
   APPEND pt_jei.
 
   " INSERT.
-
   INSERT ztssjeh FROM ps_jeh.
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'JEH INSERT 실패'.
+    MESSAGE i999(zmcss) WITH 'JEH INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   INSERT ztssjei FROM TABLE pt_jei[].
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'JEI INSERT 실패'.
+    MESSAGE i999(zmcss) WITH 'JEI INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   COMMIT WORK.
@@ -4064,6 +4126,7 @@ FORM insert_gi  TABLES   pt_gii STRUCTURE ztssgii
   ps_gih-gidat = ps_gih_0300-gidat.
   ps_gih-jenum = ps_gih_0300-jenum.
   ps_gih-fyear = ps_gih_0300-fyear.
+  ps_gih-stext = ps_gih_0300-stext.
   ps_gih-rgdat = sy-datum.
   ps_gih-rgtor = ps_gih_0300-rgtor.
 
@@ -4084,15 +4147,31 @@ FORM insert_gi  TABLES   pt_gii STRUCTURE ztssgii
   INSERT ztssgih FROM ps_gih.
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'GIH INSERT 실패'.
+    MESSAGE i999(zmcss) WITH 'GIH INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
   INSERT ztssgii FROM TABLE pt_gii[].
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE a999(zmcss) WITH 'GII INSERT 실패'.
+    MESSAGE i999(zmcss) WITH 'GII INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
+  DATA lv_jstxt TYPE c LENGTH 40.
+  lv_jstxt = pt_gii-ginum && '의 출고전표'.
+
+  UPDATE ztssjeh SET stext = lv_jstxt WHERE jenum = ps_gih-jenum AND fyear = ps_gih-fyear.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'JEH UPDATE 실패'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  COMMIT WORK.
   pv_subrc = 0.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -4107,7 +4186,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM insert_ware  TABLES   pt_ware      STRUCTURE ztssware
                            pt_info_0300 STRUCTURE gs_info_0300
-                  USING    ps_gih_0300 TYPE zssssd0207
+                  USING    ps_gih TYPE ztssgih
                   CHANGING pv_subrc LIKE sy-subrc.
 
   DATA : lv_num  TYPE n LENGTH 6,
@@ -4140,14 +4219,14 @@ FORM insert_ware  TABLES   pt_ware      STRUCTURE ztssware
       RETURN.
     ENDIF.
 
-    pt_ware-ginum = 'W' && lv_year && lv_num.
+    pt_ware-warid = 'W' && lv_year && lv_num.
     pt_ware-stoid = pt_info_0300-stoid.
     pt_ware-matnr = pt_info_0300-somnr.
     pt_ware-amount = pt_info_0300-amount.
     pt_ware-meins = pt_info_0300-meins.
     pt_ware-wtype = 'O'.
-    pt_ware-wdate = ps_gih_0300-gidat.
-    pt_ware-ginum = ps_gih_0300-ginum.
+    pt_ware-wdate = ps_gih-gidat.
+    pt_ware-ginum = ps_gih-ginum.
     pt_ware-rgdat = sy-datum.
     pt_ware-rgtor = 'E0000024'.
 
@@ -4155,11 +4234,1481 @@ FORM insert_ware  TABLES   pt_ware      STRUCTURE ztssware
   ENDLOOP.
 
   INSERT ztssware FROM TABLE pt_ware[].
-
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '재고현황 INSERT 실패'.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '재고현황 INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
   ENDIF.
 
+  COMMIT WORK.
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_SCREEN_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GV_EFLAG_0500  text
+*----------------------------------------------------------------------*
+FORM modify_screen_0500  USING    VALUE(pv_eflag).
+
+  LOOP AT SCREEN.
+    CASE pv_eflag.
+      WHEN 'X'. " 수정 모드 ON
+        CASE screen-group1.
+          WHEN 'SED'. " 수정 버튼 숨기기
+            screen-active = '0'.
+          WHEN 'EED'. " 수정 완료 버튼 생기기.
+            screen-active = '1'.
+          WHEN 'ED1'. " 수정에 따라 생기는 버튼들 생기기.
+            screen-active = '1'.
+          WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 가능하게 하기
+            screen-input = '1'.
+          WHEN OTHERS.
+        ENDCASE.
+
+      WHEN ''. " 조회 모드 ON
+        CASE screen-group1.
+          WHEN 'SED'. " 수정 버튼 생기기
+            screen-active = '1'.
+          WHEN 'EED'. " 수정 완료 버튼 숨기기.
+            screen-active = '0'.
+          WHEN 'ED1'. " 수정에 따라 생기는 버튼들 숨기기.
+            screen-active = '0'.
+          WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
+            screen-input = '0'.
+          WHEN OTHERS.
+        ENDCASE.
+
+      WHEN OTHERS.
+        MESSAGE a999(zmcss) WITH '<modify_screen_0500>' 'UNKNOWN EFLAG!'.
+    ENDCASE.
+
+    MODIFY SCREEN.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0500  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0500  TABLES   pt_fcat_0500 STRUCTURE lvc_s_fcat.
+
+  IF pt_fcat_0500[] IS INITIAL.
+    MESSAGE a999(zmcss) WITH 'FCAT500 ERROR'.
+  ENDIF.
+
+  LOOP AT pt_fcat_0500.
+    CASE pt_fcat_0500-fieldname.
+      WHEN 'SONUM'.
+        CASE gv_eflag_0500.
+          WHEN 'X'.
+            pt_fcat_0500-hotspot = ''.
+          WHEN ''.
+            pt_fcat_0500-hotspot = 'X'.
+        ENDCASE.
+        MODIFY pt_fcat_0500.
+      WHEN 'AMOUNT'.
+        CASE gv_eflag_0500.
+          WHEN 'X'.
+            pt_fcat_0500-edit = 'X'.
+          WHEN ''.
+            pt_fcat_0500-edit = ''.
+        ENDCASE.
+        MODIFY pt_fcat_0500.
+    ENDCASE.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_SO_DOAMT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_INFO_SONUM  text
+*      -->P_PS_INFO_ITNUM  text
+*      <--P_LV_DOAMT  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_so_doamt  USING    VALUE(pv_sonum)
+                            VALUE(pv_itnum)
+                   CHANGING pv_doamt TYPE zessamount
+                            pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  " GI 된 SO ITEM의 총합
+  SELECT SUM( amount )
+    FROM ztssgii
+    INTO pv_doamt
+    WHERE sonum = pv_sonum
+    AND itnum = pv_itnum.
+
+  IF pv_doamt < 0.
+    MESSAGE i999(zmcss) WITH 'MINUS DOAMT'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_GI_UPDATABILITY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_O_0500  text
+*      -->P_GS_INFO_O_0500H  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_gi_updatability  TABLES   pt_info_o STRUCTURE zssssd0206
+                                     pt_info_e STRUCTURE zssssd0206
+                            USING    VALUE(ps_info_o) LIKE gs_info_0500h
+                                     VALUE(ps_info_e) LIKE gs_info_0500h
+                            CHANGING pv_subrc LIKE sy-subrc.
+
+
+  CLEAR pv_subrc.
+  DATA : lv_subrc LIKE sy-subrc.
+
+  " 청구된 출고 문서여선 안된다.
+  IF ps_info_o-binum IS NOT INITIAL.
+    MESSAGE i999(zmcss) WITH '청구 완료된 출고 건은 수정할 수 없습니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 업데이트 된걸 반영해 줘야 한다.
+  PERFORM check_alv_updated USING go_alv_0500
+                            CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    MESSAGE s999(zmcss) WITH '출고 아이템에 문제가 있습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+
+  " 업데이트 안된 거라도 재고 확인을 해줘야 한다.
+  PERFORM check_alv_amount TABLES pt_info_e
+                           CHANGING lv_subrc.
+
+
+  IF lv_subrc <> 0.
+    MESSAGE s999(zmcss) WITH '출고 아이템에 문제가 있습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 모든 자재가 유효한 갯수여야 한다.
+
+
+  "모든 고객이 동일해야 한다.
+  PERFORM check_gii_customers TABLES gt_info_0500
+                              CHANGING lv_subrc.
+  IF gv_subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  "변화된 내용이 없어선 안된다.
+  DATA : lv_chg.
+  DATA : lv_o_lines TYPE i,
+         lv_e_lines TYPE i.
+  IF ps_info_o EQ ps_info_e.
+
+    DESCRIBE TABLE pt_info_o LINES lv_o_lines.
+    DESCRIBE TABLE pt_info_e LINES lv_e_lines.
+
+    IF lv_o_lines = lv_e_lines.
+      LOOP AT pt_info_o.
+        READ TABLE pt_info_e WITH KEY
+          giseq = pt_info_o-giseq
+          sonum = pt_info_o-sonum
+          itnum = pt_info_o-itnum
+          amount = pt_info_o-amount.
+
+        IF sy-subrc <> 0.
+          lv_chg = 'X'.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+    ELSE.
+      lv_chg = 'X'.
+    ENDIF.
+  ELSE.
+    lv_chg = 'X'.
+  ENDIF.
+
+  IF lv_chg IS INITIAL.
+    MESSAGE i999(zmcss) WITH '출고 문서의 내용에 변화가 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 헤더의 유효성 검사
+  PERFORM check_gih_updatability CHANGING gs_info_0500h
+                                          lv_subrc.
+
+  pv_subrc = lv_subrc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_GIH_UPDATABILITY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_INFO_0500H  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_gih_updatability   CHANGING ps_info_0500h LIKE gs_info_0500h
+                                       pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : lv_subrc LIKE sy-subrc.
+
+  IF ps_info_0500h-rgtor IS INITIAL
+    OR ps_info_0500h-gidat IS INITIAL.
+
+    MESSAGE i999(zmcss) WITH '출고 문서의 필수 정보를 입력해 주십시오'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_info_0500h-stext IS INITIAL.
+    MESSAGE i999(zmcss) WITH '비고가 공백입니다. 자동으로 채워집니다.'.
+
+    DATA lv_zssssd0207 TYPE zssssd0207.
+    MOVE-CORRESPONDING ps_info_0500h TO lv_zssssd0207.
+
+    PERFORM set_stext TABLES gt_info_0500
+                      USING lv_zssssd0207.
+
+    ps_info_0500h-stext = lv_zssssd0207-stext.
+  ENDIF.
+
+  " 유효한 사원 번호여야 한다.
+  PERFORM check_emp USING ps_info_0500h-rgtor
+                    CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 물류부서(D003)의 사람만 GI를 적을 수 있다.
+  PERFORM check_dept USING  ps_info_0500h-rgtor
+                            'D003'
+                    CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " Header의 출고일은 Item중 가장 늦은 아이템의 SO 일보다 늦어야 한다.
+  PERFORM check_gidat TABLES gt_info_0500
+                      USING ps_info_0500h-gidat
+                      CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    pv_subrc = lv_subrc.
+    RETURN.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_GI_WITH_ITEMS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0500  text
+*      <--P_GS_INFO_0500H  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_gi_with_items  TABLES   pt_info_0500 STRUCTURE zssssd0206
+                           CHANGING ps_gih_0500 LIKE gs_info_0500h
+                                    pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lv_subrc LIKE sy-subrc.
+
+  DATA : ls_jeh TYPE ztssjeh,
+         lt_jei TYPE TABLE OF ztssjei WITH HEADER LINE.
+  DATA : ls_gih TYPE ztssgih,
+         lt_gii TYPE TABLE OF ztssgii WITH HEADER LINE.
+  DATA : lt_ware TYPE TABLE OF ztssware WITH HEADER LINE.
+
+  PERFORM update_je TABLES lt_jei
+                           pt_info_0500
+                    USING  ps_gih_0500
+                    CHANGING ls_jeh
+                             lv_subrc.
+  IF lv_subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'INSERT 실패!'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  ps_gih_0500-jenum = ls_jeh-jenum.
+  ps_gih_0500-fyear = ls_jeh-fyear.
+  ps_gih_0500-istat = 'A'.
+
+  PERFORM update_gi TABLES   lt_gii
+                             pt_info_0500
+                    USING    ps_gih_0500
+                    CHANGING ls_gih
+                             lv_subrc.
+
+  IF lv_subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'INSERT 실패!'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_JE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_JEI  text
+*      -->P_PT_INFO_0500  text
+*      -->P_PS_GIH_0500  text
+*      <--P_LS_JEH  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_je  TABLES   pt_jei STRUCTURE ztssjei
+                         pt_info_0500 STRUCTURE zssssd0206
+                USING    ps_gih_0500 LIKE gs_info_0500h
+                CHANGING ps_jeh LIKE ztssjeh
+                         pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_jei[], ps_jeh.
+
+  " ORIGINAL
+  DATA : lt_o_jei TYPE TABLE OF ztssjei WITH HEADER LINE,
+         ls_o_jeh TYPE ztssjeh.
+
+  " REV
+  DATA : lt_r_jei TYPE TABLE OF ztssjei WITH HEADER LINE,
+         ls_r_jeh TYPE ztssjeh,
+         lv_rrson TYPE c LENGTH 40,
+         lv_jstxt TYPE c LENGTH 40.
+
+  " 채번 OBJECT
+  DATA: lv_num(6)   TYPE n,
+        lv_num2(13) TYPE c.
+
+  " ORIGINAL HEADER
+  SELECT SINGLE *
+    FROM ztssjeh
+    INTO CORRESPONDING FIELDS OF ls_o_jeh
+    WHERE jenum = ps_gih_0500-jenum
+    AND fyear = ps_gih_0500-fyear.
+
+  " ORIGINAL ITEM
+  SELECT *
+    FROM ztssjei
+    INTO CORRESPONDING FIELDS OF TABLE lt_o_jei
+    WHERE jenum = ps_gih_0500-jenum
+    AND fyear = ps_gih_0500-fyear.
+
+  IF ls_o_jeh IS NOT INITIAL. " 예전게 비어있는 거였을 수도 있음.
+    " REV JE
+    CLEAR : lv_num, lv_num2.
+    CALL FUNCTION 'NUMBER_GET_NEXT'
+      EXPORTING
+        nr_range_nr             = '01'
+        object                  = 'ZNRSSFI01'
+        toyear                  = sy-datum+0(4)
+      IMPORTING
+        number                  = lv_num
+      EXCEPTIONS  " M TYPE -> A
+        interval_not_found      = 1
+        number_range_not_intern = 2
+        object_not_found        = 3
+        quantity_is_0           = 4
+        quantity_is_not_1       = 5
+        interval_overflow       = 6
+        buffer_overflow         = 7
+        OTHERS                  = 8.
+
+    " rev의 Header를 결정.
+    IF sy-subrc = 0.
+      lv_num2 = 'J' && sy-datum+0(4) && lv_num.
+      ls_r_jeh-jenum = lv_num2.
+      ls_r_jeh-fyear = sy-datum+0(4).
+    ELSE.
+      MESSAGE a999(zmcss) WITH 'UPDATE_JE' '채번 오류'.
+    ENDIF.
+
+    ls_r_jeh-jtype = 'WA'.
+    ls_r_jeh-curky = 'KRW'.
+    ls_r_jeh-rgdat = sy-datum.
+    CLEAR lv_jstxt.
+    CONCATENATE ps_gih_0500-ginum '의 수정에 따른 역분개 전표' INTO lv_jstxt SEPARATED BY space.
+    ls_r_jeh-stext = lv_jstxt.
+
+    "rev의 Line Item을 결정.
+    LOOP AT lt_o_jei.
+      MOVE-CORRESPONDING lt_o_jei TO lt_r_jei.
+      lt_r_jei-jenum = ls_r_jeh-jenum.
+      lt_r_jei-fyear = ls_r_jeh-fyear.
+
+      " Negative Reverse
+      IF lt_o_jei-debit IS NOT INITIAL.
+        lt_r_jei-debit =  lt_o_jei-debit * -1.
+      ELSEIF lt_o_jei-credit IS NOT INITIAL.
+        lt_r_jei-credit = lt_o_jei-credit * -1.
+      ENDIF.
+
+      APPEND lt_r_jei.
+    ENDLOOP.
+
+    "rev 구성 완료, Original의 전표에 REV CHECK.
+    ls_o_jeh-rev = 'X'.
+    ls_o_jeh-rjnum = ls_r_jeh-jenum.
+    CONCATENATE ps_gih_0500-ginum '수정으로 인한 역분개' INTO lv_rrson SEPARATED BY space.
+    ls_o_jeh-rrson = lv_rrson.
+  ENDIF.
+
+  " NEW JE
+  IF pt_info_0500[] IS NOT INITIAL.
+    CLEAR : lv_num, lv_num2.
+    CALL FUNCTION 'NUMBER_GET_NEXT'
+      EXPORTING
+        nr_range_nr             = '01'
+        object                  = 'ZNRSSFI01'
+        toyear                  = sy-datum+0(4)
+      IMPORTING
+        number                  = lv_num
+      EXCEPTIONS  " M TYPE -> A
+        interval_not_found      = 1
+        number_range_not_intern = 2
+        object_not_found        = 3
+        quantity_is_0           = 4
+        quantity_is_not_1       = 5
+        interval_overflow       = 6
+        buffer_overflow         = 7
+        OTHERS                  = 8.
+
+    " ps_jeh를 결정.
+    IF sy-subrc = 0.
+      lv_num2 = 'J' && sy-datum+0(4) && lv_num.
+      ps_jeh-jenum = lv_num2.
+      ps_jeh-fyear = sy-datum+0(4).
+    ELSE.
+      MESSAGE a999(zmcss) WITH 'UPDATE_JE' '채번 오류'.
+    ENDIF.
+
+    ps_jeh-jtype = 'WA'.
+    ps_jeh-curky = 'KRW'.
+    ps_jeh-rgdat = sy-datum.
+
+    CLEAR lv_jstxt.
+    CONCATENATE ps_gih_0500-ginum '의 출고 전표' INTO lv_jstxt SEPARATED BY space.
+    ps_jeh-stext = lv_jstxt.
+
+    DATA : lv_cstid TYPE zesscstid,
+           lv_ivprc TYPE zessivprc,
+           lv_csprc TYPE zesscsprc.
+
+    " pt_info_0500의 아이템으로 가격을 결정, jei의 아이템을 APPEND 한다.
+
+
+    LOOP AT pt_info_0500.
+      CLEAR : lv_cstid, lv_csprc.
+      " 고객 찾기
+      SELECT SINGLE cstid
+        FROM ztsssoh
+        INTO lv_cstid
+        WHERE sonum EQ pt_info_0500-sonum.
+
+      IF sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH 'UPDATE_JE' '고객 정보 조회 실패'.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+      " 구매가 찾기
+      SELECT SINGLE csprc
+        FROM ztsssacat
+        INTO lv_csprc
+        WHERE prdnr = pt_info_0500-somnr
+        AND cstid = lv_cstid
+        AND del NE 'X'.
+
+      IF sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH 'UPDATE_JE' '가격 정보 조회 실패'.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+
+      lv_ivprc = lv_ivprc + ( lv_csprc * pt_info_0500-amount ).
+
+    ENDLOOP.
+
+    pt_jei-jenum = ps_jeh-jenum.
+    pt_jei-fyear = ps_jeh-fyear.
+    pt_jei-jeseq = '001'.
+    pt_jei-curky = 'KRW'.
+    pt_jei-debit = lv_ivprc.
+    pt_jei-glacc = '510000'.
+    APPEND pt_jei.
+
+    CLEAR pt_jei.
+    pt_jei-jenum = ps_jeh-jenum.
+    pt_jei-fyear = ps_jeh-fyear.
+    pt_jei-jeseq = '002'.
+    pt_jei-curky = 'KRW'.
+    pt_jei-credit = lv_ivprc.
+    pt_jei-glacc = '310000'.
+    APPEND pt_jei.
+  ENDIF.
+
+
+  IF ls_o_jeh IS NOT INITIAL.
+    " INSERT REV
+    INSERT ztssjeh FROM ls_r_jeh.
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'REV JEH INSERT 실패'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    INSERT ztssjei FROM TABLE lt_r_jei[].
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'REV JEI INSERT 실패'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    " UPDATE
+    UPDATE ztssjeh
+      SET rev = ls_o_jeh-rev
+          rjnum = ls_o_jeh-rjnum
+          rrson = ls_o_jeh-rrson
+      WHERE jenum = ls_o_jeh-jenum
+      AND   fyear = ls_o_jeh-fyear.
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'OLD JEH UPDATE 실패'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDIF.
+
+  " INSERT NEW.
+  IF ps_jeh IS NOT INITIAL.
+    INSERT ztssjeh FROM ps_jeh.
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'UPDATED JEH INSERT 실패'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    INSERT ztssjei FROM TABLE pt_jei[].
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'UPDATED JEI INSERT 실패'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDIF.
+
+
+  COMMIT WORK.
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_GISEQ_UPDATE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0500  text
+*      -->P_GV_STSEQ_0500  text
+*----------------------------------------------------------------------*
+FORM set_giseq_update  TABLES   pt_info STRUCTURE zssssd0206
+                       USING    VALUE(pv_stseq) TYPE i.
+
+  DATA lv_giseq TYPE n LENGTH 3.
+  lv_giseq = pv_stseq + 1.
+
+  LOOP AT pt_info.
+    IF pt_info-giseq IS INITIAL.
+      pt_info-giseq = lv_giseq.
+      lv_giseq = lv_giseq + 1.
+    ELSEIF pt_info-giseq <= pv_stseq.
+      CONTINUE.
+    ELSE.
+      pt_info-giseq = lv_giseq.
+      lv_giseq = lv_giseq + 1.
+    ENDIF.
+
+    IF lv_giseq EQ '999'.
+      MESSAGE a999(zmcss) WITH 'MAXIMUM GISEQ REACHED'.
+    ENDIF.
+
+    MODIFY pt_info TRANSPORTING giseq.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_GI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_GII  text
+*      -->P_PT_INFO_0500  text
+*      -->P_PS_GIH_0500  text
+*      <--P_LS_GIH  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_gi  TABLES   pt_gii STRUCTURE ztssgii
+                         pt_info_0500 STRUCTURE zssssd0206
+                USING    ps_gih_0500 LIKE gs_info_0500h
+                CHANGING ps_gih TYPE ztssgih
+                         pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : lt_todel TYPE TABLE OF ztssgii WITH HEADER LINE, " 삭제할 GII
+         lt_toadd TYPE TABLE OF ztssgii WITH HEADER LINE, " 추가할 GII
+         lt_tomod TYPE TABLE OF ztssgii WITH HEADER LINE. " 변경할 GII
+
+  DATA : lt_wain  TYPE TABLE OF ztssware WITH HEADER LINE, "늘릴 WARE
+         lt_waout TYPE TABLE OF ztssware WITH HEADER LINE. "줄일 WARE.
+
+  DATA : lt_prev TYPE TABLE OF ztssgii WITH HEADER LINE. " 변경전 GII
+
+  DATA : lv_seq TYPE n LENGTH 3.
+
+  DATA : lv_subrc_a LIKE sy-subrc, "as is
+         lv_subrc_p LIKE sy-subrc. "pt_gii
+
+  "GIH
+  "1. GI Header 정보를 받아온다.
+  MOVE-CORRESPONDING ps_gih_0500 TO ps_gih.
+
+  "GII
+  "1. 변경 전 가장 최신의 GII 정보를 가져온다.
+  SELECT *
+    FROM ztssgii
+    INTO CORRESPONDING FIELDS OF TABLE lt_prev
+    WHERE ginum = ps_gih_0500-ginum
+    AND del NE 'X'.
+
+  "2. pt_gii를 통해 변경 할 GII를 구성한다.
+  DO 999 TIMES.
+    IF sy-index = 0.
+      CONTINUE.
+    ENDIF.
+
+    CLEAR : lv_subrc_a, lv_subrc_p, lv_seq, lt_toadd, lt_todel, lt_tomod, lt_wain, lt_waout.
+
+    lv_seq = sy-index.
+
+    READ TABLE pt_info_0500 WITH KEY giseq = lv_seq.
+    lv_subrc_p = sy-subrc.
+
+    READ TABLE lt_prev WITH KEY giseq = lv_seq.
+    lv_subrc_a = sy-subrc.
+
+    "pt_gii에는 있고, 변경전 GII에는 없다 -> 추가한 아이템에 APPEND.
+    "WARE에서는 그만큼 빠져야 함.
+    IF lv_subrc_p = 0
+      AND lv_subrc_a = 4.
+
+      MOVE-CORRESPONDING pt_info_0500 TO lt_toadd.
+      APPEND lt_toadd.
+
+      MOVE-CORRESPONDING pt_info_0500 TO lt_waout.
+      PERFORM get_matnr_from_so USING pt_info_0500-sonum
+                                      pt_info_0500-itnum
+                                CHANGING lt_waout-matnr.
+      APPEND lt_waout.
+
+      "pt_gii에도 있고, 변경전 GII에도 있다 -> AMOUNT 변경한 아이템에 APPEND.
+      "WARE에서는 pt_gii 만큼은 빠지고, 변경전 GII 만큼은 늘어야 함.
+    ELSEIF lv_subrc_p = 0
+      AND lv_subrc_a = 0.
+
+      MOVE-CORRESPONDING pt_info_0500 TO lt_tomod.
+      APPEND lt_tomod.
+
+      MOVE-CORRESPONDING pt_info_0500 TO lt_waout.
+      PERFORM get_matnr_from_so USING pt_info_0500-sonum
+                                      pt_info_0500-itnum
+                                CHANGING lt_waout-matnr.
+      APPEND lt_waout.
+      MOVE-CORRESPONDING lt_prev TO lt_wain.
+      PERFORM get_matnr_from_so USING lt_prev-sonum
+                                      lt_prev-itnum
+                                CHANGING lt_wain-matnr.
+      APPEND lt_wain.
+
+      "pt_gii에는 없고, 변경전 GII에는 있다 -> 삭제한 아이템에 APPEND.
+      "WARE에서는 변경전 GII 만큼 늘어야 함.
+    ELSEIF lv_subrc_p = 4
+      AND lv_subrc_a = 0.
+
+      MOVE-CORRESPONDING lt_prev TO lt_todel.
+      APPEND lt_todel.
+
+      MOVE-CORRESPONDING lt_prev TO lt_wain.
+      PERFORM get_matnr_from_so USING lt_prev-sonum
+                                      lt_prev-itnum
+                                CHANGING lt_wain-matnr.
+
+      APPEND lt_wain.
+
+      "pt_gii에도 없고, 변경전 GII에도 없다 -> LOOP 종료.
+    ELSEIF lv_subrc_p = 4
+      AND lv_subrc_a = 4.
+      CONTINUE.
+    ELSE.
+      MESSAGE a999(zmcss) WITH 'UPDATE_GI FATAL ERROR'.
+    ENDIF.
+  ENDDO.
+
+  " GIH Update
+  UPDATE ztssgih
+    SET jenum = ps_gih-jenum
+        fyear = ps_gih-fyear
+        istat = ps_gih-istat
+        rgtor = ps_gih-rgtor
+        gidat = ps_gih-gidat
+        stext = ps_gih-stext
+    WHERE ginum = ps_gih-ginum.
+
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'UPDATE FAIL - TOMOD'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  "3.UPDATE - TOMOD
+  LOOP AT lt_tomod.
+    UPDATE ztssgii SET amount = lt_tomod-amount
+      WHERE ginum = ps_gih-ginum
+      AND giseq = lt_tomod-giseq.
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'UPDATE FAIL - TOMOD'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+  "4. UPDATE - TODEL
+  LOOP AT lt_todel.
+    UPDATE ztssgii SET del = 'X'
+      WHERE ginum = ps_gih-ginum
+      AND giseq = lt_todel-giseq.
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'UPDATE FAIL - TODEL'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+
+  "5. UPDATE - TOADD
+  IF lt_toadd[] IS NOT INITIAL.
+    LOOP AT lt_toadd.
+      lt_toadd-ginum = ps_gih-ginum.
+      MODIFY lt_toadd TRANSPORTING ginum.
+    ENDLOOP.
+
+    INSERT ztssgii FROM TABLE lt_toadd[].
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'UPDATE FAIL - TOADD'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDIF.
+
+
+  "6. UPDATE - WAIN
+  IF lt_wain[] IS NOT INITIAL.
+    PERFORM update_ware TABLES   lt_wain
+                        USING    ps_gih
+                                 'I'
+                        CHANGING pv_subrc.
+
+  ENDIF.
+
+  "7. UPDATE - WAOUT
+  IF lt_waout[] IS NOT INITIAL.
+    PERFORM update_ware TABLES lt_waout
+                        USING   ps_gih
+                                'O'
+                        CHANGING pv_subrc.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_WARE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_WAIN  text
+*      -->P_PS_GIH  text
+*      -->P_0449   text
+*      <--P_PV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_ware  TABLES   pt_ware STRUCTURE ztssware
+                  USING    VALUE(ps_gih) TYPE ztssgih
+                           VALUE(pv_wtype)
+                  CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+
+  DATA : lv_num  TYPE n LENGTH 6,
+         lv_year TYPE n LENGTH 4,
+         lv_char TYPE c LENGTH 11.
+
+  LOOP AT pt_ware.
+    CLEAR : lv_num, lv_year, lv_char.
+    " 채번
+    lv_year = sy-datum+0(4).
+
+    CALL FUNCTION 'NUMBER_GET_NEXT'
+      EXPORTING
+        nr_range_nr             = '01'
+        object                  = 'ZNRSSMD06'
+        toyear                  = lv_year
+      IMPORTING
+        number                  = lv_num
+      EXCEPTIONS
+        interval_not_found      = 1
+        number_range_not_intern = 2
+        object_not_found        = 3
+        quantity_is_0           = 4
+        quantity_is_not_1       = 5
+        interval_overflow       = 6
+        buffer_overflow         = 7
+        OTHERS                  = 8.
+    IF sy-subrc <> 0.
+      MESSAGE a999(zmcss) WITH 'WARID 채번 실패'.
+      RETURN.
+    ENDIF.
+
+    pt_ware-warid = 'W' && lv_year && lv_num.
+    pt_ware-wtype = pv_wtype.
+    pt_ware-rgdat = sy-datum.
+    pt_ware-wdate = ps_gih-gidat.
+    pt_ware-ginum = ps_gih-ginum.
+    pt_ware-rgdat = sy-datum.
+    pt_ware-rgtor = 'E0000024'.
+
+
+    MODIFY pt_ware TRANSPORTING warid wtype wdate ginum ginum rgdat rgtor.
+  ENDLOOP.
+
+  INSERT ztssware FROM TABLE pt_ware[].
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '재고현황 INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  COMMIT WORK.
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MATNR_FROM_SO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PREV_SONUM  text
+*      -->P_LT_PREV_ITNUM  text
+*      <--P_LT_WAIN_MATNR  text
+*----------------------------------------------------------------------*
+FORM get_matnr_from_so  USING    VALUE(pv_sonum) TYPE zesssonum
+                                 VALUE(pv_itnum)
+                        CHANGING pv_matnr.
+
+  SELECT SINGLE somnr
+    FROM ztsssoi
+    INTO pv_matnr
+    WHERE sonum = pv_sonum
+    AND itnum = pv_itnum.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH 'NO SO MATNR!'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_GI_WITHOUT_ITEMS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSSD0207  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM insert_gi_without_items  USING    ps_gih_0300 TYPE zssssd0207
+                              CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lv_subrc LIKE sy-subrc.
+
+  DATA : ls_gih TYPE ztssgih,
+         lt_gii TYPE TABLE OF ztssgii WITH HEADER LINE.
+
+  DATA : lv_num  TYPE n LENGTH 6,
+         lv_year TYPE n LENGTH 4,
+         lv_char TYPE c LENGTH 11.
+
+  lv_year = sy-datum+0(4).
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSSD02'
+      toyear                  = lv_year
+    IMPORTING
+      number                  = lv_num
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH 'GI 채번 실패'.
+    RETURN.
+  ENDIF.
+
+  ls_gih-ginum = 'I' && lv_year && lv_num.
+  ls_gih-gidat = ps_gih_0300-gidat.
+  CLEAR : ls_gih-jenum, ls_gih-istat, ls_gih-fyear.
+  ls_gih-stext = ps_gih_0300-stext.
+  ls_gih-rgdat = sy-datum.
+  ls_gih-rgtor = ps_gih_0300-rgtor.
+
+  INSERT ztssgih FROM ls_gih.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'GIH INSERT 실패'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  COMMIT WORK.
+  MESSAGE s999(zmcss) WITH '출고 문서' ls_gih-ginum '가 생성되었습니다'.
+  gv_ginum_0300 = ls_gih-ginum.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0500  text
+*      -->P_GT_INFO_O_0500  text
+*      -->P_GS_INFO_0500H  text
+*      <--P_GS_INFO_O_0500H  text
+*      <--P_GV_STSEQ_0500  text
+*----------------------------------------------------------------------*
+FORM set_default_0500  TABLES   pt_sender STRUCTURE zssssd0206
+                                pt_receiver STRUCTURE zssssd0206
+                       USING    ps_sender_h LIKE gs_info_0500h
+                       CHANGING ps_receiver_h LIKE gs_info_0500h
+                                pv_stseq TYPE i.
+
+  DATA lt_giseq TYPE TABLE OF zessgiseq WITH HEADER LINE.
+
+  " 변경 전 데이터 저장
+  MOVE-CORRESPONDING ps_sender_h TO ps_receiver_h.
+  APPEND LINES OF pt_sender TO pt_receiver.
+
+  " stseq 세팅 (얘는 Deleted 된 애들도 다 가져와야 함)
+  SELECT giseq
+    FROM ztssgii
+    INTO TABLE lt_giseq
+    WHERE ginum = ps_sender_h-ginum.
+
+  DESCRIBE TABLE lt_giseq LINES pv_stseq.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_GI_WITHOUT_ITEMS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0500  text
+*      <--P_GS_INFO_0500H  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_gi_without_items  TABLES   pt_info_0500 STRUCTURE zssssd0206
+                              CHANGING ps_gih_0500 LIKE gs_info_0500h
+                                       pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lv_subrc LIKE sy-subrc.
+
+  DATA : ls_jeh TYPE ztssjeh,
+         lt_jei TYPE TABLE OF ztssjei WITH HEADER LINE.
+  DATA : ls_gih TYPE ztssgih,
+         lt_gii TYPE TABLE OF ztssgii WITH HEADER LINE.
+  DATA : lt_ware TYPE TABLE OF ztssware WITH HEADER LINE.
+
+
+  PERFORM update_je TABLES lt_jei
+                           pt_info_0500
+                    USING  ps_gih_0500
+                    CHANGING ls_jeh
+                             lv_subrc.
+
+  IF lv_subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'UPDATE 실패!'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  CLEAR : ps_gih_0500-jenum,
+  ps_gih_0500-fyear,
+  ps_gih_0500-istat.
+
+  PERFORM update_gi TABLES   lt_gii
+                             pt_info_0500
+                    USING    ps_gih_0500
+                    CHANGING ls_gih
+                             lv_subrc.
+
+  IF lv_subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH 'UPDATE 실패!'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSSD0201_RGTOR  text
+*      -->P_ZSSSSD0202_RGTOR  text
+*      -->P_ZSSSSD0203_RGTOR  text
+*      <--P_ZSSSSD0201_RNAME  text
+*      <--P_ZSSSSD0202_RNAME  text
+*      <--P_ZSSSSD0203_RNAME  text
+*----------------------------------------------------------------------*
+FORM get_emp_name  USING    VALUE(pv_rgtor)
+                   CHANGING pv_rname.
+
+  DATA : ls_ztssemp TYPE ztssemp.
+  DATA : lv_rname TYPE string.
+
+  CLEAR : pv_rname.
+
+  IF pv_rgtor IS NOT INITIAL.
+    PERFORM get_emp TABLES gt_ztssemp
+                    USING  pv_rgtor
+                    CHANGING  ls_ztssemp
+                              gv_subrc.
+    IF gv_subrc <> 0.
+      CLEAR : pv_rname.
+    ELSE.
+      CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO lv_rname.
+      pv_rname = lv_rname.
+    ENDIF.
+    RETURN.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MAT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSSD0204_MATNR  text
+*      <--P_ZSSSSD0204_MATNM  text
+*----------------------------------------------------------------------*
+FORM get_mat_name  USING    VALUE(pv_0204_matnr)
+                   CHANGING pv_0204_matnm.
+
+  DATA : ls_mat TYPE ts_mat.
+
+  CLEAR pv_0204_matnm.
+
+  IF pv_0204_matnr IS NOT INITIAL.
+    PERFORM get_mat TABLES   gt_ztssmat
+                    USING    pv_0204_matnr
+                             sy-langu
+                    CHANGING ls_mat
+                             gv_subrc.
+    IF gv_subrc <> 0.
+      CLEAR ls_mat.
+    ELSE.
+      pv_0204_matnm = ls_mat-matnm.
+    ENDIF.
+    RETURN.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0101 .
+  IF zssssd0201 IS INITIAL.
+    zssssd0201-begda = sy-datum.
+    PERFORM get_calc_datum USING  sy-datum
+                                  '+'
+                                  '0'
+                                  '1'
+                                  '0'
+                          CHANGING zssssd0201-endda.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0102
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0102 .
+  IF zssssd0202 IS INITIAL.
+    zssssd0202-endda = sy-datum.
+    PERFORM get_calc_datum USING  sy-datum
+                                  '-'
+                                  '0'
+                                  '1'
+                                  '0'
+                          CHANGING zssssd0202-begda.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0103
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0103 .
+  IF zssssd0203 IS INITIAL.
+    zssssd0203-endda = sy-datum.
+    PERFORM get_calc_datum USING  sy-datum
+                                  '-'
+                                  '0'
+                                  '1'
+                                  '0'
+                          CHANGING zssssd0203-begda.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0104
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0104 .
+  IF zssssd0204 IS INITIAL.
+    zssssd0204-endda = sy-datum.
+    PERFORM get_calc_datum USING  sy-datum
+                                  '-'
+                                  '0'
+                                  '1'
+                                  '0'
+                          CHANGING zssssd0204-begda.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_UPDATED
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CON_0300  text
+*----------------------------------------------------------------------*
+FORM check_alv_updated  USING    po_alv TYPE REF TO cl_gui_alv_grid
+                        CHANGING pv_subrc LIKE sy-subrc.
+
+  DATA : lv_valid TYPE char01.
+  CLEAR pv_subrc.
+
+  CALL METHOD po_alv->check_changed_data
+    IMPORTING
+      e_valid = lv_valid
+*    CHANGING
+*     c_refresh = 'X'
+    .
+
+  IF lv_valid = 'X'.
+    pv_subrc = 0.
+  ELSE.
+    pv_subrc = 4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_EMP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_INFO_0500H_RGTOR  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_emp  USING    VALUE(pv_pernr)
+                CHANGING pv_subrc LIKE sy-subrc.
+
+  DATA : lv_pernr TYPE zesspernr.
+  CLEAR pv_subrc.
+
+  SELECT SINGLE pernr
+    FROM ztssemp
+    INTO lv_pernr
+    WHERE pernr = pv_pernr.
+
+  IF sy-subrc = 0.
+    pv_subrc = 0.
+    RETURN.
+  ELSE.
+    pv_subrc = 4.
+    MESSAGE i999(zmcss) WITH pv_pernr '는 유효한 사원 번호가 아닙니다.'.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_NEWGI_FROM_SO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GV_SONUM_0200  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM set_newgi_from_so  USING    VALUE(pv_sonum_0200) TYPE zesssonum
+                        CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lt_info_0302 LIKE TABLE OF gs_info_0302,
+         ls_cond_0302 TYPE zssssd0209.
+
+  DATA : lv_subrc LIKE sy-subrc.
+  IF pv_sonum_0200 IS NOT INITIAL.
+    ls_cond_0302-sonum = pv_sonum_0200.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '<set_newgi_from_so> NO_SONUM'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " QUERY 300
+  PERFORM get_so_with_so TABLES   lt_info_0302
+                                  gt_info_0300
+                         USING    ls_cond_0302
+                         CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    MESSAGE i999(zmcss) WITH '<set_newgi_from_so> NO_SO_HEADER'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " SET 300
+  PERFORM set_info_zssssd0206_from_0302 TABLES   lt_info_0302
+                                                 gt_info_0300
+                                        CHANGING lv_subrc.
+  IF lv_subrc <> 0.
+    MESSAGE i999(zmcss) WITH '<set_newgi_from_so> NO_SO_ITEM'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " SET 300 SEQ
+  IF gt_info_0300 IS NOT INITIAL.
+    PERFORM set_giseq TABLES gt_info_0300
+                      USING '001'.
+  ENDIF.
+
+  zssssd0207-gidat = sy-datum.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_GII_CUSTOMERS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_gii_customers  TABLES   pt_info STRUCTURE zssssd0206
+                          CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : lv_cstid TYPE zesscstid,
+         lv_cmpid TYPE zesscstid.
+
+  LOOP AT pt_info.
+    IF lv_cstid IS INITIAL.
+      SELECT SINGLE cstid
+        FROM ztsssoh
+        INTO lv_cstid
+        WHERE sonum = pt_info-sonum.
+    ELSE.
+      SELECT SINGLE cstid
+        FROM ztsssoh
+        INTO lv_cmpid
+        WHERE sonum = pt_info-sonum.
+
+      IF lv_cmpid <> lv_cstid.
+        MESSAGE i999(zmcss) WITH '모든 판매 오더의 고객이 동일하지 않습니다.'.
+        pv_subrc = 4.
+        RETURN.
+      ENDIF.
+    ENDIF.
+  ENDLOOP.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_GI_INSERTABILITY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300  text
+*      -->P_ZSSSSD0207  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_gi_insertability  TABLES   pt_info_0300 STRUCTURE zssssd0206
+                             USING    ps_info_0300h TYPE zssssd0207
+                             CHANGING pv_subrc LIKE sy-subrc.
+
+  DATA lv_subrc LIKE sy-subrc.
+  CLEAR pv_subrc.
+
+  " 라인 유효성 검사
+  PERFORM check_alv_updated USING go_alv_0300
+                            CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    MESSAGE s999(zmcss) WITH '출고 아이템에 문제가 있습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  PERFORM check_alv_amount TABLES pt_info_0300
+                           CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    MESSAGE s999(zmcss) WITH '출고 아이템에 문제가 있습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+
+  PERFORM check_gii_customers TABLES pt_info_0300
+                              CHANGING lv_subrc.
+
+  IF lv_subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " 헤더 유효성 검사
+  PERFORM check_gih_availability USING zssssd0207
+                                 CHANGING lv_subrc.
+
+  pv_subrc = lv_subrc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_AMOUNT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_E  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_alv_amount  TABLES   pt_info STRUCTURE zssssd0206
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc.
+
+  DATA : lv_msgamount TYPE string,
+         lv_msgstoid  TYPE string,
+         lv_msgmatnm  TYPE string.
+
+  DATA : lv_subrc LIKE sy-subrc,
+         lv_eflag TYPE c.
+
+  LOOP AT pt_info.
+    CLEAR : lv_msgamount, lv_msgstoid, lv_msgmatnm.
+    CLEAR : lv_subrc.
+
+    PERFORM check_gii_availability
+                USING
+                    pt_info
+                CHANGING
+                   lv_msgamount
+                   lv_msgstoid
+                   lv_msgmatnm
+                   lv_subrc.
+
+    IF lv_subrc <> 0.
+      lv_eflag = 'X'.
+
+      CASE lv_subrc.
+        WHEN '4'.
+          MESSAGE i301(zmcss) WITH pt_info-giseq.
+
+        WHEN '5'.
+          MESSAGE i302(zmcss) WITH pt_info-giseq lv_msgamount.
+
+        WHEN '6'.
+          MESSAGE i303(zmcss) WITH pt_info-giseq lv_msgstoid lv_msgmatnm lv_msgamount.
+      ENDCASE.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_eflag = 'X'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

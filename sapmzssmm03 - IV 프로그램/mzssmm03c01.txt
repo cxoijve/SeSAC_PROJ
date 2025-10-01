@@ -1,6 +1,31 @@
 *&---------------------------------------------------------------------*
 *&  Include           MZSSMM03C01
 *&---------------------------------------------------------------------*
+CLASS lcl_event_receiver01 DEFINITION.
+
+  PUBLIC SECTION.
+
+    METHODS handle_double_click
+          FOR EVENT double_click OF cl_gui_alv_grid
+      IMPORTING
+          e_column
+          e_row
+          es_row_no.
+
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+
+ENDCLASS.                    "LCL_EVENT_RECEIVER01 DEFINITION"
+CLASS lcl_event_receiver01 IMPLEMENTATION.
+  METHOD handle_double_click.
+    PERFORM alv_cl_double_click USING e_column
+                                      e_row
+                                      es_row_no.
+  ENDMETHOD.
+
+ENDCLASS.                    "LCL_EVENT_RECEIVER IMPLEMENTATION"
+
+DATA g_event_receiver01 TYPE REF TO lcl_event_receiver01.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

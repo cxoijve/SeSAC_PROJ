@@ -6,13 +6,7 @@ CLASS lcl_event_handler IMPLEMENTATION.
 
   METHOD handle_toolbar .
 
-    PERFORM handle_toolbar USING e_object.
-
-  ENDMETHOD.
-
-  METHOD handle_toolbar_item_remove.
-
-    PERFORM handle_toolbar_item_remove USING e_object.
+    PERFORM handle_toolbar USING e_object sender.
 
   ENDMETHOD.
 
@@ -22,6 +16,65 @@ CLASS lcl_event_handler IMPLEMENTATION.
 
   ENDMETHOD.
 
+  METHOD handle_data_changed.
+
+    PERFORM handle_data_changed USING er_data_changed sender.
+
+  ENDMETHOD.
+
+  METHOD handle_data_changes.
+
+    PERFORM handle_data_changes USING er_data_changed sender.
+
+  ENDMETHOD.
+
+  METHOD handle_double_click.
+
+    PERFORM handle_double_click USING e_row e_column.
+
+  ENDMETHOD.
+
+  METHOD handle_hotspot.
+
+    PERFORM handle_hotspot USING e_row_id-index e_column_id-fieldname sender.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+
+CLASS lcl_layout_builder IMPLEMENTATION.
+  METHOD create.
+
+    rs_layo-cwidth_opt = 'A'.
+    rs_layo-sel_mode   = 'A'.
+    rs_layo-col_opt    = 'X'.
+    rs_layo-grid_title = iv_title.
+
+    IF iv_info_fname IS NOT INITIAL.
+      rs_layo-info_fname = iv_info_fname.
+    ENDIF.
+
+    IF iv_zebra = abap_true.
+      rs_layo-zebra = 'X'.
+    ENDIF.
+
+    IF iv_no_rowins = abap_true.
+      rs_layo-no_rowins = 'X'.
+    ENDIF.
+
+    IF iv_excp_fname IS NOT INITIAL.
+      rs_layo-excp_fname = iv_excp_fname.
+    ENDIF.
+
+    IF iv_excp_led = abap_true.
+      rs_layo-excp_led = 'X'.
+    ENDIF.
+
+    IF iv_ctab_fname IS NOT INITIAL.
+      rs_layo-ctab_fname = iv_ctab_fname.
+    ENDIF.
+  ENDMETHOD.
 ENDCLASS.
 
 ----------------------------------------------------------------------------------

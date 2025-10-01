@@ -30,16 +30,7 @@ MODULE set_t_info OUTPUT.
   ENDCASE.
 
 ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  CREATE_DISPLAY_ALV_0100  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE create_display_alv_0100 OUTPUT.
-  PERFORM set_alv_0100.
 
-
-ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  EXIT_0100  INPUT
 *&---------------------------------------------------------------------*
@@ -50,20 +41,14 @@ MODULE exit_0100 INPUT.
     WHEN 'EXIT'.
       LEAVE PROGRAM.
     WHEN 'CANC'.
-*      PERFORM free_alv CHANGING go_con go_alv.
+*      PERFORM free_alv : CHANGING go_con_pomain go_alv_waitpo,
+*                         CHANGING go_con_up go_alv_poitems,
+*                         CHANGING go_con_down go_alv_confirm.
+*      perform free_con CHANGING go_con_pomain.
+*                         CHANGING
       LEAVE TO SCREEN 0.
     WHEN OTHERS.
   ENDCASE.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  SET_ALV_0100  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE set_alv_0100 OUTPUT.
-
-  PERFORM set_alv_0100.
-
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  MODIFY_SCREEN_0100  OUTPUT
@@ -102,9 +87,6 @@ MODULE modify_screen_0100 OUTPUT.
         ENDIF.
     ENDCASE.
 
-*    IF ZSSSMM0210-VENID and gv_radio_sceen = 1.
-*      screen-active = 0.
-*    ENDIF.
     MODIFY SCREEN.
   ENDLOOP.
 
@@ -116,6 +98,9 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0102 OUTPUT.
   PERFORM set_alv_0102.
+  IF gv_msg is not INITIAL.
+    message s999(zmcss) with gv_msg DISPLAY LIKE 'W'.
+  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  INIT_ALV  OUTPUT
@@ -123,7 +108,7 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE init_alv OUTPUT.
-  PERFORM set_alv_0101.
+*  PERFORM set_alv_0101.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0101  OUTPUT
@@ -131,7 +116,67 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE set_alv_0101 OUTPUT.
-  perform set_alv_0101.
+  PERFORM set_alv_0101.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_TEXT_EDIT_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_text_edit_0100 OUTPUT.
+  PERFORM set_text_edit_0110 USING 'CON_EDIT'
+                                    go_mod
+                                    go_edit.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0110  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0110 OUTPUT.
+  SET PF-STATUS 'S110'.
+  SET TITLEBAR 'T110'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0200 OUTPUT.
+  PERFORM set_alv_0200.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0200 OUTPUT.
+  LOOP AT SCREEN.
+    CASE screen-group1.
+      WHEN 'GR1'.
+        IF gv_bbtn = 1.
+          screen-input = 1.
+          screen-invisible = 0.
+          screen-active = 1.
+
+        ELSEIF gv_bbtn = 0.
+          screen-input = 0.
+          screen-invisible = 1.
+          screen-active = 0.
+        ENDIF.
+    ENDCASE.
+
+    MODIFY SCREEN.
+  ENDLOOP.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

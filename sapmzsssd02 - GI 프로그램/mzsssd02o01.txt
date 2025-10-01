@@ -79,9 +79,9 @@ MODULE create_alv OUTPUT.
 
         PERFORM create_alv_cprotocol TABLES gt_fcat_0300
                                      USING  go_alv_0300
-                                            go_cprotocol_0300.
-
+                                     go_cprotocol_0300.
       ENDIF.
+
     WHEN '0302'.
       IF go_con_0302 IS INITIAL.
         PERFORM create_alv  USING     'CON_0302'
@@ -99,8 +99,20 @@ MODULE create_alv OUTPUT.
         PERFORM create_alv  USING     'CON_0500'
                             CHANGING  go_con_0500
                                       go_alv_0500.
+
+        CREATE OBJECT go_handler_0500.
+        PERFORM set_alv_handler USING go_alv_0500
+                                      go_handler_0500.
+
+        PERFORM create_alv_cprotocol TABLES gt_fcat_0500
+                                     USING  go_alv_0500
+                                            go_cprotocol_0500.
       ENDIF.
+
   ENDCASE.
+
+
+
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  DISPLAY_ALV  OUTPUT
@@ -155,10 +167,10 @@ MODULE display_alv OUTPUT.
         PERFORM display_alv  TABLES  gt_info_0500
                                      gt_fcat_0500
                                      gt_sort_0500
-                             USING   'ztssgii'
+                             USING   ''
                                      gs_layo_0500
                                      go_alv_0500
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
   ENDCASE.
 ENDMODULE.
@@ -169,7 +181,13 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE status_0500 OUTPUT.
   SET PF-STATUS 'S500'.
-  SET TITLEBAR 'T500' WITH gs_info_0500h-ginum.
+  CASE gv_eflag_0500.
+    WHEN 'X'.
+      SET TITLEBAR 'T500' WITH gs_info_0500h-ginum '수정'.
+    WHEN ''.
+      SET TITLEBAR 'T500' WITH gs_info_0500h-ginum '상세 조회'.
+  ENDCASE.
+
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0300  OUTPUT
@@ -234,7 +252,14 @@ MODULE set_exit_msg OUTPUT.
       gv_exit_msg = '프로그램을 종료하시겠습니까? 미 저장 내역은 삭제됩니다.'.
       gv_canc_msg = '신규 출고 생성을 취소하시겠습니까?'.
     WHEN '0500'.
-      gv_exit_msg = '프로그램을 종료하시겠습니까?'.
+      CASE gv_eflag_0500.
+        WHEN 'X'.
+          gv_exit_msg = '프로그램을 종료하시겠습니까? 미 저장 내역은 삭제됩니다.'.
+          gv_canc_msg = '출고 문서 변경을 취소하시겠습니까?'.
+        WHEN ''.
+          gv_exit_msg = '프로그램을 종료하시겠습니까?'.
+      ENDCASE.
+
     WHEN OTHERS.
       MESSAGE a999(zmcss) WITH 'NO ENTRY'.
   ENDCASE.
@@ -255,6 +280,54 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE modify_screen_0300 OUTPUT.
   PERFORM modify_screen_0300.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_EDIT_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_edit_0500 OUTPUT.
+  " Modify Screen
+  PERFORM modify_screen_0500 USING gv_eflag_0500.
+
+  " alv fcat reset
+  PERFORM set_fcat_0500 TABLES gt_fcat_0500.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0101 OUTPUT.
+  PERFORM set_default_0101.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0102  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0102 OUTPUT.
+  PERFORM set_default_0102.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0103  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0103 OUTPUT.
+  PERFORM set_default_0103.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0104  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0104 OUTPUT.
+  PERFORM set_default_0104.
+
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

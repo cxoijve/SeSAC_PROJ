@@ -22,7 +22,7 @@ MODULE status_0200 OUTPUT.
 
   IF my_tab-activetab = 'TAB1'.
     APPEND 'REGIST' TO gt_excl.
-    APPEND 'GRTAIL' TO gt_excl.
+
 
   ELSEIF my_tab-activetab = 'TAB2'.
     APPEND 'CHANGE' TO gt_excl.
@@ -30,7 +30,6 @@ MODULE status_0200 OUTPUT.
   ELSEIF my_tab-activetab = 'TAB3'.
     APPEND 'REGIST' TO gt_excl.
     APPEND 'CHANGE' TO gt_excl.
-    APPEND 'GRTAIL' TO gt_excl.
   ENDIF.
 
   SET PF-STATUS 'S200' EXCLUDING gt_excl.
@@ -116,7 +115,134 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0400 OUTPUT.
   PERFORM create_alv_0400.
+
   PERFORM display_alv_0400.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0500 OUTPUT.
+  SET PF-STATUS 'S500'.
+  SET TITLEBAR 'T500'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0500 OUTPUT.
+  PERFORM create_alv_0500.
+  PERFORM display_alv_0500.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0410  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0410 OUTPUT.
+  SET PF-STATUS 'S410'.
+  SET TITLEBAR 'T410'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0600  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0600 OUTPUT.
+  SET PF-STATUS 'S600'.
+  SET TITLEBAR 'T600'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0600  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0600 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0600  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0600 OUTPUT.
+  PERFORM create_alv_0600.
+  PERFORM display_alv_0600.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DAFAULT_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_dafault_0101 OUTPUT.
+  DATA: gs_con   TYPE yssk1002,
+        gv_begda LIKE gs_con-begda.
+
+  zsssmm03001-cheke = 'X'.
+  zsssmm03001-endda = sy-datum.
+  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                        CHANGING gv_begda.
+
+  zsssmm03001-begda = gv_begda.
+*ENDIF.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0102  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0102 OUTPUT.
+
+  zsssmm03003-cheke = 'X'.
+  zsssmm03003-endda = sy-datum.
+  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                        CHANGING gv_begda.
+
+  zsssmm03003-begda = gv_begda.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_EDIT_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_edit_0300 OUTPUT.
+
+  PERFORM modify_screen_0300.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_EDIT_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_edit_0400 OUTPUT.
+
+  PERFORM modify_screen_0400.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DAFAULT_0103  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_dafault_0103 OUTPUT.
+
+  zsssmm03004-endda = sy-datum.
+  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                        CHANGING gv_begda.
+
+  zsssmm03004-begda = gv_begda.
+
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

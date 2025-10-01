@@ -8,11 +8,11 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0300 0300     25105192 37  0  0 27171  0G E                              20250926153543																																
+SAPMZSSSD02                             0300 0300     21105192 37  0  0 27172  0G E                              20250929100609																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B300_01		CHAR	105	00	00	00	30	00	  1	  2		  0	  0	  0		  6	R				  0	  0	107							출고 문서 정보		
+B300_01		CHAR	105	00	00	00	30	00	  1	  2		  0	  0	  0		  6	R				  0	  0	101							출고 문서 정보		
 ZSSSSD0207-RGTOR	2	CHAR	 20	30	00	04	30	00	  2	  4		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 ZSSSSD0207-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 25		  0	  0	  0		  0					 16	  0			ZSHSSSD0202					________	X                                      00	
 ZSSSSD0207-ENAME	C	CHAR	 40	A0	02	80	31	00	  2	 35		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
@@ -20,17 +20,11 @@ ZSSSSD0207-GIDAT	2	CHAR	 20	30	00	00	30	00	  3	  4		  0	  0	  0		  0					  0	  0
 ZSSSSD0207-GIDAT	D	DATE	 10	A0	00	80	00	08	  3	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSSD0207-STEXT	2	CHAR	 20	30	02	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
 ZSSSSD0207-STEXT	C	CHAR	 60	A0	02	80	00	00	  5	 25		  0	  0	  0		  0					120	  0								____________________________________________________________	                                       00	
-B3		CHAR	105	00	00	00	30	00	  7	  2		  0	  0	  0		  4	R				  0	  0	108							회계 정보		
-ZSSSSD0207-JETOR	0	CHAR	 11	30	00	00	30	00	  8	  4		  0	  0	  0		  0					  0	  0								전표 작성자	                                                                                                                                                                                                                                                        X	
-ZSSSSD0207-JETOR	C	CHAR	  8	A0	00	80	00	08	  8	 25		  0	  0	  0		  0					 16	  0			ZSHSSSD0203	JET				________	                                       00	
-ZSSSSD0207-JENAM	C	CHAR	 40	A0	02	80	31	00	  8	 35		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
-ZSSSSD0207-JSTXT	0	CHAR	  9	30	02	00	30	00	  9	  4		  0	  0	  0		  0					  0	  0								전표 비고	                                                                                                                                                                                                                                                        X	
-ZSSSSD0207-JSTXT	C	CHAR	 60	A0	02	80	30	00	  9	 25		  0	  0	  0		  0					120	  0								____________________________________________________________	                                       00	
-B300_02		CHAR	105	00	00	00	30	00	 12	  2		  0	  0	  0		 14	R				  0	  0	101							아이템 정보		
-BTN300_01		CHAR	 16	00	00	00	30	00	 13	 58		  0	  0	  0		  0	P				  0	  0	102							출고 아이템 추가	                                                                                                                                                                        INSITM	
-BTN300_02		CHAR	 16	00	00	00	30	00	 13	 76		  0	  0	  0		  0	P				  0	  0	103							선택 아이템 삭제	                                                                                                                                                                        DELITM	
-BTN300_2		CHAR	 13	00	00	00	30	00	 13	 93		  0	  0	  0		  0	P				  0	  0	104							아이템 초기화	                                                                                                                                                                        CLRITM	
-CON_0300			103	00	00	00	30	00	 14	  3		  0	  0	  0		 11	U				  1	  1	105									
+B300_02		CHAR	105	00	00	00	30	00	  8	  2		  0	  0	  0		 14	R				  0	  0	102							아이템 정보		
+BTN300_01		CHAR	 16	00	00	00	30	00	  9	 58		  0	  0	  0		  0	P				  0	  0	103							출고 아이템 추가	                                                                                                                                                                        INSITM	
+BTN300_02		CHAR	 16	00	00	00	30	00	  9	 76		  0	  0	  0		  0	P				  0	  0	104							선택 아이템 삭제	                                                                                                                                                                        DELITM	
+BTN300_2		CHAR	 13	00	00	00	30	00	  9	 93		  0	  0	  0		  0	P				  0	  0	105							아이템 초기화	                                                                                                                                                                        CLRITM	
+CON_0300			103	00	00	00	30	00	 10	  3		  0	  0	  0		 11	U				  1	  1	106									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
@@ -38,10 +32,8 @@ PROCESS BEFORE OUTPUT.
   MODULE set_exit_msg.																																
   MODULE create_alv.																																
   MODULE display_alv.																																
-  MODULE modify_screen_0300.																																
 																																
 																																
 PROCESS AFTER INPUT.																																
   MODULE exit_with_warning AT EXIT-COMMAND.																																
-  MODULE exit AT EXIT-COMMAND.																																
   MODULE user_command_0300.																																

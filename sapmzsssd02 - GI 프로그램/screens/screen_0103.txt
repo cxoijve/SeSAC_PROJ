@@ -8,7 +8,7 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0103I0103      4114192 37  0  0 27125  0G E                              20250924100623																																
+SAPMZSSSD02                             0103I0103      4114192 37  0  0 27127  0G E                              20250930150506																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -29,6 +29,7 @@ ZSSSSD0203-FYEAR	N	NUMC	  4	A0	00	84	00	08	  3	103		  0	  0	  0		  0					  8	  0
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0103.																																
-*																																
+  MODULE set_default_0103.																																
+																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0103.																																

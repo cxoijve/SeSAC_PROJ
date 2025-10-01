@@ -1,6 +1,158 @@
 *&---------------------------------------------------------------------*
 *&  Include           MZSSMM02I01
 *&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0110 INPUT.
+
+  CASE ok_code.
+    WHEN 'I_CANCLE'.
+      LEAVE TO SCREEN 0.
+    WHEN 'I_SAVE'.
+      PERFORM set_text_edit TABLES gt_edit USING go_edit.
+      LOOP AT gt_edit INTO gs_edit.
+        CONCATENATE gv_text gs_edit-text INTO gv_text SEPARATED BY space.
+      ENDLOOP.
+      PERFORM confirm_contents.
+      CLEAR : gt_edit,
+              gt_item,
+              gt_confirm.
+      LEAVE TO SCREEN 0.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      CLEAR : gt_edit_item,
+              gt_confirm.
+      LEAVE TO SCREEN 0.
+    WHEN 'B_BTN'.
+      gv_bbtn = 1.
+    WHEN 'D_BTN'.
+      gv_bbtn = 0.
+    WHEN 'EDIT'.
+      PERFORM edit_grdoc.
+    WHEN 'ENTER'.
+      PERFORM get_emp_name USING zsssmm0211-rgtor CHANGING zsssmm0211-ename.
+*      perform get_vendor_name using zsssmm0211-venid CHANGING zsssmm0211-vname.
+
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0200 INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  VALIDATE_DATE  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE validate_date INPUT.
+
+  CONSTANTS: lc_min_date TYPE sy-datum VALUE '20240101',
+             lc_max_date TYPE sy-datum VALUE '99991231'.
+
+  DATA: lv_max_year   TYPE n LENGTH 4,
+        lv_limit_date TYPE sy-datum.
+
+  " 현재년도 + 5년의 12월 31일
+  lv_max_year = sy-datum+0(4) + 5.
+  CONCATENATE lv_max_year '1231' INTO lv_limit_date.
+
+  " 시작일자 검증
+  IF zsssmm0210-dudat_s IS NOT INITIAL.
+    IF zsssmm0210-dudat_s < lc_min_date.
+      MESSAGE e999(zmcss) WITH '시작일자는 2024-01-01 이후여야 합니다.' DISPLAY LIKE 'W'.
+
+    ENDIF.
+
+    IF zsssmm0210-dudat_s <> lc_max_date AND
+       zsssmm0210-dudat_s > lv_limit_date.
+      MESSAGE e999(zmcss) WITH '시작일자가 허용 범위를 초과했습니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+  ENDIF.
+
+  " 종료일자 검증
+  IF zsssmm0210-dudat_e IS NOT INITIAL.
+    IF zsssmm0210-dudat_e < lc_min_date.
+      MESSAGE e999(zmcss) WITH '종료일자는 2024-01-01 이후여야 합니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+
+    IF zsssmm0210-dudat_e <> lc_max_date AND
+       zsssmm0210-dudat_e > lv_limit_date.
+      MESSAGE e999(zmcss) WITH '종료일자가 허용 범위를 초과했습니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+  ENDIF.
+
+
+  "-------------------------------------------------------------------
+  " 위는 DUDAT, 아래는 GRDAT으로 함
+  " => 추후 서브루틴으로 합칠 예정....
+  "-------------------------------------------------------------------
+
+  " 시작일 <= 종료일 검증
+  IF zsssmm0210-grdat_s IS NOT INITIAL AND
+     zsssmm0210-grdat_e IS NOT INITIAL AND
+     zsssmm0210-grdat_s > zsssmm0210-dudat_e.
+    MESSAGE e999(zmcss) WITH '시작일자는 종료일자 이전이어야 합니다.' DISPLAY LIKE 'W'.
+  ENDIF.
+
+  IF zsssmm0210-grdat_s IS NOT INITIAL.
+    IF zsssmm0210-grdat_s < lc_min_date.
+      MESSAGE e999(zmcss) WITH '시작일자는 2024-01-01 이후여야 합니다.' DISPLAY LIKE 'W'.
+
+    ENDIF.
+
+    IF zsssmm0210-grdat_s <> lc_max_date AND
+       zsssmm0210-grdat_s > lv_limit_date.
+      MESSAGE e999(zmcss) WITH '시작일자가 허용 범위를 초과했습니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+  ENDIF.
+
+  " 종료일자 검증
+  IF zsssmm0210-grdat_e IS NOT INITIAL.
+    IF zsssmm0210-grdat_e < lc_min_date.
+      MESSAGE e999(zmcss) WITH '종료일자는 2024-01-01 이후여야 합니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+
+    IF zsssmm0210-grdat_e <> lc_max_date AND
+       zsssmm0210-grdat_e > lv_limit_date.
+      MESSAGE e999(zmcss) WITH '종료일자가 허용 범위를 초과했습니다.' DISPLAY LIKE 'W'.
+    ENDIF.
+  ENDIF.
+
+  " 시작일 <= 종료일 검증
+  IF zsssmm0210-grdat_s IS NOT INITIAL AND
+     zsssmm0210-grdat_e IS NOT INITIAL AND
+     zsssmm0210-grdat_s > zsssmm0210-dudat_e.
+    MESSAGE e999(zmcss) WITH '시작일자는 종료일자 이전이어야 합니다.' DISPLAY LIKE 'W'.
+  ENDIF.
+
+
+ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

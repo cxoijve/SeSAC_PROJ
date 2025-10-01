@@ -7,69 +7,119 @@ PROGRAM sapmzssmm02.
 " 공통변수
 DATA : ok_code  TYPE sy-ucomm,
        gv_subrc TYPE sy-subrc,
-       gv_dynnr TYPE sy-dynnr.
+       gv_dynnr TYPE sy-dynnr,
+       gv_msg type string.
 
 *-------------------------------------------------------*
-* 100번 스크린 - 입고프로그램  ALV
+* Alv 관련
 *-------------------------------------------------------*
 
-" 탭 스트립
+***-------***
+*** 100번대 ***
+***-------***
+
+" 전체화면 탭 스트랩
 CONTROLS t_info TYPE TABSTRIP.
 
-* ALV
-DATA:
-  go_dock     TYPE REF TO cl_gui_docking_container,
-*  go_custom   TYPE REF TO cl_gui_custom_container,
-  go_split    TYPE REF TO cl_gui_splitter_container,
-  go_split2   TYPE REF TO cl_gui_splitter_container,
-*  go_con1     TYPE REF TO cl_gui_container,
-*  go_con2     TYPE REF TO cl_gui_container,
-  go_con3     TYPE REF TO cl_gui_container,
-  go_con4     TYPE REF TO cl_gui_container,
-*  go_alv2     TYPE REF TO cl_gui_alv_grid,
-  go_alv3     TYPE REF TO cl_gui_alv_grid,
-  go_alv4     TYPE REF TO cl_gui_alv_grid,
-*  go_alv5     TYPE REF TO cl_gui_alv_grid,
-  go_document TYPE REF TO cl_dd_document,
-  gs_exclude  TYPE ui_func,
-  gt_exclude  TYPE ui_functions.
+* ALV Exclude
+DATA : gs_exclude TYPE ui_func,
+       gt_exclude TYPE ui_functions.
+* ALV Unexclude => 함수 하나만 쓰기 위함( 추후 삭제 고려 O )
+DATA : gs_unexclude TYPE ui_func,
+       gt_unexclude TYPE ui_functions.
+
+* 102번 - Po Without Full Gr Info 3분할 Con, Split, Alv.
+DATA : go_custom_po  TYPE REF TO cl_gui_custom_container,
+       go_con_pomain TYPE REF TO cl_gui_container.
+
+DATA : go_split_pomain TYPE REF TO cl_gui_splitter_container,
+       go_split_poitem TYPE REF TO cl_gui_splitter_container.
+
+DATA : go_con_pright TYPE REF TO cl_gui_container,
+       go_con_up     TYPE REF TO cl_gui_container,
+       go_con_down   TYPE REF TO cl_gui_container.
+
+DATA : go_alv_waitpo  TYPE REF TO cl_gui_alv_grid,
+       go_alv_poitems TYPE REF TO cl_gui_alv_grid,
+       go_alv_confirm TYPE REF TO cl_gui_alv_grid.
 
 
-* ALV Layout, field catalog, sort.
-*DATA : gs_layo TYPE lvc_s_layo,
-*       gt_fcat TYPE lvc_t_fcat,
-*       gs_fcat TYPE lvc_s_fcat,
-*       gt_sort TYPE lvc_t_sort,
-*       gs_sort TYPE lvc_s_sort.
-*
+* 101번 - Gr list & gr item 2분할  Con, Split, Alv (추후 벤더-가격 추가 시 3분할 예정)****
+DATA : go_custom_gr  TYPE REF TO cl_gui_custom_container,
+       go_con_grmain TYPE REF TO cl_gui_container.
+
+DATA : go_split_grmain TYPE REF TO cl_gui_splitter_container.
+
+DATA : go_con_gright TYPE REF TO cl_gui_container.
+
+DATA : go_alv_grlist TYPE REF TO cl_gui_alv_grid,
+       go_alv_gritem TYPE REF TO cl_gui_alv_grid.
+
+***-------***
+*** 200번대 ***
+***-------***
+
+DATA : go_dock_gr      TYPE REF TO cl_gui_docking_container,
+       go_split_editgr TYPE REF TO cl_gui_splitter_container.
+DATA : go_con_left  TYPE REF TO cl_gui_container,
+       go_con_right TYPE REF TO cl_gui_container.
+DATA : go_alv_editgr TYPE REF TO cl_gui_alv_grid,
+       go_alv_polist TYPE REF TO cl_gui_alv_grid.
+
 
 
 *-------------------------------------------------------*
-* 100번 스크린 - 조회조건관련 & 라디오버튼
+* 스크린 & 조회관련
 *-------------------------------------------------------*
+
+***-------***
+*** 100번대 ***
+***-------***
+
+* 스크린
 TABLES : zsssmm0210.
 DATA : gs_cond TYPE zsssmm0210.
 
+TABLES : zsssmm0211.
+DATA : gs_cond2 TYPE zsssmm0211.
+
+" 입고확정 모달창화면
+TABLES : zsssmm0214.
+
+
+
+* 조회 & 라디오버튼
 DATA : gr_grdat TYPE RANGE OF ztssgrh-grdat.
+DATA : gr_dudat TYPE RANGE OF ztsspoh-dudat.
 
 DATA: gv_radio1 TYPE c VALUE 'X',  " 기본 선택
       gv_radio2 TYPE c.
+
 DATA : gv_screen(1).
 DATA : gv_radio_screen(1).
 
 *-------------------------------------------------------*
-* 100번 스크린 - 구매오더 화면 조회
+* 데이터
 *-------------------------------------------------------*
 
-* PO 화면 조회
-DATA : go_custom TYPE REF TO cl_gui_custom_container,
-       go_con    TYPE REF TO cl_gui_container,
-       go_alv    TYPE REF TO cl_gui_alv_grid.
+***-------***
+*** 100번대 ***
+***-------***
 
-" PO 화면 조회 alv의 layout, Field Catalog.
-DATA : gs_layo TYPE lvc_s_layo,
-       gt_fcat TYPE lvc_t_fcat,
-       gs_fcat TYPE lvc_s_fcat.
+" 입고 문서
+DATA : BEGIN OF gs_grdata,
+         color(4).
+    INCLUDE TYPE zsssmm0211.
+DATA : END OF gs_grdata,
+gt_grdata LIKE TABLE OF gs_grdata.
+
+DATA : BEGIN OF gs_gritem,
+         color(4),
+         it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0216.
+DATA : END OF gs_gritem,
+gt_gritem LIKE TABLE OF gs_gritem.
+
 
 " 입고되지 않은 PO 문서 데이터
 DATA : BEGIN OF gs_podata,
@@ -80,18 +130,21 @@ DATA : BEGIN OF gs_podata,
 DATA : END OF gs_podata,
 gt_podata LIKE TABLE OF gs_podata.
 
+DATA : gt_po LIKE gt_podata,
+       gs_po LIKE LINE OF gt_po.
 
-DATA : go_custom2 type ref to cl_gui_custom_container,
-       go_con5 type REF TO cl_gui_container,
-       go_alv5 type ref to cl_gui_alv_grid.
+" PO 아이템 관련
+DATA: BEGIN OF gs_col,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+       END OF gs_col,
+       gt_col like table of gs_col.
 
-*-------------------------------------------------------*
-* 100번 스크린 - 입고 화면 조회
-*-------------------------------------------------------*
-" 입고 아이템
-DATA : gv_seqnum TYPE i.
 
+" 입고문서 연산 관련
 DATA : BEGIN OF gs_gri,
+         grnum  TYPE ztssgrh-grnum,
          ponum  TYPE ztssgri-ponum,
          itnum  TYPE ztssgri-itnum,
          amount TYPE ztssgri-amount,
@@ -99,22 +152,205 @@ DATA : BEGIN OF gs_gri,
        END OF gs_gri,
        gt_gri LIKE TABLE OF gs_gri.
 
-* GR 할 수 있는 구매오더 item 화면 조회
-DATA : go_con2 TYPE REF TO cl_gui_container,
-       go_alv2 TYPE REF TO cl_gui_alv_grid.
-
-" GR 화면 조회 alv의 layout, Field Catalog.
-DATA : gs_layo2 TYPE lvc_s_layo,
-       gt_fcat2 TYPE lvc_t_fcat,
-       gs_fcat2 TYPE lvc_s_fcat.
-
-DATA : gs_layo3 type lvc_s_layo.
+" 하나의 입고문서 연산관련
+DATA : BEGIN OF gs_one_gri,
+         grnum  TYPE ztssgrh-grnum,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+         meins  TYPE ztssgri-meins,
+       END OF gs_one_gri,
+       gt_one_gri LIKE TABLE OF gs_one_gri.
 
 DATA : BEGIN OF gs_item,
          color(4).
     INCLUDE TYPE zsssmm0213.
 DATA : END OF gs_item,
 gt_item LIKE TABLE OF gs_item.
+
+
+DATA : BEGIN OF gs_confirm,
+         color(4).
+    INCLUDE TYPE zsssmm0213.
+DATA : END OF gs_confirm,
+gt_confirm LIKE TABLE OF gs_confirm.
+
+
+***-------***
+*** 200번대 ***
+***-------***
+
+" 입고 아이템 리스트
+DATA : BEGIN OF gs_edit_item,
+         color(4).
+    INCLUDE  TYPE zsssmm0215.
+DATA : END OF gs_edit_item,
+gt_edit_item LIKE TABLE OF gs_edit_item.
+
+" item - temp 변수 ( 추후 로직 변경 O )
+DATA : gt_temp LIKE gt_edit_item,
+       gs_temp LIKE gs_edit_item.
+
+TYPES : BEGIN OF ty_money,
+        debit type ztssjei-debit,
+        credit type ztssjei-credit,
+        end of ty_money.
+
+
+
+
+*-------------------------------------------------------*
+* Layout, Field Catalog
+*-------------------------------------------------------*
+
+" PO 화면 조회 alv의 layout, Field Catalog.
+DATA : gs_layo TYPE lvc_s_layo,
+       gt_fcat TYPE lvc_t_fcat,
+       gs_fcat TYPE lvc_s_fcat.
+
+" PO item 조회
+DATA : gs_layo2 TYPE lvc_s_layo,
+       gt_fcat2 TYPE lvc_t_fcat,
+       gs_fcat2 TYPE lvc_s_fcat.
+
+" 입고 확정 구매오더 아이템
+DATA : gs_layo3 TYPE lvc_s_layo,
+       gt_fcat3 TYPE lvc_t_fcat,
+       gs_fcat3 TYPE lvc_s_fcat.
+
+" 입고 완료 리스트
+DATA : gs_layo5 TYPE lvc_s_layo,
+       gt_fcat5 TYPE lvc_t_fcat,
+       gs_fcat5 TYPE lvc_s_fcat.
+
+" 입고 아이템 리스트
+DATA : gs_layo6 TYPE lvc_s_layo,
+       gt_fcat6 TYPE lvc_t_fcat,
+       gs_fcat6 TYPE lvc_s_fcat.
+
+" 입고확정 아이템 리스트 ( EDIT )
+DATA : gs_layo7 TYPE lvc_s_layo,
+       gt_fcat7 TYPE lvc_t_fcat,
+       gs_fcat7 TYPE lvc_s_fcat.
+
+
+" 입고확정의 구매오더
+DATA : gs_layo8 TYPE lvc_s_layo,
+       gt_fcat8 TYPE lvc_t_fcat,
+       gs_fcat8 TYPE lvc_s_fcat.
+
+
+
+TYPES : BEGIN OF ty_field_conf,
+          grid_id   TYPE c LENGTH 2,
+          fieldname TYPE lvc_fname,
+          coltext   TYPE scrtext_l,
+          no_out    TYPE c,
+          edit      TYPE c,
+          hotspot   TYPE c,
+          style     TYPE lvc_style,
+          col_pos   TYPE i,
+        END OF ty_field_conf.
+
+DATA : gt_field_conf TYPE TABLE OF ty_field_conf.
+
+
+*-------------------------------------------------------*
+* Utilities.
+*-------------------------------------------------------*
+" 입고 아이템 번호 넘버링 변수
+DATA : gv_seqnum TYPE i.
+
+" Text 메모 변수
+DATA : go_mod  TYPE REF TO cl_gui_custom_container,
+       go_edit TYPE REF TO cl_gui_textedit.
+TYPES: BEGIN OF t_text,
+         text TYPE ztssgrh-stext,
+       END OF t_text,
+       tt_text TYPE TABLE OF t_text.
+
+DATA: gt_edit TYPE TABLE OF t_text,
+      gs_edit LIKE LINE OF gt_edit.
+DATA: gv_text TYPE string.
+
+
+" 채번 변수
+DATA : gv_gr_num TYPE c LENGTH 11,
+       gv_fi_num TYPE c LENGTH 11,
+       gv_wh_num TYPE c LENGTH 11.
+
+
+" Field Catalog Edit 기능 / 잠깐 쓸 변수 => 추후 로직 수정 예정
+DATA : gv_temp_edit.
+
+" 가격계산 변수 => 추후 수정 여부 O
+DATA : gv_poprc LIKE ztsspoi-poprc.
+" 200번 스크린 기존정보접기 관련 변수 (flag)
+DATA : gv_bbtn(1).
+
+
+
+
+
+*-------------------------------------------------------*
+* Class Definition
+*-------------------------------------------------------*
+
+
+CLASS lcl_event_handler DEFINITION FINAL.
+  PUBLIC SECTION.
+    CLASS-METHODS :
+      handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
+      handle_data_changed FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
+      handle_data_changes FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
+      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
+      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
+      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
+ENDCLASS.
+
+
+CLASS lcl_layout_builder DEFINITION.
+  PUBLIC SECTION.
+    CLASS-METHODS:
+      create
+        IMPORTING
+          iv_title       TYPE lvc_title
+          iv_info_fname  TYPE lvc_fname OPTIONAL
+          iv_zebra       TYPE abap_bool DEFAULT abap_true
+          iv_no_rowins   TYPE abap_bool DEFAULT abap_false
+          iv_excp_fname  TYPE lvc_fname OPTIONAL
+          iv_excp_led    TYPE abap_bool DEFAULT abap_false
+          iv_ctab_fname  TYPE lvc_fname OPTIONAL
+        RETURNING
+          VALUE(rs_layo) TYPE lvc_s_layo.
+ENDCLASS.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*-------------------------
 
 
 * Event Handler Class
@@ -134,20 +370,6 @@ gt_item LIKE TABLE OF gs_item.
 **      IMPORTING er_data_changed e_ucomm.
 *
 *ENDCLASS.
-
-
-CLASS lcl_event_handler DEFINITION FINAL.
-  PUBLIC SECTION.
-    CLASS-METHODS :
-      handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
-        IMPORTING
-            e_object,
-      handle_toolbar_item_remove FOR EVENT toolbar OF cl_gui_alv_grid
-        IMPORTING
-            e_object,
-      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm.
-
-ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

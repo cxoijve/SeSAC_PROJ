@@ -8,7 +8,7 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0104I0104      4 76192 37  0  0 27123  0G E                              20250924100629																																
+SAPMZSSSD02                             0104I0104      4 76192 37  0  0 27123  0G E                              20250930142649																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -24,6 +24,7 @@ ZSSSSD0204-ENDDA	D	DATE	 10	A0	00	80	00	08	  3	 40		  0	  0	  0		  0					 16	  0
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0104.																																
-*																																
+MODULE set_default_0104.																																
+																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0104.																																

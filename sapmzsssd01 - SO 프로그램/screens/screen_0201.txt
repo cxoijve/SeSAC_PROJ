@@ -8,11 +8,11 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0201I0201     12 56192 37  0  0 27123  0G E                              20250925153200																																
+SAPMZSSSD01                             0201I0201     12 56192 37  0  0 27124  0G E                              20251001134936																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-ZSSSSD0105-CSTID	2	CHAR	 20	30	00	04	30	00	  2	  6		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
+ZSSSSD0105-CSTID	0	CHAR	 20	30	00	04	30	00	  2	  6		  0	  0	  0		  0					  0	  0								고객코드	                                                                                                                                                                                                                                                        X	
 ZSSSSD0105-CSTID	C	CHAR	  8	A0	00	84	30	08	  2	 27		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSSD0105-CNAME	C	CHAR	 20	B0	02	80	31	00	  2	 38		  0	  0	  0		  0					 80	  0								____________________	                                       00	
 ZSSSSD0105-BEGDA	0	CHAR	 20	30	00	00	30	00	  3	  6		  0	  0	  0		  0					  0	  0								계약기간	                                                                                                                                                                                                                                                        X	
@@ -31,7 +31,7 @@ ZSSSSD0105-PENID	0	CHAR	 20	30	00	04	30	00	 11	  6		  0	  0	  0		  0					  0	  0
 ZSSSSD0105-PENID	C	CHAR	  8	A0	00	84	30	08	 11	 27		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSSD0105-ENAME	C	CHAR	  5	B0	02	80	31	00	 11	 38		  0	  0	  0		  0					 40	  0								_____	                                       00	
 ZSSSSD0105-PERSG_T	C	CHAR	  5	B0	00	80	31	00	 11	 44		  0	  0	  0		  0					 20	  0								_____	                                       00	
-ZSSSSD0105-EID2	2	CHAR	 20	30	02	00	30	00	 12	  6		  0	  0	  0		  0					  0	  0								이메일아이디	                                                                                                                                                                                                                                                        X	
+ZSSSSD0105-EID2	0	CHAR	 20	30	02	00	30	00	 12	  6		  0	  0	  0		  0					  0	  0								이메일	                                                                                                                                                                                                                                                        X	
 ZSSSSD0105-EMAIL2	C	CHAR	 30	B0	00	80	30	00	 12	 27		  0	  0	  0		  0					100	  0								______________________________	                                       00	
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																

@@ -8,7 +8,7 @@
 *----------------------------------------------------------------------*
 MODULE status_0100 OUTPUT.
   SET PF-STATUS 'S100'.
-  SET TITLEBAR 'T100' WITH sy-uname.
+  SET TITLEBAR 'T100'.
 
   " 체크박스 기본값
   IF gv_first IS INITIAL.
@@ -55,7 +55,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE status_0200 OUTPUT.
   SET PF-STATUS 'S200'.
-  SET TITLEBAR 'T200' WITH sy-uname.
+  SET TITLEBAR 'T200'.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0200  OUTPUT
@@ -133,7 +133,7 @@ MODULE set_alv_0202 OUTPUT.
 
     PERFORM set_layo CHANGING gs_layo3.
 
-*    PERFORM set_fcat.
+    PERFORM set_fcat3.
 *    PERFORM set_sort.
 *    PERFORM set_light.
 
@@ -154,7 +154,8 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE status_0300 OUTPUT.
   SET PF-STATUS 'S300'.
-  SET TITLEBAR 'T300' WITH sy-uname.
+  SET TITLEBAR 'T300'.
+  gv_changed = abap_false.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0300  OUTPUT
@@ -195,6 +196,71 @@ ENDMODULE.
 MODULE status_0301 OUTPUT.
   SET PF-STATUS 'S301'.
   SET TITLEBAR 'T301'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0400 OUTPUT.
+  SET PF-STATUS 'S400'.
+  SET TITLEBAR 'T400'.
+
+  " 판매오더일 기본값 설정
+  IF gs_head_crt-sodat IS INITIAL.
+    gs_head_crt-sodat = sy-datum.
+  ENDIF.
+
+  " 등록일 기본값 설정
+  IF gs_head_crt-rgdat IS INITIAL.
+    gs_head_crt-rgdat = sy-datum.
+  ENDIF.
+
+  gs_head_crt-curky = 'KRW'.
+
+  gv_changed = abap_false.
+  CLEAR: zssssd0103, gt_item,
+         gs_head_udt, gt_item_udt.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0400 OUTPUT.
+  IF go_con5 IS INITIAL.
+    PERFORM get_item_list CHANGING gt_item_crt.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM set_toprc.
+    PERFORM create_alv USING 'CON5'
+                       CHANGING go_con5
+                                go_alv5.
+
+    PERFORM set_layo CHANGING gs_layo5.
+    gs_layo5-edit = ''.      " ALV edit - 전체 edit off
+
+    PERFORM set_fcat5.
+*    PERFORM set_sort.
+*    PERFORM set_light.
+
+    PERFORM display_alv USING 'ZSSSSD0104'
+                        CHANGING go_alv5
+                                 gs_layo5
+                                 gt_item_crt
+                                 gt_fcat5.
+  ELSE.
+*    PERFORM get_item_list CHANGING gt_item_chg.
+*    PERFORM set_toprc.
+    PERFORM refresh_alv CHANGING go_alv5.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0401  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0401 OUTPUT.
+  SET PF-STATUS 'S401'.
+  SET TITLEBAR 'T401'.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

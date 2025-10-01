@@ -669,10 +669,6 @@ FORM update_price_data .
     MESSAGE i999(zmcss) WITH '가격이 변경되었습니다'.
     LEAVE TO SCREEN 0.
   ENDIF.
-
-
-
-
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INSERT_DELETE_FLAG

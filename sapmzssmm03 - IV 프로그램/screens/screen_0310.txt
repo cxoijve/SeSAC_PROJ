@@ -8,14 +8,11 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0310M0310      2 81192 37  0  0 27124  0G E                              20250925142156																																
+SAPMZSSMM03                             0310M0310      2 81192 37  0  0 27125  0G E                              20250929102835																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-ZSSSMM03008-STEXT	2	CHAR	 20	30	02	00	30	00	  1	  2		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
-ZSSSMM03008-STEXT	C	CHAR	 60	A0	02	80	00	00	  1	 23		  0	  0	  0		  0					120	  0								____________________________________________________________	                                       00	
-ZSSSMM03008-RGTOR	2	CHAR	 20	30	00	04	30	00	  2	  2		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM03008-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 23		  0	  0	  0		  0					 16	  0			ZSHSSMM02					________	X                                      00	
+B_TXT_1	C	CHAR	 17	00	00	00	30	00	  1	  2		  0	  0	  0		  0					  0	  0								생성하시겠습니까?		
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

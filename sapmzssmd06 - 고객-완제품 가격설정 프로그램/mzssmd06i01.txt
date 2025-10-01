@@ -30,6 +30,7 @@ MODULE user_command_0100 INPUT.
         ENDIF.
         IF gs_data-del = 'X'.
           MESSAGE i999(zmcss) WITH '현재 판매중인 업체만 선택해 주세요'.
+          RETURN.
         ENDIF.
         CALL SCREEN 300.
         PERFORM check_alv_condition.
@@ -51,8 +52,9 @@ MODULE user_command_0100 INPUT.
         IF gv_subrc = 0.
           RETURN.
         ENDIF.
-        IF gs_data-del <> 'X'.
+        IF gs_data-del = 'X'.
           MESSAGE i999(zmcss) WITH '활성화된 데이터를 선택해주세요'.
+          RETURN.
         ENDIF.
         CALL SCREEN 301 STARTING AT 30 2 ENDING AT 80 5.
         PERFORM check_alv_condition.
@@ -66,6 +68,7 @@ MODULE user_command_0100 INPUT.
       IF gv_subrc IS INITIAL.
         IF gs_data-del <> 'X'.
           MESSAGE i999(zmcss) WITH '삭제된 데이터를 선택해주세요'.
+          RETURN.
         ENDIF.
         CALL SCREEN 302 STARTING AT 30 2 ENDING AT 80 5.
         PERFORM check_alv_condition.

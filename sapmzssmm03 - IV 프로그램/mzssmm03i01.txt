@@ -16,9 +16,10 @@ MODULE user_command_0100 INPUT.
       CLEAR : zsssmm03001,
               zsssmm03003,
               zsssmm03004.
+
     WHEN 'SEARCH'.
       IF my_tab-activetab = 'TAB1'.
-        PERFORM get_tables_data.
+        PERFORM get_pernr_logi.
 
         PERFORM check_tab1_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
@@ -29,22 +30,32 @@ MODULE user_command_0100 INPUT.
         PERFORM check_alv_condition.
         PERFORM get_iv_data CHANGING gv_subrc.
         IF gv_subrc = 4.
+          CLEAR gv_subrc.
           RETURN.
         ENDIF.
         PERFORM set_field_catalog.
-        PERFORM set_button.
         CALL SCREEN 200.
-        CLEAR zsssmm03001.
+        CLEAR : gt_data,
+                gs_data.
+        IF gv_subrc_de = 4.
+          CLEAR gv_subrc_de.
+          CALL SCREEN 600.
+          CLEAR : zsssmm03014,
+                    gt_mivi_2.
+        ENDIF.
 
       ELSEIF my_tab-activetab = 'TAB2'.
-        PERFORM get_tables_data.
+
+        PERFORM get_pernr_logi.
         PERFORM check_tab2_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
           CLEAR gv_subrc.
           RETURN.
         ENDIF.
+
         PERFORM check_alv_condition.
         PERFORM get_gr_data CHANGING gv_subrc.
+
         IF gv_subrc = 4.
           CLEAR zsssmm03003.
           CLEAR gv_subrc.
@@ -52,10 +63,19 @@ MODULE user_command_0100 INPUT.
         ENDIF.
         PERFORM set_field_catalog.
         CALL SCREEN 200.
+        CLEAR : gt_data,
+                gs_data.
+        IF gv_subrc_de = 4.
+          CLEAR gv_subrc_de.
+          CALL SCREEN 600.
+          CLEAR : zsssmm03014,
+                    gt_mivi_2.
+        ENDIF.
+
         CLEAR zsssmm03003.
 
       ELSEIF my_tab-activetab = 'TAB3'.
-        PERFORM get_tables_data.
+        PERFORM get_pernr_finan.
         PERFORM check_tab3_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
           CLEAR gv_subrc.
@@ -64,10 +84,41 @@ MODULE user_command_0100 INPUT.
 
         PERFORM check_alv_condition.
         PERFORM get_ap_data.
+
         PERFORM set_field_catalog.
         CALL SCREEN 200.
-        CLEAR zsssmm03004.
+        CLEAR : gt_data,
+                gs_data.
       ENDIF.
+    WHEN 'NEWIV'.
+      CALL SCREEN 300.
+      CLEAR : gv_eflag,
+                gt_grh,
+                gs_grh,
+                gt_gri,
+                gs_gri,
+             zsssmm03006,
+             zsssmm03007,
+             zsssmm03016.
+      IF gv_subrc_de = 4.
+        CLEAR gv_subrc_de.
+        CALL SCREEN 600.
+        CLEAR : zsssmm03014,
+                  gt_mivi_2.
+      ENDIF.
+    WHEN 'CHANGEIV'.
+      CALL SCREEN 400.
+      CLEAR :gv_eflag,
+               gt_grh,
+          zsssmm03013,
+          zsssmm03017.
+      IF gv_subrc_de = 4.
+        CLEAR gv_subrc_de.
+        CALL SCREEN 600.
+        CLEAR : zsssmm03014,
+                  gt_mivi_2.
+      ENDIF.
+
     WHEN 'ENTER'.
 
   ENDCASE.
@@ -112,25 +163,80 @@ MODULE user_command_0200 INPUT.
           RETURN.
         ENDIF.
 
+        "300 screen ALV 구성 및 스크린 구성
+        "--------------------------------------------------------------------
         PERFORM get_gr_item TABLES gt_gri
                             USING gs_data-grnum.
-        PERFORM get_gr_header.
+        PERFORM get_gr_header USING gs_data-grnum.
+        "---------------------------------------------------------------------
 
-        PERFORM insert_iv_data.
+        PERFORM set_insert_data CHANGING gv_subrc.
 
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+
+        gv_eflag = 'A'.
         CALL SCREEN 300.
+        CLEAR : gv_eflag,
+                gt_grh,
+                gs_grh,
+                gt_gri,
+                gs_gri,
+             zsssmm03006,
+             zsssmm03007.
+        IF gv_subrc_de = 4.
+          LEAVE TO SCREEN 0.
+        ENDIF.
       ENDIF.
+
     WHEN 'CHANGE'.
       PERFORM get_detail_info CHANGING gv_subrc.
       IF  gv_subrc IS INITIAL.
 
-        SELECT SINGLE ivnum jenum fyear stext rgtor rgdat
-          FROM ztssmivh
-          INTO CORRESPONDING FIELDS OF zsssmm03011
-          WHERE ivnum = gs_data-ivnum.
+        IF gs_data-apnum NE ''.
+          MESSAGE i999(zmcss) WITH '지급완료된 데이터 입니다'.
+          RETURN.
+        ENDIF.
+        "400 screen alv 구성 및 스크린 구성
+        "---------------------------------------------------------------------
+        PERFORM get_iv_update_data USING gs_data-ivnum
+                                   CHANGING zsssmm03013.
 
+        PERFORM get_gr_all_header_data.
+        "---------------------------------------------------------------------
+        gv_eflag = 'A'.
         CALL SCREEN 400.
+        CLEAR :gv_eflag,
+                 gt_grh,
+            zsssmm03013,
+            zsssmm03017.
+        IF gv_subrc_de = 4.
+          LEAVE TO SCREEN 0.
+        ENDIF.
       ENDIF.
+
+    WHEN 'IVTAIL'.
+
+
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+        CLEAR  gv_subrc.
+        IF gs_data-ivnum IS INITIAL.
+          MESSAGE i999(zmcss) WITH 'IV 문서가 존재하지 않습니다'.
+          RETURN.
+        ELSE.
+          PERFORM set_detail_iv_data USING gs_data-ivnum.
+
+          CALL SCREEN 600.
+          CLEAR : zsssmm03014,
+                    gt_mivi_2.
+        ENDIF.
+      ENDIF.
+
+
+    WHEN 'ENTER'.
   ENDCASE.
 
 ENDMODULE.
@@ -143,14 +249,16 @@ MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       CLEAR : gv_subrc,
+              gt_grh,
+              gs_grh,
+              gs_gri,
               gt_gri,
               gt_mivi,
               gs_mivi,
               gs_mivh.
       LEAVE TO SCREEN 0.
-    WHEN 'ENTER'.
-
-    WHEN 'ADDSET'.
+    WHEN 'INSERT'.
+      PERFORM get_pernr_logi.
       PERFORM check_iv_field CHANGING gv_subrc.
       IF gv_subrc <> 0.
         CLEAR gv_subrc.
@@ -158,8 +266,45 @@ MODULE user_command_0300 INPUT.
       ENDIF.
 
       MOVE-CORRESPONDING zsssmm03007 TO gs_mivh.
-      PERFORM set_jepost_iv.
-    WHEN 'INSERT'.
+      PERFORM set_fi_insert_data.
+      PERFORM set_iv_insert_data.
+
+      CALL SCREEN 310 STARTING AT 85 3 ENDING AT 130 6.
+      IF gv_subrc_de = 4.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+    WHEN 'GRADD'.
+
+      IF zsssmm03016-grnum IS INITIAL.
+        MESSAGE i999(zmcss) WITH '입고문서를 입력해주세요'.
+        RETURN.
+      ENDIF.
+
+      PERFORM check_grnum_field USING zsssmm03016-grnum
+                             CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        MESSAGE i999(zmcss) WITH '유효한 입고문서를 입력해주세요'.
+        RETURN.
+      ELSE.
+        gv_eflag = 'B'.
+        CLEAR zsssmm03007.
+      ENDIF.
+
+
+      PERFORM get_gr_item TABLES gt_gri
+                    USING zsssmm03016-grnum.
+      PERFORM get_gr_header USING zsssmm03016-grnum.
+
+      PERFORM set_insert_data CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        RETURN.
+      ENDIF.
+
+    WHEN 'ENTER'.
+
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -171,31 +316,28 @@ MODULE user_command_0310 INPUT.
 
   CASE sy-ucomm.
     WHEN 'CHECK'.
-      PERFORM get_tables_data.
-      PERFORM check_mscreen_field USING zsssmm03008-rgtor
-                                  CHANGING gv_subrc.
-      IF gv_subrc <> 0.
-        CLEAR gv_subrc.
-        RETURN.
-      ENDIF.
 
-      PERFORM set_fi_data.
-      PERFORM set_iv_data.
+      PERFORM insert_new_fi_item_0301   CHANGING gv_subrc.
 
-      LOOP AT gt_jei INTO gs_jei.
-        INSERT ztssjei FROM gs_jei.
-      ENDLOOP.
+      PERFORM insert_new_fi_header_0301 CHANGING gv_subrc.
 
-      INSERT ztssjeh FROM gs_jeh.
+      PERFORM insert_iv_item_0301       CHANGING gv_subrc.
 
-      LOOP AT gt_mivi INTO gs_mivi.
-        INSERT ztssmivi FROM gs_mivi.
-      ENDLOOP.
+      PERFORM insert_iv_header_0301     CHANGING gv_subrc.
 
-      INSERT ztssmivh FROM gs_mivh.
 
-      IF sy-subrc IS INITIAL.
-
+      IF gv_subrc IS INITIAL.
+        PERFORM set_detail_iv_data USING gs_mivh-ivnum.
+        CLEAR : gt_mivh,
+                gs_mivh,
+                gt_mivi,
+                gs_mivi,
+                gt_jeh,
+                gs_jeh,
+                gt_jei,
+                gs_jei.
+        gv_subrc_de = 4.
+        LEAVE TO SCREEN 0.
       ENDIF.
 
     WHEN 'CANC'.
@@ -217,6 +359,164 @@ MODULE user_command_0400 INPUT.
 
   CASE ok_code.
     WHEN 'BACK'.
+      CLEAR zsssmm03013.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ADDGR'.
+      PERFORM get_detail_info_alv_4 CHANGING gv_subrc.
+      IF gv_subrc IS INITIAL.
+        CLEAR gv_subrc.
+        zsssmm03013-grnum = gs_grh-grnum.
+      ENDIF.
+    WHEN 'UPDATE'.
+      PERFORM get_pernr_logi.
+      PERFORM check_iv_update_field CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        RETURN.
+      ENDIF.
+
+      IF zsssmm03013-grnum IS INITIAL.
+        PERFORM set_iv_default_data. "아직 송장검증일은 검사안함 나중에 확인
+
+      ELSEIF zsssmm03013-grnum NE ' '.
+        PERFORM set_fi_update_data.
+        PERFORM set_iv_update_data CHANGING gv_subrc.
+        PERFORM set_fi_new_data.
+        gs_mivh-jenum = gs_jeh_3-jenum.
+      ENDIF.
+
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        RETURN.
+      ENDIF.
+
+
+      CALL SCREEN 410 STARTING AT 85 3 ENDING AT 130 6.
+      IF gv_subrc_de = 4.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+    WHEN 'IVADD'.
+      IF zsssmm03017-ivnum IS INITIAL.
+        MESSAGE i999(zmcss) WITH '송장문서를 입력해주세요'.
+        RETURN.
+      ENDIF.
+
+      PERFORM check_ivnum_field USING zsssmm03017-ivnum
+                             CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR gv_subrc.
+        MESSAGE i999(zmcss) WITH '유효한 송장문서를 입력해주세요'.
+        RETURN.
+      ELSE.
+        gv_eflag = 'B'.
+      ENDIF.
+
+      PERFORM get_iv_update_data USING zsssmm03017-ivnum
+                                 CHANGING zsssmm03013.
+
+      PERFORM get_gr_all_header_data.
+    WHEN 'ENTER'.
+
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0500  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0500 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0410  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0410 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHEKE'.
+
+
+      IF zsssmm03013-grnum IS INITIAL.
+
+        PERFORM update_simple_iv_header_0401 CHANGING gv_subrc.
+
+        IF gv_subrc IS INITIAL.
+          PERFORM set_detail_iv_data USING gs_mivh-ivnum.
+          CLEAR : gt_mivh,
+                  gs_mivh.
+          gv_subrc = 4.
+          LEAVE TO SCREEN 0.
+        ENDIF.
+
+      ELSEIF zsssmm03013-grnum NE ' '.
+
+
+        PERFORM insert_canc_fi_item_0401    CHANGING gv_subrc.
+
+
+        PERFORM insert_canc_fi_header_0401  CHANGING gv_subrc.
+
+
+        PERFORM update_old_fi_header_0401   CHANGING gv_subrc.
+
+
+        PERFORM insert_new_fi_item_0401     CHANGING gv_subrc.
+
+
+        PERFORM insert_new_fi_header_0401   CHANGING gv_subrc.
+
+
+        PERFORM insert_del_iv_item          CHANGING gv_subrc.
+
+
+        PERFORM insert_iv_item_0401         CHANGING gv_subrc.
+
+
+        PERFORM update_iv_header_0401       CHANGING gv_subrc.
+
+
+
+        IF gv_subrc IS INITIAL.
+          PERFORM set_detail_iv_data USING gs_mivh-ivnum.
+          CLEAR : gs_jei,
+                  gt_jei,
+                  gs_jeh,
+                  gt_jeh,
+                  gt_grh,
+                  gs_grh,
+                  gt_gri,
+                  gs_gri,
+                  gt_mivi,
+                  gs_mivi,
+                  gt_mivh,
+                  gs_mivh.
+          gv_subrc_de = 4.
+          LEAVE TO SCREEN 0.
+        ENDIF.
+      ENDIF.
+
+    WHEN 'CANC'.
+      CLEAR : gs_jei,
+              gt_jei,
+              gs_jeh,
+              gt_jeh,
+              gt_gri,
+              gs_gri,
+              gt_mivi,
+              gs_mivi,
+              gt_mivh,
+              gs_mivh.
       LEAVE TO SCREEN 0.
   ENDCASE.
 
