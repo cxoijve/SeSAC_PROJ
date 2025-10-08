@@ -4,163 +4,95 @@
 *&---------------------------------------------------------------------*
 PROGRAM sapmzssmm02.
 
+
 " 공통변수
 DATA : ok_code  TYPE sy-ucomm,
        gv_subrc TYPE sy-subrc,
        gv_dynnr TYPE sy-dynnr,
-       gv_msg type string.
+       gv_msg   TYPE string.
 
-*-------------------------------------------------------*
-* Alv 관련
-*-------------------------------------------------------*
+DATA : gv_screen(1),
+       gv_radio_screen(1),
+       gv_entire_screen(1).
 
-***-------***
-*** 100번대 ***
-***-------***
+DATA : gv_seqnum type n length 3.
 
-" 전체화면 탭 스트랩
+DATA : gv_radio_vname TYPE c VALUE 'X',
+       gv_radio_venid TYPE c.
+
+
+DATA : gr_dudat TYPE RANGE OF ztsspoh-dudat,
+       gr_grdat TYPE RANGE OF ztssgrh-grdat.
+
+DATA : gt_po_header TYPE STANDARD TABLE OF ztsspoh.
+
+*-----------------------------------------------
+* ALV
+*-----------------------------------------------
+
+* 전체화면 탭스트립
 CONTROLS t_info TYPE TABSTRIP.
 
 * ALV Exclude
 DATA : gs_exclude TYPE ui_func,
        gt_exclude TYPE ui_functions.
-* ALV Unexclude => 함수 하나만 쓰기 위함( 추후 삭제 고려 O )
-DATA : gs_unexclude TYPE ui_func,
-       gt_unexclude TYPE ui_functions.
 
-* 102번 - Po Without Full Gr Info 3분할 Con, Split, Alv.
-DATA : go_custom_po  TYPE REF TO cl_gui_custom_container,
-       go_con_pomain TYPE REF TO cl_gui_container.
+* ============================================
+* 102번 - 입고대기 구매오더 (3분할)
+* ============================================
 
-DATA : go_split_pomain TYPE REF TO cl_gui_splitter_container,
-       go_split_poitem TYPE REF TO cl_gui_splitter_container.
+* Custom Container
+DATA: go_cust_po  TYPE REF TO cl_gui_custom_container,
+      go_con_main TYPE REF TO cl_gui_container.
 
-DATA : go_con_pright TYPE REF TO cl_gui_container,
-       go_con_up     TYPE REF TO cl_gui_container,
-       go_con_down   TYPE REF TO cl_gui_container.
+* Splitter Containers
+DATA: go_split_po_main  TYPE REF TO cl_gui_splitter_container,  " 좌우 분할
+      go_split_po_right TYPE REF TO cl_gui_splitter_container.  " 우측 상하 분할
 
-DATA : go_alv_waitpo  TYPE REF TO cl_gui_alv_grid,
-       go_alv_poitems TYPE REF TO cl_gui_alv_grid,
-       go_alv_confirm TYPE REF TO cl_gui_alv_grid.
+* Container References
+DATA: go_con_po_right  TYPE REF TO cl_gui_container,  " 좌측 (대기 PO)
+      go_con_po_top    TYPE REF TO cl_gui_container,  " 우측 상단 (PO Items)
+      go_con_po_bottom TYPE REF TO cl_gui_container.  " 우측 하단 (확정 내역)
 
-
-* 101번 - Gr list & gr item 2분할  Con, Split, Alv (추후 벤더-가격 추가 시 3분할 예정)****
-DATA : go_custom_gr  TYPE REF TO cl_gui_custom_container,
-       go_con_grmain TYPE REF TO cl_gui_container.
-
-DATA : go_split_grmain TYPE REF TO cl_gui_splitter_container.
-
-DATA : go_con_gright TYPE REF TO cl_gui_container.
-
-DATA : go_alv_grlist TYPE REF TO cl_gui_alv_grid,
-       go_alv_gritem TYPE REF TO cl_gui_alv_grid.
-
-***-------***
-*** 200번대 ***
-***-------***
-
-DATA : go_dock_gr      TYPE REF TO cl_gui_docking_container,
-       go_split_editgr TYPE REF TO cl_gui_splitter_container.
-DATA : go_con_left  TYPE REF TO cl_gui_container,
-       go_con_right TYPE REF TO cl_gui_container.
-DATA : go_alv_editgr TYPE REF TO cl_gui_alv_grid,
-       go_alv_polist TYPE REF TO cl_gui_alv_grid.
+* ALV Grids
+DATA: go_alv_po_waiting TYPE REF TO cl_gui_alv_grid,  " 대기중인 PO
+      go_alv_po_items   TYPE REF TO cl_gui_alv_grid,  " PO 아이템
+      go_alv_po_confirm TYPE REF TO cl_gui_alv_grid.  " 확정 내역
 
 
+" 101번 - Gr list & Gr item
 
-*-------------------------------------------------------*
-* 스크린 & 조회관련
-*-------------------------------------------------------*
-
-***-------***
-*** 100번대 ***
-***-------***
-
-* 스크린
-TABLES : zsssmm0210.
-DATA : gs_cond TYPE zsssmm0210.
-
-TABLES : zsssmm0211.
-DATA : gs_cond2 TYPE zsssmm0211.
-
-" 입고확정 모달창화면
-TABLES : zsssmm0214.
+*DATA : go_cust_gr  TYPE REF TO cl_gui_custom_container,
+*       go_con_grmain TYPE REF TO cl_gui_container.
+*
+*DATA : go_split_gr_main TYPE REF TO cl_gui_splitter_container.
+*
+*DATA : go_con_gr_right TYPE REF TO cl_gui_container.
+*
+*DATA : go_alv_gr_list TYPE REF TO cl_gui_alv_grid,
+*       go_alv_gr_item TYPE REF TO cl_gui_alv_grid.
 
 
+* ============================================
+* 102번 - 데이터
+* ============================================
 
-* 조회 & 라디오버튼
-DATA : gr_grdat TYPE RANGE OF ztssgrh-grdat.
-DATA : gr_dudat TYPE RANGE OF ztsspoh-dudat.
-
-DATA: gv_radio1 TYPE c VALUE 'X',  " 기본 선택
-      gv_radio2 TYPE c.
-
-DATA : gv_screen(1).
-DATA : gv_radio_screen(1).
-
-*-------------------------------------------------------*
-* 데이터
-*-------------------------------------------------------*
-
-***-------***
-*** 100번대 ***
-***-------***
-
-" 입고 문서
-DATA : BEGIN OF gs_grdata,
-         color(4).
-    INCLUDE TYPE zsssmm0211.
-DATA : END OF gs_grdata,
-gt_grdata LIKE TABLE OF gs_grdata.
-
-DATA : BEGIN OF gs_gritem,
-         color(4),
-         it_col   TYPE lvc_t_scol.
-    INCLUDE TYPE zsssmm0216.
-DATA : END OF gs_gritem,
-gt_gritem LIKE TABLE OF gs_gritem.
-
-
-" 입고되지 않은 PO 문서 데이터
-DATA : BEGIN OF gs_podata,
-         light,
-         icon   LIKE icon-name,
-         it_col TYPE lvc_t_scol.
+DATA: BEGIN OF gs_podata,
+        light type char8,
+        icon   LIKE icon-name,
+        it_col TYPE lvc_t_scol.
     INCLUDE TYPE zsssmm0212.
 DATA : END OF gs_podata,
 gt_podata LIKE TABLE OF gs_podata.
 
-DATA : gt_po LIKE gt_podata,
-       gs_po LIKE LINE OF gt_po.
 
-" PO 아이템 관련
-DATA: BEGIN OF gs_col,
+
+DATA : BEGIN OF gs_itamt,
          ponum  TYPE ztssgri-ponum,
          itnum  TYPE ztssgri-itnum,
          amount TYPE ztssgri-amount,
-       END OF gs_col,
-       gt_col like table of gs_col.
-
-
-" 입고문서 연산 관련
-DATA : BEGIN OF gs_gri,
-         grnum  TYPE ztssgrh-grnum,
-         ponum  TYPE ztssgri-ponum,
-         itnum  TYPE ztssgri-itnum,
-         amount TYPE ztssgri-amount,
-         meins  TYPE ztssgri-meins,
-       END OF gs_gri,
-       gt_gri LIKE TABLE OF gs_gri.
-
-" 하나의 입고문서 연산관련
-DATA : BEGIN OF gs_one_gri,
-         grnum  TYPE ztssgrh-grnum,
-         ponum  TYPE ztssgri-ponum,
-         itnum  TYPE ztssgri-itnum,
-         amount TYPE ztssgri-amount,
-         meins  TYPE ztssgri-meins,
-       END OF gs_one_gri,
-       gt_one_gri LIKE TABLE OF gs_one_gri.
+       END OF gs_itamt,
+       gt_itamt LIKE TABLE OF gs_itamt.
 
 DATA : BEGIN OF gs_item,
          color(4).
@@ -176,34 +108,29 @@ DATA : END OF gs_confirm,
 gt_confirm LIKE TABLE OF gs_confirm.
 
 
-***-------***
-*** 200번대 ***
-***-------***
+* ============================================
+* 101번 - 데이터
+* ============================================
 
-" 입고 아이템 리스트
-DATA : BEGIN OF gs_edit_item,
+DATA : BEGIN OF gs_grdata,
          color(4).
-    INCLUDE  TYPE zsssmm0215.
-DATA : END OF gs_edit_item,
-gt_edit_item LIKE TABLE OF gs_edit_item.
+    INCLUDE TYPE zsssmm0211.
+DATA : END OF gs_grdata,
+gt_grdata LIKE TABLE OF gs_grdata.
 
-" item - temp 변수 ( 추후 로직 변경 O )
-DATA : gt_temp LIKE gt_edit_item,
-       gs_temp LIKE gs_edit_item.
-
-TYPES : BEGIN OF ty_money,
-        debit type ztssjei-debit,
-        credit type ztssjei-credit,
-        end of ty_money.
+DATA : BEGIN OF gs_gritem,
+         color(4),
+         it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0216.
+DATA : END OF gs_gritem,
+gt_gritem LIKE TABLE OF gs_gritem.
 
 
-
-
-*-------------------------------------------------------*
+* ============================================
 * Layout, Field Catalog
-*-------------------------------------------------------*
+* ============================================
 
-" PO 화면 조회 alv의 layout, Field Catalog.
+* 입고 대기 PO 조회 layout, field catalog
 DATA : gs_layo TYPE lvc_s_layo,
        gt_fcat TYPE lvc_t_fcat,
        gs_fcat TYPE lvc_s_fcat.
@@ -228,86 +155,57 @@ DATA : gs_layo6 TYPE lvc_s_layo,
        gt_fcat6 TYPE lvc_t_fcat,
        gs_fcat6 TYPE lvc_s_fcat.
 
-" 입고확정 아이템 리스트 ( EDIT )
-DATA : gs_layo7 TYPE lvc_s_layo,
-       gt_fcat7 TYPE lvc_t_fcat,
-       gs_fcat7 TYPE lvc_s_fcat.
-
-
-" 입고확정의 구매오더
-DATA : gs_layo8 TYPE lvc_s_layo,
-       gt_fcat8 TYPE lvc_t_fcat,
-       gs_fcat8 TYPE lvc_s_fcat.
-
-
-
-TYPES : BEGIN OF ty_field_conf,
-          grid_id   TYPE c LENGTH 2,
-          fieldname TYPE lvc_fname,
-          coltext   TYPE scrtext_l,
-          no_out    TYPE c,
-          edit      TYPE c,
-          hotspot   TYPE c,
-          style     TYPE lvc_style,
-          col_pos   TYPE i,
-        END OF ty_field_conf.
-
-DATA : gt_field_conf TYPE TABLE OF ty_field_conf.
-
-
-*-------------------------------------------------------*
-* Utilities.
-*-------------------------------------------------------*
-" 입고 아이템 번호 넘버링 변수
-DATA : gv_seqnum TYPE i.
-
-" Text 메모 변수
-DATA : go_mod  TYPE REF TO cl_gui_custom_container,
-       go_edit TYPE REF TO cl_gui_textedit.
-TYPES: BEGIN OF t_text,
-         text TYPE ztssgrh-stext,
-       END OF t_text,
-       tt_text TYPE TABLE OF t_text.
-
-DATA: gt_edit TYPE TABLE OF t_text,
-      gs_edit LIKE LINE OF gt_edit.
-DATA: gv_text TYPE string.
-
-
-" 채번 변수
-DATA : gv_gr_num TYPE c LENGTH 11,
-       gv_fi_num TYPE c LENGTH 11,
-       gv_wh_num TYPE c LENGTH 11.
-
-
-" Field Catalog Edit 기능 / 잠깐 쓸 변수 => 추후 로직 수정 예정
-DATA : gv_temp_edit.
-
-" 가격계산 변수 => 추후 수정 여부 O
-DATA : gv_poprc LIKE ztsspoi-poprc.
-" 200번 스크린 기존정보접기 관련 변수 (flag)
-DATA : gv_bbtn(1).
 
 
 
 
 
-*-------------------------------------------------------*
-* Class Definition
-*-------------------------------------------------------*
+DATA : gt_sort TYPE lvc_t_sort,
+       gs_sort TYPE lvc_s_sort.
 
+
+" 조건조회
+TABLES : zsssmm0210.
+TABLES : zsssmm0214.
+
+* ============================================
+* 101번 - 입고완료 리스트
+* ============================================
+
+* Custom Container
+DATA: go_cust_gr TYPE REF TO cl_gui_custom_container.
+
+* Splitter Container
+DATA: go_split_gr_main TYPE REF TO cl_gui_splitter_container.  " 좌우 분할
+
+* Container References
+DATA: go_con_gr_top    TYPE REF TO cl_gui_container,  " 좌측 (GR List)
+      go_con_gr_bottom TYPE REF TO cl_gui_container.  " 우측 (GR Item, 추후 Vendor/Price 추가)
+
+* ALV Grids
+DATA: go_alv_gr_list TYPE REF TO cl_gui_alv_grid,  " GR 목록
+      go_alv_gr_item TYPE REF TO cl_gui_alv_grid.  " GR 아이템
+
+
+
+
+
+
+
+
+* ============================================
+* Event Handler
+* ============================================
 
 CLASS lcl_event_handler DEFINITION FINAL.
   PUBLIC SECTION.
     CLASS-METHODS :
       handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
       handle_data_changed FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
-      handle_data_changes FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
-      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
-      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
-      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
+      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm.
+*      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
+*      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
 ENDCLASS.
-
 
 CLASS lcl_layout_builder DEFINITION.
   PUBLIC SECTION.
@@ -324,52 +222,6 @@ CLASS lcl_layout_builder DEFINITION.
         RETURNING
           VALUE(rs_layo) TYPE lvc_s_layo.
 ENDCLASS.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*-------------------------
-
-
-* Event Handler Class
-*CLASS lcl_handler DEFINITION.
-*  PUBLIC SECTION.
-*
-*    CLASS-METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
-*      IMPORTING es_row_no e_column_id.
-*
-*    CLASS-METHODS on_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
-*      IMPORTING e_object.
-*
-*    CLASS-METHODS on_user_command FOR EVENT user_command OF cl_gui_alv_grid
-*      IMPORTING e_ucomm.
-*
-**    CLASS-METHODS on_data_changed FOR EVENT data_changed OF cl_gui_alv_grid
-**      IMPORTING er_data_changed e_ucomm.
-*
-*ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

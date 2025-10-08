@@ -18,6 +18,7 @@ DATA : gt_exclude TYPE ui_functions.
 " ALV Handler
 CLASS lcl_handler DEFINITION.
   PUBLIC SECTION.
+    DATA : hname TYPE C LENGTH 4.
 
     METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
       IMPORTING es_row_no e_column_id.
@@ -239,6 +240,9 @@ DATA : icon_gi_t_0500 TYPE icons-text,
 
 " Edit Flag 500
 DATA :  gv_eflag_0500.
+
+" CALLED
+DATA : gv_c_ginum TYPE zessginum.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

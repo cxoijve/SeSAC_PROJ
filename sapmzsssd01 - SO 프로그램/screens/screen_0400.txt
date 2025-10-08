@@ -8,7 +8,7 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0400 0400     23117192 37  0  0 27147  0G E                              20251001135045																																
+SAPMZSSSD01                             0400 0400     23117192 37  0  0 27147  0G E                              20251002130814																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -45,4 +45,9 @@ PROCESS BEFORE OUTPUT.
 																																
 PROCESS AFTER INPUT.																																
   MODULE exit AT EXIT-COMMAND.																																
+*  FIELD gs_head_crt-rgtor MODULE check_pernr.																																
+*  FIELD gs_head_crt-cstid MODULE check_cstid.																																
+  MODULE header_first.																																
+  MODULE validate_emp.																																
+  MODULE validate_cust.																																
   MODULE user_command_0400.																																

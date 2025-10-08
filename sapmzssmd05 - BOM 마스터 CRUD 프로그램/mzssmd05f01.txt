@@ -146,6 +146,10 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                            USING  'MEINS'
                            '-1'
                            '단위'.
+
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                               USING '0100L'.
+
     WHEN '0100R' OR '0200R' OR '0300R'.
       PERFORM modify_fcat :
                            TABLES pt_fcat
@@ -172,6 +176,10 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                            USING  'MEINS'
                            '4'
                            '단위'.
+
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                              USING '0100R'.
+
     WHEN '0200L' OR '0300L'.
       PERFORM modify_fcat :
                            TABLES pt_fcat
@@ -198,6 +206,8 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                            USING  'MEINS'
                            '-1'
                            '단위'.
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                          USING '0200L'.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1054,6 +1064,63 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_alv_exclude  CHANGING   pt_exclude LIKE gt_exclude.
   APPEND cl_gui_alv_grid=>mc_fc_excl_all TO gt_exclude.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_HANDLER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_0100L  text
+*      -->P_GO_HANDLER_0100L  text
+*----------------------------------------------------------------------*
+FORM set_alv_handler  USING    po_alv     TYPE REF TO cl_gui_alv_grid
+                               po_handler TYPE REF TO lcl_handler
+                               VALUE(pv_hname).
+  po_handler->lv_hname = pv_hname.
+  SET HANDLER po_handler->on_hotspot_click        FOR po_alv.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_HOTSPOT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_0244   text
+*----------------------------------------------------------------------*
+FORM set_fcat_hotspot  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                       USING    VALUE(pv_dynnr).
+
+  IF pt_fcat[] IS INITIAL.
+    MESSAGE a999(zmcss) WITH 'FCAT ERROR'.
+  ENDIF.
+
+  CASE pv_dynnr.
+    WHEN '0100L'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'PRDNR'.
+            pt_fcat-hotspot = 'X'.
+            MODIFY pt_fcat.
+        ENDCASE.
+      ENDLOOP.
+    WHEN '0100R'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'RAWNR'.
+            pt_fcat-hotspot = 'X'.
+            MODIFY pt_fcat.
+        ENDCASE.
+      ENDLOOP.
+    WHEN '0200L'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'RAWNR'.
+            pt_fcat-hotspot = 'X'.
+            MODIFY pt_fcat.
+        ENDCASE.
+      ENDLOOP.
+  ENDCASE.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

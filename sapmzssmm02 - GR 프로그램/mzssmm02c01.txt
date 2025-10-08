@@ -21,32 +21,26 @@ CLASS lcl_event_handler IMPLEMENTATION.
     PERFORM handle_data_changed USING er_data_changed sender.
 
   ENDMETHOD.
-
-  METHOD handle_data_changes.
-
-    PERFORM handle_data_changes USING er_data_changed sender.
-
-  ENDMETHOD.
-
-  METHOD handle_double_click.
-
-    PERFORM handle_double_click USING e_row e_column.
-
-  ENDMETHOD.
-
-  METHOD handle_hotspot.
-
-    PERFORM handle_hotspot USING e_row_id-index e_column_id-fieldname sender.
-
-  ENDMETHOD.
+*
+*  METHOD handle_double_click.
+*
+*    PERFORM handle_double_click USING e_row e_column.
+*
+*  ENDMETHOD.
+*
+*  METHOD handle_hotspot.
+*
+*    PERFORM handle_hotspot USING e_row_id-index e_column_id-fieldname sender.
+*
+*  ENDMETHOD.
 
 ENDCLASS.
-
 
 CLASS lcl_layout_builder IMPLEMENTATION.
   METHOD create.
 
-    rs_layo-cwidth_opt = 'A'.
+    rs_layo-cwidth_opt = 'X'.
+*    rs_layo-col_opt = 'X'.
     rs_layo-sel_mode   = 'A'.
     rs_layo-col_opt    = 'X'.
     rs_layo-grid_title = iv_title.

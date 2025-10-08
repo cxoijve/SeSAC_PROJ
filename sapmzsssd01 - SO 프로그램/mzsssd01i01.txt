@@ -114,8 +114,9 @@ MODULE user_command_0300 INPUT.
                         CHANGING gs_head_udt.
       PERFORM refresh_alv CHANGING go_alv4.
       " Screen 200에 반영
-      MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
-      gt_item = gt_item_udt.
+*      MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
+*      gt_item = gt_item_udt.
+*      zssssd0103-toprc = gs_head_udt-toprc.
       IF go_alv2 IS BOUND.
         PERFORM refresh_alv CHANGING go_alv2.
       ENDIF.
@@ -278,7 +279,8 @@ MODULE check_matnr INPUT.
        AND b~langu = '3'.
 
     IF sy-subrc <> 0.
-      MESSAGE i999(zmcss) WITH '해당 고객에게 판매 가능한 제품이 아닙니다.'.
+      MESSAGE e999(zmcss) WITH '해당 고객에게 판매 가능한 제품이 아닙니다.'.
+      CLEAR gs_item_ist-somnr.
       RETURN.
     ENDIF.
   ENDIF.
@@ -476,7 +478,8 @@ MODULE check_matnr2 INPUT.
        AND b~langu = '3'.
 
     IF sy-subrc <> 0.
-      MESSAGE i999(zmcss) WITH '해당 고객에게 판매 가능한 제품이 아닙니다.'.
+      MESSAGE e999(zmcss) WITH '해당 고객에게 판매 가능한 제품이 아닙니다.'.
+      CLEAR gs_item_add-somnr.
       RETURN.
     ENDIF.
   ENDIF.
@@ -488,6 +491,140 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE header_changed INPUT.
   gv_changed = abap_true.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_PERNR  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_pernr INPUT.
+*  DATA: lv_estat TYPE ztssemp-estat.
+*
+*  SELECT SINGLE estat
+*    FROM ztssemp
+*    INTO lv_estat
+*   WHERE pernr = gs_head_crt-rgtor.
+*
+*  IF sy-subrc <> 0.
+*    " 사원코드가 존재하지 않을 때
+*    MESSAGE e999(zmcss) WITH '존재하지 않는 입니다.'. "DISPLAY LIKE 'E'.
+*    CLEAR gs_head_crt-rgtor.
+*    RETURN.
+*  ELSEIF lv_estat <> '1'.
+*    " 재직자가 아니면 입력 금지
+*    MESSAGE e999(zmcss) WITH '재직 중이지 않은 사원은 입력할 수 없습니다.'. "DISPLAY LIKE 'E'.
+*    CLEAR gs_head_crt-rgtor.
+*    RETURN.
+*  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_CSTID  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_cstid INPUT.
+*  DATA: lv_endda TYPE ztsscust-endda.
+*
+*  SELECT SINGLE endda
+*    FROM ztsscust
+*    INTO lv_endda
+*   WHERE cstid = gs_head_crt-cstid.
+*
+*  IF sy-subrc <> 0.
+*    " 고객코드가 존재하지 않을 때
+*    MESSAGE e999(zmcss) WITH '존재하지 않는 고객입니다.'.
+*    CLEAR gs_head_crt-cstid.
+*    RETURN.
+*  ELSEIF lv_endda <> '99991231'.
+*    " 계약 종료된 고객 입력 금지
+*    MESSAGE e999(zmcss) WITH '계약이 종료된 고객은 입력할 수 없습니다.'.
+*    CLEAR gs_head_crt-cstid.
+*    RETURN.
+*  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  VALIDATE_EMP  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE validate_emp INPUT.
+  " 헤더 정보 없는 경우 검증 패스
+  IF gs_head_crt IS INITIAL OR ok_code = 'APPEND'.
+    RETURN.
+  ENDIF.
+
+  CASE ok_code.
+    WHEN 'BACK' OR 'CANC'.
+      RETURN.
+  ENDCASE.
+
+  DATA: lv_estat TYPE ztssemp-estat.
+
+  SELECT SINGLE estat
+    FROM ztssemp
+    INTO lv_estat
+   WHERE pernr = gs_head_crt-rgtor.
+
+  IF sy-subrc <> 0.
+    " 사원코드가 존재하지 않을 때
+    MESSAGE i999(zmcss) WITH '존재하지 않는 사원입니다.' DISPLAY LIKE 'E'.
+    CLEAR gs_head_crt-rgtor.
+    RETURN.
+  ELSEIF lv_estat <> '1'.
+    " 재직자가 아니면 입력 금지
+    MESSAGE i999(zmcss) WITH '재직 중이지 않은 사원은 입력할 수 없습니다.' DISPLAY LIKE 'E'.
+    CLEAR gs_head_crt-rgtor.
+    RETURN.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  VALIDATE_CUST  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE validate_cust INPUT.
+  " 헤더 정보 없는 경우 검증 패스
+  IF gs_head_crt IS INITIAL OR ok_code = 'APPEND'.
+    RETURN.
+  ENDIF.
+
+  CASE ok_code.
+    WHEN 'BACK' OR 'CANC'.
+      RETURN.
+  ENDCASE.
+
+  DATA: lv_endda TYPE ztsscust-endda.
+
+  SELECT SINGLE endda
+    FROM ztsscust
+    INTO lv_endda
+   WHERE cstid = gs_head_crt-cstid.
+
+  IF sy-subrc <> 0.
+    " 고객코드가 존재하지 않을 때
+    MESSAGE i999(zmcss) WITH '존재하지 않는 고객입니다.' DISPLAY LIKE 'E'.
+    CLEAR gs_head_crt-cstid.
+    RETURN.
+  ELSEIF lv_endda <> '99991231'.
+    " 계약 종료된 고객 입력 금지
+    MESSAGE i999(zmcss) WITH '계약이 종료된 고객은 입력할 수 없습니다.' DISPLAY LIKE 'E'.
+    CLEAR gs_head_crt-cstid.
+    RETURN.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  HEADER_FIRST  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE header_first INPUT.
+  CASE ok_code.
+    WHEN 'APPEND'.
+      IF gs_head_crt IS INITIAL.
+        MESSAGE s999(zmcss) WITH '헤더 정보를 먼저 입력해 주세요.' DISPLAY LIKE 'W'.
+        RETURN.
+      ENDIF.
+  ENDCASE.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

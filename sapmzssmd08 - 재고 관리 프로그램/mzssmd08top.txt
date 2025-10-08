@@ -1,0 +1,101 @@
+*&---------------------------------------------------------------------*
+*& Include MZSSMD08TOP                                       Module Pool      SAPMZSSMD08
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzssmd08.
+
+
+" Common Variables
+DATA : ok_code  LIKE sy-ucomm,
+       gv_subrc LIKE sy-subrc,
+       gv_dynnr LIKE sy-dynnr.
+
+" ALV Objects °øÅë
+DATA : gt_exclude TYPE ui_functions.
+
+" Itabs
+DATA : gt_dd07v TYPE TABLE OF dd07v WITH HEADER LINE.
+
+" ALV Handler
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+
+    DATA lv_hname TYPE c LENGTH 5.
+
+    METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING es_row_no e_column_id e_row_id.
+
+ENDCLASS.
+
+" 100 ===================================================
+" Condition 100
+TABLES zsssmd0801.
+
+" Result 0100
+"   - ALV Title 0100
+DATA : gs_alvtitle_0100 TYPE zsssmd0802.
+"   - side info 0100
+DATA : gs_sideinfo_0100 TYPE zsssmd0804.
+"   - ALV INFO 0100
+DATA : BEGIN OF gs_info_0100.
+DATA : cellscol TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmd0803.
+DATA : END OF gs_info_0100.
+DATA : gt_info_0100 LIKE TABLE OF gs_info_0100.
+
+" ALV Objects 0100
+DATA   go_con_0100 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0100 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0100 TYPE lvc_s_layo.
+DATA : gt_fcat_0100 TYPE lvc_t_fcat,
+       gs_fcat_0100 TYPE lvc_s_fcat.
+DATA : gt_sort_0100 TYPE lvc_t_sort,
+       gs_sort_0100 TYPE lvc_s_sort.
+
+
+" ALV Handler 0100
+DATA go_handler_0100 TYPE REF TO lcl_handler.
+
+" 200 ===================================================
+" Tab strip 200
+CONTROLS tab200 TYPE TABSTRIP.
+
+" Result 0200
+"  - ALV Title 0200
+DATA : gs_alvtitle_0200 TYPE zsssmd085.
+
+"  - ALV INFO 0210 & 0220
+DATA : BEGIN OF gs_info_0200.
+DATA : icon_210 TYPE icon-id.
+DATA : cellscol TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmd0806.
+DATA : END OF gs_info_0200.
+DATA : gt_info_0210 LIKE TABLE OF gs_info_0200,
+       gt_info_0220 LIKE TABLE OF gs_info_0200.
+
+" ALV Objects 0210
+DATA   go_con_0210 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0210 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0210 TYPE lvc_s_layo.
+DATA : gt_fcat_0210 TYPE lvc_t_fcat,
+       gs_fcat_0210 TYPE lvc_s_fcat.
+DATA : gt_sort_0210 TYPE lvc_t_sort,
+       gs_sort_0210 TYPE lvc_s_sort.
+
+" ALV Handler 0210
+DATA go_handler_0210 TYPE REF TO lcl_handler.
+
+" ALV Objects 0220
+DATA   go_con_0220 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0220 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0220 TYPE lvc_s_layo.
+DATA : gt_fcat_0220 TYPE lvc_t_fcat,
+       gs_fcat_0220 TYPE lvc_s_fcat.
+DATA : gt_sort_0220 TYPE lvc_t_sort,
+       gs_sort_0220 TYPE lvc_s_sort.
+
+" ALV Handler 0220
+DATA go_handler_0220 TYPE REF TO lcl_handler.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

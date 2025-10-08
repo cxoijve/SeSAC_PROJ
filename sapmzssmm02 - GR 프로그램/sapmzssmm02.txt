@@ -12,19 +12,18 @@ INCLUDE mzssmm02c01                             .  " Class
 
 INCLUDE mzssmm02o01                             .  " PBO-Modules
 INCLUDE mzssmm02i01                             .  " PAI-Modules
-INCLUDE mzssmm02f01                             .  " FORM-Routines
 
+INCLUDE mzssmm02f00                             .  " Common-FORM-Routines
+INCLUDE mzssmm02f01                             .  " ALV(Including PBO, PAI LOGIC) FORM-Routines
+INCLUDE mzssmm02f02                             .  " Init & form-routines
+INCLUDE mzssmm02f03                             .  " Class-FORM-Routines
 
 LOAD-OF-PROGRAM.
-
   PERFORM set_default.
-  PERFORM set_datas.
 
 *GUI Texts
 *----------------------------------------------------------
-* T100 --> 입고프로그램
-* T110 --> 입고하기
-* T200 --> 입고 수정 프로그램
+* T100 --> 입고 프로그램
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

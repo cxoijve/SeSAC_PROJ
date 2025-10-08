@@ -5,13 +5,22 @@
 PROGRAM sapmzsssd01.
 
 " Common
-DATA: ok_code  TYPE sy-ucomm,
-      gv_subrc TYPE sy-subrc,
-      gv_dynnr TYPE sy-dynnr,
-      gv_first TYPE abap_bool,
+DATA: ok_code    TYPE sy-ucomm,
+      gv_subrc   TYPE sy-subrc,
+      gv_dynnr   TYPE sy-dynnr,
+      gv_first   TYPE abap_bool,
       gt_toolbar TYPE ui_functions,
       gv_changed TYPE abap_bool VALUE abap_false,
-      gv_valid TYPE abap_bool.
+      gv_valid   TYPE abap_bool.
+
+INCLUDE <icon>.       " 아이콘 상수 정의
+
+DATA: gv_icon_g TYPE icon_d,
+      gv_icon_y TYPE icon_d,
+      gv_icon_r TYPE icon_d,
+      gv_text_g TYPE char10,
+      gv_text_y TYPE char10,
+      gv_text_r TYPE char10.
 
 " Screen 100 - Condition
 TABLES zssssd0101.
@@ -21,11 +30,11 @@ DATA: BEGIN OF gs_head,
         light.
     INCLUDE STRUCTURE zssssd0102.
 DATA: it_col TYPE lvc_t_scol,
-      stat TYPE char1,        " Y/M/N 출고 여부 저장
+      stat   TYPE char1,        " Y/M/N 출고 여부 저장
       END OF gs_head,
       gt_head LIKE TABLE OF gs_head,
       gv_stat TYPE c LENGTH 1,
-      gs_col LIKE LINE OF gs_head-it_col.
+      gs_col  LIKE LINE OF gs_head-it_col.
 TABLES zssssd0102.
 
 " ALV (100)
@@ -42,7 +51,7 @@ TABLES zssssd0103.
 DATA: BEGIN OF gs_item.
     INCLUDE STRUCTURE zssssd0104.
 DATA: END OF gs_item,
-      gt_item LIKE TABLE OF gs_item.
+gt_item LIKE TABLE OF gs_item.
 TABLES zssssd0104.
 
 " ALV (200)
@@ -63,7 +72,7 @@ DATA gv_postc TYPE char5.
 DATA: BEGIN OF gs_mat.
     INCLUDE STRUCTURE zssssd0106.
 DATA: END OF gs_mat,
-      gt_mat LIKE TABLE OF gs_mat.
+gt_mat LIKE TABLE OF gs_mat.
 TABLES zssssd0106.
 
 " ALV (202)
@@ -79,9 +88,9 @@ DATA: gs_head_udt TYPE zssssd0103,
 
 " Screen 300 - ALV (Item)
 DATA: BEGIN OF gs_item_udt.
-        INCLUDE STRUCTURE zssssd0104.
+    INCLUDE STRUCTURE zssssd0104.
 DATA: END OF gs_item_udt,
-      gt_item_udt LIKE TABLE OF gs_item_udt.
+gt_item_udt LIKE TABLE OF gs_item_udt.
 
 " ALV (300)
 DATA: go_con4  TYPE REF TO cl_gui_custom_container,
@@ -104,10 +113,10 @@ DATA: go_con4  TYPE REF TO cl_gui_custom_container,
 
 " ModalScreen 301
 DATA: BEGIN OF gs_item_ist.
-        INCLUDE STRUCTURE zssssd0104.
+    INCLUDE STRUCTURE zssssd0104.
 DATA: END OF gs_item_ist,
-      gt_item_ist LIKE TABLE OF gs_item_ist.
-DATA gv_itnum TYPE char3.
+gt_item_ist LIKE TABLE OF gs_item_ist.
+DATA gv_itnum1 TYPE char3.
 
 *DATA: BEGIN OF gs_sacat,
 *        somnr TYPE ztsssacat-prdnr,
@@ -121,9 +130,9 @@ DATA: gs_head_crt TYPE zssssd0103,
 
 " Screen 400 - ALV (Item)
 DATA: BEGIN OF gs_item_crt.
-        INCLUDE STRUCTURE zssssd0104.
+    INCLUDE STRUCTURE zssssd0104.
 DATA: END OF gs_item_crt,
-      gt_item_crt LIKE TABLE OF gs_item_crt.
+gt_item_crt LIKE TABLE OF gs_item_crt.
 
 " ALV (400)
 DATA: go_con5  TYPE REF TO cl_gui_custom_container,
@@ -134,9 +143,10 @@ DATA: go_con5  TYPE REF TO cl_gui_custom_container,
 
 " ModalScreen 401
 DATA: BEGIN OF gs_item_add.
-        INCLUDE STRUCTURE zssssd0104.
+    INCLUDE STRUCTURE zssssd0104.
 DATA: END OF gs_item_add,
-      gt_item_add LIKE TABLE OF gs_item_add.
+gt_item_add LIKE TABLE OF gs_item_add.
+DATA gv_itnum2 TYPE char3.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

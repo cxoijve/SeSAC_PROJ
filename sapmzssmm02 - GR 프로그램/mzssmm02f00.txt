@@ -1,0 +1,239 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMM02F00
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  CAL_LAST_DAY_MONTH
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_SY_DATUM  text
+*      <--P_CV_GRDAT_E  text
+*----------------------------------------------------------------------*
+FORM cal_last_day_month  USING    VALUE(p_day) TYPE sy-datum
+                         CHANGING p_last.
+
+  DATA lv_last_day TYPE sy-datum.
+
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      day_in            = p_day
+    IMPORTING
+      last_day_of_month = lv_last_day
+    EXCEPTIONS
+      day_in_no_date    = 1
+      OTHERS            = 2.
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. " 시스템 오류 : &에게 문의하세요!
+  ENDIF.
+
+  p_last = lv_last_day.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_DATE_IN_INTERVAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_SY_DATUM  text
+*      -->P_7      text
+*      -->P_0      text
+*      -->P_0      text
+*      -->P_0076   text
+*      <--P_CV_DUDAT  text
+*----------------------------------------------------------------------*
+FORM cal_date_in_interval  USING    VALUE(p_datum)
+                                    VALUE(p_days)
+                                    VALUE(p_years)
+                                    VALUE(p_months)
+                                    VALUE(p_signum)
+                           CHANGING p_begda TYPE p0001-begda.
+
+  DATA: lv_date   TYPE  p0001-begda,
+        lv_days   TYPE  t5a4a-dlydy,
+        lv_months TYPE  t5a4a-dlymo,
+        lv_signum TYPE  t5a4a-split,
+        lv_years  TYPE  t5a4a-dlyyr.
+
+
+  IF p_signum IS INITIAL.
+    lv_signum = '+'.
+  ELSE.
+    lv_signum = p_signum.
+  ENDIF.
+
+  lv_years = p_years.
+  lv_months = p_months.
+  lv_days = p_days.
+  lv_date = p_datum.
+
+  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+    EXPORTING
+      date      = lv_date
+      days      = lv_days
+      months    = lv_months
+      signum    = lv_signum
+      years     = lv_years
+    IMPORTING
+      calc_date = p_begda.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0246   text
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM create_fcat  USING    VALUE(pv_str) TYPE dd02l-tabname
+                           VALUE(pv_itab) TYPE dd02l-tabname
+                  CHANGING ct_fcat TYPE lvc_t_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name   = pv_str
+      i_internal_tabname = pv_itab
+    CHANGING
+      ct_fieldcat        = ct_fcat
+    EXCEPTIONS
+      OTHERS             = 1.
+
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. "시스템 오류 : &에게 문의하세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VEN_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_COND_VNAME  text
+*      <--P_LV_VENID  text
+*----------------------------------------------------------------------*
+FORM get_ven_name  USING  VALUE(p_vname) TYPE zsssmm0210-vname
+                   CHANGING p_venid TYPE zsssmm0210-venid.
+
+
+  CALL FUNCTION 'ZFMSS_GET_VEN_ID'
+    EXPORTING
+      iv_vname = p_vname
+    IMPORTING
+      ev_venid = p_venid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENID_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_VENID  text
+*      <--P_T_DATA_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_venid_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
+                     CHANGING p_vname TYPE zsssmm0210-vname.
+
+  CALL FUNCTION 'ZFMSS_GET_VEN_NAME'
+    EXPORTING
+      iv_venid = p_venid
+    IMPORTING
+      ev_vname = p_vname.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_RGTOR  text
+*      <--P_T_DATA_ENAME  text
+*----------------------------------------------------------------------*
+FORM get_emp_name  USING    VALUE(p_empid) TYPE zsssmm0211-rgtor
+                   CHANGING p_ename TYPE zsssmm0211-ename.
+
+  CALL FUNCTION 'ZFMSS_GET_EMP_NAME'
+    EXPORTING
+      iv_empid = p_empid
+    IMPORTING
+      ev_ename = p_ename.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_<FS_ITEM>_VENID  text
+*      <--P_<FS_ITEM>_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_vendor_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
+                      CHANGING p_vname TYPE zsssmm0210-vname.
+
+  CALL FUNCTION 'ZFMSS_GET_VEN_NAME'
+    EXPORTING
+      iv_venid = p_venid
+    IMPORTING
+      ev_vname = p_vname.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_ID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_COND_VNAME  text
+*      <--P_LV_VENID  text
+*----------------------------------------------------------------------*
+FORM get_vendor_id  USING  VALUE(p_vname) TYPE zsssmm0210-vname
+                    CHANGING p_venid TYPE zsssmm0210-venid.
+
+
+  CALL FUNCTION 'ZFMSS_GET_VEN_ID'
+    EXPORTING
+      iv_vname = p_vname
+    IMPORTING
+      ev_venid = p_venid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MAT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_<FS_ITEM>_POMNR  text
+*      <--P_<FS_ITEM>_MATNM  text
+*----------------------------------------------------------------------*
+FORM get_mat_name  USING    VALUE(p_matid) TYPE ztssmat-matnr
+                   CHANGING p_matnm TYPE ztssmat_t-matnm.
+
+  CALL FUNCTION 'ZFMSS_GET_MAT_NAME'
+    EXPORTING
+      iv_matid = p_matid
+    IMPORTING
+      ev_mname = p_matnm.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_STORAGE_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_<FS_ITEM>_STOID  text
+*      <--P_<FS_ITEM>_STONM  text
+*----------------------------------------------------------------------*
+FORM get_storage_name  USING    VALUE(p_stoid) TYPE ztssstrg-stoid
+                       CHANGING p_stonm TYPE ztssstrg-stonm.
+
+
+  CALL FUNCTION 'ZFMSS_GET_STORAGE_NAME'
+    EXPORTING
+      iv_stoid = p_stoid
+    IMPORTING
+      ev_sname = p_stonm.
+
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

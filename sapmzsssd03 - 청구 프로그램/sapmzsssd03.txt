@@ -1,0 +1,18 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSSD03
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE MZSSSD03TOP                             .    " global Data
+
+* INCLUDE MZSSSD03O01                             .  " PBO-Modules
+* INCLUDE MZSSSD03I01                             .  " PAI-Modules
+* INCLUDE MZSSSD03F01                             .  " FORM-Routines
+
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

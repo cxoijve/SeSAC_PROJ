@@ -10,6 +10,9 @@ MODULE status_0100 OUTPUT.
   SET PF-STATUS 'S100'.
   SET TITLEBAR 'T100'.
 
+  " 판매오더일 E 설정
+  zssssd0101-sodat_e = sy-datum.
+
   " 체크박스 기본값
   IF gv_first IS INITIAL.
     zssssd0101-gichk_y = 'X'.
@@ -17,6 +20,11 @@ MODULE status_0100 OUTPUT.
     zssssd0101-gichk_n = 'X'.
     gv_first = abap_true.
   ENDIF.
+
+  " 아이콘 세팅
+  MOVE '@08@' TO gv_icon_g.
+  MOVE ICON_YELLOW_LIGHT TO gv_icon_y.
+  MOVE ICON_RED_LIGHT    TO gv_icon_r.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0100  OUTPUT
@@ -261,6 +269,17 @@ ENDMODULE.
 MODULE status_0401 OUTPUT.
   SET PF-STATUS 'S401'.
   SET TITLEBAR 'T401'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_HEAD_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_head_0200 OUTPUT.
+  " 총가격은 DB에 없는 계산 필드니까 다시 계산해서 세팅
+  PERFORM set_toprc USING gt_item_udt
+                    CHANGING gs_head_udt.
+  MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

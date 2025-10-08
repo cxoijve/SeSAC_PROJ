@@ -1,0 +1,130 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD08O01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'S100'.
+  SET TITLEBAR 'T100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CREATE_ALV  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE create_alv OUTPUT.
+  CASE sy-dynnr.
+    WHEN '0100'.
+      IF go_con_0100 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0100'
+                            CHANGING  go_con_0100
+                                      go_alv_0100.
+
+        CREATE OBJECT go_handler_0100.
+        PERFORM set_alv_handler USING go_alv_0100
+                                      go_handler_0100
+                                      '0100'.
+      ENDIF.
+    WHEN '0210'.
+      IF go_con_0210 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0210'
+                            CHANGING  go_con_0210
+                                      go_alv_0210.
+        CREATE OBJECT go_handler_0210.
+        PERFORM set_alv_handler USING go_alv_0210
+                                      go_handler_0210
+                                      '0210'.
+      ENDIF.
+    WHEN '0220'.
+      IF go_con_0220 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0220'
+                            CHANGING  go_con_0220
+                                      go_alv_0220.
+        CREATE OBJECT go_handler_0220.
+        PERFORM set_alv_handler USING go_alv_0220
+                                      go_handler_0220
+                                      '0220'.
+      ENDIF.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  DISPLAY_ALV  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE display_alv OUTPUT.
+  CASE sy-dynnr.
+    WHEN '0100'.
+      IF go_con_0100 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0100
+                                     gt_fcat_0100
+                                     gt_sort_0100
+                             USING   'zsssmd0803'
+                                     gs_layo_0100
+                                     go_alv_0100
+                                     'NOT_EXCLUDE'.
+      ENDIF.
+    WHEN '0210'.
+      IF go_con_0210 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0210
+                                     gt_fcat_0210
+                                     gt_sort_0210
+                             USING   'zsssmd0806'
+                                     gs_layo_0210
+                                     go_alv_0210
+                                     'EXCLUDE'.
+      ENDIF.
+    WHEN '0220'.
+      IF go_con_0220 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0220
+                                     gt_fcat_0220
+                                     gt_sort_0220
+                             USING   'zsssmd0806'
+                                     gs_layo_0220
+                                     go_alv_0220
+                                     'EXCLUDE'.
+      ENDIF.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULTS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_defaults_0100 OUTPUT.
+  PERFORM set_defaults_0100 CHANGING zsssmd0801.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_TS_DYNNR_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_ts_dynnr_0200 OUTPUT.
+  CLEAR gv_dynnr.
+  CASE tab200-activetab.
+    WHEN 'T210'.
+      gv_dynnr = '210'.
+    WHEN 'T220'.
+      gv_dynnr = '220'.
+      " Default Tab
+    WHEN OTHERS.
+      gv_dynnr = '210'.
+      tab200-activetab = 'T210'.
+  ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

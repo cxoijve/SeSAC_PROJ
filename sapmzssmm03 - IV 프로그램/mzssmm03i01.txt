@@ -19,24 +19,30 @@ MODULE user_command_0100 INPUT.
 
     WHEN 'SEARCH'.
       IF my_tab-activetab = 'TAB1'.
-        PERFORM get_pernr_logi.
 
+        "CONDITION 유효성 검사
+        PERFORM get_pernr_logi.
         PERFORM check_tab1_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
           CLEAR gv_subrc.
           RETURN.
         ENDIF.
 
+        "ALV 데이터 생성
         PERFORM check_alv_condition.
         PERFORM get_iv_data CHANGING gv_subrc.
         IF gv_subrc = 4.
           CLEAR gv_subrc.
           RETURN.
         ENDIF.
+
+        "조건에 따라 필드 카탈로그 변경
         PERFORM set_field_catalog.
         CALL SCREEN 200.
         CLEAR : gt_data,
                 gs_data.
+
+        "생성후 상세조회창 불러오기
         IF gv_subrc_de = 4.
           CLEAR gv_subrc_de.
           CALL SCREEN 600.
@@ -46,6 +52,7 @@ MODULE user_command_0100 INPUT.
 
       ELSEIF my_tab-activetab = 'TAB2'.
 
+        "CONDITION 유효성 검사
         PERFORM get_pernr_logi.
         PERFORM check_tab2_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
@@ -53,18 +60,22 @@ MODULE user_command_0100 INPUT.
           RETURN.
         ENDIF.
 
+        "ALV 데이터 생성
         PERFORM check_alv_condition.
         PERFORM get_gr_data CHANGING gv_subrc.
-
         IF gv_subrc = 4.
           CLEAR zsssmm03003.
           CLEAR gv_subrc.
           RETURN.
         ENDIF.
+
+        "조건에 따라 필드 카탈로그 변경
         PERFORM set_field_catalog.
         CALL SCREEN 200.
         CLEAR : gt_data,
                 gs_data.
+
+        "수정후 상세조회창 불러오기
         IF gv_subrc_de = 4.
           CLEAR gv_subrc_de.
           CALL SCREEN 600.
@@ -75,6 +86,8 @@ MODULE user_command_0100 INPUT.
         CLEAR zsssmm03003.
 
       ELSEIF my_tab-activetab = 'TAB3'.
+
+        "CONDITION 유효성 검사
         PERFORM get_pernr_finan.
         PERFORM check_tab3_field CHANGING gv_subrc.
         IF gv_subrc <> 0.
@@ -82,9 +95,11 @@ MODULE user_command_0100 INPUT.
           RETURN.
         ENDIF.
 
+        "ALV 데이터 생성
         PERFORM check_alv_condition.
         PERFORM get_ap_data.
 
+        "조건에 따라 필드 카탈로그 변경
         PERFORM set_field_catalog.
         CALL SCREEN 200.
         CLEAR : gt_data,
@@ -100,6 +115,8 @@ MODULE user_command_0100 INPUT.
              zsssmm03006,
              zsssmm03007,
              zsssmm03016.
+
+      "생성후 상세조회창 불러오기
       IF gv_subrc_de = 4.
         CLEAR gv_subrc_de.
         CALL SCREEN 600.
@@ -112,6 +129,8 @@ MODULE user_command_0100 INPUT.
                gt_grh,
           zsssmm03013,
           zsssmm03017.
+
+      "수정후 상세조회창 불러오기
       IF gv_subrc_de = 4.
         CLEAR gv_subrc_de.
         CALL SCREEN 600.

@@ -8,7 +8,7 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0200 0200     22207192 37  0  0 25226  0G E                              20251001100451																																
+SAPMZSSSD01                             0200 0200     22207192 37  0  0 25226  0G E                              20251002092351																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -43,6 +43,7 @@ OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								_
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0200.																																
+*  MODULE set_head_0200.																																
   MODULE set_alv_0200.																																
   MODULE set_tab.																																
   CALL SUBSCREEN SUB1 INCLUDING sy-cprog gv_dynnr.																																

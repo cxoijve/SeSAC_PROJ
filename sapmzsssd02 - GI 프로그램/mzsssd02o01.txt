@@ -74,8 +74,8 @@ MODULE create_alv OUTPUT.
 
         CREATE OBJECT go_handler_0300.
         PERFORM set_alv_handler USING go_alv_0300
-                                      go_handler_0300.
-
+                                      go_handler_0300
+                                      '0300'.
 
         PERFORM create_alv_cprotocol TABLES gt_fcat_0300
                                      USING  go_alv_0300
@@ -102,7 +102,8 @@ MODULE create_alv OUTPUT.
 
         CREATE OBJECT go_handler_0500.
         PERFORM set_alv_handler USING go_alv_0500
-                                      go_handler_0500.
+                                      go_handler_0500
+                                      '0500'.
 
         PERFORM create_alv_cprotocol TABLES gt_fcat_0500
                                      USING  go_alv_0500

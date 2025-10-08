@@ -8,25 +8,23 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0401M0401     11 59192 37  0  0 27122  0G E                              20250930154820																																
+SAPMZSSSD01                             0401M0401     10 59192 37  0  0 27124  0G E                              20251002132601																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-ZSSSSD0104-SONUM	2	CHAR	 20	30	00	04	30	00	  3	  8		  0	  0	  0		  0					  0	  0								판매오더 번호	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-SONUM	C	CHAR	 11	80	00	84	30	08	  3	 29		  0	  0	  0		  0					 11	  0								___________		
-ZSSSSD0104-ITNUM	0	CHAR	 20	30	00	00	30	00	  4	  8		  0	  0	  0		  0					  0	  0								아이템 번호	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-ITNUM	N	NUMC	  3	80	00	80	30	00	  4	 29		  0	  0	  0		  0					  3	  0								___		
-ZSSSSD0104-SOMNR	0	CHAR	 20	30	00	04	30	00	  6	  8		  0	  0	  0		  0					  0	  0								완제품코드	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-SOMNR	C	CHAR	  8	80	00	84	00	08	  6	 29		  0	  0	  0		  0					  8	  0								________		
-GS_ITEM_ADD-MATNM	C	CHAR	 21	80	02	80	31	00	  6	 40		  0	  0	  0		  0					 40	  0								_____________________		
-ZSSSSD0104-AMOUNT	2	CHAR	 20	30	00	00	30	00	  7	  8		  0	  0	  0		  0					  0	  0								수량	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-AMOUNT	P	QUAN	  3	80	00	80	00	00	  7	 29		  0	  0	  0		  0					  3	  0		ZSSSSD0104-MEINS						___		
-GS_ITEM_ADD-MEINS	C	UNIT	  3	80	02	84	30	08	  7	 35		  0	  0	  0		  0				CUNIT	  3	  0								___		
-ZSSSSD0104-SOPRC	2	CHAR	 20	30	00	00	30	00	  9	  8		  0	  0	  0		  0					  0	  0								가격	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-SOPRC	P	CURR	 20	80	00	80	30	00	  9	 29		  0	  0	  0		  0					 15	  2		GS_ITEM_ADD-CURKY						____________________		
-GS_ITEM_ADD-CURKY	C	CUKY	  5	80	00	84	31	08	  9	 52		  0	  0	  0		  0					  5	  0								_____		
-ZSSSSD0104-PLANT	0	CHAR	 20	30	00	04	30	00	 11	  8		  0	  0	  0		  0					  0	  0								플랜트코드	                                                                                                                                                                                                                                                        X	
-GS_ITEM_ADD-PLANT	C	CHAR	  4	80	00	84	00	08	 11	 29		  0	  0	  0		  0					  4	  0								____		
+ZSSSSD0104-ITNUM	0	CHAR	 20	30	00	00	30	00	  3	  8		  0	  0	  0		  0					  0	  0								아이템 번호	                                                                                                                                                                                                                                                        X	
+GV_ITNUM2	C	CHAR	  3	80	00	80	30	00	  3	 29		  0	  0	  0		  0					  3	  0								___		
+ZSSSSD0104-SOMNR	0	CHAR	 20	30	00	04	30	00	  5	  8		  0	  0	  0		  0					  0	  0								완제품코드	                                                                                                                                                                                                                                                        X	
+GS_ITEM_ADD-SOMNR	C	CHAR	  8	80	00	84	00	08	  5	 29		  0	  0	  0		  0					  8	  0								________		
+GS_ITEM_ADD-MATNM	C	CHAR	 21	80	02	80	31	00	  5	 40		  0	  0	  0		  0					 40	  0								_____________________		
+ZSSSSD0104-AMOUNT	2	CHAR	 20	30	00	00	30	00	  6	  8		  0	  0	  0		  0					  0	  0								수량	                                                                                                                                                                                                                                                        X	
+GS_ITEM_ADD-AMOUNT	P	QUAN	  3	80	00	80	00	00	  6	 29		  0	  0	  0		  0					  3	  0		ZSSSSD0104-MEINS						___		
+GS_ITEM_ADD-MEINS	C	UNIT	  3	80	02	84	30	08	  6	 35		  0	  0	  0		  0				CUNIT	  3	  0								___		
+ZSSSSD0104-SOPRC	2	CHAR	 20	30	00	00	30	00	  8	  8		  0	  0	  0		  0					  0	  0								가격	                                                                                                                                                                                                                                                        X	
+GS_ITEM_ADD-SOPRC	P	CURR	 20	80	00	80	30	00	  8	 29		  0	  0	  0		  0					 15	  2		GS_ITEM_ADD-CURKY						____________________		
+GS_ITEM_ADD-CURKY	C	CUKY	  5	80	00	84	31	08	  8	 52		  0	  0	  0		  0					  5	  0								_____		
+ZSSSSD0104-PLANT	0	CHAR	 20	30	00	04	30	00	 10	  8		  0	  0	  0		  0					  0	  0								플랜트코드	                                                                                                                                                                                                                                                        X	
+GS_ITEM_ADD-PLANT	C	CHAR	  4	80	00	84	00	08	 10	 29		  0	  0	  0		  0					  4	  0								____		
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

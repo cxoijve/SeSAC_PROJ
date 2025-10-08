@@ -118,6 +118,10 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE gs_fcat_0100
     WHEN '0100'.
       PERFORM modify_fcat :
                            TABLES pt_fcat
+                           USING  'MATNR'
+                           '1'
+                           '자재 코드',
+                           TABLES pt_fcat
                            USING  'MTYPE'
                            '-1'
                            '자재유형',
@@ -125,6 +129,8 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE gs_fcat_0100
                            USING  'MTYPE_T'
                            '3'
                            '자재 유형'.
+      PERFORM set_fcat_0100 TABLES gt_fcat_0100.
+
     WHEN OTHERS.
   ENDCASE.
 ENDFORM.
@@ -1050,6 +1056,75 @@ FORM check_identity  USING    VALUE(ps_row_0100) TYPE zsssmd0203
     RETURN.
   ENDIF.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_ROW_0100_MATNR  text
+*      <--P_GS_INFO_0400  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0400  USING    VALUE(pv_matnr) TYPE zessmatnr
+                    CHANGING ps_info_0400 LIKE gs_info_0400
+                             pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, ps_info_0400.
+
+  SELECT SINGLE a~matnr a~expda a~meins a~mtype b~matnm
+    FROM ztssmat AS a
+    INNER JOIN ztssmat_t AS b
+    ON a~matnr = b~matnr
+    AND b~langu = sy-langu
+    INTO CORRESPONDING FIELDS OF ps_info_0400
+    WHERE a~matnr = pv_matnr.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    MESSAGE i999(zmcss) WITH '자재가 없습니다.'.
+    RETURN.
+  ENDIF.
+
+  PERFORM get_mtype_t TABLES gt_dd07v
+                      USING  ps_info_0400-mtype
+                      CHANGING ps_info_0400-mtype_t.
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_HANDLER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_0100  text
+*      -->P_GO_HANDLER_0100  text
+*----------------------------------------------------------------------*
+FORM set_alv_handler  USING    po_alv     TYPE REF TO cl_gui_alv_grid
+                               po_handler TYPE REF TO lcl_handler.
+
+  SET HANDLER po_handler->on_hotspot_click        FOR po_alv.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0100  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0100  TABLES   pt_fcat STRUCTURE lvc_s_fcat.
+
+  IF pt_fcat[] IS INITIAL.
+    MESSAGE a999(zmcss) WITH 'FCAT100 ERROR'.
+  ENDIF.
+
+  LOOP AT pt_fcat.
+    CASE pt_fcat-fieldname.
+      WHEN 'MATNR'.
+        pt_fcat-hotspot = 'X'.
+        MODIFY pt_fcat.
+    ENDCASE.
+
+  ENDLOOP.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

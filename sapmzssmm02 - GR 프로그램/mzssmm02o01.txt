@@ -11,44 +11,22 @@ MODULE status_0100 OUTPUT.
   SET TITLEBAR 'T100'.
 ENDMODULE.
 *&---------------------------------------------------------------------*
-*&      Module  SET_T_INFO  OUTPUT
+*&      Module  SET_TABSTRIP  OUTPUT
 *&---------------------------------------------------------------------*
 *       text
 *----------------------------------------------------------------------*
-MODULE set_t_info OUTPUT.
+MODULE set_tabstrip OUTPUT.
 
   CASE t_info-activetab.
     WHEN 'TAB1'.
       gv_dynnr = '0101'.
-      gv_screen = 1.
     WHEN 'TAB2'.
       gv_dynnr = '0102'.
-      gv_screen = 2.
     WHEN OTHERS.
       t_info-activetab = 'TAB2'.
       gv_dynnr = '0102'.
   ENDCASE.
 
-ENDMODULE.
-
-*&---------------------------------------------------------------------*
-*&      Module  EXIT_0100  INPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE exit_0100 INPUT.
-  CASE ok_code.
-    WHEN 'EXIT'.
-      LEAVE PROGRAM.
-    WHEN 'CANC'.
-*      PERFORM free_alv : CHANGING go_con_pomain go_alv_waitpo,
-*                         CHANGING go_con_up go_alv_poitems,
-*                         CHANGING go_con_down go_alv_confirm.
-*      perform free_con CHANGING go_con_pomain.
-*                         CHANGING
-      LEAVE TO SCREEN 0.
-    WHEN OTHERS.
-  ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  MODIFY_SCREEN_0100  OUTPUT
@@ -56,40 +34,7 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE modify_screen_0100 OUTPUT.
-
-  LOOP AT SCREEN.
-
-    CASE screen-group1.
-      WHEN 'GR1'.
-        IF gv_screen = 1.
-          screen-input = 1.
-          screen-invisible = 0.
-          screen-active = 1.
-        ENDIF.
-      WHEN 'GR2'.
-        IF gv_screen = 1.
-          screen-input = 0.
-          screen-active = 0.
-          screen-invisible = 1.
-        ENDIF.
-    ENDCASE.
-
-    CASE screen-group2.
-      WHEN 'RA1'.
-        IF gv_radio_screen = 0.
-          screen-input = 0.
-          screen-invisible = 1.
-        ENDIF.
-      WHEN 'RA2'.
-        IF gv_radio_screen = 1.
-          screen-input = 0.
-          screen-invisible = 1.
-        ENDIF.
-    ENDCASE.
-
-    MODIFY SCREEN.
-  ENDLOOP.
-
+  PERFORM modify_screen_0100.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0102  OUTPUT
@@ -98,17 +43,6 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0102 OUTPUT.
   PERFORM set_alv_0102.
-  IF gv_msg is not INITIAL.
-    message s999(zmcss) with gv_msg DISPLAY LIKE 'W'.
-  ENDIF.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  INIT_ALV  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE init_alv OUTPUT.
-*  PERFORM set_alv_0101.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0101  OUTPUT
@@ -117,66 +51,6 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0101 OUTPUT.
   PERFORM set_alv_0101.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  SET_TEXT_EDIT_0100  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE set_text_edit_0100 OUTPUT.
-  PERFORM set_text_edit_0110 USING 'CON_EDIT'
-                                    go_mod
-                                    go_edit.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0110  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE status_0110 OUTPUT.
-  SET PF-STATUS 'S110'.
-  SET TITLEBAR 'T110'.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0200  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE status_0200 OUTPUT.
-  SET PF-STATUS 'S200'.
-  SET TITLEBAR 'T200'.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  SET_ALV_0200  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE set_alv_0200 OUTPUT.
-  PERFORM set_alv_0200.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  MODIFY_SCREEN_0200  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE modify_screen_0200 OUTPUT.
-  LOOP AT SCREEN.
-    CASE screen-group1.
-      WHEN 'GR1'.
-        IF gv_bbtn = 1.
-          screen-input = 1.
-          screen-invisible = 0.
-          screen-active = 1.
-
-        ELSEIF gv_bbtn = 0.
-          screen-input = 0.
-          screen-invisible = 1.
-          screen-active = 0.
-        ENDIF.
-    ENDCASE.
-
-    MODIFY SCREEN.
-  ENDLOOP.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

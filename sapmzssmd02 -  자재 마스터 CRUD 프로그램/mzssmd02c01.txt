@@ -1,0 +1,27 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD02C01
+*&---------------------------------------------------------------------*
+
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+    DATA ls_info_0100 LIKE LINE OF gt_info_0100.
+    READ TABLE gt_info_0100 INTO ls_info_0100 INDEX es_row_no-row_id.
+    "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' e_column_id-fieldname ls_info_0100-matnr.
+
+    CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+      EXPORTING
+        iv_matnr     = ls_info_0100-matnr
+        iv_ismodal   = 'X'
+      EXCEPTIONS
+        query_failed = 1
+        OTHERS       = 2.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

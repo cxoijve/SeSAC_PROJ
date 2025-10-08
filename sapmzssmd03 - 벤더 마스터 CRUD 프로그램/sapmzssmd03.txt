@@ -14,6 +14,11 @@ INCLUDE MZSSMD03I01                             .  " PAI-Modules
 INCLUDE MZSSMD03F01                             .  " FORM-Routines
 
 LOAD-OF-PROGRAM.
+  IF SY-CALLD IS NOT INITIAL.
+    PERFORM CALLD_PROCESS.
+  ELSE.
+    PERFORM SET_INIT.
+  ENDIF.
 
   PERFORM GET_DATA.
 

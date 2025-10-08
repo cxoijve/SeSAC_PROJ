@@ -10,6 +10,8 @@ INCLUDE mzssmd05top.
 INCLUDE mzssmd05o01.
 INCLUDE mzssmd05i01.
 INCLUDE mzssmd05f01.
+INCLUDE mzssmd05c01.
+
 
 LOAD-OF-PROGRAM.
 

@@ -102,6 +102,9 @@ FORM set_alv_layo.
 
   ELSEIF sy-dynnr = '0200'.
     gs_layo-sel_mode = 'A'.
+    gs_layo-zebra = 'X'.
+    gs_layo-excp_fname = 'LIGHT'.
+    gs_layo-excp_led = 'X'.
 
   ELSEIF sy-dynnr = '0400'.
     gs_layo-sel_mode = 'A'.
@@ -410,6 +413,8 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
   CLEAR : gt_data,
           gs_data.
 
+
+  "입고완료된 데이터
   SELECT grnum rgdat rgtor
     FROM ztssgrh
     INTO TABLE lt_grnum
@@ -417,31 +422,40 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
       AND rgtor IN gt_grtor
       AND rgdat IN gt_grdat.
 
+
+  "입고완료된 데이터중
   LOOP AT lt_grnum INTO ls_grnum.
 
+    "FOR IV 미완료 데이터에 STEXT 추가
     SELECT SINGLE stext
       FROM ztssgrh
       INTO ls_grnum-stext
       WHERE grnum = ls_grnum-grnum.
 
+    "FOR IV 완료 데이터의 IVNUM 인터널 테이블에 저장
     SELECT SINGLE ivnum
       FROM ztssmivi
       INTO ls_ivnum
       WHERE grnum = ls_grnum-grnum
         AND del EQ ''.
 
-    IF   sy-subrc <> 0.
+
+
+    IF   sy-subrc <> 0. "FOR IV 미완료 데이터 APPEND 준비
+      ls_list-light = '1'. "신호등 색깔
       ls_list-grnum = ls_grnum-grnum.
       ls_list-grdat = ls_grnum-rgdat.
       ls_list-grtor = ls_grnum-rgtor.
       ls_list-grtext = ls_grnum-stext.
       APPEND ls_list TO gt_data.
-    ELSE.
+
+    ELSE.               "FOR IV 완료 데이터 APPEND 준비
       SELECT SINGLE ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
       FROM ztssmivh
       INTO CORRESPONDING FIELDS OF ls_data
       WHERE ivnum = ls_ivnum-ivnum.
 
+      ls_data-light = '3'.
       ls_data-grnum = ls_grnum-grnum.
       ls_data-grdat = ls_grnum-rgdat.
       ls_data-grtor = ls_grnum-rgtor.
@@ -480,6 +494,7 @@ FORM set_field_catalog .
 
 
   IF my_tab-activetab = 'TAB2' AND zsssmm03003-check NE ''. "GR 조회창 IV 완료
+
     PERFORM set_fcat USING 'APTOR' '' '' 'X'.
     PERFORM set_fcat USING 'APDAT' '' '' 'X'.
     PERFORM set_fcat USING 'APNUM' '' '' 'X'.
@@ -487,6 +502,7 @@ FORM set_field_catalog .
     PERFORM set_fcat USING 'GRTEXT' '' '' 'X'.
 
   ELSEIF zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
+
     PERFORM set_fcat USING 'APTOR' '' '' 'X'.
     PERFORM set_fcat USING 'APDAT' '' '' 'X'.
     PERFORM set_fcat USING 'IVDAT' '' '' 'X'.
@@ -507,12 +523,14 @@ FORM set_field_catalog .
     PERFORM set_fcat USING 'APTOR' '' 'AP등록자' ''.
     PERFORM set_fcat USING 'APDAT' '' 'AP등록일' ''.
 
+    PERFORM set_fcat USING 'LIGHT' '' '' 'X'.
     PERFORM set_fcat USING 'GRNUM' '' '' 'X'.
     PERFORM set_fcat USING 'GRTOR' '' '' 'X'.
     PERFORM set_fcat USING 'GRDAT' '' '' 'X'.
     PERFORM set_fcat USING 'GRTEXT' '' '' 'X'.
 
   ELSEIF my_tab-activetab = 'TAB1'. " IV 조회창
+    PERFORM set_fcat USING 'LIGHT' '' '' 'X'.
     PERFORM set_fcat USING 'APTOR' '' '' 'X'.
     PERFORM set_fcat USING 'APDAT' '' '' 'X'.
     PERFORM set_fcat USING 'GRNUM' '' '' 'X'.

@@ -379,7 +379,7 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM check_field_condition .
+FORM check_field_condition CHANGING cv_subrc TYPE sy-subrc.
   CLEAR sy-subrc.
 
   IF zsssmd04002-cstid IS NOT INITIAL.
@@ -388,9 +388,11 @@ FORM check_field_condition .
     IF sy-subrc <> 0.
       CLEAR zsssmd04002-cname.
       MESSAGE i999(zmcss) WITH '올바른 고객코드를 입력해주세요'.
+      cv_subrc = 4.
     ELSE.
       PERFORM get_customer_name_data USING zsssmd04002-cstid
                                       CHANGING zsssmd04002-cname.
+      cv_subrc = 0.
     ENDIF.
   ENDIF.
 
@@ -402,9 +404,11 @@ FORM check_field_condition .
     IF sy-subrc <> 0.
       CLEAR zsssmd04002-name.
       MESSAGE i999(zmcss) WITH '올바른 사원명을 입력해주세요'.
+      cv_subrc = 4.
     ELSE.
       PERFORM get_name_data USING zsssmd04002-penid
                          CHANGING zsssmd04002-name.
+      cv_subrc = 0.
     ENDIF.
   ENDIF.
 

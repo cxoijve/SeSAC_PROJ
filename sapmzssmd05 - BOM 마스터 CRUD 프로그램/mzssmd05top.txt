@@ -12,7 +12,16 @@ DATA : ok_code  TYPE sy-ucomm,
 " ALV Objects 공통
 DATA : gt_exclude TYPE ui_functions.
 
+" ALV Handler
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
 
+    DATA lv_hname TYPE c LENGTH 5.
+
+    METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING es_row_no e_column_id e_row_id.
+
+ENDCLASS.
 
 " ALV Objects 0100L
 DATA   go_con_0100l TYPE REF TO cl_gui_custom_container.
@@ -23,6 +32,9 @@ DATA : gt_fcat_0100l TYPE lvc_t_fcat,
 DATA : gt_sort_0100l TYPE lvc_t_sort,
        gs_sort_0100l LIKE LINE OF gt_sort_0100l.
 
+" ALV Handler 0100L
+DATA : go_handler_0100l TYPE REF TO lcl_handler.
+
 " ALV Objects 0100R
 DATA   go_con_0100r TYPE REF TO cl_gui_custom_container.
 DATA   go_alv_0100r TYPE REF TO cl_gui_alv_grid.
@@ -32,6 +44,8 @@ DATA : gt_fcat_0100r TYPE lvc_t_fcat,
 DATA : gt_sort_0100r TYPE lvc_t_sort,
        gs_sort_0100r LIKE LINE OF gt_sort_0100r.
 
+" ALV Handler 0100R
+DATA : go_handler_0100r TYPE REF TO lcl_handler.
 
 " Condition 0100
 TABLES zsssmd0201.
@@ -66,6 +80,9 @@ DATA : gt_fcat_0200l TYPE lvc_t_fcat,
 DATA : gt_sort_0200l TYPE lvc_t_sort,
        gs_sort_0200l LIKE LINE OF gt_sort_0100l.
 
+" ALV Handler 0200R
+DATA : go_handler_0200l TYPE REF TO lcl_handler.
+
 " ALV Objects 0200R
 DATA   go_con_0200r TYPE REF TO cl_gui_custom_container.
 DATA   go_alv_0200r TYPE REF TO cl_gui_alv_grid.
@@ -74,6 +91,9 @@ DATA : gt_fcat_0200r TYPE lvc_t_fcat,
        gs_fcat_0200r LIKE LINE OF gt_fcat_0100r.
 DATA : gt_sort_0200r TYPE lvc_t_sort,
        gs_sort_0200r LIKE LINE OF gt_sort_0100r.
+
+" ALV Handler 0200R
+DATA : go_handler_0200r TYPE REF TO lcl_handler.
 
 " Condition 0200
 TABLES zsssmd0501.
@@ -94,6 +114,9 @@ DATA : gt_fcat_0300l TYPE lvc_t_fcat,
 DATA : gt_sort_0300l TYPE lvc_t_sort,
        gs_sort_0300l LIKE LINE OF gt_sort_0100l.
 
+" ALV Handler 0300L
+DATA : go_handler_0300l TYPE REF TO lcl_handler.
+
 " ALV Objects 0300R
 DATA   go_con_0300r TYPE REF TO cl_gui_custom_container.
 DATA   go_alv_0300r TYPE REF TO cl_gui_alv_grid.
@@ -102,6 +125,9 @@ DATA : gt_fcat_0300r TYPE lvc_t_fcat,
        gs_fcat_0300r LIKE LINE OF gt_fcat_0100r.
 DATA : gt_sort_0300r TYPE lvc_t_sort,
        gs_sort_0300r LIKE LINE OF gt_sort_0100r.
+
+" ALV Handler 0300R
+DATA : go_handler_0300r TYPE REF TO lcl_handler.
 
 " Condition 0300 (수정 불가)
 DATA gs_cond_0300 TYPE zsssmd0501.

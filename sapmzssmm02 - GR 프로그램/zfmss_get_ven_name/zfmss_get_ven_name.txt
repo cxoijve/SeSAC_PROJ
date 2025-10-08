@@ -1,0 +1,26 @@
+FUNCTION zfmss_get_ven_name.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_VENID) TYPE  ZESSVENID
+*"  EXPORTING
+*"     REFERENCE(EV_VNAME) TYPE  ZESSVNAME
+*"----------------------------------------------------------------------
+
+
+  CLEAR ev_vname.
+
+  SELECT SINGLE vname
+    INTO ev_vname
+    FROM ztssvend
+    WHERE venid = iv_venid.
+
+  IF sy-subrc <> 0.
+  ENDIF.
+
+
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

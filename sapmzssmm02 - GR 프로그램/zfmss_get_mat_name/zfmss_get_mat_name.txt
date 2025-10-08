@@ -1,0 +1,23 @@
+FUNCTION zfmss_get_mat_name.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_MATID) TYPE  ZESSMATNR
+*"  EXPORTING
+*"     REFERENCE(EV_MNAME) TYPE  ZESSMATNM
+*"----------------------------------------------------------------------
+
+  SELECT SINGLE matnm
+      INTO ev_mname
+      FROM ztssmat_t
+      WHERE matnr = iv_matid.
+  IF sy-subrc <> 0.
+    RETURN.
+  ENDIF.
+
+
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

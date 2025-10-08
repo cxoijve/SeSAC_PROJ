@@ -1,0 +1,235 @@
+FUNCTION z_get_avail_stocks.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     VALUE(IV_BEGDA) TYPE  ZESSWDATE
+*"     VALUE(IV_ENDDA) TYPE  ZESSWDATE
+*"     VALUE(IV_STOID) TYPE  ZESSSTOID
+*"     VALUE(IV_MATNR) TYPE  ZESSMATNR
+*"  EXPORTING
+*"     VALUE(EV_ASTCK) TYPE  INT4
+*"     VALUE(EV_ISTCK) TYPE  INT4
+*"     VALUE(EV_OSTCK) TYPE  INT4
+*"     VALUE(EV_DSTCK) TYPE  INT4
+*"     VALUE(EV_FSTCK) TYPE  INT4
+*"  TABLES
+*"      PT_ASTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"      PT_ISTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"      PT_OSTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"      PT_DSTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"      PT_FSTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"      PT_ALLSTCKS TYPE  ZSSSMD0809 OPTIONAL
+*"  EXCEPTIONS
+*"      MATERIAL_UNFOUND
+*"      MINUS_AVAIL
+*"      QUERY_FAILED
+*"----------------------------------------------------------------------
+
+  DATA lv_expda TYPE zessexpda.
+  DATA lv_limday TYPE t5a4a-dlydy.
+  DATA lv_date TYPE p0001-begda.
+  DATA lv_qflag.
+
+  " Tables for Calc
+  DATA : lt_istck TYPE TABLE OF ztssware WITH HEADER LINE,
+         lt_mstck TYPE TABLE OF ztssware WITH HEADER LINE.
+
+  " Tables For export
+  DATA : lpt_istck TYPE zsssmd0809 WITH HEADER LINE,
+         lpt_ostck TYPE zsssmd0809 WITH HEADER LINE,
+         lpt_dstck TYPE zsssmd0809 WITH HEADER LINE,
+         lpt_astck TYPE zsssmd0809 WITH HEADER LINE,
+         lpt_fstck TYPE zsssmd0809 WITH HEADER LINE.
+
+  " Single Values
+  DATA : lv_istck TYPE int4,
+         lv_ostck TYPE int4,
+         lv_dstck TYPE int4,
+         lv_astck TYPE int4,
+         lv_fstck TYPE int4.
+
+
+
+  DATA : lv_mindat TYPE d.
+
+  SELECT SINGLE expda
+    FROM ztssmat
+    INTO lv_expda
+    WHERE matnr EQ iv_matnr
+    AND del NE 'X'.
+
+  IF sy-subrc <> 0.
+    RAISE material_unfound.
+  ENDIF.
+
+  lv_limday = lv_expda.
+
+  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+    EXPORTING
+      date      = sy-datum
+      days      = lv_limday
+      months    = '0'
+      signum    = '-'
+      years     = '0'
+    IMPORTING
+      calc_date = lv_date.
+
+
+
+  " I Query -------------------------
+  SELECT *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF TABLE lt_istck
+    WHERE matnr = iv_matnr
+    AND stoid = iv_stoid
+    AND wtype = 'I'
+    AND wdate BETWEEN iv_begda AND iv_endda.
+
+  IF sy-subrc = 0.
+    lv_qflag = 'X'.
+  ENDIF.
+
+  " I sum
+  SELECT *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF TABLE lpt_istck
+    WHERE matnr = iv_matnr
+    AND stoid = iv_stoid
+    AND wtype = 'I'
+    AND wdate BETWEEN iv_begda AND iv_endda.
+
+  " O or D Query --------------------
+  SELECT *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF TABLE lt_mstck
+    WHERE matnr = iv_matnr
+    AND stoid = iv_stoid
+    AND wtype = 'O' OR wtype = 'D'
+    AND wdate BETWEEN iv_begda AND iv_endda.
+
+  IF sy-subrc = 0.
+    lv_qflag = 'X'.
+  ENDIF.
+
+  " O sum
+  SELECT *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF TABLE lpt_ostck
+    WHERE matnr = iv_matnr
+    AND stoid = iv_stoid
+    AND wtype = 'O'
+    AND wdate BETWEEN iv_begda AND iv_endda.
+
+
+  " D sum
+  SELECT *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF TABLE lpt_dstck
+    WHERE matnr = iv_matnr
+    AND stoid = iv_stoid
+    AND wtype = 'D'
+    AND wdate BETWEEN iv_begda AND iv_endda.
+
+  " ---------------------------------
+  LOOP AT lt_mstck.
+
+    " Mstck FIFO
+    CASE lt_mstck-amount.
+      WHEN '0'.
+        CONTINUE.
+      WHEN OTHERS.
+        LOOP AT lt_istck.
+          " 잔여량이 없으면 뺼 필요 없음.
+          IF lt_mstck-amount EQ '0'.
+            EXIT.
+          ENDIF.
+
+          IF lt_istck-wdate GT lt_mstck-wdate.
+            " 재고 추가 시점이 재고 감소 시점 보다 늦은 애는 생각하지 않음.
+            " 같은 애는 생각해야함.
+            CONTINUE.
+          ELSE.
+            IF lt_istck-amount EQ '0'.
+              CONTINUE.
+            ELSE.
+              IF lt_mstck-amount = lt_istck-amount.
+                lt_istck-amount = '0'.
+                lt_mstck-amount = '0'.
+                MODIFY lt_istck TRANSPORTING amount.
+                MODIFY lt_mstck TRANSPORTING amount.
+              ELSEIF lt_mstck-amount > lt_istck-amount.
+                lt_mstck-amount = lt_mstck-amount - lt_istck-amount.
+                lt_istck-amount = '0'.
+                MODIFY lt_istck TRANSPORTING amount.
+                MODIFY lt_mstck TRANSPORTING amount.
+              ELSE.
+                lt_istck-amount = lt_istck-amount - lt_mstck-amount.
+                lt_mstck-amount = '0'.
+                MODIFY lt_istck TRANSPORTING amount.
+                MODIFY lt_mstck TRANSPORTING amount.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDLOOP.
+    ENDCASE.
+  ENDLOOP.
+
+  LOOP AT lt_istck.
+    CASE lt_istck-amount.
+      WHEN '0'.
+        CONTINUE.
+      WHEN OTHERS.
+        " 유통기한 지난 여부에 따라 계산.
+        IF lt_istck-wdate LT lv_date.
+          " 상한 재고에 +
+          lv_fstck = lv_fstck + lt_istck-amount.
+          APPEND lt_istck TO lpt_fstck.
+        ELSE.
+          " 가용 재고에 +
+          lv_astck = lv_astck + lt_istck-amount.
+          APPEND lt_istck TO lpt_astck.
+        ENDIF.
+    ENDCASE.
+  ENDLOOP.
+
+
+  LOOP AT lpt_istck.
+    lv_istck = lv_istck + lpt_istck-amount.
+  ENDLOOP.
+
+  LOOP AT lpt_ostck.
+    lv_ostck = lv_ostck + lpt_ostck-amount.
+  ENDLOOP.
+
+  LOOP AT lpt_dstck.
+    lv_dstck = lv_dstck + lpt_dstck-amount.
+  ENDLOOP.
+
+  ev_istck = lv_istck.
+  ev_dstck = lv_dstck.
+  ev_ostck = lv_ostck.
+  ev_fstck = lv_fstck.
+  ev_astck = lv_astck.
+
+  APPEND LINES OF lpt_istck TO pt_allstcks.
+  APPEND LINES OF lpt_istck TO pt_istcks.
+
+  APPEND LINES OF lpt_ostck TO pt_allstcks.
+  APPEND LINES OF lpt_ostck TO pt_ostcks.
+
+  APPEND LINES OF lpt_dstck TO pt_allstcks.
+  APPEND LINES OF lpt_dstck TO pt_dstcks.
+
+  APPEND LINES OF lpt_astck TO pt_astcks.
+  APPEND LINES OF lpt_fstck TO pt_fstcks.
+
+  SORT pt_allstcks BY warid.
+  SORT pt_istcks BY warid.
+  SORT pt_ostcks BY warid.
+  SORT pt_dstcks BY warid.
+  SORT pt_fstcks BY warid.
+  SORT pt_astcks BY warid.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

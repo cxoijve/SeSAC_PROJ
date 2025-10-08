@@ -1,0 +1,976 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD08F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUES
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_DD07V  text
+*      -->P_0017   text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_values  TABLES   pt_dd07v STRUCTURE gt_dd07v
+                              USING    VALUE(pv_domname).
+  DATA : lt_dd07v TYPE TABLE OF dd07v.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = pv_domname
+    TABLES
+      values_tab      = lt_dd07v
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<get_domain_fixed_values>' 'FATAL ERROR'.
+  ENDIF.
+
+  APPEND LINES OF lt_dd07v TO pt_dd07v.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_EXCLUDE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_EXCLUDE  text
+*----------------------------------------------------------------------*
+FORM set_alv_exclude  CHANGING   pt_exclude LIKE gt_exclude.
+  APPEND cl_gui_alv_grid=>mc_fc_excl_all TO gt_exclude.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT_0100  text
+*      -->P_GT_SORT_0100  text
+*      -->P_0028   text
+*      <--P_GS_LAYO_0100  text
+*----------------------------------------------------------------------*
+FORM set_default_alv  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                               pt_sort STRUCTURE lvc_s_sort
+                      USING    VALUE(pv_aflag)
+                      CHANGING ps_layo TYPE lvc_s_layo.
+
+
+  PERFORM set_fcat TABLES pt_fcat
+                   USING  pv_aflag.
+
+  PERFORM set_sort TABLES pt_sort
+                   USING  pv_aflag.
+
+  PERFORM set_layo USING    pv_aflag
+                   CHANGING ps_layo.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_PV_AFLAG  text
+*----------------------------------------------------------------------*
+FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
+               USING    VALUE(pv_aflag).
+
+  CLEAR pt_fcat[].
+  CASE pv_aflag.
+      " 100 Default
+    WHEN '0100'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'MATNR' '1' '자재 코드',
+                            TABLES pt_fcat
+                            USING  'MATNM' '2' '자재명',
+                            TABLES pt_fcat
+                            USING  'ASTCK' '3' '가용 재고',
+                            TABLES pt_fcat
+                            USING  'ISTCK' '5' '반입 재고',
+                            TABLES pt_fcat
+                            USING  'OSTCK' '6' '반출 재고',
+                            TABLES pt_fcat
+                            USING  'DSTCK' '7' '폐기 재고',
+                            TABLES pt_fcat
+                            USING  'FSTCK' '4' '불량 재고',
+                            TABLES pt_fcat
+                            USING  'MEINS' '8' '기본 단위'.
+
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                               USING pv_aflag.
+
+    WHEN '0210'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'WDATE' '1' '변동일',
+                            TABLES pt_fcat
+                            USING  'WTYPE' '-1' '변동 유형',
+                            TABLES pt_fcat
+                            USING  'WARID' '2' '재고 변동 번호',
+                            TABLES pt_fcat
+                            USING  'ICON_210' '-1' '변동 유형',
+                            TABLES pt_fcat
+                            USING  'WTYPE_T' '4' '변동 유형',
+                            TABLES pt_fcat
+                            USING  'AMOUNT' '5' '수량',
+                            TABLES pt_fcat
+                            USING  'MEINS' '6' '단위',
+                            TABLES pt_fcat
+                            USING  'RDOC' '7' '관련 문서'.
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                             USING pv_aflag.
+    WHEN '0220'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'WDATE' '1' '반입일',
+                            TABLES pt_fcat
+                            USING  'WTYPE' '-1' '변동 유형',
+                            TABLES pt_fcat
+                            USING  'ICON_210' '-1' '변동 유형',
+                            TABLES pt_fcat
+                            USING  'WARID' '2' '재고 변동 번호',
+                            TABLES pt_fcat
+                            USING  'WTYPE_T' '3' '재고 유형',
+                            TABLES pt_fcat
+                            USING  'AMOUNT' '4' '수량',
+                            TABLES pt_fcat
+                            USING  'MEINS' '5' '단위',
+                            TABLES pt_fcat
+                            USING  'RDOC' '-1' '관련 문서'.
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                           USING pv_aflag.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_0114   text
+*      -->P_0115   text
+*      -->P_0116   text
+*----------------------------------------------------------------------*
+FORM modify_fcat  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                  USING    VALUE(pv_fieldname)
+                           VALUE(pv_colpos)
+                           VALUE(pv_coltext).
+
+  CLEAR : pt_fcat.
+
+  pt_fcat-fieldname = pv_fieldname.
+
+  CASE pv_colpos.
+    WHEN '-1'.
+      pt_fcat-no_out = 'X'.
+
+    WHEN OTHERS.
+      pt_fcat-col_pos = pv_colpos.
+      pt_fcat-coltext = pv_coltext.
+  ENDCASE.
+
+  IF pv_fieldname = 'ICON_210'.
+    pt_fcat-icon = 'X'.
+  ENDIF.
+
+  APPEND pt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_SORT  text
+*      -->P_PV_AFLAG  text
+*----------------------------------------------------------------------*
+FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
+               USING    VALUE(pv_aflag).
+
+  CLEAR pt_sort[].
+  CASE pv_aflag.
+    WHEN '0100'.
+      PERFORM modify_sort : TABLES pt_sort
+                            USING  'MATNR' '1' 'X' 'X'.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_SORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_SORT  text
+*      -->P_0164   text
+*      -->P_0165   text
+*      -->P_0166   text
+*      -->P_0167   text
+*----------------------------------------------------------------------*
+FORM modify_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
+                  USING    VALUE(pv_fieldname)
+                           VALUE(pv_spos)
+                           VALUE(pv_up)
+                           VALUE(pv_subtot).
+
+  CLEAR pt_sort.
+
+  pt_sort-spos = pv_spos.
+  pt_sort-fieldname = pv_fieldname.
+  IF pv_up IS NOT INITIAL.
+    pt_sort-up = pv_up.
+  ENDIF.
+
+  pt_sort-subtot = pv_subtot.
+
+  APPEND pt_sort.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_AFLAG  text
+*      <--P_PS_LAYO  text
+*----------------------------------------------------------------------*
+FORM set_layo  USING    VALUE(pv_aflag)
+               CHANGING ps_layo TYPE lvc_s_layo.
+
+  CASE pv_aflag.
+    WHEN '0100' OR '0210' OR '0220'.
+      ps_layo-cwidth_opt = 'X'.
+      ps_layo-ctab_fname = 'CELLSCOL'.
+      ps_layo-sel_mode = 'A'. "A, B C D
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0025   text
+*      <--P_GO_CON_0100  text
+*      <--P_GO_ALV_0100  text
+*----------------------------------------------------------------------*
+FORM create_alv  USING     VALUE(pv_cname)
+                 CHANGING  po_con TYPE REF TO cl_gui_custom_container
+                           po_alv TYPE REF TO cl_gui_alv_grid.
+
+  CREATE OBJECT po_con
+    EXPORTING
+      container_name              = pv_cname
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'CON_ERROR'.
+  ENDIF.
+
+  CREATE OBJECT po_alv
+    EXPORTING
+      i_parent          = po_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<create_alv>' 'ALV_ERROR'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0100  text
+*      -->P_GT_FCAT_0100  text
+*      -->P_GT_SORT_0100  text
+*      -->P_0051   text
+*      -->P_GS_LAYO_0100  text
+*      -->P_GO_ALV_0100  text
+*      -->P_0054   text
+*----------------------------------------------------------------------*
+FORM display_alv  TABLES    pt_info
+                            pt_fcat STRUCTURE lvc_s_fcat
+                            pt_sort STRUCTURE lvc_s_sort
+                  USING     VALUE(pv_sname)
+                            VALUE(ps_layo) TYPE lvc_s_layo
+                            po_alv TYPE REF TO cl_gui_alv_grid
+                            VALUE(pv_exclude).
+
+  CASE pv_exclude.
+    WHEN 'NOT_EXCLUDE'.
+      CALL METHOD po_alv->set_table_for_first_display
+        EXPORTING
+          i_structure_name              = pv_sname
+          is_layout                     = ps_layo
+        CHANGING
+          it_outtab                     = pt_info[]
+          it_fieldcatalog               = pt_fcat[]
+          it_sort                       = pt_sort[]
+        EXCEPTIONS
+          invalid_parameter_combination = 1
+          program_error                 = 2
+          too_many_lines                = 3
+          OTHERS                        = 4.
+      IF sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH '<display_alv>' 'DISPLAY_ERR'.
+      ENDIF.
+
+    WHEN 'EXCLUDE'.
+      CALL METHOD po_alv->set_table_for_first_display
+        EXPORTING
+          i_structure_name              = pv_sname
+          is_layout                     = ps_layo
+          it_toolbar_excluding          = gt_exclude
+        CHANGING
+          it_outtab                     = pt_info[]
+          it_fieldcatalog               = pt_fcat[]
+          it_sort                       = pt_sort[]
+        EXCEPTIONS
+          invalid_parameter_combination = 1
+          program_error                 = 2
+          too_many_lines                = 3
+          OTHERS                        = 4.
+      IF sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH '<display_alv>' 'DISPLAY_ERR'.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0100  text
+*      -->P_ZSSSMD0801  text
+*----------------------------------------------------------------------*
+FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
+                    USING    VALUE(ps_cond_0100) TYPE zsssmd0801
+                    CHANGING ps_alvtitle_0100 TYPE zsssmd0802
+                             ps_sideinfo_0100 TYPE zsssmd0804
+                             pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, ps_alvtitle_0100, ps_sideinfo_0100, pt_info_0100[].
+
+  " alv title 정보 획득
+  MOVE-CORRESPONDING ps_cond_0100 TO ps_alvtitle_0100.
+
+  CONCATENATE
+    '플랜트'
+    ps_alvtitle_0100-plant
+    '창고'
+    ps_alvtitle_0100-stoid
+    '의 재고 현황'
+    INTO ps_alvtitle_0100-infotext
+    SEPARATED BY space.
+
+  " side info 획득
+  SELECT SINGLE a~plant a~pname
+    a~ppern AS plnr
+    b~lname AS pllnm
+    b~fname AS plfnm
+    b~telnr AS pltel
+    b~persg AS plsg
+    FROM ztssplant AS a
+    INNER JOIN ztssemp AS b
+    ON a~ppern EQ b~pernr
+    INTO CORRESPONDING FIELDS OF ps_sideinfo_0100
+    WHERE plant EQ ps_cond_0100-plant.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  " side info 획득
+  SELECT SINGLE a~stoid a~stonm
+    a~stadm AS stnr
+    b~lname AS stlnm
+    b~fname AS stfnm
+    b~telnr AS sgtel
+    b~persg AS stsg
+    FROM ztssstrg AS a
+    INNER JOIN ztssemp AS b
+    ON a~stadm EQ b~pernr
+    INTO CORRESPONDING FIELDS OF ps_sideinfo_0100
+    WHERE stoid EQ ps_cond_0100-stoid.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  "DOMFIX 가져오기
+  PERFORM get_domain_fixed_value TABLES gt_dd07v
+                                 USING  ps_sideinfo_0100-plsg
+                                        'ZDSSPERSG'
+                                 CHANGING ps_sideinfo_0100-plsg_t.
+
+  PERFORM get_domain_fixed_value TABLES gt_dd07v
+                                 USING  ps_sideinfo_0100-stsg
+                                        'ZDSSPERSG'
+                                 CHANGING ps_sideinfo_0100-stsg_t.
+
+  " 사원 이름 CONCAT
+  CONCATENATE ps_sideinfo_0100-pllnm ps_sideinfo_0100-plfnm
+  INTO ps_sideinfo_0100-planm.
+
+  CONCATENATE ps_sideinfo_0100-stlnm ps_sideinfo_0100-stfnm
+  INTO ps_sideinfo_0100-stanm.
+
+  " pt_info_0100 획득
+
+  IF ps_cond_0100-matnm IS NOT INITIAL.
+    SELECT a~matnr b~matnm a~meins
+      FROM ztssware AS a
+      INNER JOIN ztssmat_t AS b
+      ON a~matnr = b~matnr
+      AND b~langu = sy-langu
+      INTO CORRESPONDING FIELDS OF TABLE pt_info_0100
+      WHERE stoid = ps_cond_0100-stoid
+      AND matnm LIKE ps_cond_0100-matnm.
+  ELSE.
+    SELECT a~matnr b~matnm a~meins
+      FROM ztssware AS a
+      INNER JOIN ztssmat_t AS b
+      ON a~matnr = b~matnr
+      AND b~langu = sy-langu
+      INTO CORRESPONDING FIELDS OF TABLE pt_info_0100
+      WHERE stoid = ps_cond_0100-stoid.
+  ENDIF.
+
+  IF pt_info_0100[] IS INITIAL.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+  SORT pt_info_0100 BY matnr DESCENDING.
+  DELETE ADJACENT DUPLICATES FROM pt_info_0100 COMPARING matnr.
+
+
+  DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
+
+  LOOP AT pt_info_0100.
+
+    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = '99991231'
+        iv_stoid         = ps_cond_0100-stoid
+        iv_matnr         = pt_info_0100-matnr
+      IMPORTING
+        ev_astck         = pt_info_0100-astck
+        ev_istck         = pt_info_0100-istck
+        ev_ostck         = pt_info_0100-ostck
+        ev_dstck         = pt_info_0100-dstck
+        ev_fstck         = pt_info_0100-fstck
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    IF pt_info_0100-astck IS NOT INITIAL.
+      lt_color-fname = 'ASTCK'.
+      lt_color-color-int = 1.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 5.
+      APPEND lt_color.
+    ENDIF.
+
+    IF pt_info_0100-fstck IS NOT INITIAL.
+      lt_color-fname = 'FSTCK'.
+      lt_color-color-int = 0.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 6.
+      APPEND lt_color.
+
+    ENDIF.
+
+    APPEND LINES OF lt_color TO pt_info_0100-cellscol.
+    MODIFY pt_info_0100 TRANSPORTING astck istck ostck dstck fstck cellscol.
+    CLEAR : lt_color, lt_color[].
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_DD07V  text
+*      -->P_PS_SIDEINFO_0100_PLSG  text
+*      -->P_0638   text
+*      <--P_PS_SIDEINFO_0100_PLSG_T  text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_value  TABLES   pt_dd07v STRUCTURE dd07v
+                             USING    VALUE(pv_domval_l)
+                                      VALUE(pv_domname)
+                             CHANGING pv_ddtext.
+
+  READ TABLE pt_dd07v WITH KEY domvalue_l = pv_domval_l domname = pv_domname.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '<get_domain_fixed_value>' 'Fatal Error'.
+  ENDIF.
+
+  pv_ddtext = pt_dd07v-ddtext.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_COND_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD0801  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_cond_0100  USING    VALUE(ps_cond_0100) TYPE zsssmd0801
+                      CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+*  " BEGDA > ENDDA
+*  IF ps_cond_0100-begda > ps_cond_0100-endda.
+*    MESSAGE i999(zmcss) WITH '시작일은 종료일보다 작거나 같아야 합니다'.
+*    pv_subrc = 4.
+*    RETURN.
+*  ENDIF.
+*
+*  " ENDDA > SY-DATUM
+*  IF ps_cond_0100-endda > sy-datum.
+*    MESSAGE i999(zmcss) WITH '종료일은 오늘 날짜보다 작거나 같아야 합니다'.
+*    pv_subrc = 4.
+*    RETURN.
+*  ENDIF.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULTS_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMD0801  text
+*----------------------------------------------------------------------*
+FORM set_defaults_0100  CHANGING ps_cond_0100 TYPE zsssmd0801.
+
+  IF ps_cond_0100 IS INITIAL.
+    CLEAR ps_cond_0100.
+*    ps_cond_0100-endda = sy-datum.
+*    PERFORM get_calc_datum  USING     sy-datum '-' '1' '0' '0'
+*                            CHANGING  ps_cond_0100-begda.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALC_DATUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_calc_datum  USING    VALUE(p_datum)
+                              VALUE(p_signum)
+                              VALUE(p_years)
+                              VALUE(p_months)
+                              VALUE(p_days)
+                    CHANGING p_begda LIKE p0001-begda.
+
+  DATA: lv_date   TYPE  p0001-begda,
+        lv_days   TYPE  t5a4a-dlydy,
+        lv_months TYPE  t5a4a-dlymo,
+        lv_signum TYPE  t5a4a-split,
+        lv_years  TYPE  t5a4a-dlyyr.
+
+  IF p_signum IS INITIAL.
+    lv_signum = '+'.
+  ELSE.
+    lv_signum = p_signum.
+  ENDIF.
+  lv_years = p_years.
+  lv_months = p_months.
+  lv_days = p_days.
+
+  lv_date = p_datum.
+  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+    EXPORTING
+      date      = lv_date
+      days      = lv_days
+      months    = lv_months
+      signum    = lv_signum
+      years     = lv_years
+    IMPORTING
+      calc_date = p_begda.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SEARCH_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM search_0100 .
+  " COND CHECK 0100
+  PERFORM check_cond_0100 USING zsssmd0801
+                          CHANGING gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+  " QUERY 0100
+  PERFORM get_info_0100 TABLES gt_info_0100
+                        USING  zsssmd0801
+                        CHANGING gs_alvtitle_0100
+                                 gs_sideinfo_0100
+                                 gv_subrc.
+  IF gv_subrc <> 0.
+    MESSAGE i999(zmcss) WITH '해당 조건을 만족하는 데이터가 없습니다'.
+    CLEAR : gs_alvtitle_0100, gs_sideinfo_0100, gt_info_0100.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  M200_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM c200_0100 .
+
+  DATA : ls_row_0100 LIKE LINE OF gt_info_0100.
+
+  " Select Row
+  PERFORM select_row_0100 TABLES gt_info_0100
+                          CHANGING ls_row_0100
+                                   gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+  " Query 200
+  PERFORM get_info_0200 TABLES   gt_info_0210
+                                 gt_info_0220
+                        USING    ls_row_0100
+                                 gs_alvtitle_0100
+                        CHANGING gs_alvtitle_0200
+                                 gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+  CALL SCREEN 200.
+
+  " Clear 200 Related
+  CLEAR : gt_info_0210, gt_info_0220, gs_alvtitle_0200.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0100  text
+*      <--P_LS_ROW_0100  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_row_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
+                      CHANGING ps_row_0100 LIKE gs_info_0100
+                               pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, ps_row_0100.
+
+  DATA : lt_row   TYPE lvc_t_roid,
+         ls_row   LIKE LINE OF lt_row,
+         lv_index TYPE i.
+
+  CALL METHOD go_alv_0100->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 1.
+      pv_subrc = 0.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '상세 조회를 위해 하나만 선택해 주세요.'.
+      pv_subrc = 4.
+      RETURN.
+    WHEN OTHERS.
+      MESSAGE i999(zmcss) WITH '상세 조회를 위해 하나만 선택해 주세요.'.
+      pv_subrc = 4.
+      RETURN.
+  ENDCASE.
+
+  READ TABLE lt_row INDEX 1 INTO ls_row.
+  READ TABLE pt_info_0100 INDEX ls_row-row_id.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '치명적인 에러가 발생했습니다. 선택한 Row를 Internal Table에서 찾을 수 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  MOVE-CORRESPONDING pt_info_0100 TO ps_row_0100.
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0200  text
+*      -->P_LS_ROW_0100  text
+*      <--P_GS_ALVTITLE_0200  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0200  TABLES   pt_info_0210 STRUCTURE gs_info_0200
+                             pt_info_0220 STRUCTURE gs_info_0200
+                    USING    VALUE(ps_row_0100) LIKE gs_info_0100
+                             VALUE(ps_alvtitle_0100) TYPE zsssmd0802
+                    CHANGING ps_alvtitle_0200 LIKE gs_alvtitle_0200
+                             pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, ps_alvtitle_0200, pt_info_0210[], pt_info_0220[].
+
+  ps_alvtitle_0200-matnr = ps_row_0100-matnr.
+  ps_alvtitle_0200-matnm = ps_row_0100-matnm.
+
+  CONCATENATE
+    '재고 변동 현황 '
+     ps_alvtitle_0200-matnm
+     '('
+     ps_alvtitle_0200-matnr
+     ')'
+     INTO ps_alvtitle_0200-infotext_210
+     SEPARATED BY space.
+
+  CONCATENATE
+    '가용 및 불량 재고 현황'
+     ps_alvtitle_0200-matnm
+     '('
+     ps_alvtitle_0200-matnr
+     ')'
+     INTO ps_alvtitle_0200-infotext_220
+     SEPARATED BY space.
+
+  DATA : lt_info_0210   TYPE zsssmd0809 WITH HEADER LINE,
+         lt_info_fstcks TYPE zsssmd0809 WITH HEADER LINE,
+         lt_info_astcks TYPE zsssmd0809 WITH HEADER LINE,
+         lt_info_0220   TYPE zsssmd0809 WITH HEADER LINE.
+
+  CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+    EXPORTING
+      iv_begda         = '11110101'
+      iv_endda         = '99991231'
+      iv_stoid         = ps_alvtitle_0100-stoid
+      iv_matnr         = ps_row_0100-matnr
+    IMPORTING
+      ev_astck         = ps_alvtitle_0200-astck
+      ev_istck         = ps_alvtitle_0200-istck
+      ev_ostck         = ps_alvtitle_0200-ostck
+      ev_dstck         = ps_alvtitle_0200-dstck
+      ev_fstck         = ps_alvtitle_0200-fstck
+    TABLES
+      pt_fstcks        = lt_info_fstcks[]
+      pt_astcks        = lt_info_astcks[]
+      pt_allstcks      = lt_info_0210[]
+    EXCEPTIONS
+      material_unfound = 1
+      minus_avail      = 2
+      query_failed     = 3
+      OTHERS           = 4.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '가용 재고를 불러오는 도중 에러가 발생했습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+
+  IF lt_info_0210[] IS NOT INITIAL.
+    SORT lt_info_0210 BY warid.
+  ENDIF.
+
+  DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
+
+  LOOP AT lt_info_0210.
+    MOVE-CORRESPONDING lt_info_0210 TO pt_info_0210.
+    IF lt_info_0210-ginum IS NOT INITIAL AND
+      lt_info_0210-grnum IS INITIAL.
+      pt_info_0210-rdoc = lt_info_0210-ginum.
+    ELSEIF lt_info_0210-ginum IS INITIAL AND
+      lt_info_0210-grnum IS NOT INITIAL.
+      pt_info_0210-rdoc = lt_info_0210-grnum.
+    ELSE.
+      pt_info_0210-rdoc = '-'.
+    ENDIF.
+
+    CASE lt_info_0210-wtype.
+      WHEN 'I'.
+        pt_info_0210-wtype_t = '반입'.
+        pt_info_0210-icon_210 = icon_arrow_right.
+
+        lt_color-fname = 'WTYPE_T'.
+        lt_color-color-int = 0.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 6.
+        APPEND lt_color.
+
+        lt_color-fname = 'AMOUNT'.
+        lt_color-color-int = 0.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 6.
+        APPEND lt_color.
+
+      WHEN 'O'.
+        pt_info_0210-wtype_t = '반출'.
+        pt_info_0210-icon_210 = icon_arrow_left.
+
+        lt_color-fname = 'WTYPE_T'.
+        lt_color-color-int = 1.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 4.
+        APPEND lt_color.
+
+        lt_color-fname = 'AMOUNT'.
+        lt_color-color-int = 1.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 4.
+        APPEND lt_color.
+
+      WHEN 'D'.
+        pt_info_0210-wtype_t = '폐기'.
+        pt_info_0210-icon_210 = icon_delete.
+
+        lt_color-fname = 'WTYPE_T'.
+        lt_color-color-int = 0.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 4.
+        APPEND lt_color.
+
+        lt_color-fname = 'AMOUNT'.
+        lt_color-color-int = 0.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 4.
+        APPEND lt_color.
+
+    ENDCASE.
+    APPEND LINES OF lt_color TO pt_info_0210-cellscol.
+    CLEAR : lt_color[].
+    APPEND pt_info_0210.
+    CLEAR pt_info_0210.
+  ENDLOOP.
+
+  CLEAR lt_color[].
+  lt_color-fname = 'WTYPE_T'.
+  lt_color-color-int = 0.
+  lt_color-color-inv = 0.
+  lt_color-color-col = 6.
+  APPEND lt_color.
+
+  lt_color-fname = 'AMOUNT'.
+  lt_color-color-int = 0.
+  lt_color-color-inv = 0.
+  lt_color-color-col = 6.
+  APPEND lt_color.
+
+  LOOP AT lt_info_fstcks.
+    MOVE-CORRESPONDING lt_info_fstcks TO pt_info_0220.
+    pt_info_0220-wtype_t = '불량'.
+    APPEND LINES OF lt_color TO pt_info_0220-cellscol.
+    APPEND pt_info_0220.
+    CLEAR pt_info_0220.
+  ENDLOOP.
+
+  CLEAR lt_color[].
+  lt_color-fname = 'WTYPE_T'.
+  lt_color-color-int = 1.
+  lt_color-color-inv = 0.
+  lt_color-color-col = 5.
+  APPEND lt_color.
+
+  lt_color-fname = 'AMOUNT'.
+  lt_color-color-int = 1.
+  lt_color-color-inv = 0.
+  lt_color-color-col = 5.
+  APPEND lt_color.
+
+  LOOP AT lt_info_astcks.
+    MOVE-CORRESPONDING lt_info_astcks TO pt_info_0220.
+    pt_info_0220-wtype_t = '가용'.
+    APPEND LINES OF lt_color TO pt_info_0220-cellscol.
+    APPEND pt_info_0220.
+    CLEAR pt_info_0220.
+  ENDLOOP.
+
+  IF pt_info_0220[] IS NOT INITIAL.
+    SORT pt_info_0220 BY warid.
+  ENDIF.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_HANDLER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_0100  text
+*      -->P_GO_HANDLER_0100  text
+*      -->P_0037   text
+*----------------------------------------------------------------------*
+FORM set_alv_handler  USING    po_alv     TYPE REF TO cl_gui_alv_grid
+                               po_handler TYPE REF TO lcl_handler
+                               VALUE(pv_hname).
+  po_handler->lv_hname = pv_hname.
+  SET HANDLER po_handler->on_hotspot_click        FOR po_alv.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_HOTSPOT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_PV_AFLAG  text
+*----------------------------------------------------------------------*
+FORM set_fcat_hotspot  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                       USING    VALUE(pv_aflag).
+
+  IF pt_fcat[] IS INITIAL.
+    MESSAGE a999(zmcss) WITH 'FCAT ERROR'.
+  ENDIF.
+
+  CASE pv_aflag.
+    WHEN '0100'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'MATNR'.
+            pt_fcat-hotspot = 'X'.
+        ENDCASE.
+        MODIFY pt_fcat.
+      ENDLOOP.
+    WHEN '0210' OR '0220'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'WARID'.
+            pt_fcat-hotspot = 'X'.
+          WHEN 'RDOC'.
+            pt_fcat-hotspot = 'X'.
+        ENDCASE.
+        MODIFY pt_fcat.
+      ENDLOOP.
+  ENDCASE.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

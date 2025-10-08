@@ -22,6 +22,10 @@ MODULE create_alv_0100 OUTPUT.
     PERFORM create_alv  USING     'CON_0100L'
                         CHANGING  go_con_0100l
                                   go_alv_0100l.
+    CREATE OBJECT go_handler_0100l.
+    PERFORM set_alv_handler USING go_alv_0100l
+                                  go_handler_0100l
+                                  '0100L'.
   ENDIF.
 
   " alv 持失_ 0100R
@@ -29,6 +33,10 @@ MODULE create_alv_0100 OUTPUT.
     PERFORM create_alv  USING     'CON_0100R'
                         CHANGING  go_con_0100r
                                   go_alv_0100r.
+    CREATE OBJECT go_handler_0100r.
+    PERFORM set_alv_handler USING go_alv_0100r
+                                  go_handler_0100r
+                                  '0100R'.
   ENDIF.
 
 ENDMODULE.
@@ -81,6 +89,10 @@ MODULE create_alv_0200 OUTPUT.
     PERFORM create_alv  USING     'CON_0200L'
                         CHANGING  go_con_0200l
                                   go_alv_0200l.
+    CREATE OBJECT go_handler_0200l.
+    PERFORM set_alv_handler USING go_alv_0200l
+                                  go_handler_0200l
+                                  '0200L'.
   ENDIF.
 
   " alv 持失_ 0200R
@@ -88,6 +100,10 @@ MODULE create_alv_0200 OUTPUT.
     PERFORM create_alv  USING     'CON_0200R'
                         CHANGING  go_con_0200r
                                   go_alv_0200r.
+    CREATE OBJECT go_handler_0200r.
+    PERFORM set_alv_handler USING go_alv_0200r
+                                  go_handler_0200r
+                                  '0200R'.
   ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -129,7 +145,7 @@ MODULE modify_screen_0200 OUTPUT.
     IF screen-group1 = 'CND'.
       IF gt_info_0200r IS NOT INITIAL.
         screen-input = 0.
-      ElSE.
+      ELSE.
         screen-input = 1.
       ENDIF.
     ENDIF.
@@ -143,7 +159,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE status_0300 OUTPUT.
   SET PF-STATUS 'S300'.
-  SET TITLEBAR 'T300' WITH ZSSSMD0201-matnr.
+  SET TITLEBAR 'T300' WITH zsssmd0201-matnr.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  CREATE_ALV_0300  OUTPUT
@@ -151,11 +167,15 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE create_alv_0300 OUTPUT.
-    " alv 持失_ 0300L
+  " alv 持失_ 0300L
   IF go_con_0300l IS INITIAL.
     PERFORM create_alv  USING     'CON_0300L'
                         CHANGING  go_con_0300l
                                   go_alv_0300l.
+    CREATE OBJECT go_handler_0300l.
+    PERFORM set_alv_handler USING go_alv_0300l
+                                  go_handler_0300l
+                                  '0300L'.
   ENDIF.
 
   " alv 持失_ 0300R
@@ -163,6 +183,10 @@ MODULE create_alv_0300 OUTPUT.
     PERFORM create_alv  USING     'CON_0300R'
                         CHANGING  go_con_0300r
                                   go_alv_0300r.
+    CREATE OBJECT go_handler_0300r.
+    PERFORM set_alv_handler USING go_alv_0300r
+                                  go_handler_0300r
+                                  '0300R'.
   ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -171,7 +195,7 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE display_alv_0300 OUTPUT.
-    " alv display 0300L
+  " alv display 0300L
   IF go_con_0300l IS NOT INITIAL.
     PERFORM display_alv  TABLES  gt_info_0300l
                                  gt_fcat_0300l

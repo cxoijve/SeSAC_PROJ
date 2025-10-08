@@ -966,6 +966,47 @@ FORM SEL_ROWS .
   READ TABLE GT_DATA INDEX GS_ROWS-INDEX INTO GS_DATA.
 
 ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALLD_PROCESS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM CALLD_PROCESS .
+
+
+  PERFORM GET_DATA.
+
+  DATA: LV_VENID    TYPE ZTSSVEND-VENID.
+
+  " 다른 프로그램에서 현재 프로그램으로 이동
+  " 입고 프로그램 -> 벤더 프로그램
+  " 로직 추가 구현 예정
+  GET PARAMETER ID 'VEN' FIELD LV_VENID.
+  IF LV_VENID IS NOT INITIAL.
+*    PERFORM SEL_ROWS_0100_V2 CHANGING GV_SUBRC LV_VENID.
+    IF GV_SUBRC = 0.
+      PERFORM SET_DATA_0300.
+      CALL SCREEN 300.
+      SET PARAMETER ID 'VEN' FIELD SPACE.
+    ELSE.
+      MESSAGE '해당 벤더를 찾을 수 없습니다.' TYPE 'E'.
+    ENDIF.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_INIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM SET_INIT .
+
+ENDFORM.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

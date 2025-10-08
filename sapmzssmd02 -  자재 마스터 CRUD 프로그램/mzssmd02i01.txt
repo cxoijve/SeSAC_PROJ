@@ -91,6 +91,29 @@ MODULE user_command_0100 INPUT.
                                    gt_r_matnr
                             USING  zsssmd0201.
 
+    WHEN 'M400'.
+      " 100에서 선택한 Row를 설정.
+      PERFORM select_row_0100 TABLES   gt_info_0100
+                              CHANGING gs_row_0100
+                                       gv_subrc.
+
+      " 열 하나만 골라야되는데 그게 안됐으면 이 다음은 진행하면 안됨.
+      IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+        EXPORTING
+          iv_matnr     = gs_row_0100-matnr
+          iv_ismodal   = 'X'
+        EXCEPTIONS
+          query_failed = 1
+          OTHERS       = 2.
+      IF sy-subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      CLEAR :  gs_row_0100.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*

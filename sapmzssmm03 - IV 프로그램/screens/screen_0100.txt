@@ -8,7 +8,7 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0100 0100      0  0192 37  0  0 27126  0G E                              20251001185102																																
+SAPMZSSMM03                             0100 0100      9 80192 37  0  0 27126  0G E                              20251002102259																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -23,14 +23,9 @@ PROCESS BEFORE OUTPUT.
   MODULE status_0100.																																
   MODULE fill_dynnr.																																
   CALL SUBSCREEN sub1 INCLUDING sy-cprog gv_dynnr.																																
-*  CALL SUBSCREEN sub2 INCLUDING sy-cprog gv_dynnr.																																
-*  CALL SUBSCREEN sub3 INCLUDING sy-cprog gv_dynnr.																																
 																																
 PROCESS AFTER INPUT.																																
   MODULE exit AT EXIT-COMMAND.																																
 																																
   CALL SUBSCREEN sub1.																																
-*  CALL SUBSCREEN sub2.																																
-*  CALL SUBSCREEN sub3.																																
-																																
   MODULE user_command_0100.																																

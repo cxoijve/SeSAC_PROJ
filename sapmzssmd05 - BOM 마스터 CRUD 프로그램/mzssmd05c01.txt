@@ -1,0 +1,54 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD05C01
+*&---------------------------------------------------------------------*
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+
+    "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' sy-dynnr me->lv_hname.
+    DATA : ls_info LIKE gs_info_0100.
+
+    DATA : lv_matnr TYPE zessmatnr.
+
+    CASE me->lv_hname.
+      WHEN '0100L'.
+        READ TABLE gt_info_0100l INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-prdnr.
+      WHEN '0100R'.
+        READ TABLE gt_info_0100r INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-rawnr.
+      WHEN '0200L'.
+        READ TABLE gt_info_0200l INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-rawnr.
+      WHEN '0200R'.
+        READ TABLE gt_info_0200r INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-rawnr.
+      WHEN '0300L'.
+        READ TABLE gt_info_0300l INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-rawnr.
+      WHEN '0300R'.
+        READ TABLE gt_info_0300r INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-rawnr.
+    ENDCASE.
+
+    IF lv_matnr IS INITIAL.
+      MESSAGE i999(zmcss) WITH '자재가 선택되지 않았습니다.'.
+      RETURN.
+    ENDIF.
+
+    CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+      EXPORTING
+        iv_matnr     = lv_matnr
+        iv_ismodal   = 'X'
+      EXCEPTIONS
+        query_failed = 1
+        OTHERS       = 2.
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

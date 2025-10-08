@@ -1,0 +1,49 @@
+*&---------------------------------------------------------------------*
+*& Module Pool       SAPMZSSMD08
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+
+INCLUDE mzssmd08top                             .  " global Data
+
+INCLUDE mzssmd08o01                             .  " PBO-Modules
+INCLUDE mzssmd08i01                             .  " PAI-Modules
+INCLUDE mzssmd08f01                             .  " FORM-Routines
+INCLUDE mzssmd08f02                             .  " Function Module Caller
+INCLUDE mzssmd08c01.
+
+LOAD-OF-PROGRAM.
+
+  PERFORM get_domain_fixed_values TABLES gt_dd07v
+                                  USING  'ZDSSPERSG'.
+
+  " 공통 세팅 : exclude (ALV위에 툴바)
+  PERFORM set_alv_exclude CHANGING gt_exclude.
+
+
+  " alv의 기본 세팅
+  PERFORM set_default_alv : TABLES    gt_fcat_0100
+                                      gt_sort_0100
+                            USING     '0100'
+                            CHANGING  gs_layo_0100,
+
+                            TABLES    gt_fcat_0210
+                                      gt_sort_0210
+                            USING     '0210'
+                            CHANGING  gs_layo_0210,
+
+                            TABLES    gt_fcat_0220
+                                      gt_sort_0220
+                            USING     '0220'
+                            CHANGING  gs_layo_0220.
+
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> 재고 관리 프로그램
+* T200 --> 재고 변동 상세 내역
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

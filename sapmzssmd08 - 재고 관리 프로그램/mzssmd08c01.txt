@@ -1,0 +1,88 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD08C01
+*&---------------------------------------------------------------------*
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+
+    "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' sy-dynnr me->lv_hname.
+    DATA : ls_info_0100 LIKE gs_info_0100.
+    DATA : lv_matnr TYPE zessmatnr.
+
+    DATA : ls_info_0200 LIKE gs_info_0200.
+    DATA : lv_warid TYPE zesswarid,
+           lv_ginum TYPE zessginum,
+           lv_grnum TYPE zessgrnum.
+
+    CASE me->lv_hname.
+      WHEN '0100'.
+        READ TABLE gt_info_0100 INTO ls_info_0100 INDEX es_row_no-row_id.
+        lv_matnr = ls_info_0100-matnr.
+      WHEN '0210'.
+        READ TABLE gt_info_0210 INTO ls_info_0200 INDEX es_row_no-row_id.
+        lv_warid = ls_info_0200-warid.
+        CASE ls_info_0200-rdoc+0(1).
+          WHEN 'I'.
+            lv_ginum = ls_info_0200-rdoc.
+          WHEN 'G'.
+            lv_grnum = ls_info_0200-rdoc.
+          WHEN OTHERS.
+        ENDCASE.
+      WHEN '0220'.
+        READ TABLE gt_info_0220 INTO ls_info_0200 INDEX es_row_no-row_id.
+        lv_warid = ls_info_0200-warid.
+        CASE ls_info_0200-rdoc+0(1).
+          WHEN 'I'.
+            lv_ginum = ls_info_0200-rdoc.
+          WHEN 'G'.
+            lv_grnum = ls_info_0200-rdoc.
+          WHEN OTHERS.
+        ENDCASE.
+    ENDCASE.
+
+    CASE e_column_id-fieldname.
+      WHEN 'MATNR'.
+        IF lv_matnr IS INITIAL.
+          MESSAGE i999(zmcss) WITH '자재가 선택되지 않았습니다.'.
+          RETURN.
+        ENDIF.
+
+        CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = lv_matnr
+            iv_ismodal   = 'X'
+          EXCEPTIONS
+            query_failed = 1
+            OTHERS       = 2.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+
+      WHEN 'WARID'.
+        MESSAGE i999(zmcss) WITH 'HOTSPOT WARID :' lv_warid.
+      WHEN 'RDOC'.
+
+        IF lv_ginum IS NOT INITIAL AND lv_grnum IS INITIAL.
+          CALL FUNCTION 'Z_CALL_GI_DETAIL'
+            EXPORTING
+              iv_ginum     = lv_ginum
+            EXCEPTIONS
+              query_failed = 1
+              OTHERS       = 2.
+          IF sy-subrc <> 0.
+            MESSAGE i999(zmcss) WITH lv_ginum '을 불러오는 도중 에러가 발생했습니다.'.
+            RETURN.
+          ENDIF.
+        ELSEIF lv_ginum IS INITIAL AND lv_grnum IS NOT INITIAL.
+          MESSAGE i999(zmcss) WITH 'HOTSPOT RDOC :' lv_grnum.
+          RETURN.
+        ELSE.
+          MESSAGE i999(zmcss) WITH '연관된 문서가 없습니다.'.
+          RETURN.
+        ENDIF.
+    ENDCASE.
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

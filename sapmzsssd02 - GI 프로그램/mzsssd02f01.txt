@@ -146,69 +146,37 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
       " 200 Default
     WHEN '0200'.
       PERFORM modify_fcat : TABLES pt_fcat
-                            USING  'GINUM'
-                                   '1'
-                                   '출고 문서 번호',
+                            USING  'GINUM' '1' '출고 문서 번호',
                             TABLES pt_fcat
-                            USING  'ISTAT'
-                                   '2'
-                                   '출고 문서 상태 RAW',
+                            USING  'ISTAT' '2' '출고 문서 상태 RAW',
                             TABLES pt_fcat
-                            USING  'ISTAT_T'
-                                   '3'
-                                   '출고 문서 상태',
+                            USING  'ISTAT_T' '3' '출고 문서 상태',
                             TABLES pt_fcat
-                            USING  'GIDAT'
-                                   '4'
-                                   '출고일',
+                            USING  'GIDAT' '4' '출고일',
                             TABLES pt_fcat
-                            USING  'STEXT'
-                                   '5'
-                                   '비고',
+                            USING  'STEXT' '5' '비고',
                             TABLES pt_fcat
-                            USING  'GITOR'
-                                   '6'
-                                   '출고 문서 등록자 번호',
+                            USING  'GITOR' '6' '출고 문서 등록자 번호',
                             TABLES pt_fcat
-                            USING  'JENUM'
-                                   '7'
-                                   '전표 번호',
+                            USING  'JENUM' '7' '전표 번호',
                             TABLES pt_fcat
-                            USING  'FYEAR'
-                                   '8'
-                                   '회계 연도',
+                            USING  'FYEAR' '8' '회계 연도',
                             TABLES pt_fcat
-                            USING  'JETOR'
-                                   '9'
-                                   '전표 등록자 번호',
+                            USING  'JETOR' '9' '전표 등록자 번호',
                             TABLES pt_fcat
-                            USING  'JEDAT'
-                                   '10'
-                                   '전표 작성일',
+                            USING  'JEDAT' '10' '전표 작성일',
                             TABLES pt_fcat
-                            USING  'SONUM_S'
-                                   '11'
-                                   '판매오더 번호',
+                            USING  'SONUM' '11' '판매오더 번호',
                             TABLES pt_fcat
-                            USING  'SOTOR'
-                                   '12'
-                                   '판매오더 등록자 번호',
+                            USING  'SOTOR' '12' '판매오더 등록자 번호',
                             TABLES pt_fcat
-                            USING  'SODAT'
-                                   '13'
-                                   '판매오더일',
+                            USING  'SODAT' '13' '판매오더일',
                             TABLES pt_fcat
-                            USING  'ENAME'
-                                   '14'
-                                   '사원명',
+                            USING  'ENAME' '14' '사원명',
                             TABLES pt_fcat
-                            USING  'MATNM_S'
-                                   '15'
-                                   '자재명',
+                            USING  'MATNM_S' '15' '자재명',
                             TABLES pt_fcat
-                            USING  'RGDAT'
-                                   '16'
-                                   '출고 문서 등록일'.
+                            USING  'RGDAT' '16' '출고 문서 등록일'.
       " 200 검색 조건 - 1
     WHEN '0200_01'.
       PERFORM modify_fcat :
@@ -355,7 +323,7 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             TABLES pt_fcat
                             USING 'SODAT' '-1' '미노출',
                             TABLES pt_fcat
-                            USING 'ENAME' '4' '출고 전표 등록자',
+                            USING 'ENAME' '-1' '미노출',
                             TABLES pt_fcat
                             USING 'MATNM' '-1' '미노출',
                             TABLES pt_fcat
@@ -988,7 +956,8 @@ FORM set_range_0200  USING   VALUE(ps_cond_0101) TYPE zssssd0201
     " 출고 전표 레인지 세팅
   ELSEIF ps_cond_0103 IS NOT INITIAL.
 
-    CLEAR : gr_jedat_0103[] , gr_jenum_0103[], gr_fyear_0103[], gr_rgtor_0103[].
+    CLEAR : gr_jedat_0103[] , gr_jenum_0103[], gr_fyear_0103[].
+    " gr_rgtor_0103[].
 
     " 날짜
     IF ps_cond_0103-begda IS NOT INITIAL
@@ -1000,13 +969,13 @@ FORM set_range_0200  USING   VALUE(ps_cond_0101) TYPE zssssd0201
       APPEND gr_jedat_0103.
     ENDIF.
 
-    IF ps_cond_0103-rgtor IS NOT INITIAL.
-      gr_rgtor_0103-sign = 'I'.
-      gr_rgtor_0103-option = 'EQ'.
-      gr_rgtor_0103-low = ps_cond_0103-rgtor.
-      gr_rgtor_0103-high = ''.
-      APPEND gr_rgtor_0103.
-    ENDIF.
+*    IF ps_cond_0103-rgtor IS NOT INITIAL.
+*      gr_rgtor_0103-sign = 'I'.
+*      gr_rgtor_0103-option = 'EQ'.
+*      gr_rgtor_0103-low = ps_cond_0103-rgtor.
+*      gr_rgtor_0103-high = ''.
+*      APPEND gr_rgtor_0103.
+*    ENDIF.
 
     " 맨 마지막 - 하나만 나옴
     IF ps_cond_0103-jenum IS NOT INITIAL
@@ -1142,8 +1111,8 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
     " 출고 전표 검색 조건 검증
   ELSEIF ps_cond_0103 IS NOT INITIAL.
     IF ps_cond_0103-begda IS NOT INITIAL
-      AND ps_cond_0103-endda IS NOT INITIAL
-      AND ps_cond_0103-rgtor IS NOT INITIAL.
+      AND ps_cond_0103-endda IS NOT INITIAL.
+*      AND ps_cond_0103-rgtor IS NOT INITIAL.
 
       PERFORM check_datum USING ps_cond_0103-begda
                                 ps_cond_0103-endda
@@ -1153,15 +1122,15 @@ FORM check_cond_0100  USING   VALUE(ps_cond_0101) TYPE zssssd0201
         RETURN.
       ENDIF.
 
-      " 사원의 부서 검증 - 회계 부서 (D001)이니?
-      PERFORM check_dept USING ps_cond_0103-rgtor
-                               'D001'
-                         CHANGING lv_subrc.
-
-      IF lv_subrc <> 0.
-        pv_subrc = 4.
-        RETURN.
-      ENDIF.
+*      " 사원의 부서 검증 - 회계 부서 (D001)이니?
+*      PERFORM check_dept USING ps_cond_0103-rgtor
+*                               'D001'
+*                         CHANGING lv_subrc.
+*
+*      IF lv_subrc <> 0.
+*        pv_subrc = 4.
+*        RETURN.
+*      ENDIF.
 
     ELSEIF ps_cond_0103-jenum IS NOT INITIAL
       AND ps_cond_0103-fyear IS NOT INITIAL.
@@ -1556,6 +1525,11 @@ FORM get_gi_with_gi  TABLES   pt_info_0200 STRUCTURE gs_info_0200
     APPEND pt_info_0200.
   ENDLOOP.
 
+  IF pt_info_0200[] IS INITIAL.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
   PERFORM modify_gi_with_gi TABLES pt_info_0200
                             CHANGING lv_subrc.
 
@@ -1658,7 +1632,6 @@ FORM get_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
     AND jenum IN gr_jenum_0103
     AND fyear IN gr_fyear_0103
     AND rgdat IN gr_jedat_0103
-    AND rgtor IN gr_rgtor_0103
     AND rev NE 'X'.
 
   IF sy-subrc <> 0.
@@ -1674,9 +1647,7 @@ FORM get_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
       AND fyear = lt_jeh-fyear.
 
     IF sy-subrc <> 0.
-      MESSAGE i999(zmcss) WITH '<get_gi_with_je>' '치명적인 에러가 발생했습니다. 전표에 해당하는 출고 문서가 없습니다.'.
-      pv_subrc = 4.
-      RETURN.
+      CONTINUE.
     ENDIF.
 
     lt_jeh_gih-jedat = lt_jeh-rgdat.
@@ -1699,7 +1670,7 @@ FORM get_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
 
   IF lv_subrc <> 0.
     MESSAGE i999(zmcss) WITH '<get_gi_with_je>' '데이터를 불러오는 중 치명적인 에러가 발생했습니다'.
-    pv_subrc = 0.
+    pv_subrc = 4.
     RETURN.
   ENDIF.
 
@@ -1730,19 +1701,19 @@ FORM modify_gi_with_je  TABLES   pt_info_0200 STRUCTURE gs_info_0200
                                             'ZDSSISTAT'
                                    CHANGING pt_info_0200-istat_t.
 
-    " Employee Name
-    PERFORM get_emp TABLES gt_ztssemp
-                    USING pt_info_0200-jetor
-                    CHANGING ls_ztssemp
-                             lv_subrc.
-
-    IF lv_subrc <> 0.
-      MESSAGE i999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
-      pv_subrc = 4.
-      RETURN.
-    ENDIF.
-
-    CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
+*    " Employee Name
+*    PERFORM get_emp TABLES gt_ztssemp
+*                    USING pt_info_0200-jetor
+*                    CHANGING ls_ztssemp
+*                             lv_subrc.
+*
+*    IF lv_subrc <> 0.
+*      MESSAGE i999(zmcss) WITH '<modify_gi_with_gi>' '사원 정보가 없습니다'.
+*      pv_subrc = 4.
+*      RETURN.
+*    ENDIF.
+*
+*    CONCATENATE ls_ztssemp-lname ls_ztssemp-fname INTO pt_info_0200-ename.
 
     MODIFY pt_info_0200.
   ENDLOOP.
@@ -1831,12 +1802,20 @@ FORM get_gi_with_mat  TABLES   pt_info_0200 STRUCTURE gs_info_0200
     SELECT SINGLE *
       FROM ztssgih
       INTO CORRESPONDING FIELDS OF lt_gih
-      WHERE ginum = lt_gii-ginum.
+      WHERE ginum = lt_gii-ginum
+      AND gidat IN gr_gidat_0104.
 
-    lt_gih-somnr = lt_gii-somnr.
-    APPEND lt_gih.
+    IF sy-subrc = 0.
+      lt_gih-somnr = lt_gii-somnr.
+      APPEND lt_gih.
+    ENDIF.
 
   ENDLOOP.
+
+  IF lt_gih[] IS INITIAL.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
 
   LOOP AT lt_gih.
     CLEAR ls_mat.
@@ -2338,6 +2317,9 @@ FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
                             USING  'DUDAT' '1' '' 'X',
                             TABLES pt_sort
                             USING  'ENAME' '4' 'X' 'X'.
+    WHEN '0200_04'.
+      PERFORM modify_sort : TABLES pt_sort
+                            USING  'MATNM' '1' 'X' 'X'.
     WHEN '0303'.
       PERFORM modify_sort : TABLES pt_sort
                             USING  'DUDAT' '1' '' 'X'.
@@ -2904,7 +2886,10 @@ ENDFORM.
 *      -->P_GO_HANDLER_0300  text
 *----------------------------------------------------------------------*
 FORM set_alv_handler  USING    po_alv     TYPE REF TO cl_gui_alv_grid
-                               po_handler TYPE REF TO lcl_handler.
+                               po_handler TYPE REF TO lcl_handler
+                               VALUE(pv_hname).
+
+  po_handler->hname = pv_hname.
 
   SET HANDLER po_handler->on_hotspot_click        FOR po_alv.
   SET HANDLER po_handler->on_toolbar              FOR po_alv.
@@ -2937,6 +2922,9 @@ FORM set_fcat_0300  TABLES   pt_fcat_0300 STRUCTURE lvc_s_fcat.
   LOOP AT pt_fcat_0300.
     CASE pt_fcat_0300-fieldname.
       WHEN 'SONUM'.
+        pt_fcat_0300-hotspot = 'X'.
+        MODIFY pt_fcat_0300.
+      WHEN 'SOMNR'.
         pt_fcat_0300-hotspot = 'X'.
         MODIFY pt_fcat_0300.
       WHEN 'AMOUNT'.
@@ -3498,61 +3486,31 @@ FORM get_avail_stock  USING    VALUE(pv_matnr) TYPE zessmatnr
                       CHANGING pv_availamt
                                pv_subrc.
 
-  CLEAR : pv_availamt, pv_subrc.
-  DATA : ls_mat    TYPE ts_mat,
-         lv_subrc  LIKE sy-subrc,
-         lv_limdat LIKE sy-datum.
+  CLEAR pv_subrc.
 
-  DATA : lt_ztssware TYPE TABLE OF ztssware WITH HEADER LINE.
+  DATA : lv_astck TYPE int4.
 
-  " Get EXPDA
-  PERFORM get_mat TABLES gt_ztssmat
-                  USING  pv_matnr
-                         sy-langu
-                  CHANGING ls_mat
-                           lv_subrc.
-
-  IF lv_subrc <> 0.
+  " 현재 시점의 가용재고 확인
+  CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+    EXPORTING
+      iv_begda         = '11110101'
+      iv_endda         = sy-datum
+      iv_stoid         = pv_stoid
+      iv_matnr         = pv_matnr
+    IMPORTING
+      ev_astck         = lv_astck
+    EXCEPTIONS
+      material_unfound = 1
+      minus_avail      = 2
+      query_failed     = 3
+      OTHERS           = 4.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '자재량 가져오는 도중 에러 발생!'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
-
-  PERFORM get_calc_datum USING sy-datum
-                               '-'
-                               '0'
-                               '0'
-                               ls_mat-expda
-                        CHANGING lv_limdat.
-
-  SELECT stoid matnr amount wtype wdate
-    FROM ztssware
-    INTO CORRESPONDING FIELDS OF TABLE lt_ztssware
-    WHERE stoid = pv_stoid
-    AND matnr = pv_matnr
-    AND wdate GE lv_limdat.
-
-  IF lv_subrc <> 0.
-    pv_availamt = 0.
-    pv_subrc = 0.
-    RETURN.
-  ENDIF.
-
-  LOOP AT lt_ztssware.
-    CASE lt_ztssware-wtype.
-      WHEN 'I'.
-        pv_availamt = pv_availamt + lt_ztssware-amount.
-      WHEN 'D' OR 'O'.
-        pv_availamt = pv_availamt - lt_ztssware-amount.
-    ENDCASE.
-  ENDLOOP.
-
-  IF pv_availamt < 0.
-    MESSAGE i999(zmcss) WITH '<get_avail_stock>' 'MINUS STOCK'.
-    pv_subrc = 4.
-    RETURN.
-  ENDIF.
-
+  pv_availamt = lv_astck.
   pv_subrc = 0.
 
 ENDFORM.
@@ -4253,6 +4211,42 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM modify_screen_0500  USING    VALUE(pv_eflag).
 
+  IF sy-calld EQ 'X'.
+    LOOP AT SCREEN.
+      CASE screen-group1.
+        WHEN 'SED'. " 수정 버튼 숨기기
+          screen-active = '0'.
+        WHEN 'EED'. " 수정 완료 버튼 숨기기.
+          screen-active = '0'.
+        WHEN 'ED1'. " 수정에 따라 생기는 버튼들 숨기기.
+          screen-active = '0'.
+        WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
+          screen-input = '0'.
+        WHEN OTHERS.
+      ENDCASE.
+      MODIFY SCREEN.
+    ENDLOOP.
+    RETURN.
+  ENDIF.
+
+  IF gs_info_0500h-binum IS NOT INITIAL.
+    LOOP AT SCREEN.
+      CASE screen-group1.
+        WHEN 'SED'. " 수정 버튼 숨기기
+          screen-active = '0'.
+        WHEN 'EED'. " 수정 완료 버튼 숨기기.
+          screen-active = '0'.
+        WHEN 'ED1'. " 수정에 따라 생기는 버튼들 숨기기.
+          screen-active = '0'.
+        WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
+          screen-input = '0'.
+        WHEN OTHERS.
+      ENDCASE.
+      MODIFY SCREEN.
+    ENDLOOP.
+    RETURN.
+  ENDIF.
+
   LOOP AT SCREEN.
     CASE pv_eflag.
       WHEN 'X'. " 수정 모드 ON
@@ -4265,6 +4259,8 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
             screen-active = '1'.
           WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 가능하게 하기
             screen-input = '1'.
+          WHEN 'DTL'.
+            screen-active = '0'.
           WHEN OTHERS.
         ENDCASE.
 
@@ -4278,6 +4274,22 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
             screen-active = '0'.
           WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
             screen-input = '0'.
+          WHEN 'DTL'.
+            screen-active = '1'.
+            CASE screen-group2.
+              WHEN 'GI'.
+                IF gs_info_0500h-jenum IS INITIAL.
+                  screen-active = '0'.
+                ENDIF.
+              WHEN 'BI'.
+                IF gs_info_0500h-binum IS INITIAL.
+                  screen-active = '0'.
+                ENDIF.
+              WHEN 'AR'.
+                IF gs_info_0500h-arnum IS INITIAL.
+                  screen-active = '0'.
+                ENDIF.
+            ENDCASE.
           WHEN OTHERS.
         ENDCASE.
 
@@ -4305,6 +4317,14 @@ FORM set_fcat_0500  TABLES   pt_fcat_0500 STRUCTURE lvc_s_fcat.
   LOOP AT pt_fcat_0500.
     CASE pt_fcat_0500-fieldname.
       WHEN 'SONUM'.
+        CASE gv_eflag_0500.
+          WHEN 'X'.
+            pt_fcat_0500-hotspot = ''.
+          WHEN ''.
+            pt_fcat_0500-hotspot = 'X'.
+        ENDCASE.
+        MODIFY pt_fcat_0500.
+      WHEN 'SOMNR'.
         CASE gv_eflag_0500.
           WHEN 'X'.
             pt_fcat_0500-hotspot = ''.

@@ -4,35 +4,73 @@
 
 CLASS lcl_handler IMPLEMENTATION.
   METHOD on_hotspot_click.
-    MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' e_column_id-fieldname es_row_no-row_id.
+    "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' me->hname e_column_id-fieldname es_row_no-row_id.
+    DATA : ls_info TYPE zssssd0206.
+    DATA : lv_matnr TYPE zessmatnr,
+           lv_sonum TYPE zesssonum.
+
+    CASE me->hname.
+      WHEN '0300'.
+        READ TABLE gt_info_0300 INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-somnr.
+        lv_sonum = ls_info-sonum.
+      WHEN '0500'.
+        READ TABLE gt_info_0500 INTO ls_info INDEX es_row_no-row_id.
+        lv_matnr = ls_info-somnr.
+        lv_sonum = ls_info-sonum.
+    ENDCASE.
+
+    IF lv_matnr IS INITIAL OR lv_sonum IS INITIAL.
+      MESSAGE i999(zmcss) WITH '선택한 Hotspot의 상세정보를 확인할 수 없습니다.'.
+      RETURN.
+    ENDIF.
+
+    CASE e_column_id-fieldname.
+      WHEN 'SOMNR'.
+        CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = lv_matnr
+            iv_ismodal   = 'X'
+          EXCEPTIONS
+            query_failed = 1
+            OTHERS       = 2.
+        IF sy-subrc <> 0.
+          MESSAGE i999(zmcss) WITH '선택한 자재 정보' lv_matnr '를 확인할 수 없습니다.'.
+          RETURN.
+        ENDIF.
+
+      WHEN 'SONUM'.
+        MESSAGE i999(zmcss) WITH lv_sonum.
+    ENDCASE.
+
   ENDMETHOD.
 
   METHOD on_toolbar.
-    DATA ls_button TYPE stb_button.
-    CASE sy-dynnr.
-      WHEN '0300'.
-        ls_button-butn_type = '3'. "Separator
-        APPEND ls_button TO e_object->mt_toolbar.
-
-        CLEAR ls_button.
-        ls_button-function = 'ENDEDIT'.
-        ls_button-icon = icon_change.
-        ls_button-butn_type = '0'.
-        ls_button-text = '입력 완료'.
-        APPEND ls_button TO e_object->mt_toolbar.
-      WHEN '0500'.
-        IF gv_eflag_0500 EQ 'X'.
-          ls_button-butn_type = '3'. "Separator
-          APPEND ls_button TO e_object->mt_toolbar.
-
-          CLEAR ls_button.
-          ls_button-function = 'ENDEDIT'.
-          ls_button-icon = icon_change.
-          ls_button-butn_type = '0'.
-          ls_button-text = '입력 완료'.
-          APPEND ls_button TO e_object->mt_toolbar.
-        ENDIF.
-    ENDCASE.
+*    DATA ls_button TYPE stb_button.
+*    CASE sy-dynnr.
+*      WHEN '0300'.
+*        ls_button-butn_type = '3'. "Separator
+*        APPEND ls_button TO e_object->mt_toolbar.
+*
+*        CLEAR ls_button.
+*        ls_button-function = 'ENDEDIT'.
+*        ls_button-icon = icon_change.
+*        ls_button-butn_type = '0'.
+*        ls_button-text = '입력 완료'.
+*        APPEND ls_button TO e_object->mt_toolbar.
+*      WHEN '0500'.
+*        IF gv_eflag_0500 EQ 'X'.
+*          ls_button-butn_type = '3'. "Separator
+*          APPEND ls_button TO e_object->mt_toolbar.
+*
+*          CLEAR ls_button.
+*          ls_button-function = 'ENDEDIT'.
+*          ls_button-icon = icon_change.
+*          ls_button-butn_type = '0'.
+*          ls_button-text = '입력 완료'.
+*          APPEND ls_button TO e_object->mt_toolbar.
+*        ENDIF.
+*    ENDCASE.
 
   ENDMETHOD.
 
