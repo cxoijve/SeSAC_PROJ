@@ -1,0 +1,58 @@
+*&---------------------------------------------------------------------*
+*& Include ZRBSSMM01TOP                                      Report ZRBSSMM01
+*&
+*&---------------------------------------------------------------------*
+REPORT zrbssmm01.
+
+
+TABLES: sscrfields.
+
+
+" Excel Data
+*DATA: BEGIN OF gs_data,
+*        carrid(3),
+*        begda(8),
+*      END OF gs_data,
+*      gt_data LIKE TABLE OF gs_data.
+
+
+DATA : BEGIN OF gs_header,
+         ponum(11),
+         podat(8),
+         venid(8),
+         dudat(8),
+         stext(60),
+         curky(5),
+         rgdat(8),
+         rgtor(8),
+       END OF gs_header,
+       gt_header LIKE TABLE OF gs_header.
+
+
+DATA : BEGIN OF gs_item,
+         ponum(11),
+         itnum(3) ,
+         pomnr(8) ,
+         amount(3),
+         meins(3) ,
+         plant(4) ,
+         poprc(17),
+         curky(5) ,
+         del(1)   ,
+         flag(1)  ,
+       END OF gs_item,
+       gt_item LIKE TABLE OF gs_item.
+
+
+
+" Selection Screen: Application Toolbar Button
+SELECTION-SCREEN: FUNCTION KEY 1, FUNCTION KEY 2.
+
+PARAMETERS: pa_file TYPE rlgrap-filename,
+            pa_file2 type rlgrap-filename.
+
+DATA : gs_bdc TYPE bdcdata,
+       gt_bdc LIKE TABLE OF gs_bdc.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

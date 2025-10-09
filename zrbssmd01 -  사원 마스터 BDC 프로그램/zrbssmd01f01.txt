@@ -1,0 +1,149 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRBSSMD01F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  F4_DATA_FILE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f4_data_file .
+  DATA: lt_file TYPE filetable,
+        ls_file TYPE file_table,
+        lv_rc   TYPE i.
+
+  CALL METHOD cl_gui_frontend_services=>file_open_dialog
+    CHANGING
+      file_table = lt_file
+      rc         = lv_rc.
+
+  READ TABLE lt_file INTO ls_file INDEX 1.    " 첫번째 선택한 파일을 업로드
+  IF sy-subrc EQ 0.
+    pa_file = ls_file.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXCEL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_excel_data .
+  DATA: lt_excel TYPE TABLE OF alsmex_tabline,
+        ls_excel LIKE LINE OF lt_excel.
+
+  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXPORTING
+      filename                = pa_file
+      i_begin_col             = 1     "Start column
+      i_begin_row             = 2     "Start row( 1 Row Column Name )
+      i_end_col               = 15    "max Field
+      i_end_row               = 10    "max row
+    TABLES
+      intern                  = lt_excel
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2
+      OTHERS                  = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  LOOP AT lt_excel INTO ls_excel.
+    CASE ls_excel-col.
+      WHEN 1. gs_data-depid  = ls_excel-value.
+      WHEN 2. gs_data-persg  = ls_excel-value.
+      WHEN 3. gs_data-lname  = ls_excel-value.
+      WHEN 4. gs_data-fname  = ls_excel-value.
+      WHEN 5. gs_data-entdt  = ls_excel-value.
+      WHEN 6. gs_data-gesch  = ls_excel-value.
+      WHEN 7. gs_data-gbdat  = ls_excel-value.
+      WHEN 8. gs_data-eid    = ls_excel-value.
+      WHEN 9. gs_data-edom   = ls_excel-value.
+      WHEN 10. gs_data-tel_1 = ls_excel-value.
+      WHEN 11. gs_data-tel_2 = ls_excel-value.
+      WHEN 12. gs_data-tel_3 = ls_excel-value.
+      WHEN 13. gs_data-postc = ls_excel-value.
+      WHEN 14. gs_data-addre = ls_excel-value.
+    ENDCASE.
+
+    AT END OF row.
+      APPEND gs_data TO gt_data.
+      CLEAR gs_data.
+    ENDAT.
+    CLEAR ls_excel.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_bdc USING p_prog TYPE sy-repid
+                   p_scr TYPE sy-dynnr
+                   p_beg.
+
+  CLEAR gs_bdc.
+  gs_bdc-program = p_prog.    " 프로그램명
+  gs_bdc-dynpro = p_scr.      " 시작할 스크린 넘버
+  gs_bdc-dynbegin = 'X'.      " Start of dynpro
+
+  APPEND gs_bdc TO gt_bdc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  BDC_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM bdc_field USING p_field
+                     p_value.
+
+  CLEAR gs_bdc.
+  gs_bdc-fnam = p_field.      " 필드명
+  gs_bdc-fval = p_value.      " 입력할 값
+
+  APPEND gs_bdc TO gt_bdc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  BDC_RADIO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM bdc_radio USING p_group
+                     p_value.
+
+  CLEAR gs_bdc.
+  CASE p_group.
+    WHEN 'PERSG'.
+      CASE p_value.
+        WHEN '1'. gs_bdc-fnam = 'ZSSSMD0103-PERSG_1'.
+        WHEN '2'. gs_bdc-fnam = 'ZSSSMD0103-PERSG_2'.
+        WHEN '3'. gs_bdc-fnam = 'ZSSSMD0103-PERSG_3'.
+      ENDCASE.
+
+    WHEN 'GESCH'.
+      CASE p_value.
+        WHEN '1'. gs_bdc-fnam = 'ZSSSMD0103-GESCH_1'.
+        WHEN '2'. gs_bdc-fnam = 'ZSSSMD0103-GESCH_2'.
+      ENDCASE.
+  ENDCASE.
+
+  gs_bdc-fval = 'X'.
+  APPEND gs_bdc TO gt_bdc.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

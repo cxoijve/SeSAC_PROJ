@@ -11,16 +11,17 @@ DATA : ok_code  TYPE sy-ucomm,
        gv_dynnr TYPE sy-dynnr,
        gv_msg   TYPE string.
 
+" 스크린 관련 변수
 DATA : gv_screen(1),
        gv_radio_screen(1),
        gv_entire_screen(1).
 
-DATA : gv_seqnum type n length 3.
+DATA : gv_seqnum TYPE n LENGTH 3.
 
 DATA : gv_radio_vname TYPE c VALUE 'X',
        gv_radio_venid TYPE c.
 
-
+" 날짜 Range 변수
 DATA : gr_dudat TYPE RANGE OF ztsspoh-dudat,
        gr_grdat TYPE RANGE OF ztssgrh-grdat.
 
@@ -60,17 +61,42 @@ DATA: go_alv_po_waiting TYPE REF TO cl_gui_alv_grid,  " 대기중인 PO
       go_alv_po_confirm TYPE REF TO cl_gui_alv_grid.  " 확정 내역
 
 
-" 101번 - Gr list & Gr item
+* ============================================
+* 101번 - 입고완료 리스트
+* ============================================
 
-*DATA : go_cust_gr  TYPE REF TO cl_gui_custom_container,
-*       go_con_grmain TYPE REF TO cl_gui_container.
-*
-*DATA : go_split_gr_main TYPE REF TO cl_gui_splitter_container.
-*
-*DATA : go_con_gr_right TYPE REF TO cl_gui_container.
-*
-*DATA : go_alv_gr_list TYPE REF TO cl_gui_alv_grid,
-*       go_alv_gr_item TYPE REF TO cl_gui_alv_grid.
+* Custom Container
+DATA: go_cust_gr TYPE REF TO cl_gui_custom_container.
+
+* Splitter Container
+DATA: go_split_gr_main TYPE REF TO cl_gui_splitter_container.  " 좌우 분할
+
+* Container References
+DATA: go_con_gr_top    TYPE REF TO cl_gui_container,  " 좌측 (GR List)
+      go_con_gr_bottom TYPE REF TO cl_gui_container.  " 우측 (GR Item, 추후 Vendor/Price 추가)
+
+* ALV Grids
+DATA: go_alv_gr_list TYPE REF TO cl_gui_alv_grid,  " GR 목록
+      go_alv_gr_item TYPE REF TO cl_gui_alv_grid.  " GR 아이템
+
+* ============================================
+* 200번 - 입고수정
+* ============================================
+
+DATA : go_dock_gr      TYPE REF TO cl_gui_docking_container,
+       go_split_editgr TYPE REF TO cl_gui_splitter_container.
+DATA : go_con_left  TYPE REF TO cl_gui_container,
+       go_con_right TYPE REF TO cl_gui_container.
+DATA : go_alv_editgr TYPE REF TO cl_gui_alv_grid,
+       go_alv_polist TYPE REF TO cl_gui_alv_grid.
+
+
+* ============================================
+* 300번 - 입고상세조회
+* ============================================
+
+DATA : go_con_detail type ref to cl_gui_custom_container,
+       go_alv_detail type ref to cl_gui_alv_grid.
 
 
 * ============================================
@@ -78,7 +104,7 @@ DATA: go_alv_po_waiting TYPE REF TO cl_gui_alv_grid,  " 대기중인 PO
 * ============================================
 
 DATA: BEGIN OF gs_podata,
-        light type char8,
+        light  TYPE char8,
         icon   LIKE icon-name,
         it_col TYPE lvc_t_scol.
     INCLUDE TYPE zsssmm0212.
@@ -95,14 +121,18 @@ DATA : BEGIN OF gs_itamt,
        gt_itamt LIKE TABLE OF gs_itamt.
 
 DATA : BEGIN OF gs_item,
-         color(4).
+         color(4),
+         it_col   TYPE lvc_t_scol,
+         style    TYPE lvc_t_styl.
     INCLUDE TYPE zsssmm0213.
 DATA : END OF gs_item,
 gt_item LIKE TABLE OF gs_item.
 
 
 DATA : BEGIN OF gs_confirm,
-         color(4).
+         color(4),
+         it_col   TYPE lvc_t_scol,
+         style    TYPE lvc_t_styl.
     INCLUDE TYPE zsssmm0213.
 DATA : END OF gs_confirm,
 gt_confirm LIKE TABLE OF gs_confirm.
@@ -124,6 +154,34 @@ DATA : BEGIN OF gs_gritem,
     INCLUDE TYPE zsssmm0216.
 DATA : END OF gs_gritem,
 gt_gritem LIKE TABLE OF gs_gritem.
+
+
+* ============================================
+* 200번 - 데이터
+* ============================================
+
+
+DATA : BEGIN OF gs_edit_item,
+         color(4).
+    INCLUDE  TYPE zsssmm0215.
+DATA : END OF gs_edit_item,
+gt_edit_item LIKE TABLE OF gs_edit_item.
+
+
+DATA : gt_temp LIKE gt_edit_item,
+       gs_temp LIKE gs_edit_item.
+
+
+DATA : BEGIN OF gs_gri,
+         grnum  TYPE ztssgrh-grnum,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+         meins  TYPE ztssgri-meins,
+       END OF gs_gri,
+       gt_gri LIKE TABLE OF gs_gri.
+
+
 
 
 * ============================================
@@ -156,7 +214,13 @@ DATA : gs_layo6 TYPE lvc_s_layo,
        gs_fcat6 TYPE lvc_s_fcat.
 
 
+DATA : gs_layo7 TYPE lvc_s_layo,
+       gt_fcat7 TYPE lvc_t_fcat,
+       gs_fcat7 TYPE lvc_s_fcat.
 
+DATA : gs_layo8 TYPE lvc_s_layo,
+       gt_fcat8 TYPE lvc_t_fcat,
+       gs_fcat8 TYPE lvc_s_fcat.
 
 
 
@@ -164,37 +228,58 @@ DATA : gt_sort TYPE lvc_t_sort,
        gs_sort TYPE lvc_s_sort.
 
 
+
+
+
+* ============================================
+* UTILITES
+* ============================================
+
+TYPES : BEGIN OF ty_money,
+          debit  TYPE ztssjei-debit,
+          credit TYPE ztssjei-credit,
+        END OF ty_money.
+
+
+" Text 메모 변수
+DATA : go_mod  TYPE REF TO cl_gui_custom_container,
+       go_edit TYPE REF TO cl_gui_textedit.
+TYPES: BEGIN OF t_text,
+         text TYPE ztssgrh-stext,
+       END OF t_text,
+       tt_text TYPE TABLE OF t_text.
+
+DATA: gt_edit TYPE TABLE OF t_text,
+      gs_edit LIKE LINE OF gt_edit.
+DATA: gv_text TYPE string.
+
+
+" 채번 변수
+DATA : gv_gr_num TYPE c LENGTH 11,
+       gv_fi_num TYPE c LENGTH 11,
+       gv_wh_num TYPE c LENGTH 11.
+
+
+* ============================================
+* COND
+* ============================================
+
 " 조건조회
 TABLES : zsssmm0210.
+DATA : gs_cond TYPE zsssmm0210.
+
+TABLES : zsssmm0211.
+DATA : gs_cond2 TYPE zsssmm0211.
+
+" 입고확정 모달창화면
 TABLES : zsssmm0214.
 
-* ============================================
-* 101번 - 입고완료 리스트
-* ============================================
-
-* Custom Container
-DATA: go_cust_gr TYPE REF TO cl_gui_custom_container.
-
-* Splitter Container
-DATA: go_split_gr_main TYPE REF TO cl_gui_splitter_container.  " 좌우 분할
-
-* Container References
-DATA: go_con_gr_top    TYPE REF TO cl_gui_container,  " 좌측 (GR List)
-      go_con_gr_bottom TYPE REF TO cl_gui_container.  " 우측 (GR Item, 추후 Vendor/Price 추가)
-
-* ALV Grids
-DATA: go_alv_gr_list TYPE REF TO cl_gui_alv_grid,  " GR 목록
-      go_alv_gr_item TYPE REF TO cl_gui_alv_grid.  " GR 아이템
-
-
-
-
 
 
 
 
 * ============================================
-* Event Handler
+* Event Handler & CLASS
 * ============================================
 
 CLASS lcl_event_handler DEFINITION FINAL.
@@ -202,9 +287,9 @@ CLASS lcl_event_handler DEFINITION FINAL.
     CLASS-METHODS :
       handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
       handle_data_changed FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
-      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm.
-*      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
-*      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
+      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
+      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
+      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
 ENDCLASS.
 
 CLASS lcl_layout_builder DEFINITION.

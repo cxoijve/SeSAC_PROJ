@@ -1,0 +1,81 @@
+*&---------------------------------------------------------------------*
+*& Report  ZRBSSMD01
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrbssmd01top                              .  " global Data
+
+* INCLUDE ZRBSSMD01O01                            .  " PBO-Modules
+* INCLUDE ZRBSSMD01I01                            .  " PAI-Modules
+INCLUDE zrbssmd01f01                              .  " FORM-Routines
+
+INITIALIZATION.
+  sscrfields-functxt_01 = 'Test'.
+
+
+AT SELECTION-SCREEN OUTPUT.
+
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_file.
+  " Selection screen의 엑셀파일 업로드에서 F4를 눌렀을 때 실행
+  PERFORM f4_data_file.
+
+
+AT SELECTION-SCREEN.
+  CASE sscrfields-ucomm.
+    WHEN 'FC01'.
+      MESSAGE i999(zmcss) WITH 'Test'.
+      RETURN.
+    WHEN OTHERS.
+  ENDCASE.
+
+
+START-OF-SELECTION.
+  " 엑셀파일 업로드 후 gt_data에 담기
+  PERFORM get_excel_data.
+*  cl_demo_output=>display_data( gt_data ).   " gt_data 확인용
+
+  " BDC 실행 루프
+  LOOP AT gt_data INTO gs_data.
+    CLEAR gt_bdc.
+
+    " Dynpro(Screen) - 100
+    PERFORM set_bdc USING 'SAPMZSSMD01'
+                          '0100'
+                          'X'.
+
+    PERFORM bdc_field USING 'BDC_OKCODE' 'REGIS'.     " [사원 등록] 버튼
+
+    " Dynpro(Screen) - 200
+    PERFORM set_bdc USING 'SAPMZSSMD01'
+                          '0200'
+                          'X'.
+
+    PERFORM bdc_field USING 'ZSSSMD0103-DEPID' gs_data-depid.
+    PERFORM bdc_radio USING 'PERSG' gs_data-persg.  " 라디오버튼
+    PERFORM bdc_field USING 'ZSSSMD0103-LNAME' gs_data-lname.
+    PERFORM bdc_field USING 'ZSSSMD0103-FNAME' gs_data-fname.
+    PERFORM bdc_field USING 'ZSSSMD0103-ENTDT' gs_data-entdt.
+    PERFORM bdc_radio USING 'GESCH' gs_data-gesch.  " 라디오버튼
+    PERFORM bdc_field USING 'ZSSSMD0103-GBDAT' gs_data-gbdat.
+    PERFORM bdc_field USING 'ZSSSMD0103-EID' gs_data-eid.
+    PERFORM bdc_field USING 'ZSSSMD0103-EDOM' gs_data-edom.
+    PERFORM bdc_field USING 'GV_TEL_1' gs_data-tel_1.
+    PERFORM bdc_field USING 'GV_TEL_2' gs_data-tel_2.
+    PERFORM bdc_field USING 'GV_TEL_3' gs_data-tel_3.
+    PERFORM bdc_field USING 'ZSSSMD0103-POSTC' gs_data-postc.
+    PERFORM bdc_field USING 'ZSSSMD0103-ADDRE' gs_data-addre.
+
+    PERFORM bdc_field USING 'BDC_OKCODE' 'SAVE'.      " [등록] 버튼
+
+    CALL TRANSACTION 'ZSSMD01'
+      USING gt_bdc
+      MODE 'N'.
+    WRITE sy-subrc.
+  ENDLOOP.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

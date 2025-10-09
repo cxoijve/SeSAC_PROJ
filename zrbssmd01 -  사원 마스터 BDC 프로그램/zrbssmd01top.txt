@@ -1,0 +1,40 @@
+*&---------------------------------------------------------------------*
+*& Include ZRBSSMD01TOP                                      Report ZRBSSMD01
+*&
+*&---------------------------------------------------------------------*
+REPORT ZRBSSMD01.
+
+" Fields on Selection screen
+TABLES: sscrfields.
+
+" Excel
+DATA: BEGIN OF gs_data,
+        " 필드들
+        depid(4),
+        persg(1),
+        lname(20),
+        fname(20),
+        entdt(8),
+        gesch(1),
+        gbdat(8),
+        eid(50),
+        edom(4),
+        tel_1(3),
+        tel_2(4),
+        tel_3(4),
+        postc(5),
+        addre(100),
+      END OF gs_data,
+      gt_data LIKE TABLE OF gs_data.
+
+" Selection screen - Application toolbar button
+SELECTION-SCREEN: FUNCTION KEY 1, FUNCTION KEY 2.
+
+PARAMETERS pa_file TYPE rlgrap-filename OBLIGATORY.    " PC 파일 경로
+
+" BDC
+DATA: gs_bdc TYPE bdcdata,
+      gt_bdc LIKE TABLE OF gs_bdc.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

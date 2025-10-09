@@ -31,6 +31,9 @@ MODULE user_command_0100 INPUT.
     WHEN 'DELALL'. " 불량 재고 일괄 폐기
 
     WHEN 'DELROW'. " 선택한 불량 재고 폐기
+
+    WHEN 'C300'.
+      PERFORM c300_0100.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -45,6 +48,105 @@ MODULE user_command_0200 INPUT.
     WHEN 'ENTER'.
     WHEN 'T210' OR 'T220'.
       tab200-activetab = ok_code.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+      " QUERY 300
+      PERFORM get_info_0300 TABLES gt_info_0300
+                            USING zsssmd0810
+                            CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR gt_info_0300.
+        RETURN.
+      ENDIF.
+
+    WHEN 'C310'.
+      CLEAR : gs_inware, gt_outwares, gt_info_0310, gv_imm_0310, gv_fix_0310, zsssmd0812, zsssmd0813.
+      CALL SCREEN 310 STARTING AT 10 10.
+      CLEAR : gs_inware, gt_outwares, gt_info_0310, gv_imm_0310, gv_fix_0310, zsssmd0812, zsssmd0813.
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0310  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0310 INPUT.
+  CASE ok_code.
+    WHEN 'CONTINUE'.
+
+    WHEN 'CANCLE'.
+      SET SCREEN 0.
+    WHEN 'FIXITM'.
+      PERFORM get_info_0310 TABLES gt_info_0310
+                            USING zsssmd0813
+                            CHANGING zsssmd0813-meins
+                                     gv_subrc.
+      IF gv_subrc <> 0. RETURN. ENDIF.
+
+      PERFORM set_fix USING    zsssmd0813
+                               'X'
+                      CHANGING gv_fix_0310
+                               gv_subrc.
+      IF gv_subrc <> 0. RETURN. ENDIF.
+    WHEN 'CHGITM'.
+      PERFORM set_fix USING zsssmd0813
+                            ''
+                      CHANGING gv_fix_0310
+                               gv_subrc.
+      IF gv_subrc <> 0. RETURN. ENDIF.
+      CLEAR : gt_info_0310.
+    WHEN 'IMM'.
+      PERFORM set_imm USING zsssmd0812
+                      CHANGING gv_imm_0310.
+
+    WHEN 'CREATE'.
+      PERFORM check_mrp TABLES   gt_info_0310
+                                 gt_outwares
+                        USING    zsssmd0812
+                                 zsssmd0813
+                        CHANGING gs_inware
+                                 gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR : gt_outwares, gs_inware.
+        RETURN.
+      ENDIF.
+
+      " 정말 계획하시겠습니까?
+      PERFORM release_mrp TABLES   gt_outwares
+                          USING    zsssmd0812
+                                   gs_inware
+                          CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR : gt_outwares, gs_inware.
+        RETURN.
+      ENDIF.
+
+      " SET DEFAULT CONDITION 300
+      PERFORM set_default_0300 CHANGING zsssmd0810
+                                        gv_subrc.
+
+      " 실패해도 MODAL은 닫도록.
+      " REQUERY 300
+      PERFORM get_info_0300 TABLES gt_info_0300
+                            USING zsssmd0810
+                            CHANGING gv_subrc.
+
+      " 실패해도 MODAL은 닫도록.
+      SET SCREEN 0.
   ENDCASE.
 ENDMODULE.
 

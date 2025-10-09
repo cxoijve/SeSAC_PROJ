@@ -1,6 +1,18 @@
 *&---------------------------------------------------------------------*
-*&  Include           ZSSMM02I01
+*& Include ZRBSSMD04TOP                                      Report ZRBSSMD04
+*&
 *&---------------------------------------------------------------------*
+REPORT zrbssmd04.
+
+DATA: gs_bdc TYPE bdcdata,
+      gt_bdc LIKE TABLE OF gs_bdc.
+
+
+DATA : gt_data LIKE TABLE OF zsssmd04003,
+       gs_data LIKE LINE OF gt_data.
+
+
+PARAMETERS pa_file TYPE rlgrap-filename.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

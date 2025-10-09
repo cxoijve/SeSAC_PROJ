@@ -1,0 +1,132 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRBSSMD04F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC_SCREEN_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_bdc_screen_field USING VALUE(pv_program) TYPE bdc_prog
+                                VALUE(pv_dynpro) TYPE bdc_dynr
+                                VALUE(pv_dynbegin) TYPE bdc_start.
+  CLEAR : GS_BDC.
+  gs_bdc-program = pv_program. "Program Name
+  gs_bdc-dynpro = pv_dynpro. " Screen No
+  gs_bdc-dynbegin = pv_dynbegin.  " Start Screen
+  APPEND gs_bdc TO gt_bdc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_bdc_field USING VALUE(pv_fnam)
+                         VALUE(pv_fval).
+
+  CLEAR gs_bdc.
+  gs_bdc-fnam = pv_fnam. "Screen Element Name
+  gs_bdc-fval = pv_fval. "Screen Input Value
+  APPEND gs_bdc TO gt_bdc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXEL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_exel_data .
+  DATA: lt_excel TYPE TABLE OF alsmex_tabline,
+        ls_excel LIKE LINE OF lt_excel.
+
+
+
+  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXPORTING
+      filename                = pa_file
+      i_begin_col             = 1
+      i_begin_row             = 2
+      i_end_col               = 10
+      i_end_row               = 1000
+    TABLES
+      intern                  = lt_excel
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2
+      OTHERS                  = 3.
+  IF sy-subrc <> 0.
+
+  ENDIF.
+
+  LOOP AT lt_excel INTO ls_excel.
+    CASE ls_excel-col.
+      WHEN '1'.
+        gs_data-cname = ls_excel-value.
+      WHEN '2'.
+        gs_data-begda = ls_excel-value.
+      WHEN '3'.
+        gs_data-endda = ls_excel-value.
+      WHEN '4'.
+        gs_data-postc = ls_excel-value.
+      WHEN '5'.
+        gs_data-addre = ls_excel-value.
+      WHEN '6'.
+        gs_data-ctype = ls_excel-value.
+      WHEN '7'.
+        gs_data-eid = ls_excel-value.
+      WHEN '8'.
+        gs_data-ednme = ls_excel-value.
+      WHEN '9'.
+        gs_data-cpnme = ls_excel-value.
+      WHEN '10'.
+        gs_data-penid = ls_excel-value.
+
+        AT END OF row.
+          APPEND gs_data TO gt_data.
+          CLEAR gs_data.
+        ENDAT.
+        CLEAR ls_excel.
+    ENDCASE.
+
+
+
+
+
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F4_DATA_FILE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f4_data_file .
+  DATA : lt_file TYPE filetable,
+         ls_file TYPE file_table,
+         lv_rc   TYPE i.
+
+  CALL METHOD cl_gui_frontend_services=>file_open_dialog
+    CHANGING
+      file_table = lt_file
+      rc         = lv_rc.
+
+  READ TABLE lt_file INTO ls_file INDEX 1.
+  IF sy-subrc = 0.
+    pa_file = ls_file.
+  ENDIF.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

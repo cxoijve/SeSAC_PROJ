@@ -48,6 +48,22 @@ MODULE create_alv OUTPUT.
                                       go_handler_0220
                                       '0220'.
       ENDIF.
+    WHEN '0300'.
+      IF go_con_0300 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0300'
+                            CHANGING  go_con_0300
+                                      go_alv_0300.
+      ENDIF.
+    WHEN '0310'.
+      IF go_con_0310 IS INITIAL.
+        PERFORM create_alv  USING     'CON_0310'
+                            CHANGING  go_con_0310
+                                      go_alv_0310.
+        CREATE OBJECT go_handler_0310.
+        PERFORM set_alv_handler USING go_alv_0310
+                                      go_handler_0310
+                                      '0310'.
+      ENDIF.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -87,6 +103,26 @@ MODULE display_alv OUTPUT.
                                      go_alv_0220
                                      'EXCLUDE'.
       ENDIF.
+    WHEN '0300'.
+      IF go_con_0300 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0300
+                                     gt_fcat_0300
+                                     gt_sort_0300
+                             USING   ''
+                                     gs_layo_0300
+                                     go_alv_0300
+                                     'NOT_EXCLUDE'.
+      ENDIF.
+    WHEN '0310'.
+      IF go_con_0310 IS NOT INITIAL.
+        PERFORM display_alv  TABLES  gt_info_0310
+                                     gt_fcat_0310
+                                     gt_sort_0310
+                             USING   ''
+                                     gs_layo_0310
+                                     go_alv_0310
+                                     'EXCLUDE'.
+      ENDIF.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -124,6 +160,32 @@ MODULE set_ts_dynnr_0200 OUTPUT.
       tab200-activetab = 'T210'.
   ENDCASE.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0310  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0310 OUTPUT.
+  SET PF-STATUS 'S310'.
+  SET TITLEBAR 'T310'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0310  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0310 OUTPUT.
+  PERFORM modify_screen_0310.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

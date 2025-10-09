@@ -1,0 +1,52 @@
+*&---------------------------------------------------------------------*
+*& Report ZRSSMD02
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrssmd02.
+
+
+PARAMETERS : pa_ware TYPE zsssmd0809 NO-DISPLAY.
+DATA : gs_ware LIKE LINE OF pa_ware.
+DATA : gv_warid TYPE zesswarid.
+DATA : gv_amount_string TYPE string.
+DATA : gv_log TYPE string.
+
+START-OF-SELECTION.
+  LOOP AT pa_ware INTO gs_ware.
+    CALL FUNCTION 'Z_INSERT_NEXT_WARE'
+      EXPORTING
+        is_ztssware     = gs_ware
+      IMPORTING
+        ev_warid        = gv_warid
+      EXCEPTIONS
+        numrange_failed = 1
+        insert_failed   = 2
+        zero_amount     = 3
+        init_detected   = 4
+        OTHERS          = 5.
+
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH 'INSERT FAILED!'.
+      RETURN.
+    ENDIF.
+
+    gv_amount_string = gs_ware-amount.
+
+    CONCATENATE
+      'OK -: '
+      gv_warid
+      '-'
+      gs_ware-matnr
+      gs_ware-wtype
+      gv_amount_string
+      gs_ware-meins
+    INTO gv_log
+    SEPARATED BY space.
+
+    MESSAGE i999(zmcss) WITH gv_log.
+    CLEAR : gs_ware, gv_log, gv_amount_string, gv_warid.
+  ENDLOOP.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

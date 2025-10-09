@@ -13,9 +13,16 @@ INCLUDE mzssmd07o01                             .  " PBO-Modules
 INCLUDE mzssmd07i01                             .  " PAI-Modules
 INCLUDE mzssmd07f01                             .  " FORM-Routines
 
+
+LOAD-OF-PROGRAM.
+  PERFORM set_alv_condition.
+  PERFORM get_prcat_data TABLES gt_prcat.
+
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 벤더 원자재 가격 설정 프로그램
+* T120 --> 삭제 확인창
+* T200 --> 벤더 원자재 생성창
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

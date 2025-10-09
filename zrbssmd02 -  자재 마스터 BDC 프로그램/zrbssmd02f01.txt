@@ -1,0 +1,115 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRBSSMD02F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC_SETTINGS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_BDC  text
+*----------------------------------------------------------------------*
+FORM set_bdc_settings  TABLES   pt_bdc STRUCTURE gs_bdc
+                       USING    VALUE(pv_prog)
+                                VALUE(pv_dynnr)
+                                VALUE(pv_beg).
+
+  pt_bdc-program = pv_prog.
+  pt_bdc-dynpro = pv_dynnr.
+  pt_bdc-dynbegin = pv_beg.
+  APPEND pt_bdc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC_RECORD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_BDC  text
+*      -->P_0025   text
+*      -->P_0026   text
+*----------------------------------------------------------------------*
+FORM set_bdc_record  TABLES   pt_bdc STRUCTURE gs_bdc
+                     USING    VALUE(pv_fieldname)
+                              VALUE(pv_value).
+  CLEAR pt_bdc.
+  pt_bdc-fnam = pv_fieldname.
+  pt_bdc-fval = pv_value.
+  APPEND pt_bdc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F4_DATA_FILE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f4_data_file .
+  DATA : lt_file TYPE filetable,
+         ls_file TYPE file_table,
+         lv_rc   TYPE i.
+
+  CALL METHOD cl_gui_frontend_services=>file_open_dialog
+    CHANGING
+      file_table = lt_file
+      rc         = lv_rc.
+
+  READ TABLE lt_file INTO ls_file INDEX 1.
+  IF sy-subrc = 0.
+    pa_file = ls_file.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXCEL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_excel_data .
+  DATA: lt_excel TYPE TABLE OF alsmex_tabline,
+        ls_excel LIKE LINE OF lt_excel.
+
+  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXPORTING
+      filename                = pa_file
+      i_begin_col             = 1     "Start column
+      i_begin_row             = 2     "Start row( 1 Row Column Name )
+      i_end_col               = 10    "max Field
+      i_end_row               = 1000  "max row
+    TABLES
+      intern                  = lt_excel
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2
+      OTHERS                  = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  LOOP AT lt_excel INTO ls_excel.
+    CASE ls_excel-col.
+      WHEN '1'.
+        gs_ztssmat-mtype = ls_excel-value.
+      WHEN '2'.
+        gs_ztssmat-kname = ls_excel-value.
+      WHEN '3'.
+        gs_ztssmat-ename = ls_excel-value.
+      WHEN '4'.
+        gs_ztssmat-expda = ls_excel-value.
+      WHEN '5'.
+        gs_ztssmat-tflag = ls_excel-value.
+    ENDCASE.
+
+    AT END OF row.
+      APPEND gs_ztssmat TO gt_ztssmat.
+      CLEAR gs_ztssmat.
+    ENDAT.
+    CLEAR ls_excel.
+  ENDLOOP.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

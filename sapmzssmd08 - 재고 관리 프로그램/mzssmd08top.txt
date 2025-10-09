@@ -97,5 +97,72 @@ DATA : gt_sort_0220 TYPE lvc_t_sort,
 " ALV Handler 0220
 DATA go_handler_0220 TYPE REF TO lcl_handler.
 
+" 300 ==============================================
+" Condition 300
+TABLES zsssmd0810.
+
+" Range 300
+DATA : grt_datum TYPE RANGE OF tbtco-sdlstrtdt,
+       gr_datum  LIKE LINE OF grt_datum.
+DATA : grt_status TYPE RANGE OF tbtco-status,
+       gr_status  LIKE LINE OF grt_status.
+
+DATA : BEGIN OF gs_info_0300.
+DATA : cellscol TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmd0811.
+DATA : END OF gs_info_0300.
+DATA : gt_info_0300 LIKE TABLE OF gs_info_0300.
+
+" ALV Objects 0300
+DATA   go_con_0300 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0300 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0300 TYPE lvc_s_layo.
+DATA : gt_fcat_0300 TYPE lvc_t_fcat,
+       gs_fcat_0300 TYPE lvc_s_fcat.
+DATA : gt_sort_0300 TYPE lvc_t_sort,
+       gs_sort_0300 TYPE lvc_s_sort.
+
+" ALV Handler 0300
+DATA go_handler_0300 TYPE REF TO lcl_handler.
+
+" Insert Data 0310
+DATA : gs_inware TYPE ztssware.
+DATA : gt_outwares TYPE TABLE OF ztssware.
+
+" Condition 0310
+TABLES zsssmd0812.
+
+TABLES zsssmd0813.
+
+DATA : BEGIN OF gs_info_0310.
+DATA : cellscol TYPE lvc_t_scol,
+       matnr    TYPE zessmatnr,
+       matnm    TYPE zessmatnm,
+       stoid    TYPE zessstoid,
+       stonm    TYPE zessstonm,
+       astck    TYPE int4,
+       ustck    TYPE int4,
+       afamt    TYPE int4,
+       meins    TYPE zessmeins.
+DATA : END OF gs_info_0310.
+DATA : gt_info_0310 LIKE TABLE OF gs_info_0310.
+
+" ALV Objects 0310
+DATA   go_con_0310 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0310 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0310 TYPE lvc_s_layo.
+DATA : gt_fcat_0310 TYPE lvc_t_fcat,
+       gs_fcat_0310 TYPE lvc_s_fcat.
+DATA : gt_sort_0310 TYPE lvc_t_sort,
+       gs_sort_0310 TYPE lvc_s_sort.
+
+" ALV Handler 0310
+DATA go_handler_0310 TYPE REF TO lcl_handler.
+
+" Flag 0310
+
+DATA : gv_imm_0310, " 'X' : Immediate 설정함
+       gv_fix_0310. " 'X' : 아이템 결정함.
+
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

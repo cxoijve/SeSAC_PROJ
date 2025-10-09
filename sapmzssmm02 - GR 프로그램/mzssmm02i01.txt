@@ -12,8 +12,18 @@ MODULE user_command_0100 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'SEARCH'.
+      IF gv_screen = 0.
+        PERFORM get_po_datas USING zsssmm0210.
+      ELSEIF gv_screen = 1.
+        PERFORM get_gr_datas USING zsssmm0210.
+      ENDIF.
     WHEN 'TAB1' OR 'TAB2'.
-      IF ok_code = 'TAB1'. gv_screen = 1. ELSE. gv_screen = 0. ENDIF.
+      IF ok_code = 'TAB1'.
+        gv_screen = 1.
+        CLEAR : gt_item, gt_confirm.
+      ELSE.
+        gv_screen = 0.
+      ENDIF.
       t_info-activetab = ok_code.
 
     WHEN 'RA1'.
@@ -33,14 +43,127 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE exit_0100 INPUT.
 
-  CASE OK_CODE.
+  CASE ok_code.
     WHEN 'EXIT'.
-      leave PROGRAM.
+      LEAVE PROGRAM.
     WHEN 'CANC'.
-      leave to SCREEN 0.
+      LEAVE TO SCREEN 0.
     WHEN OTHERS.
   ENDCASE.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0110 INPUT.
+  CASE ok_code.
+    WHEN 'I_CANCLE'.
+      LEAVE TO SCREEN 0.
+    WHEN 'I_SAVE'.
+      " 아이템 확인 -> 1:CN이지만 1:N처럼 확인(아이템이 없으면 입고를 못함)
+      IF gt_confirm IS INITIAL.
+        MESSAGE i999(zmcss) WITH '아이템 1개 이상 시 입고 가능합니다!'.
+        PERFORM clear_text USING go_edit.
+        RETURN.
+      ENDIF.
+
+      " 비고란 세팅
+      PERFORM set_text_edit TABLES gt_edit USING go_edit.
+
+      " 글자 읽어서 data에 전달
+      LOOP AT gt_edit INTO gs_edit.
+        CONCATENATE gv_text gs_edit-text INTO gv_text SEPARATED BY space.
+      ENDLOOP.
+*      " 팝업 확인 후 insert작업
+      PERFORM confirm_contents.
+      PERFORM clear_editor.
+*      " 전역 clear 및 스크린나가기
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0110 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      CLEAR: zsssmm0211,
+           gs_cond2,
+           gt_edit_item.
+      PERFORM open_edit_to_close.
+      LEAVE TO SCREEN 0.
+    WHEN 'EDIT'.
+      PERFORM edit_grdoc.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'EXIT'.
+      CLEAR: zsssmm0211,
+           gs_cond2,
+           gt_edit_item.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      CLEAR: zsssmm0211,
+           gs_cond2,
+           gt_edit_item.
+      LEAVE TO SCREEN 0.
+
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0300 INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+
+    WHEN OTHERS.
+  ENDCASE.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

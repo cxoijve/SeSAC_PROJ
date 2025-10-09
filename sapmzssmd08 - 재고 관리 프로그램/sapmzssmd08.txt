@@ -38,12 +38,23 @@ LOAD-OF-PROGRAM.
                             TABLES    gt_fcat_0220
                                       gt_sort_0220
                             USING     '0220'
-                            CHANGING  gs_layo_0220.
+                            CHANGING  gs_layo_0220,
+
+                            TABLES    gt_fcat_0300
+                                      gt_sort_0300
+                            USING     '0300'
+                            CHANGING  gs_layo_0300,
+
+                            TABLES    gt_fcat_0310
+                                      gt_sort_0310
+                            USING     '0310'
+                            CHANGING  gs_layo_0310.
 
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 재고 관리 프로그램
 * T200 --> 재고 변동 상세 내역
+* T300 --> Material Resource Planning
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

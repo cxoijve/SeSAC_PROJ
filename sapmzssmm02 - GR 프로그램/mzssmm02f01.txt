@@ -36,14 +36,14 @@ FORM modify_screen_0100 .
         IF gv_entire_screen  = 1.
           screen-input = 0.
           screen-active = 0.
-        endif.
+        ENDIF.
       WHEN 'BT2'.
         IF gv_entire_screen = 0 OR gv_screen = 1.
           screen-input = 0.
           screen-active = 0.
         ENDIF.
       WHEN 'BT3'.
-        IF gv_screen = 1 or gv_entire_screen = 1.
+        IF gv_screen = 1 OR gv_entire_screen = 1.
           screen-input = 0.
           screen-active = 0.
         ENDIF.
@@ -101,6 +101,8 @@ FORM set_alv_0102 .
   ELSE.
     PERFORM refresh_alv_0102.
   ENDIF.
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -277,7 +279,7 @@ FORM create_alv     USING    VALUE(po_con) TYPE REF TO cl_gui_container
     EXPORTING
 *     i_shellstyle      = 0
 *     i_lifetime        =
-*      i_appl_events     = 'X'
+*     i_appl_events     = 'X'
       i_parent          = po_con
     EXCEPTIONS
       error_cntl_create = 1
@@ -301,9 +303,10 @@ ENDFORM.
 FORM req_event_for_alv_0102 .
 
   SET HANDLER :  lcl_event_handler=>handle_toolbar FOR go_alv_po_waiting,
+                 lcl_event_handler=>handle_toolbar FOR go_alv_po_confirm,
                  lcl_event_handler=>handle_user_command FOR go_alv_po_waiting,
-*                 lcl_layout_builder=>create for go_alv_po_waiting,
                  lcl_event_handler=>handle_user_command FOR go_alv_po_items,
+                 lcl_event_handler=>handle_user_command FOR go_alv_po_confirm,
                  lcl_event_handler=>handle_toolbar FOR go_alv_po_items,
                  lcl_event_handler=>handle_data_changed FOR go_alv_po_items.
 *
@@ -467,15 +470,6 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_alv_0101 .
-  DATA : go_cust_gr    TYPE REF TO cl_gui_custom_container,
-         go_con_grmain TYPE REF TO cl_gui_container.
-
-  DATA : go_split_gr_main TYPE REF TO cl_gui_splitter_container.
-
-  DATA : go_con_gr_right TYPE REF TO cl_gui_container.
-
-  DATA : go_alv_gr_list TYPE REF TO cl_gui_alv_grid,
-         go_alv_gr_item TYPE REF TO cl_gui_alv_grid.
 
 
   IF go_cust_gr IS INITIAL.
@@ -513,9 +507,9 @@ FORM create_container_0101 .
 
 
   PERFORM create_cust_obj  USING 'CON_101' CHANGING go_cust_gr.
-  PERFORM create_split_obj_cust USING go_cust_gr 2 1 CHANGING go_split_gr_main.
+  PERFORM create_split_obj_cust USING go_cust_gr 1 1 CHANGING go_split_gr_main.
   PERFORM get_split_container USING 1 1 CHANGING go_split_gr_main go_con_gr_top.
-  PERFORM get_split_container USING 2 1 CHANGING go_split_gr_main go_con_gr_bottom.
+*  PERFORM get_split_container USING 2 1 CHANGING go_split_gr_main go_con_gr_bottom.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -528,7 +522,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM create_alvs_0101 .
   PERFORM create_alv USING go_con_gr_top CHANGING go_alv_gr_list.
-  PERFORM create_alv USING go_con_gr_bottom CHANGING go_alv_gr_item.
+*  PERFORM create_alv USING go_con_gr_bottom CHANGING go_alv_gr_item.
+  PERFORM req_event_for_alv_0101.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  DISPLAY_ALVS_0101
@@ -541,7 +536,7 @@ ENDFORM.
 FORM display_alvs_0101 .
 
   PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0211' gs_layo5 gt_exclude CHANGING gt_grdata gt_fcat5 gt_sort go_alv_gr_list.
-  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo6 gt_exclude CHANGING gt_gritem gt_fcat6 gt_sort go_alv_gr_item.
+*  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo6 gt_exclude CHANGING gt_gritem gt_fcat6 gt_sort go_alv_gr_item.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -554,7 +549,676 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM refresh_alv_0101 .
   PERFORM refresh_table_display CHANGING go_alv_gr_list.
-  PERFORM refresh_table_display CHANGING go_alv_gr_item.
+*  PERFORM refresh_table_display CHANGING go_alv_gr_item.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TEXT_EDIT_0110
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0070   text
+*      -->P_GO_MOD  text
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM set_text_edit_0110  USING VALUE(p_con_name)
+                              po_con TYPE REF TO cl_gui_custom_container
+                              po_edit TYPE REF TO cl_gui_textedit  .
+  IF po_con IS INITIAL.
+    CREATE OBJECT po_con
+      EXPORTING
+        container_name = p_con_name.
+  ENDIF.
+
+  IF po_edit IS INITIAL.
+    CREATE OBJECT po_edit
+      EXPORTING
+        max_number_chars = 60
+        parent           = po_con.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CLEAR_TEXT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM clear_text  USING po_edit TYPE REF TO cl_gui_textedit.
+
+  DATA: lt_empty TYPE soli_tab.
+
+  IF po_edit IS BOUND.
+    CALL METHOD po_edit->set_text_as_r3table
+      EXPORTING
+        table = lt_empty.
+  ENDIF.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CONFIRM_CONTENTS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM confirm_contents .
+
+  DATA lv_answer TYPE c.
+
+  PERFORM popup_to_confirm
+    USING    '입고최종확인'                " 제목
+             '정말 입고하시겠습니까?'       " 질문
+             'Yes'                         " 버튼1 텍스트
+             'ICON_CHECKED'                " 버튼1 아이콘
+             'No'                          " 버튼2 텍스트
+             'ICON_INCOMPLETE'             " 버튼2 아이콘
+             '누르면 입고가 완료됩니다'     " 버튼1 퀵인포
+             '누르면 입고가 취소됩니다'     " 버튼2 퀵인포
+    CHANGING lv_answer.
+
+
+
+  CASE lv_answer.
+    WHEN '1'.
+*      MESSAGE i999(zmcss) with '입고완료!'.
+      PERFORM insert_grdatas.
+    WHEN '2'.
+    WHEN '3'.
+
+
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0944   text
+*      -->P_0945   text
+*      -->P_0946   text
+*      -->P_0947   text
+*      -->P_0948   text
+*      -->P_0949   text
+*      -->P_0950   text
+*      -->P_0951   text
+*      <--P_LV_ANSWER  text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm   USING     iv_title
+                                  iv_question
+                                  iv_btn1_text
+                                  iv_btn1_icon
+                                  iv_btn2_text
+                                  iv_btn2_icon
+                                  iv_info1
+                                  iv_info2
+                        CHANGING cv_answer    TYPE c.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = iv_title
+      text_question         = iv_question
+      text_button_1         = iv_btn1_text
+      icon_button_1         = iv_btn1_icon
+      text_button_2         = iv_btn2_text
+      icon_button_2         = iv_btn2_icon
+      default_button        = '1'
+      display_cancel_button = 'X'
+      iv_quickinfo_button_1 = iv_info1
+      iv_quickinfo_button_2 = iv_info2
+    IMPORTING
+      answer                = cv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+
+  IF sy-subrc <> 0.
+    cv_answer = 'A'.  " Cancel 처리
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TEXT_EDIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_EDIT  text
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM set_text_edit  TABLES pt_edit TYPE tt_text
+                   USING po_edit TYPE REF TO cl_gui_textedit  .
+
+  CALL METHOD po_edit->get_text_as_r3table
+    IMPORTING
+      table  = pt_edit[]
+    EXCEPTIONS
+      OTHERS = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CLEAR_EDITOR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM clear_editor .
+
+  CLEAR: gv_text,
+       gt_edit,
+       gt_item,
+       gt_confirm.
+
+
+  PERFORM refresh_alv_0102.
+  PERFORM clear_text USING go_edit.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0101 .
+  SET HANDLER :    lcl_event_handler=>handle_double_click FOR go_alv_gr_list,
+                   lcl_event_handler=>handle_toolbar FOR go_alv_gr_list,
+                   lcl_event_handler=>handle_user_command FOR go_alv_gr_list.
+*                     lcl_event_handler=>handle_hotspot FOR go_alv_gr_list.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0200 .
+
+  IF go_dock_gr IS INITIAL.
+    PERFORM init_alv_0200.
+  ELSE.
+*    PERFORM display_alv_grid_200.
+    PERFORM display_alv_grid_200.
+    PERFORM refresh_alv_0200.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0200 .
+  PERFORM create_container_0200.
+  PERFORM create_alvs_0200.
+  PERFORM display_alv_grid_200.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_CONTAINER_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_container_0200 .
+
+  PERFORM create_dock_bottom CHANGING go_dock_gr.
+  PERFORM create_dock_split_obj USING go_dock_gr 1 2 CHANGING go_split_editgr.
+  PERFORM set_row_height USING 1 30 CHANGING go_split_editgr.
+  PERFORM set_col_width USING 1 40 CHANGING go_split_editgr.
+  PERFORM get_split_container USING 1 1 CHANGING go_split_editgr go_con_left.
+  PERFORM get_split_container USING 1 2 CHANGING go_split_editgr go_con_right.
+
+  PERFORM set_col_width USING 2 58 CHANGING go_split_editgr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_DOCK_BOTTOM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GO_DOCK_GR  text
+*----------------------------------------------------------------------*
+FORM create_dock_bottom  CHANGING co_dock TYPE REF TO cl_gui_docking_container.
+
+  CREATE OBJECT co_dock
+    EXPORTING
+*     parent                      =
+      repid                       = sy-repid
+      dynnr                       = sy-dynnr
+      side                        = cl_gui_docking_container=>dock_at_bottom
+      extension                   = 300
+*     style                       =
+*     lifetime                    = lifetime_default
+*     caption                     =
+*     metric                      = 0
+*     ratio                       =
+*     no_autodef_progid_dynnr     =
+*     name                        =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_DOCK_SPLIT_OBJ
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_DOCK_GR  text
+*      -->P_1      text
+*      -->P_2      text
+*      <--P_GO_SPLIT_EDITGR  text
+*----------------------------------------------------------------------*
+FORM create_dock_split_obj  USING    VALUE(po_obj) TYPE REF TO cl_gui_docking_container
+                                VALUE(p_1) TYPE i
+                                VALUE(p_2) TYPE i
+                              CHANGING co_split TYPE REF TO cl_gui_splitter_container.
+
+  CREATE OBJECT co_split
+    EXPORTING
+      parent  = po_obj
+      rows    = p_1
+*     WIDTH   = 2000
+      columns = p_2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALVS_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alvs_0200 .
+  PERFORM create_alv USING go_con_left CHANGING go_alv_editgr.
+  PERFORM create_alv USING go_con_right CHANGING go_alv_polist.
+
+  PERFORM req_event_for_alv_0200.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0200 .
+
+  SET HANDLER :
+                  lcl_event_handler=>handle_user_command FOR go_alv_editgr,
+                  lcl_event_handler=>handle_toolbar FOR go_alv_editgr,
+                  lcl_event_handler=>handle_hotspot FOR go_alv_editgr,
+                  lcl_event_handler=>handle_data_changed FOR go_alv_editgr.
+
+  CALL METHOD go_alv_editgr->register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_GRID_200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_grid_200 .
+
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0215' gs_layo7 gt_exclude CHANGING gt_edit_item gt_fcat7 gt_sort go_alv_editgr.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0213' gs_layo8 gt_exclude CHANGING gt_confirm gt_fcat8 gt_sort go_alv_polist.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_EDITGR_CHANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_DATA_CHANGED  text
+*      -->P_LS_CELL  text
+*----------------------------------------------------------------------*
+FORM handle_editgr_change   USING p_data_changed TYPE REF TO cl_alv_changed_data_protocol
+                                  ps_cell        LIKE LINE OF p_data_changed->mt_good_cells.
+
+  DATA: lv_orqty      TYPE p,
+        lv_ponum      TYPE ztsspoi-ponum,
+        lv_itnum      TYPE ztsspoi-itnum,
+        lv_grnum      TYPE ztssgrh-grnum,
+        lv_po_amt     TYPE ztsspoi-amount,
+        lv_gr_qty     TYPE p,
+        lv_one_gr_qty TYPE p.
+
+  READ TABLE gt_edit_item INTO gs_edit_item INDEX ps_cell-row_id.
+  CHECK sy-subrc = 0.
+
+  CASE ps_cell-fieldname.
+    WHEN 'AMOUNT'.
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'AMOUNT'
+                              CHANGING lv_orqty.
+
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'PONUM'
+                              CHANGING lv_ponum.
+
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'ITNUM'
+                              CHANGING lv_itnum.
+
+      PERFORM validate_editgr_amount  USING    p_data_changed ps_cell lv_orqty lv_ponum lv_itnum
+                                      CHANGING gs_edit_item.
+
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  VALIDATE_EDITGR_AMOUNT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_DATA_CHANGED  text
+*      -->P_PS_CELL  text
+*      -->P_LV_ORQTY  text
+*      -->P_LV_PONUM  text
+*      -->P_LV_ITNUM  text
+*      <--P_GS_EDIT_ITEM  text
+*----------------------------------------------------------------------*
+FORM validate_editgr_amount  USING  p_data_changed TYPE REF TO cl_alv_changed_data_protocol
+                                    ps_cell        LIKE LINE OF p_data_changed->mt_good_cells
+                                    pv_orqty       TYPE p
+                                    pv_ponum       TYPE ztsspoi-ponum
+                                    pv_itnum       TYPE ztsspoi-itnum
+                             CHANGING cs_edit_item   LIKE gs_edit_item.
+
+
+  DATA: lv_grnum      TYPE ztssgrh-grnum,
+        lv_po_amt     TYPE ztsspoi-amount,
+        lv_gr_qty     TYPE p,
+        lv_one_gr_qty TYPE p,
+        lv_available  TYPE p.
+
+  lv_grnum = zsssmm0211-grnum.
+
+  " PO 에서 개수 구하기
+  SELECT SINGLE amount
+    INTO lv_po_amt
+    FROM ztsspoi
+    WHERE ponum = pv_ponum
+      AND itnum = pv_itnum.
+
+  CHECK sy-subrc = 0.
+
+  " 전체 GR 양구하기
+  PERFORM calculate_gr_quantities USING    pv_ponum pv_itnum lv_grnum
+                                  CHANGING lv_gr_qty
+                                           lv_one_gr_qty.
+
+  lv_available = lv_po_amt - lv_gr_qty + lv_one_gr_qty.
+
+  IF pv_orqty > lv_available.
+    MESSAGE s999(zmcss) WITH pv_orqty '는 유효하지 않습니다(PO 수량 초과!)' DISPLAY LIKE 'W'.
+    RETURN.
+  ENDIF.
+
+  cs_edit_item-amount = pv_orqty.
+  MODIFY gt_edit_item FROM cs_edit_item INDEX ps_cell-row_id.
+
+  p_data_changed->modify_cell(
+    EXPORTING
+      i_row_id    = ps_cell-row_id
+      i_tabix     = ps_cell-tabix
+      i_fieldname = ps_cell-fieldname
+      i_value     = pv_orqty
+  ).
+
+  MESSAGE s999(zmcss) WITH '입고수량이 변경되었습니다:' pv_orqty.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALCULATE_GR_QUANTITIES
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_PONUM  text
+*      -->P_PV_ITNUM  text
+*      -->P_LV_GRNUM  text
+*      <--P_LV_GR_QTY  text
+*      <--P_LV_ONE_GR_QTY  text
+*----------------------------------------------------------------------*
+FORM calculate_gr_quantities  USING    pv_ponum      TYPE ztsspoi-ponum
+                                       pv_itnum      TYPE ztsspoi-itnum
+                                       pv_grnum      TYPE ztssgrh-grnum
+                              CHANGING cv_total_qty  TYPE p
+                                       cv_cur_qty TYPE p.
+  CLEAR: cv_total_qty,
+         cv_cur_qty.
+
+  " 모든 gr아이템 - 수량 가져오기!
+  SELECT grnum ponum itnum amount
+    FROM ztssgri
+    INTO CORRESPONDING FIELDS OF TABLE gt_gri
+    WHERE ponum = pv_ponum
+      AND itnum = pv_itnum.
+
+  IF sy-subrc <> 0. RETURN. ENDIF.
+
+  " GR에 있는 '수량' 구하기
+  LOOP AT gt_gri INTO gs_gri.
+    cv_total_qty = cv_total_qty + gs_gri-amount.
+  ENDLOOP.
+
+  " 현재 GRNUM에 있는 수량만 구하기
+  LOOP AT gt_gri INTO gs_gri WHERE grnum = pv_grnum.
+    cv_cur_qty = cv_cur_qty + gs_gri-amount.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0200 .
+
+
+  PERFORM refresh_table_display CHANGING go_alv_editgr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  OPEN_EDIT_TO_CLOSE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM open_edit_to_close .
+
+
+  FIELD-SYMBOLS: <fs_fcat> TYPE lvc_s_fcat.
+
+*  IF gv_temp_edit IS INITIAL.
+
+  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+    WITH KEY fieldname = 'AMOUNT'.
+
+  IF sy-subrc = 0.
+    IF <fs_fcat>-edit = 'X'. <fs_fcat>-edit = ''. ENDIF.
+*   ELSE.
+*    APPEND VALUE #( fieldname = 'AMOUNT' edit = '' ) TO gt_fcat7.
+  ENDIF.
+
+  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+    WITH KEY fieldname = 'STOID'.
+
+  IF sy-subrc = 0.
+    IF <fs_fcat>-edit = 'X'. <fs_fcat>-edit = ''. ENDIF.
+*  ELSE.
+*    APPEND VALUE #( fieldname = 'STOID' edit = '' ) TO gt_fcat7.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0300 .
+
+  IF go_con_detail IS INITIAL.
+    PERFORM init_alv_0300.
+  ELSE.
+    PERFORM refresh_alv_0300.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0300 .
+  PERFORM create_container_0300.
+  PERFORM create_alvs_0300.
+  PERFORM display_alv_grid_0300.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_CONTAINER_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_container_0300 .
+*  PERFORM create_cust_obj  USING 'CON_DETAIL' CHANGING go_con_detail.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALVS_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alvs_0300 .
+  PERFORM create_alv_custom USING 'CON_DETAIL'  CHANGING go_con_detail go_alv_detail.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_GRID_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_grid_0300 .
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo6 gt_exclude CHANGING gt_gritem gt_fcat6 gt_sort go_alv_detail.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0300 .
+  PERFORM refresh_table_display CHANGING go_alv_detail.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_CUSTOM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_CON_DETAIL  text
+*      <--P_GO_ALV_DETAIL  text
+*----------------------------------------------------------------------*
+FORM create_alv_custom USING VALUE(p_con) TYPE c
+                 CHANGING  co_con TYPE REF TO cl_gui_custom_container
+                           co_alv TYPE REF TO cl_gui_alv_grid.
+
+  IF co_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT co_con
+    EXPORTING
+*     parent                      =
+      container_name              = p_con
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    " &에 대한 시스템 오류입니다 담당자 &에게 문의하세요
+    MESSAGE a999(zmcss) WITH '시스템 오류입니다. 담당자에게 문의하세요'.
+    RETURN.
+*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
+*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
+  ENDIF.
+
+  CREATE OBJECT co_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = co_con
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '시스템 오류입니다. 담당자에게 문의하세요'.
+    RETURN.
+  ENDIF.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

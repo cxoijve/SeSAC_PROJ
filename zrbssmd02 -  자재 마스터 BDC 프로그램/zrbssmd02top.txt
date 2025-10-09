@@ -1,0 +1,25 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRBSSMD02TOP
+*&---------------------------------------------------------------------*
+REPORT zrbssmd02.
+
+TABLES : sscrfields.
+
+DATA : BEGIN OF gs_ztssmat,
+         mtype(1),
+         kname(40),
+         ename(40),
+         expda(3),
+         tflag(1),
+       END OF gs_ztssmat,
+       gt_ztssmat LIKE TABLE OF gs_ztssmat.
+
+DATA : gs_bdc TYPE bdcdata,
+       gt_bdc LIKE TABLE OF gs_bdc.
+
+SELECTION-SCREEN: FUNCTION KEY 1.
+
+PARAMETERS : pa_file TYPE rlgrap-filename.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

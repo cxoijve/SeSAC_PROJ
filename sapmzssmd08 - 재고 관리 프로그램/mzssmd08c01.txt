@@ -14,6 +14,8 @@ CLASS lcl_handler IMPLEMENTATION.
            lv_ginum TYPE zessginum,
            lv_grnum TYPE zessgrnum.
 
+    DATA : ls_info_0310 LIKE gs_info_0310.
+
     CASE me->lv_hname.
       WHEN '0100'.
         READ TABLE gt_info_0100 INTO ls_info_0100 INDEX es_row_no-row_id.
@@ -38,6 +40,9 @@ CLASS lcl_handler IMPLEMENTATION.
             lv_grnum = ls_info_0200-rdoc.
           WHEN OTHERS.
         ENDCASE.
+      WHEN '0310'.
+        READ TABLE gt_info_0310 INTO ls_info_0310 INDEX es_row_no-row_id.
+        lv_matnr = ls_info_0310-matnr.
     ENDCASE.
 
     CASE e_column_id-fieldname.
@@ -57,11 +62,9 @@ CLASS lcl_handler IMPLEMENTATION.
         IF sy-subrc <> 0.
           RETURN.
         ENDIF.
-
       WHEN 'WARID'.
         MESSAGE i999(zmcss) WITH 'HOTSPOT WARID :' lv_warid.
       WHEN 'RDOC'.
-
         IF lv_ginum IS NOT INITIAL AND lv_grnum IS INITIAL.
           CALL FUNCTION 'Z_CALL_GI_DETAIL'
             EXPORTING

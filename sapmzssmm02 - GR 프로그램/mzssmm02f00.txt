@@ -103,44 +103,7 @@ FORM create_fcat  USING    VALUE(pv_str) TYPE dd02l-tabname
   ENDIF.
 
 ENDFORM.
-*&---------------------------------------------------------------------*
-*&      Form  GET_VEN_NAME
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*      -->P_P_COND_VNAME  text
-*      <--P_LV_VENID  text
-*----------------------------------------------------------------------*
-FORM get_ven_name  USING  VALUE(p_vname) TYPE zsssmm0210-vname
-                   CHANGING p_venid TYPE zsssmm0210-venid.
 
-
-  CALL FUNCTION 'ZFMSS_GET_VEN_ID'
-    EXPORTING
-      iv_vname = p_vname
-    IMPORTING
-      ev_venid = p_venid.
-
-ENDFORM.
-*&---------------------------------------------------------------------*
-*&      Form  GET_VENID_NAME
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*      -->P_T_DATA_VENID  text
-*      <--P_T_DATA_VNAME  text
-*----------------------------------------------------------------------*
-FORM get_venid_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
-                     CHANGING p_vname TYPE zsssmm0210-vname.
-
-  CALL FUNCTION 'ZFMSS_GET_VEN_NAME'
-    EXPORTING
-      iv_venid = p_venid
-    IMPORTING
-      ev_vname = p_vname.
-
-
-ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_EMP_NAME
 *&---------------------------------------------------------------------*
@@ -232,6 +195,77 @@ FORM get_storage_name  USING    VALUE(p_stoid) TYPE ztssstrg-stoid
     IMPORTING
       ev_sname = p_stonm.
 
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_NUMBER_RANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_2259   text
+*      -->P_2260   text
+*      -->P_2261   text
+*      <--P_GV_GR_NUM  text
+*----------------------------------------------------------------------*
+FORM get_number_range       USING    iv_object   TYPE inri-object
+                                     iv_nrnr     TYPE inri-nrrangenr
+                                     iv_prefix   TYPE string
+                            CHANGING cv_number   TYPE ztsspoh-ponum.
+
+  DATA : lv_num  TYPE n LENGTH 6,
+         lv_year TYPE n LENGTH 4.
+
+  lv_year = sy-datum+0(4).
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = iv_nrnr
+      object                  = iv_object
+      toyear                  = lv_year
+    IMPORTING
+      number                  = lv_num
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '넘버링이 실패했습니다.'.
+    RETURN.
+  ENDIF.
+
+  cv_number = iv_prefix && lv_year && lv_num.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENMAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_<FS_CONFIRM>_VENID  text
+*      -->P_<FS_CONFIRM>_POMNR  text
+*      <--P_LV_ITEM_PRICE  text
+*----------------------------------------------------------------------*
+FORM get_venmat  USING    VALUE(pv_venid) TYPE ztssvend-venid
+                          VALUE(pv_matnr) TYPE ztssmat-matnr
+                 CHANGING cv_price TYPE ztssprcat-vnprc.
+
+
+  SELECT SINGLE vnprc
+    INTO cv_price
+    FROM ztssprcat
+    WHERE venid = pv_venid
+    AND rawnr = pv_matnr.
+
+  IF sy-subrc <> 0.
+    MESSAGE s999(zmcss) WITH  |존재하지 않는 { pv_venid } 와 { pv_matnr }의 조합입니다!|.
+    RETURN.
+  ENDIF.
 
 ENDFORM.
 

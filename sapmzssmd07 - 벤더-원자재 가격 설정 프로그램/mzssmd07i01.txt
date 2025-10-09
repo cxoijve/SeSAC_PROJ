@@ -11,6 +11,65 @@ MODULE user_command_0100 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'SEARCH'.
+      PERFORM set_alv_condition.
+      PERFORM get_prcat_data TABLES gt_prcat.
+
+    WHEN 'BUY'.
+      PERFORM set_vntext_0110.
+      CALL SCREEN 110 STARTING AT 85 3 ENDING AT 150 25.
+      CLEAR : gt_vntext.
+
+    WHEN 'RELEASE'.
+      PERFORM get_detail_info_0100 CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+        CLEAR : gv_subrc.
+        PERFORM check_po_pomnr_data USING gs_prcat-venid
+                                          gs_prcat-rawnr
+                                 CHANGING gv_subrc.
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ENDIF.
+
+        IF gs_prcat-del = 'X'.
+          MESSAGE i999(zmcss) WITH '활성화된 데이터를 선택해주세요'.
+          RETURN.
+        ENDIF.
+
+        CALL SCREEN 120 STARTING AT 30 2 ENDING AT 80 5.
+        CLEAR gs_prcat.
+
+        PERFORM set_alv_condition.
+        PERFORM get_prcat_data TABLES gt_prcat.
+
+      ENDIF.
+
+
+    WHEN 'RESTORE'.
+      PERFORM get_detail_info_0100 CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+        CLEAR : gv_subrc.
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          RETURN.
+        ELSE.
+          IF gs_prcat-del <> 'X'.
+            MESSAGE i999(zmcss) WITH '삭제된 데이터를 선택해주세요'.
+            RETURN.
+          ENDIF.
+
+          CALL SCREEN 130 STARTING AT 30 2 ENDING AT 80 5.
+          CLEAR gs_prcat.
+
+          PERFORM set_alv_condition.
+          PERFORM get_prcat_data TABLES gt_prcat.
+        ENDIF.
+
+
+      ENDIF.
+
+    WHEN 'ENTER'.
   ENDCASE.
 
 ENDMODULE.
@@ -24,6 +83,134 @@ MODULE exit INPUT.
   CASE sy-ucomm.
     WHEN 'EXIT'.
       LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_MATNR INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_matnr INPUT.
+
+  PERFORM check_matnr_data CHANGING gv_subrc.
+  IF gv_subrc <> 0.
+    CLEAR gv_subrc.
+    RETURN.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_VENID  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_venid INPUT.
+
+  PERFORM check_venid_data CHANGING gv_subrc.
+  IF gv_subrc <> 0.
+    CLEAR gv_subrc.
+    RETURN.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN 'INSERT'.
+
+      PERFORM insert_new_prcat CHANGING gv_subrc.
+      IF gv_subrc = 0.
+        CLEAR gv_subrc.
+        PERFORM set_alv_condition.
+        PERFORM get_prcat_data TABLES gt_prcat.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0110 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'.
+      PERFORM get_detail_info CHANGING gv_subrc.
+      IF  gv_subrc IS INITIAL.
+        CLEAR : gv_subrc.
+
+        PERFORM set_regist_prcat.
+
+        CALL SCREEN 200.
+        CLEAR : gt_prcat_0200,
+                gs_prcat_0200,
+                zsssmd07004,
+                zsssmd07005.
+        LEAVE TO SCREEN 0.
+      ENDIF.
+
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CHECK_VENID_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE check_venid_0200 INPUT.
+
+  PERFORM check_venid_0200 CHANGING gv_subrc .
+  IF gv_subrc <> 0.
+    CLEAR : gv_subrc,
+    zsssmd07004-venid,
+    zsssmd07004-vnprc.
+    MESSAGE i999(zmcss) WITH '유효한 벤더를 입려해주세요'.
+    RETURN.
+  ENDIF.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0120  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0120 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'.
+      PERFORM insert_del_flag.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0130  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0130 INPUT.
+
+  CASE sy-ucomm.
+    WHEN 'CHECK'.
+      PERFORM update_del_flag.
     WHEN 'CANC'.
       LEAVE TO SCREEN 0.
   ENDCASE.

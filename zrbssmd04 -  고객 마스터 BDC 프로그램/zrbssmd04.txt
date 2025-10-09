@@ -1,0 +1,116 @@
+*&---------------------------------------------------------------------*
+*& Report  ZRBSSMD04
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrbssmd04top                            .    " global Data
+
+INCLUDE zrbssmd04o01                            .  " PBO-Modules
+INCLUDE zrbssmd04i01                            .  " PAI-Modules
+INCLUDE zrbssmd04f01                            .  " FORM-Routines
+
+INITIALIZATION.
+
+
+AT SELECTION-SCREEN OUTPUT.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_file.
+  PERFORM f4_data_file.
+
+AT SELECTION-SCREEN.
+
+START-OF-SELECTION.
+
+  PERFORM get_exel_data.
+
+  DATA : lt_message TYPE TABLE OF bdcmsgcoll.
+  DATA : ls_params TYPE ctu_params.
+  ls_params-dismode = 'N'.
+  ls_params-racommit = 'X'.
+
+  LOOP AT gt_data INTO gs_data.
+    CLEAR: gt_bdc, gs_bdc.
+    PERFORM set_bdc_screen_field USING 'SAPMZSSMD04'
+                                       '0100'
+                                       'X'.
+
+    PERFORM set_bdc_field USING 'BDC_OKCODE'
+                                '=REGIST'.
+
+    PERFORM set_bdc_screen_field USING 'SAPMZSSMD04'
+                                       '0200'
+                                       'X'.
+
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-CNAME'
+                                gs_data-cname.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-BEGDA'
+                                gs_data-begda.
+
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-POSTC'
+                                gs_data-postc.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-ADDRE'
+                                gs_data-addre.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-CTYPE'
+                                gs_data-ctype.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-EID'
+                                gs_data-eid.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-EDNME'
+                                gs_data-ednme.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-CPNME'
+                                gs_data-cpnme.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04003-PENID'
+                                gs_data-penid.
+
+    PERFORM set_bdc_field USING 'BDC_OKCODE'
+                                'ENDSET'.
+
+    PERFORM set_bdc_screen_field USING 'SAPMZSSMD04'
+                                        '0201'
+                                        'X'.
+
+    PERFORM set_bdc_field USING 'ZSSSMD04004-ENDDA'
+                               gs_data-endda.
+
+    PERFORM set_bdc_field USING 'BDC_OKCODE'
+                                '=CHECK'.
+
+    PERFORM set_bdc_screen_field USING 'SAPMZSSMD04'
+                                         '0200'
+                                         'X'.
+
+    PERFORM set_bdc_field USING 'BDC_OKCODE'
+                                '=INSERT'.
+
+    PERFORM set_bdc_screen_field USING 'SAPMZSSMD04'
+                                       '0100'
+                                       'X'.
+
+    PERFORM set_bdc_field USING 'BDC_OKCODE'
+                                '=BACK'.
+
+    CALL TRANSACTION 'ZSSMD04'
+*    USING gt_bdc MODE 'A'
+    USING gt_bdc
+     OPTIONS FROM ls_params
+*          MODE 'N'
+    MESSAGES INTO lt_message   . "A, E, N
+*    WRITE sy-subrc.
+
+  ENDLOOP.
+
+  BREAK-POINT.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -1,0 +1,75 @@
+*&---------------------------------------------------------------------*
+*& Report ZRBSSMD02
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+INCLUDE zrbssmd02top.
+INCLUDE zrbssmd02f01.
+
+
+
+INITIALIZATION.
+
+AT SELECTION-SCREEN OUTPUT.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_file.
+  PERFORM f4_data_file.
+
+AT SELECTION-SCREEN.
+
+START-OF-SELECTION.
+  " 엑셀 데이터 받아오기
+  PERFORM get_excel_data.
+
+  LOOP AT gt_ztssmat INTO gs_ztssmat.
+    CLEAR : gt_bdc, gs_bdc.
+    PERFORM set_bdc_settings TABLES gt_bdc
+                             USING 'SAPMZSSMD02'
+                                   '0100'
+                                   'X'.
+
+
+    PERFORM set_bdc_record : TABLES gt_bdc
+                             USING  'BDC_CURSOR'
+                                    'ZSSSMD0201-MATNR',
+                             TABLES gt_bdc
+                             USING  'BDC_OKCODE'
+                                    'M200'.
+
+    PERFORM set_bdc_settings TABLES gt_bdc
+                             USING 'SAPMZSSMD02'
+                                   '0200'
+                                    'X'.
+
+    PERFORM set_bdc_record : TABLES gt_bdc
+                             USING  'GS_COND_0200-MTYPE'
+                                    gs_ztssmat-mtype,
+                             TABLES gt_bdc
+                             USING  'GS_COND_0200-KNAME'
+                                    gs_ztssmat-kname,
+                             TABLES gt_bdc
+                             USING  'GS_COND_0200-ENAME'
+                                    gs_ztssmat-ename,
+                             TABLES gt_bdc
+                             USING  'GS_COND_0200-EXPDA'
+                                    gs_ztssmat-expda,
+                             TABLES gt_bdc
+                             USING  'GS_COND_0200-TFLAG'
+                                    gs_ztssmat-tflag,
+                             TABLES gt_bdc
+                             USING  'BDC_CURSOR'
+                                    'GS_COND_0200-MTYPE',
+                             TABLES gt_bdc
+                             USING  'BDC_OKCODE'
+                                    'INSERT'.
+
+    CALL TRANSACTION 'ZSSMD02'
+    USING gt_bdc MODE 'N'.
+    WRITE sy-subrc.
+  ENDLOOP.
+  " 테스트 (잘 받아왔나)
+*  cl_demo_output=>display_data( gt_ztssmat ).
+  "  cl_demo_output=>display_data( gt_bdc ).
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

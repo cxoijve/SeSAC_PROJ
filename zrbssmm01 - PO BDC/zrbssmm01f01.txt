@@ -1,0 +1,253 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRBSSMM01F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  F4_DATA_FILE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM f4_data_file CHANGING c_file TYPE rlgrap-filename.
+
+  DATA : lt_file TYPE filetable,
+         ls_file TYPE file_table,
+         lv_rc   TYPE i.
+
+  CALL METHOD cl_gui_frontend_services=>file_open_dialog
+    CHANGING
+      file_table = lt_file
+      rc         = lv_rc.
+
+  READ TABLE lt_file INTO ls_file INDEX 1.
+  IF sy-subrc = 0.
+    c_file = ls_file.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXCEL_DATA_HEADER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_excel_data_header .
+
+  DATA: lt_excel TYPE TABLE OF alsmex_tabline,
+        ls_excel LIKE LINE OF lt_excel.
+
+  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXPORTING
+      filename                = pa_file
+      i_begin_col             = 1     "Start column
+      i_begin_row             = 2     "Start row( 1 Row Column Name )
+      i_end_col               = 10    "max Field
+      i_end_row               = 1000  "max row
+    TABLES
+      intern                  = lt_excel
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2
+      OTHERS                  = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  LOOP AT lt_excel INTO ls_excel.
+    CASE ls_excel-col.
+      WHEN '1'.
+        gs_header-ponum = ls_excel-value.
+      WHEN '2'.
+        gs_header-podat = ls_excel-value.
+      WHEN '3'.
+        gs_header-venid = ls_excel-value.
+      WHEN '4'.
+        gs_header-dudat = ls_excel-value.
+      WHEN '5'.
+        gs_header-stext = ls_excel-value.
+      WHEN '6'.
+        gs_header-curky = ls_excel-value.
+      WHEN '7'.
+        gs_header-rgdat = ls_excel-value.
+      WHEN '8'.
+        gs_header-rgtor = ls_excel-value.
+    ENDCASE.
+    AT END OF row.
+      APPEND gs_header TO gt_header.
+      CLEAR gs_header.
+    ENDAT.
+    CLEAR ls_excel.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXCEL_DATA_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_excel_data_item .
+
+  DATA: lt_excel TYPE TABLE OF alsmex_tabline,
+        ls_excel LIKE LINE OF lt_excel.
+
+  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXPORTING
+      filename                = pa_file2
+      i_begin_col             = 1     "Start column
+      i_begin_row             = 2     "Start row( 1 Row Column Name )
+      i_end_col               = 10    "max Field
+      i_end_row               = 1000  "max row
+    TABLES
+      intern                  = lt_excel
+    EXCEPTIONS
+      inconsistent_parameters = 1
+      upload_ole              = 2
+      OTHERS                  = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  LOOP AT lt_excel INTO ls_excel.
+    CASE ls_excel-col.
+      WHEN '1'.
+        gs_item-ponum = ls_excel-value.
+      WHEN '2'.
+        gs_item-itnum = ls_excel-value.
+      WHEN '3'.
+        gs_item-pomnr = ls_excel-value.
+      WHEN '4'.
+        gs_item-amount = ls_excel-value.
+      WHEN '5'.
+        gs_item-meins = ls_excel-value.
+      WHEN '6'.
+        gs_item-plant = ls_excel-value.
+      WHEN '7'.
+        gs_item-poprc = ls_excel-value.
+      WHEN '8'.
+        gs_item-curky = ls_excel-value.
+      WHEN '9'.
+        gs_item-del = ls_excel-value.
+      WHEN '10'.
+        gs_item-flag = ls_excel-value.
+    ENDCASE.
+    AT END OF row.
+      APPEND gs_item TO gt_item.
+      CLEAR gs_item.
+    ENDAT.
+    CLEAR ls_excel.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BDC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_bdc .
+
+  DATA : ls_header LIKE gs_header,
+         ls_item   LIKE gs_item.
+
+  CLEAR : gt_bdc, gs_bdc.
+  DATA : LT_MESSAGE TYPE TABLE OF  BDCMSGCOLL.
+
+  LOOP AT gt_header INTO ls_header.
+    REFRESH gt_bdc.
+    CLEAR : gs_bdc.
+    gs_bdc-program = 'SAPMZSSMM01'.
+    gs_bdc-dynpro = '0100'.
+    gs_bdc-dynbegin = 'X'.
+    APPEND gs_bdc TO gt_bdc.
+
+    PERFORM bdc_field USING 'BDC_OKCODE' 'CREATE'.
+    CLEAR gs_bdc.
+    gs_bdc-program = 'SAPMZSSMM01'.
+    gs_bdc-dynpro = '0200'.
+    gs_bdc-dynbegin = 'X'.
+    APPEND gs_bdc TO gt_bdc.
+
+    "====== Header ========
+
+    PERFORM bdc_field USING 'ZSSSMM0103-PODAT' ls_header-podat.
+    PERFORM bdc_field USING 'ZSSSMM0103-DUDAT' ls_header-dudat.
+    PERFORM bdc_field USING 'ZSSSMM0103-VENID' ls_header-venid.
+    PERFORM bdc_field USING 'ZSSSMM0103-RGTOR' ls_header-rgtor.
+    PERFORM bdc_field USING 'ZSSSMM0103-STEXT' ls_header-stext.
+
+    "======= item ==========
+
+    LOOP AT gt_item INTO ls_item .
+      IF ls_item-ponum <> ls_header-ponum. CONTINUE. ENDIF.
+      IF ls_item-del = 'X'. CONTINUE. ENDIF.
+
+      PERFORM bdc_field USING 'BDC_OKCODE' 'I_ADD'.
+      CLEAR gs_bdc.
+      gs_bdc-program = 'SAPMZSSMM01'.
+      gs_bdc-dynpro = '0210'.
+      gs_bdc-dynbegin = 'X'.
+      APPEND gs_bdc TO gt_bdc.
+*      PERFORM bdc_field USING 'ZSSSMM0104-ITNUM'  ls_item-itnum.
+      PERFORM bdc_field USING 'ZSSSMM0104-POMNR'  ls_item-pomnr.
+      PERFORM bdc_field USING 'ZSSSMM0104-AMOUNT' ls_item-amount.
+*      PERFORM bdc_field USING 'ZSSSMM0103-MEINS'  ls_item-meins.
+*      PERFORM bdc_field USING 'ZSSSMM0103-PLANT'  ls_item-plant.
+*      PERFORM bdc_field USING 'ZSSSMM0104-POPRC'  ls_item-poprc.
+*      PERFORM bdc_field USING 'ZSSSMM0103-CURKY'  ls_item-curky.
+*      PERFORM bdc_field USING 'ZSSSMM0103-DEL'    ls_item-del.
+      PERFORM bdc_field USING 'BDC_OKCODE' 'SAVE'.
+      CLEAR gs_bdc.
+
+      gs_bdc-program = 'SAPMZSSMM01'.
+      gs_bdc-dynpro = '0200'.
+      gs_bdc-dynbegin = 'X'.
+      APPEND gs_bdc TO gt_bdc.
+
+      IF ls_item-flag = 'E'.
+        EXIT.
+      ENDIF.
+*      PERFORM bdc_field USING 'ZSSSMM0103-FLAG'   ls_item-flag.
+    ENDLOOP.
+
+    PERFORM bdc_field USING 'BDC_OKCODE' 'ORDER'.
+
+    CLEAR : ls_header, ls_item.
+
+    "=== BDC ====
+    CALL TRANSACTION 'ZSSMM01'
+      USING gt_bdc MODE 'N' "A, E, N
+       MESSAGES INTO LT_MESSAGE.
+
+    WRITE : 'Success or Fail: ',  sy-subrc.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  BDC_FIELD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0322   text
+*      -->P_LS_HEADER_PODAT  text
+*----------------------------------------------------------------------*
+FORM bdc_field  USING    VALUE(p_nam)
+                         VALUE(p_val).
+
+  CLEAR gs_bdc.
+  gs_bdc-fnam = p_nam.
+  gs_bdc-fval = p_val.
+  APPEND gs_bdc TO gt_bdc.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

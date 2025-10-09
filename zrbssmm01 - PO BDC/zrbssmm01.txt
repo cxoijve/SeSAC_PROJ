@@ -1,0 +1,48 @@
+*&---------------------------------------------------------------------*
+*& Report  ZRBSSMM01
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrbssmm01top                            .    " global Data
+
+INCLUDE zrbssmm01o01                            .  " PBO-Modules
+INCLUDE zrbssmm01i01                            .  " PAI-Modules
+INCLUDE zrbssmm01f01                            .  " FORM-Routines
+
+
+INITIALIZATION.
+
+
+AT SELECTION-SCREEN OUTPUT.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_file.
+  PERFORM f4_data_file CHANGING pa_file.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_file2.
+  PERFORM f4_data_file CHANGING pa_file2.
+
+
+AT SELECTION-SCREEN.
+
+  CASE sscrfields-ucomm.
+    WHEN 'FC01'.
+      MESSAGE i000(ymc00) WITH 'Test'.
+
+    WHEN OTHERS.
+
+  ENDCASE.
+
+START-OF-SELECTION.
+
+  PERFORM get_excel_data_header.
+  PERFORM get_excel_data_item.
+  PERFORM set_bdc.
+
+*  cl_demo_output=>display_data( gt_header ).
+*  cl_demo_output=>display_data( gt_item ).
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

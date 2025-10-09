@@ -1,0 +1,66 @@
+FUNCTION z_insert_next_ware.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     VALUE(IS_ZTSSWARE) TYPE  ZTSSWARE
+*"  EXPORTING
+*"     VALUE(EV_WARID) TYPE  ZESSWARID
+*"  EXCEPTIONS
+*"      NUMRANGE_FAILED
+*"      INSERT_FAILED
+*"      ZERO_AMOUNT
+*"      INIT_DETECTED
+*"----------------------------------------------------------------------
+
+  DATA : lv_num  TYPE n LENGTH 6,
+         lv_year TYPE n LENGTH 4,
+         lv_char TYPE c LENGTH 11.
+
+  DATA : ls_ztssware TYPE ztssware.
+
+  lv_year = sy-datum+0(4).
+
+  PERFORM check_init USING is_ztssware
+                     CHANGING gv_subrc.
+
+  IF gv_subrc <> 0.
+    RAISE init_detected.
+  ENDIF.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSMD06'
+      toyear                  = lv_year
+    IMPORTING
+      number                  = lv_num
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc <> 0.
+    RAISE numrange_failed.
+  ENDIF.
+
+  MOVE-CORRESPONDING is_ztssware TO ls_ztssware.
+  ls_ztssware-warid = 'W' && lv_year && lv_num.
+  ls_ztssware-rgdat = sy-datum.
+
+  INSERT ztssware FROM ls_ztssware.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    RAISE insert_failed.
+  ENDIF.
+
+  COMMIT WORK.
+  ev_warid = ls_ztssware-warid.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

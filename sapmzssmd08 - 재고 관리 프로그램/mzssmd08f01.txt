@@ -137,6 +137,36 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             USING  'RDOC' '-1' '관련 문서'.
       PERFORM set_fcat_hotspot TABLES pt_fcat
                            USING pv_aflag.
+    WHEN '0300'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'JOBNAME' '1' '생산명',
+                            TABLES pt_fcat
+                            USING  'SDLSTRTDT' '2' '생산 일자',
+                            TABLES pt_fcat
+                            USING  'SDLSTRTTM' '3' '생산 시각',
+                            TABLES pt_fcat
+                            USING  'STATUS' '-1' '미표시',
+                            TABLES pt_fcat
+                            USING  'STATUS_T' '4' '생산 상태'.
+    WHEN '0310'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'MATNR' '1' '자재 코드',
+                            TABLES pt_fcat
+                            USING  'MATNM' '2' '자재명',
+                            TABLES pt_fcat
+                            USING  'STOID' '-1' '반출 창고 코드',
+                            TABLES pt_fcat
+                            USING  'STONM' '3' '반출 창고',
+                            TABLES pt_fcat
+                            USING  'ASTCK' '4' '가용 재고량',
+                            TABLES pt_fcat
+                            USING  'USTCK' '5' '소모 재고량',
+                            TABLES pt_fcat
+                            USING  'AFAMT' '6' '생산 이후 잔여량',
+                            TABLES pt_fcat
+                            USING  'MEINS' '7' '기본 단위'.
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                           USING pv_aflag.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -189,6 +219,17 @@ FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
     WHEN '0100'.
       PERFORM modify_sort : TABLES pt_sort
                             USING  'MATNR' '1' 'X' 'X'.
+    WHEN '0210'.
+      PERFORM modify_sort : TABLES pt_sort
+                            USING  'WDATE' '1' '' 'X'.
+    WHEN '0220'.
+      PERFORM modify_sort : TABLES pt_sort
+                            USING  'WDATE' '1' '' 'X'.
+    WHEN '0300'.
+      PERFORM modify_sort : TABLES pt_sort
+                            USING  'SDLSTRTDT' '1' '' 'X',
+                            TABLES pt_sort
+                            USING  'SDLSTRTTM' '2' '' 'X'.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -214,6 +255,8 @@ FORM modify_sort  TABLES   pt_sort STRUCTURE lvc_s_sort
   pt_sort-fieldname = pv_fieldname.
   IF pv_up IS NOT INITIAL.
     pt_sort-up = pv_up.
+  ELSE.
+    pt_sort-down = 'X'.
   ENDIF.
 
   pt_sort-subtot = pv_subtot.
@@ -233,7 +276,7 @@ FORM set_layo  USING    VALUE(pv_aflag)
                CHANGING ps_layo TYPE lvc_s_layo.
 
   CASE pv_aflag.
-    WHEN '0100' OR '0210' OR '0220'.
+    WHEN '0100' OR '0210' OR '0220' OR '0300' OR '0310'.
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'CELLSCOL'.
       ps_layo-sel_mode = 'A'. "A, B C D
@@ -951,7 +994,7 @@ FORM set_fcat_hotspot  TABLES   pt_fcat STRUCTURE lvc_s_fcat
   ENDIF.
 
   CASE pv_aflag.
-    WHEN '0100'.
+    WHEN '0100' OR '0310'.
       LOOP AT pt_fcat.
         CASE pt_fcat-fieldname.
           WHEN 'MATNR'.
@@ -970,6 +1013,626 @@ FORM set_fcat_hotspot  TABLES   pt_fcat STRUCTURE lvc_s_fcat
         MODIFY pt_fcat.
       ENDLOOP.
   ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMD0810  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM set_default_0300  CHANGING ps_cond_0300 TYPE zsssmd0810
+                                pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA lv_begda LIKE p0001-begda.
+  DATA lv_endda LIKE p0001-begda.
+
+  PERFORM get_calc_datum USING sy-datum '-' '0' '1' '0'
+                         CHANGING lv_begda.
+
+  PERFORM get_calc_datum USING sy-datum '+' '0' '1' '0'
+                         CHANGING lv_endda.
+
+  ps_cond_0300-begda = lv_begda.
+  ps_cond_0300-endda = lv_endda.
+  ps_cond_0300-isr = 'X'.
+  ps_cond_0300-isf = 'X'.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0300  text
+*      -->P_ZSSSMD0810  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
+                    USING    VALUE(ps_cond_0300) TYPE zsssmd0810
+                    CHANGING pv_subrc LIKE gv_subrc.
+
+  CLEAR : pv_subrc, pt_info_0300.
+
+  DATA : lr_status TYPE RANGE OF tbtco-status,
+         lr_datum  TYPE RANGE OF tbtco-sdlstrtdt.
+
+  DATA : lv_subrc LIKE sy-subrc.
+
+  PERFORM check_cond_0300 USING ps_cond_0300
+                          CHANGING lv_subrc.
+
+  IF lv_subrc <> 0. pv_subrc = 4. ENDIF.
+
+  PERFORM set_range_0300 TABLES lr_status
+                                lr_datum
+                         USING  ps_cond_0300
+                         CHANGING lv_subrc.
+
+  IF lv_subrc <> 0. MESSAGE i999(zmcss) WITH '조회 조건 설정 중 에러가 발생했습니다.'. pv_subrc = 4. ENDIF.
+
+  SELECT jobname sdlstrtdt sdlstrttm status
+  FROM tbtco
+  INTO CORRESPONDING FIELDS OF TABLE pt_info_0300
+  WHERE sdluname EQ sy-uname
+    AND sdlstrtdt IN lr_datum
+    AND status IN lr_status.
+
+  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '조회 조건을 만족하는 데이터가 없습니다.'. pv_subrc = 4. ENDIF.
+
+  PERFORM modify_info_0300 TABLES pt_info_0300
+                           CHANGING lv_subrc.
+
+  IF lv_subrc <> 0. MESSAGE i999(zmcss) WITH '데이터를 불러오는 도중 에러가 발생했습니다.'. pv_subrc = 4. ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_COND_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_COND_0300  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_cond_0300  USING    VALUE(ps_cond_0300) TYPE zsssmd0810
+                      CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  IF ps_cond_0300-begda IS INITIAL
+    OR ps_cond_0300-endda IS INITIAL.
+    MESSAGE i999(zmcss) WITH '날짜를 입력해 주십시오'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0300-begda > ps_cond_0300-endda.
+    MESSAGE i999(zmcss) WITH '시작일은 종료일보다 작거나 같아야 합니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0300-isa IS INITIAL
+    AND ps_cond_0300-isr IS INITIAL
+    AND ps_cond_0300-isf IS INITIAL.
+
+    MESSAGE i999(zmcss) WITH '하나 이상의 생산 계획 유형을 선택해 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_RANGE_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LR_STATUS  text
+*      -->P_LR_DATUM  text
+*      -->P_PS_COND_0300  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM set_range_0300  TABLES   pr_status STRUCTURE gr_status
+                              pr_datum STRUCTURE gr_datum
+                     USING    VALUE(ps_cond_0300) TYPE zsssmd0810
+                     CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pr_status[], pr_datum[], pv_subrc.
+
+  pr_datum-sign = 'I'.
+  pr_datum-option = 'BT'.
+  pr_datum-low = ps_cond_0300-begda.
+  pr_datum-high = ps_cond_0300-endda.
+  APPEND pr_datum.
+
+  IF ps_cond_0300-isa EQ 'X'.
+    CLEAR pr_status.
+    pr_status-sign = 'I'.
+    pr_status-option = 'EQ'.
+    pr_status-low = 'A'.
+    APPEND pr_status.
+  ENDIF.
+
+  IF ps_cond_0300-isr EQ 'X'.
+    CLEAR pr_status.
+    pr_status-sign = 'I'.
+    pr_status-option = 'EQ'.
+    pr_status-low = 'S'.
+    APPEND pr_status.
+  ENDIF.
+
+  IF ps_cond_0300-isf EQ 'X'.
+    CLEAR pr_status.
+    pr_status-sign = 'I'.
+    pr_status-option = 'EQ'.
+    pr_status-low = 'F'.
+    APPEND pr_status.
+  ENDIF.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_INFO_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_INFO_0300  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM modify_info_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
+
+  LOOP AT pt_info_0300.
+    CLEAR : lt_color, lt_color[].
+    CASE pt_info_0300-status.
+      WHEN 'S'.
+        pt_info_0300-status_t = '예정'.
+        lt_color-fname = 'STATUS_T'.
+        lt_color-color-int = 1.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 3.
+        APPEND lt_color.
+      WHEN 'A'.
+        pt_info_0300-status_t = '실패'.
+        lt_color-fname = 'STATUS_T'.
+        lt_color-color-int = 1.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 6.
+        APPEND lt_color.
+      WHEN 'F'.
+        pt_info_0300-status_t = '완료'.
+        lt_color-fname = 'STATUS_T'.
+        lt_color-color-int = 1.
+        lt_color-color-inv = 0.
+        lt_color-color-col = 5.
+        APPEND lt_color.
+    ENDCASE.
+    APPEND LINES OF lt_color TO pt_info_0300-cellscol.
+    MODIFY pt_info_0300 TRANSPORTING status_t cellscol.
+  ENDLOOP.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  C300_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM c300_0100 .
+  " SET DEFAULT CONDITION 300
+  PERFORM set_default_0300 CHANGING zsssmd0810
+                                    gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+  " QUERY 300
+  PERFORM get_info_0300 TABLES gt_info_0300
+                        USING zsssmd0810
+                        CHANGING gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+  CALL SCREEN 300.
+
+  CLEAR : zsssmd0810 , gt_info_0300.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_SCREEN_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_screen_0310 .
+  LOOP AT SCREEN.
+    CASE gv_fix_0310.
+      WHEN 'X'. " 아이템 결정 체크함
+        CASE screen-group1.
+          WHEN 'PRD'.
+            screen-input = '0'.
+          WHEN 'FIX'.
+            screen-active = '0'.
+          WHEN 'CHG'.
+            screen-active = '1'.
+        ENDCASE.
+      WHEN ''. " 아이템 결정 체크 안함.
+        CASE screen-group1.
+          WHEN 'PRD'.
+            screen-input = '1'.
+          WHEN 'FIX'.
+            screen-active = '1'.
+          WHEN 'CHG'.
+            screen-active = '0'.
+        ENDCASE.
+      WHEN OTHERS.
+        MESSAGE a999(zmcss) WITH 'UNKNOWN FIXFLAG!'.
+    ENDCASE.
+
+    CASE gv_imm_0310.
+      WHEN 'X'. " 즉시 생산 체크함
+        CASE screen-group1.
+          WHEN 'PLA'.
+            screen-active = '0'.
+        ENDCASE.
+      WHEN ''. " 즉시 생산 체크 안함.
+        CASE screen-group1.
+          WHEN 'PLA'.
+            screen-active = '1'.
+        ENDCASE.
+      WHEN OTHERS.
+        MESSAGE a999(zmcss) WITH 'UNKNOWN FIXFLAG!'.
+    ENDCASE.
+
+
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_IMM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMDD0813  text
+*      <--P_GV_IMM_0310  text
+*----------------------------------------------------------------------*
+FORM set_imm  USING    VALUE(ps_cond_0310) TYPE zsssmd0812
+              CHANGING pv_imm_0310.
+
+  IF ps_cond_0310-isimmi = 'X'.
+    pv_imm_0310 = 'X'.
+    CLEAR : ps_cond_0310-sdlstrtdt, ps_cond_0310-sdlstrttm.
+  ELSE.
+    pv_imm_0310 = ''.
+    CLEAR : ps_cond_0310-sdlstrtdt, ps_cond_0310-sdlstrttm.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FIX
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD0813  text
+*      -->P_0155   text
+*      <--P_GV_FIX_0310  text
+*----------------------------------------------------------------------*
+FORM set_fix  USING    VALUE(ps_cond_0310) TYPE zsssmd0813
+                       VALUE(pv_value)
+              CHANGING pv_fix_0310
+                       pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  IF pv_value IS INITIAL.
+    pv_fix_0310 = ''.
+    pv_subrc = 0.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0310-matnr IS NOT INITIAL
+    AND ps_cond_0310-stoid IS NOT INITIAL
+    AND ps_cond_0310-amount IS NOT INITIAL.
+
+    pv_fix_0310 = 'X'.
+    pv_subrc = 0.
+    RETURN.
+  ELSE.
+    MESSAGE i999(zmcss) WITH '생산할 완제품이 확정되지 않았습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0310  text
+*      -->P_ZSSSMD0813  text
+*      <--P_ZSSSMD0813_MEINS  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
+                    USING    VALUE(ps_cond_0310) TYPE zsssmd0813
+                    CHANGING pv_meins TYPE zessmeins
+                             pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc , pv_meins.
+
+  pv_meins = 'EA'.
+
+  DATA lv_subrc LIKE sy-subrc.
+  DATA lt_req TYPE TABLE OF ztssreq WITH HEADER LINE.
+  DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
+
+  PERFORM check_cond_0310 USING ps_cond_0310
+                          CHANGING lv_subrc.
+
+  IF lv_subrc <> 0. pv_subrc = 4. RETURN. ENDIF.
+
+  SELECT *
+    FROM ztssreq
+    INTO CORRESPONDING FIELDS OF TABLE lt_req
+    WHERE prdnr EQ ps_cond_0310-matnr.
+
+  IF sy-subrc <> 0. MESSAGE i999(zmcss) WITH '자재' ps_cond_0310-matnr '의 BOM이 존재하지 않습니다.'. pv_subrc = 4. RETURN. ENDIF.
+
+  LOOP AT lt_req.
+    pt_info_0310-matnr = lt_req-rawnr.
+    pt_info_0310-ustck = lt_req-amount * ps_cond_0310-amount.
+    pt_info_0310-meins = lt_req-meins.
+
+    " Need enhancement
+    pt_info_0310-stoid = 'SL01'.
+    pt_info_0310-stonm = '제 1 원자재 창고'.
+
+    SELECT SINGLE matnm
+      FROM ztssmat_t
+      INTO pt_info_0310-matnm
+      WHERE matnr EQ pt_info_0310-matnr
+      AND langu EQ sy-langu.
+
+    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = '99991231'
+        iv_stoid         = 'SL01'
+        iv_matnr         = pt_info_0310-matnr
+      IMPORTING
+        ev_astck         = pt_info_0310-astck
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0. pv_subrc = 4. RETURN. ENDIF.
+
+    pt_info_0310-afamt = pt_info_0310-astck - pt_info_0310-ustck.
+
+    IF pt_info_0310-afamt < 0.
+      lt_color-fname = 'AFAMT'.
+      lt_color-color-int = 1.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 6.
+      APPEND lt_color.
+      MESSAGE s999(zmcss) WITH '원자재 재고가 부족합니다.'.
+    ELSE.
+      lt_color-fname = 'AFAMT'.
+      lt_color-color-int = 1.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 5.
+      APPEND lt_color.
+    ENDIF.
+
+    APPEND LINES OF lt_color TO pt_info_0310-cellscol.
+    APPEND pt_info_0310.
+    CLEAR : pt_info_0310-cellscol[], pt_info_0310, lt_color[].
+  ENDLOOP.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_COND_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_COND_0310  text
+*      <--P_LV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_cond_0310  USING    VALUE(ps_cond_0310) TYPE zsssmd0813
+                      CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  IF ps_cond_0310-matnr IS INITIAL
+    OR ps_cond_0310-stoid IS INITIAL
+    OR ps_cond_0310-amount IS INITIAL.
+
+    MESSAGE i999(zmcss) WITH '필수 입력값을 입력해 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0310-matnr+0(1) EQ 'R'.
+    MESSAGE i999(zmcss) WITH '완제품 생산만 가능합니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0310-amount <= 0.
+    MESSAGE i999(zmcss) WITH '1 이상의 수량을 입력해 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_0310-stoid NE 'SL02'.
+    MESSAGE i999(zmcss) WITH '해당 자재의 소속 창고가 아닙니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_MRP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0310  text
+*      -->P_GT_OUTWARES  text
+*      -->P_ZSSSMD0812  text
+*      -->P_ZSSSMD0813  text
+*      <--P_GS_INWARE  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_mrp  TABLES   pt_info_0310 STRUCTURE gs_info_0310
+                         pt_outwares STRUCTURE ztssware
+                USING    VALUE(ps_cond_time) TYPE zsssmd0812
+                         VALUE(ps_cond_prd) TYPE zsssmd0813
+                CHANGING ps_inware TYPE ztssware
+                         pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_outwares[], ps_inware.
+
+  IF pt_info_0310[] IS INITIAL.
+    MESSAGE i999(zmcss) WITH '완제품을 결정해 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  LOOP AT pt_info_0310.
+    IF pt_info_0310-afamt < 0.
+      MESSAGE i999(zmcss) WITH '자재' pt_info_0310-matnm '의 수량이 부족합니다.'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+  IF ps_cond_time-isbook = 'X'
+    AND ( ps_cond_time-sdlstrtdt IS INITIAL
+    OR ps_cond_time-sdlstrttm IS INITIAL ).
+
+    MESSAGE i999(zmcss) WITH '자재 생산 계획의 일자 및 시간을 입력해 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_cond_time-isbook = 'X'
+    AND ( ps_cond_time-sdlstrtdt < sy-datum
+    OR ( ps_cond_time-sdlstrtdt EQ sy-datum
+    AND ps_cond_time-sdlstrttm < sy-uzeit ) ).
+
+    MESSAGE i999(zmcss) WITH '과거 시점으로의 생산 계획은 생성할 수 없습니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+*  ps_cond_prd-amount
+*  ps_cond_prd-matnr
+*  ps_cond_prd-meins
+*  ps_cond_prd-stoid
+
+  " INWARE SETTINGS
+  MOVE-CORRESPONDING ps_cond_prd TO ps_inware.
+  ps_inware-wtype = 'I'.
+
+  CASE ps_cond_time-isbook.
+    WHEN 'X'.
+      ps_inware-wdate = ps_cond_time-sdlstrtdt.
+    WHEN OTHERS.
+      ps_inware-wdate = sy-datum.
+  ENDCASE.
+
+  ps_inware-rgtor = 'E0000024'.
+
+  " OUTWARE SETTINGS
+  LOOP AT pt_info_0310.
+
+*     pt_info_0310-ustck
+*     pt_info_0310-matnr
+*     pt_info_0310-meins
+*     pt_info_0310-stoid
+
+    MOVE-CORRESPONDING pt_info_0310 TO pt_outwares.
+    pt_outwares-amount = pt_info_0310-ustck.
+    pt_outwares-wtype = 'O'.
+    CASE ps_cond_time-isbook.
+      WHEN 'X'.
+        pt_outwares-wdate = ps_cond_time-sdlstrtdt.
+      WHEN OTHERS.
+        pt_outwares-wdate = sy-datum.
+    ENDCASE.
+
+    pt_outwares-rgtor = 'E0000012'.
+    APPEND pt_outwares.
+  ENDLOOP.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  RELEASE_MRP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_OUTWARES  text
+*      -->P_ZSSSMD0812  text
+*      -->P_GS_INWARE  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
+                  USING    VALUE(ps_cond_time) TYPE zsssmd0812
+                           VALUE(ps_inware) TYPE ztssware
+                  CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  CASE ps_cond_time-isbook.
+    WHEN 'X'.
+      CALL FUNCTION 'Z_SCHEDULE_MRP'
+        EXPORTING
+          iv_startdate        = ps_cond_time-sdlstrtdt
+          iv_starttime        = ps_cond_time-sdlstrttm
+          is_inware           = ps_inware
+          it_outwares         = pt_outwares[]
+        EXCEPTIONS
+          query_failed        = 1
+          insert_failed       = 2
+          invalid_inware      = 3
+          invalid_outwares    = 4
+          job_process_error   = 5
+          not_enough_outwares = 6
+          OTHERS              = 7.
+    WHEN OTHERS.
+      CALL FUNCTION 'Z_SCHEDULE_MRP'
+        EXPORTING
+          iv_startimm         = 'X'
+          is_inware           = ps_inware
+          it_outwares         = pt_outwares[]
+        EXCEPTIONS
+          query_failed        = 1
+          insert_failed       = 2
+          invalid_inware      = 3
+          invalid_outwares    = 4
+          job_process_error   = 5
+          not_enough_outwares = 6
+          OTHERS              = 7.
+  ENDCASE.
+
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  pv_subrc = 0.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

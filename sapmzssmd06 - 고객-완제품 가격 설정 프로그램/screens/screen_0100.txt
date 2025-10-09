@@ -8,16 +8,16 @@ SAPMZSSMD06
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD06                             0100 0100     23 66192 37  0  0 27125  0G E                              20251005110837																																
+SAPMZSSMD06                             0100 0100      4 75192 37  0  0 27126  0G E                              20251009091300																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_1		CHAR	 47	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							CONDITION		
+B_BOX_1		CHAR	 82	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							CONDITION		
 ZSSSMD06002-PRDNR	2	CHAR	 20	30	00	04	30	00	  2	  4		  0	  0	  0		  0					  0	  0								肯力前 内靛	                                                                                                                                                                                                                                                        X	
 ZSSSMD06002-PRDNR	C	CHAR	  8	A0	00	84	00	08	  2	 25		  0	  0	  0		  0					 16	  0			ZSHSSMD06					________	X                                      00	
 ZSSSMD06002-CSTID	2	CHAR	 20	30	00	04	30	00	  3	  4		  0	  0	  0		  0					  0	  0								绊按 内靛	                                                                                                                                                                                                                                                        X	
 ZSSSMD06002-CSTID	C	CHAR	  8	A0	00	84	00	08	  3	 25		  0	  0	  0		  0					 16	  0			ZSHSSMD08					________	X                                      00	
-CON			 66	00	00	00	30	00	  5	  2		  0	  0	  0		 19	U				  1	  1	102									
+CON			 82	00	00	00	30	00	  5	  2		  0	  0	  0		 19	U				  1	  1	102									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
