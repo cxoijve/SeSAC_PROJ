@@ -4214,6 +4214,8 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
   IF sy-calld EQ 'X'.
     LOOP AT SCREEN.
       CASE screen-group1.
+        WHEN 'CLD'.
+          screen-active = '0'.
         WHEN 'SED'. " 수정 버튼 숨기기
           screen-active = '0'.
         WHEN 'EED'. " 수정 완료 버튼 숨기기.
@@ -4222,7 +4224,6 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
           screen-active = '0'.
         WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
           screen-input = '0'.
-        WHEN OTHERS.
       ENDCASE.
       MODIFY SCREEN.
     ENDLOOP.
@@ -4232,6 +4233,26 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
   IF gs_info_0500h-binum IS NOT INITIAL.
     LOOP AT SCREEN.
       CASE screen-group1.
+        WHEN 'CLD'.
+          screen-active = '1'.
+          CASE screen-group2.
+            WHEN 'DTL'.
+              screen-active = '1'.
+              CASE screen-group3.
+                WHEN 'GI'.
+                  IF gs_info_0500h-jenum IS INITIAL.
+                    screen-active = '0'.
+                  ENDIF.
+                WHEN 'BI'.
+                  IF gs_info_0500h-binum IS INITIAL.
+                    screen-active = '0'.
+                  ENDIF.
+                WHEN 'AR'.
+                  IF gs_info_0500h-arnum IS INITIAL.
+                    screen-active = '0'.
+                  ENDIF.
+              ENDCASE.
+          ENDCASE.
         WHEN 'SED'. " 수정 버튼 숨기기
           screen-active = '0'.
         WHEN 'EED'. " 수정 완료 버튼 숨기기.
@@ -4251,6 +4272,12 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
     CASE pv_eflag.
       WHEN 'X'. " 수정 모드 ON
         CASE screen-group1.
+          WHEN 'CLD'.
+            screen-active = '1'.
+            CASE screen-group2.
+              WHEN 'DTL'.
+                screen-active = '0'.
+            ENDCASE.
           WHEN 'SED'. " 수정 버튼 숨기기
             screen-active = '0'.
           WHEN 'EED'. " 수정 완료 버튼 생기기.
@@ -4259,13 +4286,30 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
             screen-active = '1'.
           WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 가능하게 하기
             screen-input = '1'.
-          WHEN 'DTL'.
-            screen-active = '0'.
-          WHEN OTHERS.
         ENDCASE.
 
       WHEN ''. " 조회 모드 ON
         CASE screen-group1.
+          WHEN 'CLD'.
+            screen-active = '1'.
+            CASE screen-group2.
+              WHEN 'DTL'.
+                screen-active = '1'.
+                CASE screen-group3.
+                  WHEN 'GI'.
+                    IF gs_info_0500h-jenum IS INITIAL.
+                      screen-active = '0'.
+                    ENDIF.
+                  WHEN 'BI'.
+                    IF gs_info_0500h-binum IS INITIAL.
+                      screen-active = '0'.
+                    ENDIF.
+                  WHEN 'AR'.
+                    IF gs_info_0500h-arnum IS INITIAL.
+                      screen-active = '0'.
+                    ENDIF.
+                ENDCASE.
+            ENDCASE.
           WHEN 'SED'. " 수정 버튼 생기기
             screen-active = '1'.
           WHEN 'EED'. " 수정 완료 버튼 숨기기.
@@ -4274,23 +4318,6 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
             screen-active = '0'.
           WHEN 'ED2'. " 수정에 따라 입력가능한 필드들 입력 불가능하게 하기
             screen-input = '0'.
-          WHEN 'DTL'.
-            screen-active = '1'.
-            CASE screen-group2.
-              WHEN 'GI'.
-                IF gs_info_0500h-jenum IS INITIAL.
-                  screen-active = '0'.
-                ENDIF.
-              WHEN 'BI'.
-                IF gs_info_0500h-binum IS INITIAL.
-                  screen-active = '0'.
-                ENDIF.
-              WHEN 'AR'.
-                IF gs_info_0500h-arnum IS INITIAL.
-                  screen-active = '0'.
-                ENDIF.
-            ENDCASE.
-          WHEN OTHERS.
         ENDCASE.
 
       WHEN OTHERS.
@@ -5729,6 +5756,19 @@ FORM check_alv_amount  TABLES   pt_info STRUCTURE zssssd0206
     pv_subrc = 4.
     RETURN.
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALL_JE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_INFO_0500H_JENUM  text
+*----------------------------------------------------------------------*
+FORM call_je  USING  VALUE(pv_jenum) TYPE zessjenum.
+
+  SET PARAMETER ID 'JEN' FIELD pv_jenum.
+  CALL TRANSACTION 'ZSSFI01' .
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

@@ -210,6 +210,10 @@ ENDMODULE.
 MODULE user_command_0500 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
+      IF SY-CALLD = 'X'.
+        LEAVE PROGRAM.
+      ENDIF.
+
       IF gv_eflag_0500 = 'X'.
         MESSAGE s999(zmcss) WITH '현재 출고 문서를 수정중입니다'.
       ELSE.
@@ -316,13 +320,16 @@ MODULE user_command_0500 INPUT.
       ENDIF.
 
     WHEN 'JEDTL'.
-      MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-jenum '/' gs_info_0500h-fyear.
+      "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-jenum'/' gs_info_0500h-fyear.
+      PERFORM call_je USING gs_info_0500h-jenum.
     WHEN 'BIDTL'.
       MESSAGE i999(zmcss) WITH 'BI : ' gs_info_0500h-binum.
     WHEN 'BJDTL'.
-      MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-bjnum '/' gs_info_0500h-bifyr.
+      "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-bjnum '/' gs_info_0500h-bifyr.
+      PERFORM call_je USING gs_info_0500h-bjnum.
     WHEN 'ARDTL'.
-      MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-arnum '/' gs_info_0500h-arfyr.
+      "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-arnum '/' gs_info_0500h-arfyr.
+      PERFORM call_je USING gs_info_0500h-arnum.
   ENDCASE.
 
   IF gt_info_0500 IS NOT INITIAL.

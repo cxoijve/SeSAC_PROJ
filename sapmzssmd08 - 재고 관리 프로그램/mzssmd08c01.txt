@@ -10,6 +10,8 @@ CLASS lcl_handler IMPLEMENTATION.
     DATA : lv_matnr TYPE zessmatnr.
 
     DATA : ls_info_0200 LIKE gs_info_0200.
+    DATA : ls_info_0400 LIKE gs_info_0400.
+
     DATA : lv_warid TYPE zesswarid,
            lv_ginum TYPE zessginum,
            lv_grnum TYPE zessgrnum.
@@ -43,6 +45,9 @@ CLASS lcl_handler IMPLEMENTATION.
       WHEN '0310'.
         READ TABLE gt_info_0310 INTO ls_info_0310 INDEX es_row_no-row_id.
         lv_matnr = ls_info_0310-matnr.
+      WHEN '0400'.
+        READ TABLE gt_info_0400 INTO ls_info_0400 INDEX es_row_no-row_id.
+        lv_matnr = ls_info_0400-matnr.
     ENDCASE.
 
     CASE e_column_id-fieldname.
@@ -51,8 +56,7 @@ CLASS lcl_handler IMPLEMENTATION.
           MESSAGE i999(zmcss) WITH '자재가 선택되지 않았습니다.'.
           RETURN.
         ENDIF.
-
-        CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
           EXPORTING
             iv_matnr     = lv_matnr
             iv_ismodal   = 'X'
@@ -63,10 +67,20 @@ CLASS lcl_handler IMPLEMENTATION.
           RETURN.
         ENDIF.
       WHEN 'WARID'.
-        MESSAGE i999(zmcss) WITH 'HOTSPOT WARID :' lv_warid.
+        CALL FUNCTION 'Z_FMSS_CALL_WARID_DETAIL'
+          EXPORTING
+            iv_warid     = lv_warid
+            iv_ismodal   = 'X'
+          EXCEPTIONS
+            query_failed = 1
+            OTHERS       = 2.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+
       WHEN 'RDOC'.
         IF lv_ginum IS NOT INITIAL AND lv_grnum IS INITIAL.
-          CALL FUNCTION 'Z_CALL_GI_DETAIL'
+          CALL FUNCTION 'Z_FMSS_CALL_GI_DETAIL'
             EXPORTING
               iv_ginum     = lv_ginum
             EXCEPTIONS
@@ -84,6 +98,80 @@ CLASS lcl_handler IMPLEMENTATION.
           RETURN.
         ENDIF.
     ENDCASE.
+  ENDMETHOD.
+
+  METHOD on_data_changed.
+    DATA ls_cell LIKE LINE OF er_data_changed->mt_good_cells.
+    DATA ls_info LIKE gs_info_0400.
+    DATA lv_adamt LIKE gs_info_0400-adamt.
+    DATA lv_matnr TYPE zessmatnr.
+    DATA lv_matnm TYPE zessmatnm.
+
+    LOOP AT er_data_changed->mt_good_cells INTO ls_cell.
+      CASE ls_cell-fieldname.
+        WHEN 'DEAMT'.
+          READ TABLE gt_info_0400 INTO ls_info INDEX ls_cell-row_id.
+
+          er_data_changed->get_cell_value(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_fieldname = ls_cell-fieldname
+            IMPORTING
+              e_value = ls_info-deamt
+          ).
+
+          PERFORM check_ware_availablity USING ls_info
+                                         CHANGING lv_adamt
+                                                  lv_matnr
+                                                  lv_matnm
+                                                  gv_subrc.
+          IF gv_subrc <> 0.
+            CASE gv_subrc.
+              WHEN '4'. " 0개 폐기하는 경우
+                er_data_changed->add_protocol_entry(
+                 EXPORTING
+                   i_msgid = 'ZMCSS'
+                   i_msgno = '305'
+                   i_msgty = 'E'
+                   i_msgv1 = ls_info-warid
+                   i_fieldname = ls_cell-fieldname
+                   i_row_id = ls_cell-row_id
+                 ).
+              WHEN '5'. " lv_adamt가 음수가 되는 경우
+                er_data_changed->add_protocol_entry(
+                 EXPORTING
+                   i_msgid = 'ZMCSS'
+                   i_msgno = '306'
+                   i_msgty = 'E'
+                   i_msgv1 = ls_info-warid
+                   i_msgv2 = lv_matnm
+                   i_msgv3 = lv_matnr
+                   i_fieldname = ls_cell-fieldname
+                   i_row_id = ls_cell-row_id
+                 ).
+            ENDCASE.
+            CONTINUE.
+          ENDIF.
+
+          " DEAMT 반영
+          er_data_changed->modify_cell(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_tabix = ls_cell-tabix
+              i_fieldname = ls_cell-fieldname
+              i_value = ls_info-deamt
+          ).
+
+          " ADAMT 반영
+          er_data_changed->modify_cell(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_tabix = ls_cell-tabix
+              i_fieldname = 'ADAMT'
+              i_value = lv_adamt
+          ).
+      ENDCASE.
+    ENDLOOP.
   ENDMETHOD.
 ENDCLASS.
 

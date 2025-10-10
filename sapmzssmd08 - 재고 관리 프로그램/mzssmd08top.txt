@@ -25,6 +25,8 @@ CLASS lcl_handler DEFINITION.
     METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
       IMPORTING es_row_no e_column_id e_row_id.
 
+    METHODS on_data_changed FOR EVENT data_changed OF cl_gui_alv_grid
+      IMPORTING er_data_changed e_ucomm.
 ENDCLASS.
 
 " 100 ===================================================
@@ -163,6 +165,27 @@ DATA go_handler_0310 TYPE REF TO lcl_handler.
 
 DATA : gv_imm_0310, " 'X' : Immediate 설정함
        gv_fix_0310. " 'X' : 아이템 결정함.
+
+" 400 ============================================
+
+DATA : BEGIN OF gs_info_0400.
+DATA : cellscol TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmd0814.
+DATA : END OF gs_info_0400.
+
+DATA gt_info_0400 LIKE TABLE OF gs_info_0400.
+
+" ALV Objects 0400
+DATA   go_con_0400 TYPE REF TO cl_gui_custom_container.
+DATA   go_alv_0400 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo_0400 TYPE lvc_s_layo.
+DATA : gt_fcat_0400 TYPE lvc_t_fcat,
+       gs_fcat_0400 TYPE lvc_s_fcat.
+DATA : gt_sort_0400 TYPE lvc_t_sort,
+       gs_sort_0400 TYPE lvc_s_sort.
+
+" ALV Handler 0400
+DATA go_handler_0400 TYPE REF TO lcl_handler.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

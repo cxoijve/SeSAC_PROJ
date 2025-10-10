@@ -8,11 +8,11 @@ SAPMZSSMD08
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD08                             0310M0310     22 99192 37  0  0 27124  0G E                              20251009163329																																
+SAPMZSSMD08                             0310M0310     24 99192 37  0  0 27125  0G E                              20251009194543																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B310_4		CHAR	 99	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	108							계획 정보		
+B310_4		CHAR	 99	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	105							계획 정보		
 ZSSSMD0812-ISBOOK	C	CHAR	  1	A0	00	80	00	00	  2	  6		  0	  0	  0		  0	A				  2	  0	102							_	                                       00                                                                                                                               IMM	
 ZSSSMD0812-ISBOOK	0	CHAR	 22	30	00	00	30	00	  2	  8		  0	  0	  0		  0	A				  0	  0	102							생산 일자 및 시간 설정		
 ZSSSMD0812-ISIMMI	C	CHAR	  1	A0	00	80	00	00	  2	 37		  0	  0	  0		  0	A				  2	  0	102							_	                                       00                                                                                                                               IMM	
@@ -21,8 +21,8 @@ ZSSSMD0812-SDLSTRTDT	0	CHAR	  9	30	00	00	30	00	  3	  6		  0	  0	  0		  0					  0
 ZSSSMD0812-SDLSTRTDT	D	DATE	 10	A0	00	80	00	08	  3	 21		  0	  0	  0		  0					 16	  0				PLA				__________	X                                      00	
 ZSSSMD0812-SDLSTRTTM	0	CHAR	  9	30	00	00	30	00	  3	 39		  0	  0	  0		  0					  0	  0				PLA				계획 시각	                                                                                                                                                                                                                                                        X	
 ZSSSMD0812-SDLSTRTTM	T	TIME	  8	A0	00	80	00	08	  3	 56		  0	  0	  0		  0					 12	  0				PLA				________	X                                      00	
-B310_1		CHAR	 99	00	00	00	30	00	  5	  2		  0	  0	  0		 20	R				  0	  0	101							생산 정보		
-B310_2		CHAR	 97	00	00	00	30	00	  6	  3		  0	  0	  0		  5	R				  0	  0	103							생산 자재 (완제품)		
+B310_1		CHAR	 99	00	00	00	30	00	  5	  2		  0	  0	  0		 20	R				  0	  0	106							생산 정보		
+B310_2		CHAR	 97	00	00	00	30	00	  6	  3		  0	  0	  0		  5	R				  0	  0	107							생산 자재 (완제품)		
 ZSSSMD0813-MATNR	2	CHAR	 20	30	00	04	30	00	  7	  5		  0	  0	  0		  0					  0	  0								자재 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD0813-MATNR	C	CHAR	  8	A0	00	84	00	08	  7	 26		  0	  0	  0		  0					 16	  0				PRD				________	X                                      00	
 ZSSSMD0813-MATNM	C	CHAR	 40	A0	02	80	31	00	  7	 36		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
@@ -32,10 +32,11 @@ ZSSSMD0813-STONM	C	CHAR	 40	A0	02	80	31	00	  8	 32		  0	  0	  0		  0					 80	  0
 ZSSSMD0813-AMOUNT	2	CHAR	 20	30	00	00	30	00	  9	  5		  0	  0	  0		  0					  0	  0								수량	                                                                                                                                                                                                                                                        X	
 ZSSSMD0813-AMOUNT	P	QUAN	  3	A0	00	80	00	00	  9	 26		  0	  0	  0		  0					  3	  0		ZSSSMD0813-MEINS		PRD				___	                                       00	
 ZSSSMD0813-MEINS	C	UNIT	  3	A0	02	80	30	00	  9	 30		  0	  0	  0		  0				CUNIT	  6	  0								___	                                       00	
-BTN4		CHAR	 13	00	00	00	30	00	 11	 86		  0	  0	  0		  0	P				  0	  0	104			CHG				완제품 재설정	                                                                                                                                                                        CHGITM	
-BTN3		CHAR	 11	00	00	00	30	00	 12	 88		  0	  0	  0		  0	P				  0	  0	105			FIX				완제품 결정	                                                                                                                                                                        FIXITM	
-B310_3		CHAR	 97	00	00	00	30	00	 13	  3		  0	  0	  0		 11	R				  0	  0	106							사용 자재 (원자재)		
-CON_0310			 93	00	00	00	30	00	 14	  5		  0	  0	  0		  9	U				  1	  1	109									
+ZSSSMD0813-INFOTEXT	C	CHAR	 60	A0	02	80	31	00	  9	 36		  0	  0	  0		  0					120	  0								____________________________________________________________	                                       00	
+BTN4		CHAR	 13	00	00	00	30	00	 11	 86		  0	  0	  0		  0	P				  0	  0	108			CHG				완제품 재설정	                                                                                                                                                                        CHGITM	
+BTN3		CHAR	 11	00	00	00	30	00	 12	 88		  0	  0	  0		  0	P				  0	  0	109			FIX				완제품 결정	                                                                                                                                                                        FIXITM	
+B310_3		CHAR	 97	00	00	00	30	00	 13	  3		  0	  0	  0		 11	R				  0	  0	101							사용 자재 (원자재)		
+CON_0310			 93	00	00	00	30	00	 14	  5		  0	  0	  0		  9	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

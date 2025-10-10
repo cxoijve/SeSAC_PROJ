@@ -1,0 +1,61 @@
+FUNCTION z_fmss_call_warid_detail.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_WARID) TYPE  ZESSWARID
+*"     REFERENCE(IV_ISMODAL) TYPE  CHAR01
+*"  EXCEPTIONS
+*"      QUERY_FAILED
+*"----------------------------------------------------------------------
+
+  CLEAR zsssmd0815.
+
+  DATA ls_emp TYPE ztssemp.
+
+  SELECT SINGLE *
+    FROM ztssware
+    INTO CORRESPONDING FIELDS OF zsssmd0815
+    WHERE warid = iv_warid.
+  IF sy-subrc <> 0. RAISE query_failed. ENDIF.
+
+  SELECT SINGLE matnm
+    FROM ztssmat_t
+    INTO CORRESPONDING FIELDS OF zsssmd0815
+    WHERE matnr = zsssmd0815-matnr
+    AND langu = sy-langu.
+  IF sy-subrc <> 0. RAISE query_failed. ENDIF.
+
+  SELECT SINGLE stonm
+    FROM ztssstrg
+    INTO CORRESPONDING FIELDS OF zsssmd0815
+    WHERE stoid = zsssmd0815-stoid.
+  IF sy-subrc <> 0. RAISE query_failed. ENDIF.
+
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO CORRESPONDING FIELDS OF ls_emp
+    WHERE pernr = zsssmd0815-rgtor.
+  IF sy-subrc <> 0. RAISE query_failed. ENDIF.
+
+  CONCATENATE ls_emp-lname ls_emp-fname
+  INTO zsssmd0815-ename.
+
+  CASE zsssmd0815-wtype.
+    WHEN 'I'.
+      zsssmd0815-wtype_t = '반입'.
+    WHEN 'O'.
+      zsssmd0815-wtype_t = '반출'.
+    WHEN 'D'.
+      zsssmd0815-wtype_t = '폐기'.
+  ENDCASE.
+
+  CASE iv_ismodal.
+    WHEN 'X'.
+      CALL SCREEN 110 STARTING AT 10 10.
+    WHEN OTHERS.
+      CALL SCREEN 100.
+  ENDCASE.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

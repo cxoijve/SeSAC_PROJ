@@ -52,6 +52,9 @@ FORM create_alv_0100 .
 * MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
 *            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
+
+  PERFORM req_event_for_alv.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  DISPLAY_ALV_0100
@@ -159,29 +162,29 @@ ENDFORM.
 FORM refresh_alv  USING    po_alv TYPE REF TO cl_gui_alv_grid
                            ps_layo TYPE lvc_s_layo
                            pt_fcat TYPE lvc_t_fcat.
-* ALV Refresh
   DATA: ls_stbl TYPE lvc_s_stbl.
 
 *    "ALV Refresh
-  CALL METHOD po_alv->set_frontend_fieldcatalog
-    EXPORTING
-      it_fieldcatalog = pt_fcat.
+*  CALL METHOD po_alv->set_frontend_fieldcatalog
+*    EXPORTING
+*      it_fieldcatalog = pt_fcat.
 
-  CALL METHOD po_alv->set_frontend_layout
-    EXPORTING
-      is_layout = ps_layo.
+*  CALL METHOD po_alv->set_frontend_layout
+*    EXPORTING
+*      is_layout = ps_layo.
 
 *  i_soft_refresh: without sort, filter, etc.
-*  i_soft_refresh = 'X' : sort, filter condition Clear
+*  i_soft_refresh = 'X' : SORT, filter condition CLEAR
 
 *  is_stable: with stable rows/columns
 *  row: alv control: row-based stable refresh
 *  col: alv control: column-based stable refresh
   ls_stbl-row = 'X'.  "( row scroll Fix )
   ls_stbl-col = 'X'. "( col scroll Fix )
-  go_alv->refresh_table_display( EXPORTING i_soft_refresh = 'X'
-                                           is_stable      = ls_stbl  ).
-
+  go_alv->refresh_table_display(
+                EXPORTING i_soft_refresh = 'X'
+                          is_stable      = ls_stbl
+                                            ).
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_LAYOUT
@@ -221,7 +224,7 @@ FORM set_fcat  CHANGING pt_fcat TYPE lvc_t_fcat.
   LOOP AT pt_fcat INTO ls_fcat.
     CASE ls_fcat-fieldname.
       WHEN 'LIGHT'.
-        ls_fcat-coltext = 'TEST'.
+        ls_fcat-coltext = '계약여부'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -236,8 +239,6 @@ ENDFORM.
 *      -->P_GT_PRCAT  text
 *----------------------------------------------------------------------*
 FORM get_prcat_data  TABLES ct_prcat STRUCTURE zsssmd07002.
-
-
 
   SELECT rawnr venid vnprc curky del
     FROM ztssprcat
@@ -437,7 +438,7 @@ FORM display_alv_0110 .
   CALL METHOD go_alv_0110->set_table_for_first_display
     EXPORTING
       i_structure_name              = 'zsssmd07003'
-      is_layout                     = gs_layo
+      is_layout                     = gs_layo_0110
     CHANGING
       it_outtab                     = gt_vntext
 *     it_fieldcatalog               =
@@ -556,10 +557,10 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_layout_0110 .
-  CLEAR gs_layo.
-  gs_layo-cwidth_opt = 'X'.
-  gs_layo-zebra = 'X'.
-  gs_layo-sel_mode = 'A'.
+  CLEAR gs_layo_0110.
+  gs_layo_0110-cwidth_opt = 'X'.
+  gs_layo_0110-zebra = 'X'.
+  gs_layo_0110-sel_mode = 'A'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CREATE_ALV_0200
@@ -631,7 +632,7 @@ FORM display_alv_0200 .
   CALL METHOD go_alv_0200->set_table_for_first_display
     EXPORTING
       i_structure_name              = 'ZSSSMD07005'
-      is_layout                     = gs_layo
+      is_layout                     = gs_layo_0200
     CHANGING
       it_outtab                     = gt_prcat_0200
 *     it_fieldcatalog               =
@@ -691,9 +692,9 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_layout_0200 .
-  CLEAR gs_layo.
-  gs_layo-cwidth_opt = 'X'.
-  gs_layo-zebra = 'X'.
+  CLEAR gs_layo_0200.
+  gs_layo_0200-cwidth_opt = 'X'.
+  gs_layo_0200-zebra = 'X'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_LAYOUT_0100
@@ -707,11 +708,11 @@ FORM set_layout_0100 .
 
   CLEAR gs_layo.
   gs_layo-sel_mode = 'A'.
-  gs_layo-cwidth_opt = 'X'.
-
+  gs_layo-cwidth_opt = 'A'.
   gs_layo-no_rowins = 'X'. "Standard Edit X
   gs_layo-excp_fname = 'LIGHT'.
   gs_layo-excp_led = 'X'.
+  gs_layo-stylefname = 'CELLSTYL'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -911,6 +912,82 @@ FORM update_del_flag .
     COMMIT WORK.
     LEAVE TO SCREEN 0.
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv .
+
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv.
+  SET HANDLER lcl_handler=>on_user_command         FOR go_alv.
+  SET HANDLER lcl_handler=>on_data_changed         FOR go_alv.
+  " Enter Event ( on_data_changed  )
+  CALL METHOD go_alv->register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=>mc_evt_modified. " "Enter Key + F4
+
+*  CALL METHOD go_alv->register_edit_event
+*    EXPORTING
+*      i_event_id = cl_gui_alv_grid=>mc_evt_enter. "Enter Key
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  FCAT_CELL1
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_CELL_COL_ID  text
+*      -->P_CL_GUI_ALV_GRID=>MC_STYLE_ENAB  text
+*      <--P_GS_LIST01  text
+*----------------------------------------------------------------------*
+FORM fcat_cell USING VALUE(p_fname)
+                     VALUE(p_mc_style)
+                CHANGING ps_list TYPE ty_s_list01.
+
+  DATA: lv_cell      TYPE lvc_s_styl,
+        lv_cell_list TYPE lvc_s_styl.
+
+  CLEAR ps_list-cellstyl.
+
+
+  lv_cell-style = p_mc_style.
+  lv_cell-fieldname = p_fname.
+
+
+  INSERT lv_cell INTO TABLE ps_list-cellstyl.
+
+
+ENDFORM.                    "FCAT_CELL1
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_INSERT_PRCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM update_prcat_data  CHANGING cv_subrc TYPE sy-subrc.
+  DATA : lt_prcat TYPE TABLE OF ztssprcat,
+         ls_prcat LIKE LINE OF lt_prcat.
+
+  CLEAR gs_prcat.
+  LOOP AT gt_prcat INTO gs_prcat.
+
+    MOVE-CORRESPONDING gs_prcat TO ls_prcat.
+
+    UPDATE ztssprcat FROM ls_prcat.
+
+    IF sy-subrc <> 0.
+      cv_subrc = 4.
+    ELSE.
+      cv_subrc = 0.
+    ENDIF.
+
+  ENDLOOP.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

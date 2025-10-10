@@ -1,0 +1,386 @@
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv_0100 .
+  " 1. 커스텀컨테이너 생성
+  CREATE OBJECT go_con1
+    EXPORTING
+      container_name = 'CON1'.
+
+  " 2. Splitter 생성 (1행 2열 -> 좌우 분할)
+  CREATE OBJECT go_split
+    EXPORTING
+      parent  = go_con1
+      rows    = 1
+      columns = 2.
+
+  " 2-1. 좌우 비율 설정
+  CALL METHOD go_split->set_column_width
+    EXPORTING
+      id    = 1
+      width = 47.
+
+  " 3. 좌/우 컨테이너 가져오기
+  CALL METHOD go_split->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_con_bi.
+
+  CALL METHOD go_split->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_con_doc.
+
+  " 4. ALV 객체 생성
+  CREATE OBJECT go_alv_bi
+    EXPORTING
+      i_parent = go_con_bi.
+
+  CREATE OBJECT go_alv_doc
+    EXPORTING
+      i_parent = go_con_doc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv USING ps_strnm
+                 CHANGING co_alv TYPE REF TO cl_gui_alv_grid
+                          cs_layo TYPE lvc_s_layo
+                          ct_tab
+                          ct_fcat TYPE lvc_t_fcat
+                          ct_sort TYPE lvc_t_sort.
+
+  CALL METHOD co_alv->set_table_for_first_display
+    EXPORTING
+      i_structure_name              = ps_strnm
+      is_layout                     = cs_layo
+      it_toolbar_excluding          = gt_toolbar
+    CHANGING
+      it_outtab                     = ct_tab
+      it_fieldcatalog               = ct_fcat
+      it_sort                       = ct_sort
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_layo USING pv_title
+              CHANGING cs_layo TYPE lvc_s_layo.
+  CLEAR cs_layo.
+  cs_layo-grid_title = pv_title.
+  cs_layo-cwidth_opt = 'A'.
+  cs_layo-zebra = 'X'.
+  cs_layo-sel_mode = 'A'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat_bi .
+  CLEAR gt_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'CSTID'.
+  gs_fcat_bi-coltext = '고객코드'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'CNAME'.
+  gs_fcat_bi-coltext = '고객명'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'FYEAR'.
+  gs_fcat_bi-no_out = 'X'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'JENUM'.
+  gs_fcat_bi-no_out = 'X'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'TOPRC'.
+  gs_fcat_bi-no_out = 'X'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'CURKY'.
+  gs_fcat_bi-no_out = 'X'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'RGDAT'.
+  gs_fcat_bi-no_out = 'X'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+
+  gs_fcat_bi-fieldname = 'LIGHT'.
+  gs_fcat_bi-coltext = '청구 현황'.
+  APPEND gs_fcat_bi TO gt_fcat_bi.
+  CLEAR gs_fcat_bi.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_DOC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat_doc .
+  CLEAR gt_fcat_doc.
+
+  gs_fcat_doc-fieldname = 'CSTID'.
+  gs_fcat_doc-coltext = '고객코드'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
+  gs_fcat_doc-fieldname = 'CNAME'.
+  gs_fcat_doc-coltext = '고객명'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
+  gs_fcat_doc-fieldname = 'RGDAT'.
+  gs_fcat_doc-no_out = 'X'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT_BI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_sort USING pv_dat
+              CHANGING ct_sort TYPE lvc_t_sort
+                       cs_sort TYPE lvc_s_sort.
+  CLEAR ct_sort.
+
+  cs_sort-spos = '1'.
+  cs_sort-fieldname = pv_dat.
+  cs_sort-up = 'X'.
+  APPEND cs_sort TO ct_sort.
+  CLEAR cs_sort.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv CHANGING co_alv TYPE REF TO cl_gui_alv_grid.
+  CALL METHOD co_alv->refresh_table_display
+    EXCEPTIONS
+      finished = 1
+      OTHERS   = 2.
+  IF sy-subrc <> 0.
+*   Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELETE_TOOLBAR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM delete_toolbar .
+  APPEND cl_gui_alv_grid=>mc_fc_excl_all TO gt_toolbar.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GI_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_bi_list .
+  DATA: lr_gidat TYPE RANGE OF sy-datum,
+        lv_exist TYPE c LENGTH 1.
+
+  " 출고일 범위
+  PERFORM date_range USING gs_cond-gidat_b gs_cond-gidat_e
+                     CHANGING lr_gidat.
+
+  CLEAR gt_bi.
+  SELECT a~gidat a~ginum d~cstid d~cname a~stext a~fyear a~jenum a~rgdat
+    INTO CORRESPONDING FIELDS OF TABLE gt_bi
+    FROM ztssgih AS a
+      INNER JOIN ztssgii AS b ON a~ginum EQ b~ginum
+      INNER JOIN ztsssoh AS c ON b~sonum EQ c~sonum
+      INNER JOIN ztsscust AS d ON c~cstid EQ d~cstid
+   WHERE a~gidat IN lr_gidat
+     AND b~ginum <> space.     " 아이템 없는 헤더 제외(이너조인해서 아이템없는 헤더는 조회 안되겠지만)
+
+  " 고객코드 필터링
+  IF gs_cond-cstid IS NOT INITIAL.
+    DELETE gt_bi WHERE cstid <> gs_cond-cstid.
+  ENDIF.
+
+  " 청구여부 신호등
+  LOOP AT gt_bi INTO gs_bi.
+    CLEAR lv_exist.
+    SELECT SINGLE ginum
+      INTO lv_exist
+      FROM ztsssivi
+     WHERE ginum EQ gs_bi-ginum.
+
+    IF sy-subrc EQ 0.
+      gs_bi-light = '3'.
+    ELSE.
+      gs_bi-light = '1'.
+    ENDIF.
+    MODIFY gt_bi FROM gs_bi.
+  ENDLOOP.
+
+  IF gt_bi IS INITIAL.
+    MESSAGE s999(zmcss) WITH '조건에 해당되는 출고문서가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_IV_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_doc_list .
+  DATA: lr_bidat TYPE RANGE OF sy-datum.
+*        ls_bidat LIKE LINE OF lr_bidat.
+
+  " 청구일 범위
+  PERFORM date_range USING gs_cond-bidat_b gs_cond-bidat_e
+                     CHANGING lr_bidat.
+
+  CLEAR gt_doc.
+  SELECT a~bidat a~binum e~cstid e~cname a~stext a~fyear a~jenum
+         a~toprc a~curky a~arfyr a~arnum a~rgdat
+    INTO CORRESPONDING FIELDS OF TABLE gt_doc
+    FROM ztsssivh AS a
+      INNER JOIN ztsssivi AS b ON a~binum EQ b~binum
+      INNER JOIN ztssgii AS c ON b~ginum EQ c~ginum
+      INNER JOIN ztsssoh AS d ON c~sonum EQ d~sonum
+      INNER JOIN ztsscust AS e ON d~cstid EQ e~cstid
+   WHERE a~bidat IN lr_bidat.
+
+  " 고객코드 필터링
+  IF gs_cond-cstid IS NOT INITIAL.
+    DELETE gt_doc WHERE cstid <> gs_cond-cstid.
+  ENDIF.
+
+  " 수금여부 필터링
+  IF gs_cond-archk_y = 'X' AND gs_cond-archk_n = 'X'.
+    " 둘 다 선택 시 모두 조회
+  ELSEIF gs_cond-archk_y = 'X'.
+    DELETE gt_doc WHERE arfyr IS INITIAL AND arnum IS INITIAL.
+  ELSEIF gs_cond-archk_n = 'X'.
+    DELETE gt_doc WHERE arfyr IS NOT INITIAL AND arnum IS NOT INITIAL.
+  ELSE.
+    " 아무것도 선택하지 않았을 시
+    CLEAR gt_doc.
+  ENDIF.
+
+  IF gt_doc IS INITIAL.
+    MESSAGE s999(zmcss) WITH '조건에 해당되는 청구문서가 존재하지 않습니다.' DISPLAY LIKE 'E'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DATE_RANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM date_range USING ps_dat_b TYPE dats
+                      ps_dat_e TYPE dats
+                CHANGING cr_range TYPE STANDARD TABLE.
+
+*  CLEAR: cr_dat, cs_dat.
+*
+*  cs_dat-sign = 'I'.
+*  cs_dat-option = 'BT'.     " 하나의 range row 기본 생성 (입력 안 하면 전체 범위)
+*
+*  " 판매오더일 필터링
+*  IF cs_dat_b IS INITIAL.
+*    cs_dat-low = '00010101'.
+*  ELSE.
+*    cs_dat-low = cs_dat_b.
+*  ENDIF.
+*
+*  IF cs_dat_e IS INITIAL.
+*    cs_dat-high = '99991231'.
+*  ELSE.
+*    cs_dat-high = cs_dat_e.
+*  ENDIF.
+*
+*  APPEND cs_dat TO cr_dat.
+*  CLEAR cs_dat.
+
+  " range row 타입은 pr_range의 line 형식을 사용
+  DATA: lr_row TYPE RANGE OF sy-datum,
+        ls_row LIKE LINE OF lr_row.
+
+  " pr_range 초기화 (호출자가 이미 초기화 안 했을 수 있으니)
+  CLEAR cr_range.
+
+  ls_row-sign   = 'I'.
+  ls_row-option = 'BT'.    " Between
+
+  " 시작일
+  IF ps_dat_b IS INITIAL.
+    ls_row-low = '00010101'.
+  ELSE.
+    ls_row-low = ps_dat_b.
+  ENDIF.
+
+  " 종료일
+  IF ps_dat_e IS INITIAL.
+    ls_row-high = '99991231'.
+  ELSE.
+    ls_row-high = ps_dat_e.
+  ENDIF.
+
+  APPEND ls_row TO cr_range.
+  CLEAR ls_row.
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

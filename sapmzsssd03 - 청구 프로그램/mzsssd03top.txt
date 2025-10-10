@@ -2,8 +2,55 @@
 *& Include MZSSSD03TOP                                       Module Pool      SAPMZSSSD03
 *&
 *&---------------------------------------------------------------------*
-PROGRAM SAPMZSSSD03.
+PROGRAM sapmzsssd03.
 
+" Common
+DATA: ok_code    TYPE sy-ucomm,
+      gv_subrc   TYPE sy-subrc,
+      gv_dynnr   TYPE sy-dynnr,
+      gv_first   TYPE abap_bool,
+      gt_toolbar TYPE ui_functions.
+
+" 라디오버튼
+DATA : gv_rb_bi  TYPE c VALUE 'X',      " 청구 대상
+       gv_rb_doc TYPE c.                " 청구 문서
+
+" Screen 100 - Condition
+DATA: BEGIN OF gs_cond.
+    INCLUDE STRUCTURE zssssd0301.
+DATA: END OF gs_cond,
+      gt_cond LIKE TABLE OF gs_cond.
+
+" Screen 100 - ALV (청구 대상)
+DATA: BEGIN OF gs_bi,
+        light.
+    INCLUDE STRUCTURE zssssd0302.
+DATA: END OF gs_bi,
+      gt_bi LIKE TABLE OF gs_bi.
+
+" Screen 100 - ALV (청구 문서)
+DATA: BEGIN OF gs_doc.
+    INCLUDE STRUCTURE zssssd0303.
+DATA: END OF gs_doc,
+      gt_doc LIKE TABLE OF gs_doc.
+
+" ALV (100)
+DATA: go_con1  TYPE REF TO cl_gui_custom_container,
+      go_split TYPE REF TO cl_gui_splitter_container,
+      go_con_bi TYPE REF TO cl_gui_container,             " 청구 대상
+      go_con_doc TYPE REF TO cl_gui_container.            " 청구 문서
+DATA: go_alv_bi  TYPE REF TO cl_gui_alv_grid,
+      go_alv_doc  TYPE REF TO cl_gui_alv_grid,
+      gs_layo_bi TYPE lvc_s_layo,
+      gs_layo_doc TYPE lvc_s_layo,
+      gt_fcat_bi TYPE lvc_t_fcat,
+      gs_fcat_bi LIKE LINE OF gt_fcat_bi,
+      gt_fcat_doc TYPE lvc_t_fcat,
+      gs_fcat_doc LIKE LINE OF gt_fcat_doc,
+      gt_sort_bi TYPE lvc_t_sort,
+      gs_sort_bi LIKE LINE OF gt_sort_bi,
+      gt_sort_doc TYPE lvc_t_sort,
+      gs_sort_doc LIKE LINE OF gt_sort_doc.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

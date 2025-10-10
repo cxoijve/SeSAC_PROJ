@@ -1,0 +1,158 @@
+FUNCTION Z_FMSS_SCHEDULE_MRP.
+*"--------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_STARTDATE) TYPE  BTCSDATE OPTIONAL
+*"     REFERENCE(IV_STARTTIME) TYPE  BTCSTIME OPTIONAL
+*"     REFERENCE(IV_STARTIMM) TYPE  BTCH0000-CHAR1 OPTIONAL
+*"     REFERENCE(IS_INWARE) TYPE  ZTSSWARE
+*"     REFERENCE(IT_OUTWARES) TYPE  ZSSSMD0809
+*"  EXCEPTIONS
+*"      QUERY_FAILED
+*"      INSERT_FAILED
+*"      INVALID_INWARE
+*"      INVALID_OUTWARES
+*"      JOB_PROCESS_ERROR
+*"      NOT_ENOUGH_OUTWARES
+*"--------------------------------------------------------------------
+
+  " INVALID IN / OUTWARE CHECK
+  DATA : ls_ware TYPE ztssware.
+  DATA : lt_ware TYPE TABLE OF ztssware.
+  " Job Related
+  DATA lv_jobname TYPE tbtcjob-jobname.
+  DATA lv_jobcount TYPE tbtcjob-jobcount.
+  DATA lv_amount_string TYPE string.
+  DATA lv_outavamt TYPE int4.
+
+  DATA lv_log TYPE string.
+  " 넣을 WARE에 빈 값이 있는가?
+  PERFORM check_init USING    is_inware
+                     CHANGING gv_subrc.
+  IF gv_subrc <> 0. RAISE invalid_inware. ENDIF.
+
+  LOOP AT it_outwares INTO ls_ware.
+    PERFORM check_init USING ls_ware
+                       CHANGING gv_subrc.
+    IF gv_subrc <> 0. RAISE invalid_outwares. ENDIF.
+    " OUTWARES의 재고량이 충분한가?
+    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = '99991231'
+        iv_stoid         = ls_ware-stoid
+        iv_matnr         = ls_ware-matnr
+      IMPORTING
+        ev_astck         = lv_outavamt
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '자재의 재고량을 확인할 수 없습니다.'.
+      RAISE query_failed.
+    ENDIF.
+
+    IF ls_ware-amount > lv_outavamt.
+      MESSAGE i999(zmcss) WITH ls_ware-matnr '자재의 재고량이 충분하지 않습니다. 가용재고 :' lv_outavamt.
+      RAISE not_enough_outwares.
+    ENDIF.
+
+    CLEAR : ls_ware, lv_outavamt.
+  ENDLOOP.
+
+  " INSERT 할 WARE 한 INTERNAL TABLE에 삽입.
+  APPEND is_inware TO lt_ware.
+  APPEND LINES OF it_outwares TO lt_ware.
+
+  " JOB NAME SETTINGS
+  lv_amount_string = is_inware-amount.
+  CONCATENATE
+    'ZMRP_'
+    is_inware-matnr
+    '_'
+    lv_amount_string
+    is_inware-meins
+  INTO lv_jobname.
+
+  " JOB SCHEDULE ZRSSMD02 (BATCH REPORT)
+  CALL FUNCTION 'JOB_OPEN'
+    EXPORTING
+      jobname          = lv_jobname
+    IMPORTING
+      jobcount         = lv_jobcount
+    EXCEPTIONS
+      cant_create_job  = 1
+      invalid_job_data = 2
+      jobname_missing  = 3
+      OTHERS           = 4.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH 'MRP 등록 실패 - OPEN'.
+    RAISE job_process_error.
+  ENDIF.
+
+  IF sy-subrc = 0.
+    " CALL REPORT
+    SUBMIT zrssmd02
+      WITH pa_ware = lt_ware
+      VIA JOB lv_jobname NUMBER lv_jobcount
+      AND RETURN.
+    IF iv_startimm EQ 'X'
+      AND iv_startdate IS INITIAL
+      AND iv_starttime IS INITIAL.
+      CALL FUNCTION 'JOB_CLOSE'
+        EXPORTING
+          jobcount             = lv_jobcount
+          jobname              = lv_jobname
+          strtimmed            = iv_startimm
+        EXCEPTIONS
+          cant_start_immediate = 1
+          invalid_startdate    = 2
+          jobname_missing      = 3
+          job_close_failed     = 4
+          job_nosteps          = 5
+          job_notex            = 6
+          lock_failed          = 7
+          invalid_target       = 8
+          OTHERS               = 9.
+    ELSEIF iv_startimm IS INITIAL
+      AND iv_startdate IS NOT INITIAL
+      AND iv_starttime IS NOT INITIAL.
+      CALL FUNCTION 'JOB_CLOSE'
+        EXPORTING
+          jobcount             = lv_jobcount
+          jobname              = lv_jobname
+          sdlstrtdt            = iv_startdate
+          sdlstrttm            = iv_starttime
+        EXCEPTIONS
+          cant_start_immediate = 1
+          invalid_startdate    = 2
+          jobname_missing      = 3
+          job_close_failed     = 4
+          job_nosteps          = 5
+          job_notex            = 6
+          lock_failed          = 7
+          invalid_target       = 8
+          OTHERS               = 9.
+    ELSE.
+      MESSAGE i999(zmcss) WITH 'MRP 등록 실패 - 예약 오류'.
+      RAISE job_process_error.
+    ENDIF.
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH 'MRP 등록 실패 - CLOSE'.
+      RAISE job_process_error.
+    ENDIF.
+    CASE iv_startimm.
+      WHEN 'X'.
+        MESSAGE i999(zmcss) WITH '신규 생산 계획' lv_jobname '이 등록되었습니다. '.
+      WHEN OTHERS.
+        CONCATENATE iv_startdate '/' iv_starttime INTO lv_log.
+        MESSAGE i999(zmcss) WITH '신규 생산 계획' lv_jobname '이 등록되었습니다.' lv_log .
+    ENDCASE.
+
+  ENDIF.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

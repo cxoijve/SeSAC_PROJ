@@ -1,0 +1,30 @@
+FUNCTION-POOL zfgss28.                      "MESSAGE-ID ..
+
+* INCLUDE LZFGSS28D...                       " Local class definition
+
+" Common Variables
+DATA : gv_subrc LIKE sy-subrc,
+       ok_code LIKE sy-ucomm.
+
+" Itab 0100
+DATA gt_dd07v TYPE TABLE OF dd07v WITH HEADER LINE.
+
+" 100 : 자재 상세정보 =========================
+TYPES : BEGIN OF ts_mat.
+TYPES : matnr   TYPE zessmatnr,
+        mtype   TYPE zessmtype,
+        mtype_t TYPE ddtext,
+        expda   TYPE zessexpda,
+        meins   TYPE zessmeins,
+        matnm   TYPE zessmatnm.
+TYPES : END OF ts_mat.
+DATA : gs_info_0100 TYPE ts_mat.
+
+LOAD-OF-PROGRAM.
+
+  " Domain Fixed Value 가져오기
+  PERFORM get_domain_fixed_values TABLES  gt_dd07v
+                                  USING  'ZDSSMTYPE'.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

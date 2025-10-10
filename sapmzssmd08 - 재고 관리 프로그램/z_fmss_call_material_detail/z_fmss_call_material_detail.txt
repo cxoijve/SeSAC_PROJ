@@ -1,0 +1,36 @@
+FUNCTION Z_FMSS_CALL_MATERIAL_DETAIL.
+*"--------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_MATNR) TYPE  ZESSMATNR
+*"     REFERENCE(IV_ISMODAL) TYPE  CHAR1 DEFAULT 'X'
+*"  EXCEPTIONS
+*"      QUERY_FAILED
+*"      UNKNOWN_FLAG
+*"--------------------------------------------------------------------
+  CLEAR gs_info_0100.
+
+  PERFORM get_info_0100 USING     iv_matnr
+                        CHANGING  gs_info_0100
+                                  gv_subrc.
+
+  IF gv_subrc <> 0.
+    MESSAGE i999(zmcss) WITH '자재 정보를 불러오는 중 에러가 발생했습니다.'.
+    RAISE query_failed.
+  ENDIF.
+
+  CASE iv_ismodal .
+    WHEN ''.
+      CALL SCREEN 110.
+    WHEN 'X'.
+      CALL SCREEN 100 STARTING AT 10 10.
+    WHEN OTHERS.
+      RAISE unknown_flag.
+  ENDCASE.
+
+  CLEAR gs_info_0100.
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -1,0 +1,123 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD03O01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'S100'.
+  SET TITLEBAR 'T100'.
+
+  IF gv_first IS INITIAL.
+    " 출고일, 청구일 기본값 설정
+    gs_cond-gidat_e = sy-datum.
+    gs_cond-bidat_e = sy-datum.
+    " 수금여부 체크박스
+    gs_cond-archk_y = 'X'.
+    gs_cond-archk_n = 'X'.
+    gv_first = 'X'.  " abap_true
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0100 OUTPUT.
+  IF go_con1 IS INITIAL.
+    PERFORM get_doc_list.
+    PERFORM get_bi_list.
+    PERFORM delete_toolbar.
+
+    PERFORM create_alv_0100.        " ALV split
+
+    " 1. 청구대상 ALV
+    PERFORM set_layo USING '출고문서 리스트'
+                     CHANGING gs_layo_bi.
+    gs_layo_bi-excp_fname = 'LIGHT'.
+    gs_layo_bi-excp_led = 'X'.
+    PERFORM set_fcat_bi.
+    PERFORM set_sort USING 'GIDAT'
+                     CHANGING gt_sort_bi
+                              gs_sort_bi.
+    PERFORM display_alv USING 'ZSSSSD0302'
+                        CHANGING go_alv_bi
+                                 gs_layo_bi
+                                 gt_bi
+                                 gt_fcat_bi
+                                 gt_sort_bi.
+
+    " 2. 청구문서 ALV
+    PERFORM set_layo USING '청구문서 리스트'
+                     CHANGING gs_layo_doc.
+    PERFORM set_fcat_doc.
+    PERFORM set_sort USING 'BIDAT'
+                     CHANGING gt_sort_doc
+                              gs_sort_doc.
+    PERFORM display_alv USING 'ZSSSSD0303'
+                        CHANGING go_alv_doc
+                                 gs_layo_doc
+                                 gt_doc
+                                 gt_fcat_doc
+                                 gt_sort_doc.
+  ELSE.
+    PERFORM refresh_alv CHANGING go_alv_bi.
+    PERFORM refresh_alv CHANGING go_alv_doc.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_SCREEN_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_screen_0100 OUTPUT.
+  LOOP AT SCREEN.
+    " 1. 공통 필드
+    IF screen-name = 'GS_COND-CSTID'.
+      screen-active = 1.
+      screen-invisible = 0.   " 보임
+      MODIFY SCREEN.
+      CONTINUE.
+    ENDIF.
+
+    " 2. 청구대상용 필드
+    IF screen-name = 'GS_COND-GIDAT_B'
+    OR screen-name = 'GS_COND-GIDAT_E'
+    OR screen-name = 'TO1'.
+      IF gv_rb_bi = 'X'.
+        screen-active = 1.
+        screen-invisible = 0.
+      ELSE.
+        screen-active = 0.
+        screen-invisible = 1. " 숨김
+      ENDIF.
+      MODIFY SCREEN.
+      CONTINUE.
+    ENDIF.
+
+    " 3. 청구문서용 필드
+    IF screen-name = 'GS_COND-BIDAT_B'
+    OR screen-name = 'GS_COND-BIDAT_E'
+    OR screen-name = 'TO2'
+    OR screen-name = 'ZSSSSD0301-ARCHK'
+    OR screen-name = 'GS_COND-ARCHK_Y'
+    OR screen-name = 'GS_COND-ARCHK_N'
+    OR screen-name = 'ARCHK_Y'
+    OR screen-name = 'ARCHK_N'.
+      IF gv_rb_doc = 'X'.
+        screen-active = 1.
+        screen-invisible = 0.
+      ELSE.
+        screen-active = 0.
+        screen-invisible = 1.
+      ENDIF.
+      MODIFY SCREEN.
+      CONTINUE.
+    ENDIF.
+  ENDLOOP.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -13,6 +13,9 @@ FORM SET_LAYO .
   GS_LAYO-ZEBRA = 'X'.
   GS_LAYO-SEL_MODE = 'A'.
 
+  GS_LAYO-EXCP_FNAME = 'LIGHT'.
+  GS_LAYO-EXCP_LED = 'X'.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_SORT
@@ -138,6 +141,7 @@ FORM CREATE_ALV_0200 .
 *              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
 
+  PERFORM SET_EVENT_0200.
 *  "Event Register
 *  PERFORM REQ_EVENT_FOR_ALV.
 
@@ -155,17 +159,18 @@ FORM SET_FCAT_0200 .
   CLEAR: GT_FCAT.
 
   PERFORM FCAT USING:
-        'REV' '1' '역분개 여부',
-        'FYEAR' '2' '회계연도',
-        'JENUM' '3' '전표번호',
-        'JTYPE' '4' '전표 유형 코드',
-        'JTYPE_T' '5' '전표 유형',
-        'STEXT' '6' '비고',
-        'RGDAT' '7' '전기일',
-        'RGTOR_T' '8' '등록자명',
-        'RGTOR' '9' '등록자 코드',
-        'RRSON' '10' '역분개 사유',
-        'RJNUM' '11' '역분개 전표번호'.
+        'LIGHT' '1' '역분개 여부',
+        'REV' '2' '역분개 여부',
+        'JTYPE' '3' '전표 유형 코드',
+        'JTYPE_T' '4' '전표 유형',
+        'FYEAR' '5' '기존 회계연도',
+        'JENUM' '6' '기존 전표번호',
+        'RGDAT' '7' '기존 전기일',
+        'STEXT' '8' '비고',
+        'RGTOR_T' '9' '등록자명',
+        'RGTOR' '10' '등록자 코드',
+        'RRSON' '11' '역분개 사유',
+        'RJNUM' '12' '역분개 전표번호'.
 
   CLEAR GS_FCAT.
 
@@ -186,6 +191,9 @@ FORM SET_FCAT_0200 .
     ELSEIF GS_FCAT-FIELDNAME = 'RGTOR'.
       GS_FCAT-NO_OUT = 'X'.
 
+    ELSEIF GS_FCAT-FIELDNAME = 'REV'.
+      GS_FCAT-NO_OUT = 'X'.
+
     ENDIF.
 
     MODIFY GT_FCAT FROM GS_FCAT.
@@ -202,7 +210,12 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM SET_EVENT .
+FORM SET_EVENT_0200 .
+  CREATE OBJECT GO_EVENT.
+
+  SET HANDLER:
+  GO_EVENT->DATA_CHANGED FOR GO_ALV,
+  GO_EVENT->HANDLE_HOTSPOT_CLICK FOR GO_ALV.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -213,7 +226,13 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM EVENT_OPTION .
+FORM EVENT_OPTION_0200 .
+
+  " Enter 눌렀을 때
+  GO_ALV->REGISTER_EDIT_EVENT(
+    EXPORTING
+      I_EVENT_ID = CL_GUI_ALV_GRID=>MC_EVT_ENTER
+   ).
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -327,6 +346,8 @@ FORM CREATE_ALV_0300 .
 *              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
 
+
+  PERFORM SET_EVENT_0300.
 *  "Event Register
 *  PERFORM REQ_EVENT_FOR_ALV.
 
@@ -341,12 +362,18 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM SET_SORT_0300 .
 
-  CLEAR: GT_SORT, GS_SORT.
+  CLEAR: GT_SORT2, GS_SORT2.
 
-  GS_SORT-SPOS = '1'.
-  GS_SORT-FIELDNAME = 'REV'.
-  GS_SORT-DOWN = 'X'.
-  APPEND GS_SORT TO GT_SORT.
+  GS_SORT2-SPOS = '1'.
+  GS_SORT2-FIELDNAME = 'RJNUM'.
+  GS_SORT2-DOWN = 'X'.
+  APPEND GS_SORT2 TO GT_SORT2.
+
+**
+**  GS_SORT-SPOS = '1'.
+**  GS_SORT-FIELDNAME = 'REV'.
+**  GS_SORT-DOWN = 'X'.
+**  APPEND GS_SORT TO GT_SORT.
 
 
 ENDFORM.
@@ -363,19 +390,20 @@ FORM SET_FCAT_0300 .
   CLEAR: GT_FCAT.
 
   PERFORM FCAT USING:
-        'REV' '1' '역분개 여부',
-        'RJNUM' '2' '역분개 전표번호',
-        'RRSON' '3' '역분개 사유',
-        'JTYPE' '4' '전표 유형 코드',
-        'JTYPE_T' '5' '전표 유형',
-        'TOPRC' '6' '총 금액',
-        'CURKY' '7' '통화 키',
-        'RGTOR' '8' '등록자 코드',
-        'RGTOR_T' '9' '등록자명',
-        'REFDOC' '10' '참조문서',
-        'FYEAR' '11' '기존 회계연도',
-        'RGDAT' '12' '기존 전기일',
-        'JENUM' '13' '기존 전표번호'.
+        'REV' '2' '역분개 여부',
+        'RJNUM' '3' '역분개 전표번호',
+        'RRSON' '4' '역분개 사유',
+        'JTYPE' '5' '전표 유형 코드',
+        'JTYPE_T' '6' '전표 유형',
+        'TOPRC' '7' '총 금액',
+        'CURKY' '8' '통화 키',
+        'RGTOR' '9' '등록자 코드',
+        'RGTOR_T' '10' '등록자명',
+        'REFDOC' '11' '참조문서',
+        'FYEAR' '12' '기존 회계연도',
+        'RGDAT' '13' '기존 전기일',
+        'JENUM' '14' '기존 전표번호',
+        'LIGHT' '1' '역분개 여부'.
 
   CLEAR GS_FCAT.
 
@@ -399,6 +427,9 @@ FORM SET_FCAT_0300 .
     ELSEIF GS_FCAT-FIELDNAME = 'REFDOC'.
       GS_FCAT-NO_OUT = 'X'.
 
+    ELSEIF GS_FCAT-FIELDNAME = 'REV'.
+      GS_FCAT-NO_OUT = 'X'.
+
     ENDIF.
 
     MODIFY GT_FCAT FROM GS_FCAT.
@@ -417,26 +448,11 @@ FORM DISPLAY_ALV_0300 .
 
   CALL METHOD GO_ALV2->SET_TABLE_FOR_FIRST_DISPLAY
     EXPORTING
-*     I_BUFFER_ACTIVE =
-*     I_BYPASSING_BUFFER            =
-*     I_CONSISTENCY_CHECK           =
-*     I_STRUCTURE_NAME              =
-*     IS_VARIANT      =
-*     I_SAVE          =
-*     I_DEFAULT       = 'X'
       IS_LAYOUT       = GS_LAYO
-*     IS_PRINT        =
-*     IT_SPECIAL_GROUPS             =
-*     IT_TOOLBAR_EXCLUDING          =
-*     IT_HYPERLINK    =
-*     IT_ALV_GRAPHICS =
-*     IT_EXCEPT_QINFO =
-*     IR_SALV_ADAPTER =
     CHANGING
       IT_OUTTAB       = GT_ADATA
       IT_FIELDCATALOG = GT_FCAT
       IT_SORT         = GT_SORT2
-*     IT_FILTER       =
 *  EXCEPTIONS
 *     INVALID_PARAMETER_COMBINATION = 1
 *     PROGRAM_ERROR   = 2
@@ -458,7 +474,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM GET_NON_REV_DATA .
 
-  SELECT JENUM FYEAR JTYPE STEXT CURKY RGDAT RGTOR REV RRSON
+  SELECT JENUM FYEAR JTYPE STEXT CURKY RGDAT RGTOR REV
+         RRSON RJNUM
     FROM ZTSSJEH
     INTO CORRESPONDING FIELDS OF TABLE GT_HDATA
     WHERE REV IN GT_RREV
@@ -477,7 +494,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM GET_ALL_JEH_DATA .
 
-  SELECT JENUM FYEAR JTYPE STEXT CURKY RGDAT RGTOR REV RRSON
+  SELECT JENUM FYEAR JTYPE STEXT CURKY RGDAT RGTOR
+         RJNUM REV RRSON
     FROM ZTSSJEH
     INTO CORRESPONDING FIELDS OF TABLE GT_ADATA
     WHERE REV IN GT_RREV
@@ -697,6 +715,11 @@ FORM SET_SCREEN_0200 .
   PERFORM GET_NON_REV_DATA.
 
   LOOP AT GT_HDATA INTO GS_HDATA.
+    IF GS_HDATA-REV = 'X'.
+      GS_HDATA-LIGHT = '1'.
+    ELSE.
+      GS_HDATA-LIGHT = '3'.
+    ENDIF.
 
     " 차변이 없을 경우 대변 정보 출력
     READ TABLE GT_TOPRC INTO GS_TOPRC WITH KEY JENUM = GS_HDATA-JENUM.
@@ -732,6 +755,11 @@ FORM SET_SCREEN_0300 .
 
 
   LOOP AT GT_ADATA INTO GS_ADATA.
+    IF GS_ADATA-REV = 'X'.
+      GS_ADATA-LIGHT = '1'.
+    ELSE.
+      GS_ADATA-LIGHT = '3'.
+    ENDIF.
 
     " 차변이 없을 경우 대변 정보 출력
     READ TABLE GT_TOPRC INTO GS_TOPRC WITH KEY JENUM = GS_ADATA-JENUM.
@@ -763,7 +791,7 @@ FORM MODIFY_DATA_0300 .
   PERFORM GET_DOMAIN_VALUE USING 'ZDSSJTYPE' CHANGING GT_DOMAIN.
 
   CLEAR GS_DOMAIN.
-  READ TABLE GT_DOMAIN INTO GS_DOMAIN WITH KEY DOMVALUE_L = GS_HDATA-JTYPE.
+  READ TABLE GT_DOMAIN INTO GS_DOMAIN WITH KEY DOMVALUE_L = GS_ADATA-JTYPE.
 
   IF SY-SUBRC = 0.
     GS_ADATA-JTYPE_T = GS_DOMAIN-DDTEXT.
@@ -792,6 +820,98 @@ FORM SET_DATA_0300 .
   CLEAR ZSSSFI0303.
   ZSSSFI0303-FYEAR = '2025'.
   ZSSSFI0303-REV = 'X'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOUBLE_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ES_ROW_NO  text
+*      -->P_E_COLUMN  text
+*----------------------------------------------------------------------*
+FORM GET_DOUBLE_CLICK  USING    P_ES_ROW_NO
+                                P_E_COLUMN.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  ALV_DATA_CHANGED
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ER_DATA_CHANGED  text
+*      -->P_E_ONF4  text
+*      -->P_E_ONF4_BEFORE  text
+*      -->P_E_ONF4_AFTER  text
+*----------------------------------------------------------------------*
+FORM ALV_DATA_CHANGED
+  USING
+    PR_DATA_CHANGED TYPE REF TO CL_ALV_CHANGED_DATA_PROTOCOL
+    P_ONF4
+    P_ONF4_BEFORE
+    P_ONF4_AFTER.
+
+  DATA:
+    LT_GOOD_CELLS TYPE LVC_T_MODI,
+    LS_GOOD_CELL  TYPE LVC_S_MODI.
+
+  LT_GOOD_CELLS[] = PR_DATA_CHANGED->MT_GOOD_CELLS[].
+
+
+  LOOP AT LT_GOOD_CELLS INTO LS_GOOD_CELL.
+
+    IF LS_GOOD_CELL-FIELDNAME EQ 'STEXT'.
+      " 유효성 검사 ~~
+      " SELECT ~~
+***
+***      IF SY-SUBRC EQ 0.
+***        " 다른 필드 값 변경
+***        CALL METHOD PR_DATA_CHANGED->MODIFY_CELL
+***          EXPORTING
+***            I_ROW_ID = LS_GOOD_CELL-ROW_ID  " Row ID
+***            I_FIELDNAME = 'STEXT'           " Field Name
+***            I_VALUE = '값 입력'.
+***      ENDIF.
+
+    ENDIF.
+
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  EVENT_OPTION_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM EVENT_OPTION_0300 .
+
+  " Enter 눌렀을 때
+  GO_ALV2->REGISTER_EDIT_EVENT(
+    EXPORTING
+      I_EVENT_ID = CL_GUI_ALV_GRID=>MC_EVT_ENTER
+   ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_EVENT_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM SET_EVENT_0300 .
+
+  CREATE OBJECT GO_EVENT.
+
+  SET HANDLER:
+  GO_EVENT->DATA_CHANGED FOR GO_ALV2,
+  GO_EVENT->HANDLE_HOTSPOT_CLICK FOR GO_ALV2.
 
 ENDFORM.
 

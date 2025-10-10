@@ -8,38 +8,38 @@ SAPMZSSMM02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM02                             0100 0100     41231192 37  0  0200255  0G E                              20251009171644																																
+SAPMZSSMM02                             0100 0100     67243192 37  0  0127255  0G E                              20251010185309																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 T_COND		CHAR	 76	00	00	00	30	00	  1	  2		  0	  0	  0		 12	R				  0	  0	102							검색조회		
 ZSSSMM0210-GRDAT_S	2	CHAR	 20	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	  0				GR2				입고일	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-GRDAT_S	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0				GR2				__________	X                                      00	
+ZSSSMM0210-GRDAT_S	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0				GR2	BT2			__________	X                                      00	
 TILT1	0	CHAR	  1	00	00	00	30	00	  2	 37		  0	  0	  0		  0					  0	  0				GR2				~		
 ZSSSMM0210-GRDAT_E	D	DATE	 10	A0	00	80	00	08	  2	 42		  0	  0	  0		  0					 16	  0				GR2				__________	X                                      00	
-ZSSSMM0210-DUDAT_S	2	CHAR	 20	30	00	00	30	00	  3	  3		  0	  0	  0		  0					  0	  0				GR1	BT1			납기일	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-DUDAT_S	D	DATE	 10	A0	00	80	00	08	  3	 24		  0	  0	  0		  0					 16	  0				GR1	BT1			__________	X                                      00	
-TILT2	0	CHAR	  1	00	00	00	30	00	  3	 37		  0	  0	  0		  0					  0	  0				GR1	BT1			~		
-ZSSSMM0210-DUDAT_E	D	DATE	 10	A0	00	80	00	08	  3	 42		  0	  0	  0		  0					 16	  0				GR1	BT1			__________	X                                      00	
-		CHAR	 74	00	00	00	30	00	  4	  3		  0	  0	  0		  5	R				  0	  0	103									
-GV_RADIO_VNAME	C	CHAR	  1	80	00	80	00	00	  5	  4		  0	  0	  0		  0	A				  0	  0	104				BT1				                                                                                                                                                                        RA1	
-GV_RADIO_VNAME	0	CHAR	  8	00	00	00	30	00	  5	  6		  0	  0	  0		  0	A				  0	  0	104				BT1			이름조회		
-GV_RADIO_VENID	C	CHAR	  1	80	00	80	00	00	  5	 15		  0	  0	  0		  0	A				  0	  0	104				BT1				                                                                                                                                                                        RA1	
-GV_RADIO_VENID	0	CHAR	  8	00	00	00	30	00	  5	 17		  0	  0	  0		  0	A				  0	  0	104				BT1			코드조회		
-ZSSSMM0210-VENID	2	CHAR	 20	30	00	04	30	00	  6	  4		  0	  0	  0		  0					  0	  0					BT1	RA1		벤더코드	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-VENID	C	CHAR	  8	A0	00	84	00	08	  6	 25		  0	  0	  0		  0					 16	  0					BT1	RA1		________	X                                      00	
-ZSSSMM0210-VSNME	C	CHAR	 40	A0	02	80	31	00	  6	 34		  0	  0	  0		  0					 80	  0					BT1	RA1		________________________________________	                                       00	
-ZSSSMM0210-VNAME	2	CHAR	 20	30	02	00	30	00	  7	  4		  0	  0	  0		  0					  0	  0					BT1	RA2		벤더명	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-VNAME	C	CHAR	 40	A0	02	80	00	00	  7	 25		  0	  0	  0		  0					 80	  0					BT1	RA2		________________________________________	                                       00	
-ZSSSMM0210-PONUM	2	CHAR	 20	30	00	04	30	00	  9	  3		  0	  0	  0		  0					  0	  0					BT2			구매오더 번호	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-PONUM	C	CHAR	 11	A0	00	84	00	08	  9	 24		  0	  0	  0		  0					 22	  0					BT2			___________	X                                      00	
-P_BTN		CHAR	 23	00	00	00	30	00	 10	  3		  0	  0	  0		  0	P				  0	  0	105				BT3			구매오더번호로 조회하기	                                                                                                                                                                        P_BTN	
-B_BTN		CHAR	 22	00	00	00	30	00	 11	  3		  0	  0	  0		  0	P				  0	  0	106				BT2			입고일/벤더사 조회하기	                                                                                                                                                                        B_BTN	
-T_INFO			230	08	30	00	00	00	 14	  3	J	101	  1	  1		 28	I				 28	230										
+ZSSSMM0210-DUDAT_S	2	CHAR	 20	30	00	00	30	00	  3	  3		  0	  0	  0		  0					  0	  0				GR1	BT2			납기일	                                                                                                                                                                                                                                                        X	
+ZSSSMM0210-DUDAT_S	D	DATE	 10	A0	00	80	00	08	  3	 24		  0	  0	  0		  0					 16	  0				GR1	BT2			__________	X                                      00	
+GR1TILT2	0	CHAR	  1	00	00	00	30	00	  3	 37		  0	  0	  0		  0					  0	  0				GR1	BT2			~		
+ZSSSMM0210-DUDAT_E	D	DATE	 10	A0	00	80	00	08	  3	 42		  0	  0	  0		  0					 16	  0				GR1	BT2			__________	X                                      00	
+%#AUTOTEXT001		CHAR	 74	00	00	00	30	00	  4	  3		  0	  0	  0		  5	R				  0	  0	103				BT2					
+GV_RADIO_VNAME	C	CHAR	  1	80	00	80	00	00	  5	  4		  0	  0	  0		  0	A				  0	  0	104				BT2				                                                                                                                                                                        RA1	
+GV_RADIO_VNAME	0	CHAR	  8	00	00	00	30	00	  5	  6		  0	  0	  0		  0	A				  0	  0	104				BT2			이름조회		
+GV_RADIO_VENID	C	CHAR	  1	80	00	80	00	00	  5	 15		  0	  0	  0		  0	A				  0	  0	104				BT2				                                                                                                                                                                        RA1	
+GV_RADIO_VENID	0	CHAR	  8	00	00	00	30	00	  5	 17		  0	  0	  0		  0	A				  0	  0	104				BT2			코드조회		
+ZSSSMM0210-VENID	2	CHAR	 20	30	00	04	30	00	  6	  4		  0	  0	  0		  0					  0	  0					BT2	RA1		벤더코드	                                                                                                                                                                                                                                                        X	
+ZSSSMM0210-VENID	C	CHAR	  8	A0	00	84	00	08	  6	 25		  0	  0	  0		  0					 16	  0					BT2	RA1		________	X                                      00	
+ZSSSMM0210-VSNME	C	CHAR	 40	A0	02	80	31	00	  6	 34		  0	  0	  0		  0					 80	  0					BT2	RA1		________________________________________	                                       00	
+ZSSSMM0210-VNAME	2	CHAR	 20	30	02	00	30	00	  7	  4		  0	  0	  0		  0					  0	  0					BT2	RA2		벤더명	                                                                                                                                                                                                                                                        X	
+ZSSSMM0210-VNAME	C	CHAR	 40	A0	02	80	00	00	  7	 25		  0	  0	  0		  0					 80	  0					BT2	RA2		________________________________________	                                       00	
+ZSSSMM0210-PONUM	2	CHAR	 20	30	00	04	30	00	  9	  3		  0	  0	  0		  0					  0	  0				GR1	BT1			구매오더 번호	                                                                                                                                                                                                                                                        X	
+ZSSSMM0210-PONUM	C	CHAR	 11	A0	00	84	00	08	  9	 24		  0	  0	  0		  0					 22	  0				GR1	BT1			___________	X                                      00	
+P_BTN		CHAR	 23	00	00	00	30	00	 10	  3		  0	  0	  0		  0	P				  0	  0	105			GR1	BT2			구매오더번호로 조회하기	                                                                                                                                                                        P_BTN	
+B_BTN		CHAR	 22	00	00	00	30	00	 11	  3		  0	  0	  0		  0	P				  0	  0	106			GR1	BT1			입고일/벤더사 조회하기	                                                                                                                                                                        B_BTN	
+T_INFO			242	08	30	00	00	00	 14	  3	J	101	  1	  1		 54	I				 28	220										
 TAB1		CHAR	 14	00	00	00	30	00	  1	  1	I	101	  1	  1		  0	P				  0	  0	107	SUB						입고완료리스트	                                                                                                                                                                        TAB1	
 TAB2		CHAR	 14	00	00	00	30	00	  1	  2	I	101	  1	  1		  0	P				  0	  0	108	SUB						입고대기리스트	                                                                                                                                                                        TAB2	
 TAB3		CHAR	 16	00	00	00	30	00	  1	  3	I	101	  1	  1		  0	P				  0	  0	109	SUB						납기일만료리스트	                                                                                                                                                                        TAB3	
-SUB			228	00	F0	00	30	00	 16	  4	I	101	  0	  0		 25	B				 12	114	110									
+SUB			240	00	F0	00	30	00	 16	  4	I	101	  0	  0		 51	B				 25	125	110									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

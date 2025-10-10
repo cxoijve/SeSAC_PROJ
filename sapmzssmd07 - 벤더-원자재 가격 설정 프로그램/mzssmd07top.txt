@@ -16,8 +16,14 @@ TABLES : zsssmd07001,
 DATA : gt_matnr TYPE RANGE OF zsssmd07001-matnr WITH HEADER LINE,
        gt_venid TYPE RANGE OF zsssmd07001-venid WITH HEADER LINE.
 
-DATA : gt_prcat TYPE TABLE OF zsssmd07002,
-       gs_prcat LIKE LINE OF gt_prcat.
+TYPES: BEGIN OF ty_s_list01.
+    INCLUDE STRUCTURE zsssmd07002.
+TYPES: cellstyl TYPE lvc_t_styl,
+       END OF ty_s_list01.
+DATA : gs_prcat TYPE ty_s_list01,
+       gt_prcat LIKE TABLE OF gs_prcat.
+
+
 
 DATA : gt_prcat_0200 TYPE TABLE OF zsssmd07005,
        gs_prcat_0200 LIKE LINE OF gt_prcat_0200.
@@ -25,7 +31,9 @@ DATA : gt_prcat_0200 TYPE TABLE OF zsssmd07005,
 DATA : gt_vntext LIKE TABLE OF zsssmd07003,
        gs_vntext LIKE LINE OF gt_vntext.
 
-DATA : gs_layo TYPE lvc_s_layo.
+DATA : gs_layo      TYPE lvc_s_layo,
+       gs_layo_0110 TYPE lvc_s_layo,
+       gs_layo_0200 TYPE lvc_s_layo.
 
 DATA : gt_fval TYPE TABLE OF dd07v,
        gs_fval LIKE LINE OF gt_fval.
@@ -34,11 +42,39 @@ DATA : gt_fcat TYPE lvc_t_fcat,
        gs_fcat LIKE LINE OF gt_fcat.
 
 DATA : go_con      TYPE  REF TO cl_gui_custom_container,
-       go_alv      TYPE REF TO cl_gui_alv_grid,
+       go_alv      TYPE  REF TO cl_gui_alv_grid,
        go_con_0110 TYPE  REF TO cl_gui_custom_container,
-       go_alv_0110 TYPE REF TO cl_gui_alv_grid,
+       go_alv_0110 TYPE  REF TO cl_gui_alv_grid,
        go_con_0200 TYPE  REF TO cl_gui_custom_container,
-       go_alv_0200 TYPE REF TO cl_gui_alv_grid.
+       go_alv_0200 TYPE  REF TO cl_gui_alv_grid.
+
+
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-METHODS on_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
+      IMPORTING e_object.
+
+    CLASS-METHODS on_user_command FOR EVENT user_command OF cl_gui_alv_grid
+      IMPORTING e_ucomm.
+
+    CLASS-METHODS on_data_changed FOR EVENT data_changed OF cl_gui_alv_grid
+      IMPORTING er_data_changed e_ucomm.
+
+*    METHODS data_changed FOR EVENT data_changed OF cl_gui_alv_grid
+*      IMPORTING
+*          er_data_changed
+*          e_onf4
+*          e_onf4_before
+*          e_onf4_after.
+*
+*    METHODS data_changed_finished FOR EVENT data_changed_finished OF cl_gui_alv_grid
+*      IMPORTING
+*          e_modified
+*          et_good_cells.
+
+
+ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

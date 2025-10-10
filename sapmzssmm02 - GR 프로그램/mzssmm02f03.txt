@@ -25,7 +25,6 @@ FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
     WHEN go_alv_gr_list.
       PERFORM add_toolbar_button USING 'I_DETAIL' TEXT-b06 icon_check CHANGING pcl_toolbar.
 
-
     WHEN go_alv_editgr.
       PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
       PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b05 icon_workflow_activity CHANGING pcl_toolbar.
@@ -120,8 +119,6 @@ FORM handle_add_item .
 
   PERFORM add_item_data.
 
-
-
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  ADD_ITEM_DATA
@@ -152,6 +149,7 @@ FORM add_item_data .
                       style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
           APPEND VALUE #( fieldname = 'STOID'
                       style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
+
         ENDIF.
 
         " 2번째 행: REQTY = 10 → 편집 가능 (아무 설정 안 함)
@@ -222,17 +220,14 @@ FORM get_selected_rows  USING    co_alv    TYPE REF TO cl_gui_alv_grid
 
   DESCRIBE TABLE ct_row_no LINES lv_cnt.
 
-*  IF lv_cnt > 1.
-*    cv_subrc = 4.
-*    MESSAGE s999(zmcss) WITH '1개의 행만 선택해주세요!'.
-*    RETURN.
-*  ENDIF.
-
   IF lv_cnt = 0.
     cv_subrc = 4.
-    MESSAGE s999(zmcss) WITH '1개의 행을 선택해주세요!'.
+*    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
+    MESSAGE w110(zmcss). "  '1개의 행을 선택해주세요!'.
     RETURN.
   ENDIF.
+
+  " 필드문 - s / e
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -267,6 +262,9 @@ FORM check_dup_po  USING    it_row_no TYPE lvc_t_roid
       RETURN.
     ENDIF.
   ENDLOOP.
+
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -311,7 +309,7 @@ FORM check_vendor_validate  USING    p_row_no TYPE lvc_t_roid
 
   DESCRIBE TABLE p_row_no LINES lv_cnt.
 
- UNASSIGN <fs_podata>.
+  UNASSIGN <fs_podata>.
   IF lv_cnt > 1.
     LOOP AT p_row_no INTO ls_row_no FROM 2.
       READ TABLE gt_podata INDEX ls_row_no-row_id ASSIGNING <fs_podata>.
@@ -447,7 +445,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM renumber_gr_number .
 
-  DATA : lv_grseq TYPE ztssgri-grseq VALUE '001'.
+  DATA : lv_grseq TYPE n LENGTH 3 VALUE '001'.
 
   FIELD-SYMBOLS : <fs_item> LIKE LINE OF gt_item.
 
@@ -823,6 +821,10 @@ FORM handle_double_click  USING ps_row     TYPE lvc_s_row
   CASE ps_column.
     WHEN 'LTEXT'.
       PERFORM handle_editpage USING ps_row.
+    WHEN 'VNAME'.
+      PERFORM handle_vname_click USING ps_row.
+    WHEN 'ENAME'.
+      PERFORM handle_emp_click USING ps_row.
 *   WHEN .
 *   WHEN OTHERS.
   ENDCASE.
@@ -865,7 +867,7 @@ FORM handle_editpage  USING ps_row     TYPE lvc_s_row.
     ENDLOOP.
 
     CALL SCREEN 0200.
-*    MESSAGE i999(zmcss) WITH 'call function 200'.
+
     CLEAR: zsssmm0211,
            gs_cond2,
            gt_edit_item,
@@ -961,18 +963,17 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM handle_enable_edit_mode .
 
-
+  " 원래코드 - display_alv_grid 다시 불러오기
   FIELD-SYMBOLS: <fs_fcat> TYPE lvc_s_fcat.
 
-*  IF gv_temp_edit IS INITIAL.
 
   READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
     WITH KEY fieldname = 'AMOUNT'.
 
   IF sy-subrc = 0.
     <fs_fcat>-edit = 'X'.
-*  ELSE.
-*    APPEND VALUE #( fieldname = 'AMOUNT' edit = '' ) TO gt_fcat7.
+  ELSE.
+    APPEND VALUE #( fieldname = 'AMOUNT' edit = '' ) TO gt_fcat7.
   ENDIF.
 
   READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
@@ -980,9 +981,63 @@ FORM handle_enable_edit_mode .
 
   IF sy-subrc = 0.
     <fs_fcat>-edit = 'X'.
-*  ELSE.
-*    APPEND VALUE #( fieldname = 'STOID' edit = '' ) TO gt_fcat7.
+  ELSE.
+    APPEND VALUE #( fieldname = 'STOID' edit = '' ) TO gt_fcat7.
   ENDIF.
+
+
+  PERFORM display_alv_grid_200.
+
+
+
+  " set_ready ... & refresh~
+
+*  FIELD-SYMBOLS: <fs_fcat> TYPE lvc_s_fcat.
+*
+*  " 1. Field Catalog 수정
+*  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+*    WITH KEY fieldname = 'AMOUNT'.
+*  IF sy-subrc = 0.
+*    <fs_fcat>-edit = 'X'.
+*  ENDIF.
+*
+*  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+*    WITH KEY fieldname = 'STOID'.
+*  IF sy-subrc = 0.
+*    <fs_fcat>-edit = 'X'.
+*  ENDIF.
+*
+**  " 2. 변경된 Field Catalog 적용
+**  CALL METHOD go_alv_editgr->set_frontend_fieldcatalog
+**    EXPORTING
+**      it_fieldcatalog = gt_fcat7.
+*
+*  " 3. 편집 모드 활성화
+*  CALL METHOD go_alv_editgr->set_ready_for_input
+*    EXPORTING
+*      i_ready_for_input = 1.
+*
+*  " 4. 화면 리프레시 (스크롤 위치 유지)
+*  CALL METHOD go_alv_editgr->refresh_table_display
+*    EXPORTING
+*      is_stable = VALUE #( row = 'X' col = 'X' ).
+
+
+
+
+*  CALL METHOD go_alv_editgr->set_frontend_fieldcatalog
+*    EXPORTING
+*      it_fieldcatalog = gt_fcat7.
+*
+*  " 3. 편집 모드 활성화
+*  CALL METHOD go_alv_editgr->set_ready_for_input
+*    EXPORTING
+*      i_ready_for_input = 1.
+*
+*  " 4. 화면 리프레시 (스크롤 위치 유지)
+*  CALL METHOD go_alv_editgr->refresh_table_display
+*    EXPORTING
+*      is_stable = VALUE #( row = 'X' col = 'X' ).
 
 *    gv_temp_edit = 1.
 *  ENDIF.
@@ -992,7 +1047,37 @@ FORM handle_enable_edit_mode .
 *      i_ready_for_input = 1.
 *  PERFORM refresh_stable_display CHANGING go_alv_editgr.
 *  PERFORM refresh_table_display CHANGING go_alv_editgr.
-  PERFORM display_alv_grid_200.
+
+*  PERFORM display_alv_grid_200.
+*
+*
+*  FIELD-SYMBOLS: <fs_fcat> TYPE lvc_s_fcat.
+*
+*  " 1. Field Catalog 수정 (이미 하고 있는 것)
+*  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+*    WITH KEY fieldname = 'AMOUNT'.
+*  IF sy-subrc = 0.
+*    <fs_fcat>-edit = 'X'.
+*  ENDIF.
+*
+*  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+*    WITH KEY fieldname = 'STOID'.
+*  IF sy-subrc = 0.
+*    <fs_fcat>-edit = 'X'.
+*  ENDIF.
+*
+*  " 2. 편집 모드 활성화
+*  CALL METHOD go_alv_editgr->set_ready_for_input
+*    EXPORTING
+*      i_ready_for_input = 0.
+*
+*  " 3. 가볍게 리프레시 (스크롤 위치 유지)
+*  CALL METHOD go_alv_editgr->refresh_table_display
+*    EXPORTING
+*      is_stable = VALUE #( row = 'X' col = 'X' )
+*    EXCEPTIONS
+*      finished  = 1
+*      OTHERS    = 2.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  REFRESH_STABLE_DISPLAY
@@ -1297,8 +1382,195 @@ FORM handle_detail_info .
   READ TABLE gt_grdata INTO ls_data INDEX ls_row_no-row_id.
   MOVE-CORRESPONDING ls_data TO zsssmm0211.
   PERFORM get_gr_item_list USING lv_index. " class에서 씀
+
+
+  PERFORM get_vendor_details USING ls_data-venid CHANGING zsssmm0218.
+  PERFORM get_vendor_price USING ls_data-venid CHANGING gt_vnprc.
+  PERFORM get_emp_details USING ls_data-rgtor CHANGING zsssmm0220.
+
+
   CALL SCREEN '0300'.
 
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_VNAME_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_ROW  text
+*----------------------------------------------------------------------*
+FORM handle_vname_click   USING ps_row     TYPE lvc_s_row.
+
+
+  DATA : ls_grdata LIKE LINE OF gt_grdata,
+         lv_grnum  TYPE ztssgri-grnum.
+
+  READ TABLE gt_grdata INTO ls_grdata INDEX ps_row-index.
+  PERFORM get_vendor_details USING ls_grdata-venid CHANGING zsssmm0218.
+
+
+  CALL SCREEN 0120 STARTING AT 20 20.
+  CLEAR zsssmm0218.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_EMP_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_ROW  text
+*----------------------------------------------------------------------*
+FORM handle_emp_click  USING ps_row     TYPE lvc_s_row.
+
+
+  DATA : ls_grdata LIKE LINE OF gt_grdata.
+
+  READ TABLE gt_grdata INTO ls_grdata INDEX ps_row-index.
+  PERFORM get_emp_details USING ls_grdata-rgtor CHANGING zsssmm0220.
+
+  CALL SCREEN 0140 STARTING AT 20 20.
+  CLEAR zsssmm0220.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_EDITGR_CHANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_DATA_CHANGED  text
+*      -->P_LS_CELL  text
+*----------------------------------------------------------------------*
+FORM handle_editgr_change   USING p_data_changed TYPE REF TO cl_alv_changed_data_protocol
+                                  ps_cell        LIKE LINE OF p_data_changed->mt_good_cells.
+
+  DATA: lv_orqty      TYPE p,
+        lv_ponum      TYPE ztsspoi-ponum,
+        lv_itnum      TYPE ztsspoi-itnum,
+        lv_grnum      TYPE ztssgrh-grnum,
+        lv_po_amt     TYPE ztsspoi-amount,
+        lv_gr_qty     TYPE p,
+        lv_one_gr_qty TYPE p.
+
+  READ TABLE gt_edit_item INTO gs_edit_item INDEX ps_cell-row_id.
+  CHECK sy-subrc = 0.
+
+  CASE ps_cell-fieldname.
+    WHEN 'AMOUNT'.
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'AMOUNT'
+                              CHANGING lv_orqty.
+
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'PONUM'
+                              CHANGING lv_ponum.
+
+      PERFORM get_cell_value  USING    p_data_changed ps_cell-row_id 'ITNUM'
+                              CHANGING lv_itnum.
+
+      PERFORM validate_editgr_amount  USING    p_data_changed ps_cell lv_orqty lv_ponum lv_itnum
+                                      CHANGING gs_edit_item.
+
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  VALIDATE_EDITGR_AMOUNT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_DATA_CHANGED  text
+*      -->P_PS_CELL  text
+*      -->P_LV_ORQTY  text
+*      -->P_LV_PONUM  text
+*      -->P_LV_ITNUM  text
+*      <--P_GS_EDIT_ITEM  text
+*----------------------------------------------------------------------*
+FORM validate_editgr_amount  USING  p_data_changed TYPE REF TO cl_alv_changed_data_protocol
+                                    ps_cell        LIKE LINE OF p_data_changed->mt_good_cells
+                                    pv_orqty       TYPE p
+                                    pv_ponum       TYPE ztsspoi-ponum
+                                    pv_itnum       TYPE ztsspoi-itnum
+                             CHANGING cs_edit_item   LIKE gs_edit_item.
+
+
+  DATA: lv_grnum      TYPE ztssgrh-grnum,
+        lv_po_amt     TYPE ztsspoi-amount,
+        lv_gr_qty     TYPE p,
+        lv_one_gr_qty TYPE p,
+        lv_available  TYPE p.
+
+  lv_grnum = zsssmm0211-grnum.
+
+  " PO 에서 개수 구하기
+  SELECT SINGLE amount
+    INTO lv_po_amt
+    FROM ztsspoi
+    WHERE ponum = pv_ponum
+      AND itnum = pv_itnum.
+
+  CHECK sy-subrc = 0.
+
+  " 전체 GR 양구하기
+  PERFORM calculate_gr_quantities USING    pv_ponum pv_itnum lv_grnum
+                                  CHANGING lv_gr_qty
+                                           lv_one_gr_qty.
+
+  lv_available = lv_po_amt - lv_gr_qty + lv_one_gr_qty.
+
+  IF pv_orqty > lv_available.
+    MESSAGE s999(zmcss) WITH pv_orqty '는 유효하지 않습니다(PO 수량 초과!)' DISPLAY LIKE 'W'.
+    RETURN.
+  ENDIF.
+
+  cs_edit_item-amount = pv_orqty.
+  MODIFY gt_edit_item FROM cs_edit_item INDEX ps_cell-row_id.
+
+  p_data_changed->modify_cell(
+    EXPORTING
+      i_row_id    = ps_cell-row_id
+      i_tabix     = ps_cell-tabix
+      i_fieldname = ps_cell-fieldname
+      i_value     = pv_orqty
+  ).
+
+  MESSAGE s999(zmcss) WITH '입고수량이 변경되었습니다:' pv_orqty.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALCULATE_GR_QUANTITIES
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_PONUM  text
+*      -->P_PV_ITNUM  text
+*      -->P_LV_GRNUM  text
+*      <--P_LV_GR_QTY  text
+*      <--P_LV_ONE_GR_QTY  text
+*----------------------------------------------------------------------*
+FORM calculate_gr_quantities  USING    pv_ponum      TYPE ztsspoi-ponum
+                                       pv_itnum      TYPE ztsspoi-itnum
+                                       pv_grnum      TYPE ztssgrh-grnum
+                              CHANGING cv_total_qty  TYPE p
+                                       cv_cur_qty TYPE p.
+  CLEAR: cv_total_qty,
+         cv_cur_qty.
+
+  " 모든 gr아이템 - 수량 가져오기!
+  SELECT grnum ponum itnum amount
+    FROM ztssgri
+    INTO CORRESPONDING FIELDS OF TABLE gt_gri
+    WHERE ponum = pv_ponum
+      AND itnum = pv_itnum.
+
+  IF sy-subrc <> 0. RETURN. ENDIF.
+
+  " GR에 있는 '수량' 구하기
+  LOOP AT gt_gri INTO gs_gri.
+    cv_total_qty = cv_total_qty + gs_gri-amount.
+  ENDLOOP.
+
+  " 현재 GRNUM에 있는 수량만 구하기
+  LOOP AT gt_gri INTO gs_gri WHERE grnum = pv_grnum.
+    cv_cur_qty = cv_cur_qty + gs_gri-amount.
+  ENDLOOP.
 
 ENDFORM.
 

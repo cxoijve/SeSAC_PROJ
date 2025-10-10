@@ -29,9 +29,7 @@ MODULE user_command_0100 INPUT.
     WHEN 'C200'.
       PERFORM c200_0100.
     WHEN 'DELALL'. " 불량 재고 일괄 폐기
-
-    WHEN 'DELROW'. " 선택한 불량 재고 폐기
-
+      PERFORM delall_0100.
     WHEN 'C300'.
       PERFORM c300_0100.
   ENDCASE.
@@ -87,11 +85,13 @@ MODULE user_command_0310 INPUT.
     WHEN 'CONTINUE'.
 
     WHEN 'CANCLE'.
+      MESSAGE s999(zmcss) WITH '사용자가 액션을 취소하였습니다.'.
       SET SCREEN 0.
     WHEN 'FIXITM'.
       PERFORM get_info_0310 TABLES gt_info_0310
                             USING zsssmd0813
                             CHANGING zsssmd0813-meins
+                                     zsssmd0813-infotext
                                      gv_subrc.
       IF gv_subrc <> 0. RETURN. ENDIF.
 
@@ -124,6 +124,17 @@ MODULE user_command_0310 INPUT.
         RETURN.
       ENDIF.
 
+      PERFORM popup_to_confirm USING '신규 생산 계획 생성'
+                                     '신규 생산 계획을 생성하시겠습니까?'
+                                     '확인'
+                                     '취소'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        CLEAR : gt_outwares, gs_inware.
+        RETURN.
+      ENDIF.
+
       " 정말 계획하시겠습니까?
       PERFORM release_mrp TABLES   gt_outwares
                           USING    zsssmd0812
@@ -147,6 +158,64 @@ MODULE user_command_0310 INPUT.
 
       " 실패해도 MODAL은 닫도록.
       SET SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0400  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0400 INPUT.
+  CASE ok_code.
+    WHEN 'CONTINUE'.
+      PERFORM check_alv_updated USING go_alv_0400
+                                CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '폐기 내역에 문제가 있습니다.'.
+        RETURN.
+      ENDIF.
+
+    WHEN 'WASTE'.
+      PERFORM check_alv_updated USING go_alv_0400
+                                CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '폐기 내역에 문제가 있습니다.'.
+        RETURN.
+      ENDIF.
+
+      PERFORM popup_to_confirm USING  '재고 폐기'
+                                      '선택한 재고를 폐기하시겠습니까?'
+                                      '확인'
+                                      '취소'
+                               CHANGING gv_subrc.
+
+      IF gv_subrc <> 0. RETURN. ENDIF.
+
+      PERFORM waste_ware TABLES gt_info_0400
+                         CHANGING gv_subrc.
+
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '재고 폐기에 실패했습니다.'.
+        RETURN.
+      ENDIF.
+
+      CLEAR : gt_info_0400.
+      SET SCREEN 0.
+
+    WHEN 'CANCLE'.
+      SET SCREEN 0.
+      MESSAGE s999(zmcss) WITH '사용자가 액션을 취소했습니다.'.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0220  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0220 INPUT.
+  CASE ok_code.
+    WHEN 'DELITM'.
+      PERFORM delitm_0200.
   ENDCASE.
 ENDMODULE.
 

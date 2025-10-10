@@ -115,7 +115,7 @@ ENDFORM.
 FORM get_emp_name  USING    VALUE(p_empid) TYPE zsssmm0211-rgtor
                    CHANGING p_ename TYPE zsssmm0211-ename.
 
-  CALL FUNCTION 'ZFMSS_GET_EMP_NAME'
+  CALL FUNCTION 'Z_FMSS_GET_EMP_NAME'
     EXPORTING
       iv_empid = p_empid
     IMPORTING
@@ -133,11 +133,12 @@ ENDFORM.
 FORM get_vendor_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
                       CHANGING p_vname TYPE zsssmm0210-vname.
 
-  CALL FUNCTION 'ZFMSS_GET_VEN_NAME'
+  CALL FUNCTION 'Z_FMSS_GET_VEN_NAME'
     EXPORTING
       iv_venid = p_venid
     IMPORTING
       ev_vname = p_vname.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_VENDOR_ID
@@ -151,7 +152,7 @@ FORM get_vendor_id  USING  VALUE(p_vname) TYPE zsssmm0210-vname
                     CHANGING p_venid TYPE zsssmm0210-venid.
 
 
-  CALL FUNCTION 'ZFMSS_GET_VEN_ID'
+  CALL FUNCTION 'Z_FMSS_GET_VEN_ID'
     EXPORTING
       iv_vname = p_vname
     IMPORTING
@@ -169,7 +170,7 @@ ENDFORM.
 FORM get_mat_name  USING    VALUE(p_matid) TYPE ztssmat-matnr
                    CHANGING p_matnm TYPE ztssmat_t-matnm.
 
-  CALL FUNCTION 'ZFMSS_GET_MAT_NAME'
+  CALL FUNCTION 'Z_FMSS_GET_MAT_NAME'
     EXPORTING
       iv_matid = p_matid
     IMPORTING
@@ -189,7 +190,7 @@ FORM get_storage_name  USING    VALUE(p_stoid) TYPE ztssstrg-stoid
                        CHANGING p_stonm TYPE ztssstrg-stonm.
 
 
-  CALL FUNCTION 'ZFMSS_GET_STORAGE_NAME'
+  CALL FUNCTION 'Z_FMSS_GET_STORAGE_NAME'
     EXPORTING
       iv_stoid = p_stoid
     IMPORTING
@@ -235,8 +236,8 @@ FORM get_number_range       USING    iv_object   TYPE inri-object
       OTHERS                  = 8.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '넘버링이 실패했습니다.'.
-    RETURN.
+    " 넘버링이 실패하였습니다
+    MESSAGE a120(zmcss).
   ENDIF.
 
   cv_number = iv_prefix && lv_year && lv_num.
@@ -266,6 +267,55 @@ FORM get_venmat  USING    VALUE(pv_venid) TYPE ztssvend-venid
     MESSAGE s999(zmcss) WITH  |존재하지 않는 { pv_venid } 와 { pv_matnr }의 조합입니다!|.
     RETURN.
   ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0944   text
+*      -->P_0945   text
+*      -->P_0946   text
+*      -->P_0947   text
+*      -->P_0948   text
+*      -->P_0949   text
+*      -->P_0950   text
+*      -->P_0951   text
+*      <--P_LV_ANSWER  text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm   USING     iv_title
+                                  iv_question
+                                  iv_btn1_text
+                                  iv_btn1_icon
+                                  iv_btn2_text
+                                  iv_btn2_icon
+                                  iv_info1
+                                  iv_info2
+                        CHANGING cv_answer    TYPE c.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = iv_title
+      text_question         = iv_question
+      text_button_1         = iv_btn1_text
+      icon_button_1         = iv_btn1_icon
+      text_button_2         = iv_btn2_text
+      icon_button_2         = iv_btn2_icon
+      default_button        = '1'
+      display_cancel_button = 'X'
+      iv_quickinfo_button_1 = iv_info1
+      iv_quickinfo_button_2 = iv_info2
+    IMPORTING
+      answer                = cv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+
+  IF sy-subrc <> 0.
+    cv_answer = 'A'.  " Cancel 처리
+  ENDIF.
+
 
 ENDFORM.
 

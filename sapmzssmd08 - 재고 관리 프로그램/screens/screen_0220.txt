@@ -8,19 +8,20 @@ SAPMZSSMD08
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD08                             0220I0220      2 90192 37  0  0 27124  0G E                              20251005151055																																
+SAPMZSSMD08                             0220I0220      2100192 37  0  0 27125  0G E                              20251010161534																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 GS_ALVTITLE_0200-INFOTEXT_220	C	CHAR	100	80	00	80	31	00	  1	  2		  0	  0	  0		  0					  0	  0								____________________________________________________________________________________________________		
-BTN220_1		CHAR	 14	00	00	00	30	00	  2	 88		  0	  0	  0		  0	P				  0	  0	103							선택 재고 폐기	                                                                                                                                                                        DELITM	
-CON_0220			 99	00	00	00	30	00	  3	  3		  0	  0	  0		 10	U				  1	  1	101									
+BTN220_1		CHAR	 14	00	00	00	30	00	  2	 88		  0	  0	  0		  0	P				  0	  0	102			BTN				선택 재고 폐기	                                                                                                                                                                        DELITM	
+CON_0220			 99	00	00	00	30	00	  3	  3		  0	  0	  0		 10	U				  1	  1	103									
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0220.																																
+  MODULE modify_screen_220.																																
   MODULE create_alv.																																
   MODULE display_alv.																																
 																																
 PROCESS AFTER INPUT.																																
-* MODULE USER_COMMAND_0220.																																
+  MODULE user_command_0220.																																

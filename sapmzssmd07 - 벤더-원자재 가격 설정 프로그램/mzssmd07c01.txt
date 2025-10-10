@@ -1,0 +1,181 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSMD07C01
+*&---------------------------------------------------------------------*
+CLASS lcl_handler IMPLEMENTATION.
+
+  METHOD on_toolbar.
+    DATA ls_button TYPE stb_button.
+    ls_button-butn_type = '3'. "Separator
+    APPEND ls_button TO e_object->mt_toolbar.
+
+    CLEAR ls_button.
+    ls_button-function = 'CUST_CHG'.
+    ls_button-icon = icon_change.
+    ls_button-butn_type = '0'.
+    ls_button-text = '편집 모드'. "ALV Customer Button
+    APPEND ls_button TO e_object->mt_toolbar.
+
+    CLEAR ls_button.
+    ls_button-function  = 'CUST_SAV'.
+    ls_button-icon      = icon_system_save.
+    ls_button-butn_type = '0'.
+    ls_button-text      = '저장'.
+    ls_button-quickinfo = '변경사항 저장'.
+    APPEND ls_button TO e_object->mt_toolbar.
+  ENDMETHOD.
+  METHOD on_user_command.
+    DATA: lt_row_no TYPE lvc_t_roid,
+          ls_row_no LIKE LINE OF lt_row_no.
+
+    DATA : BEGIN OF ls_cell,
+             row_id TYPE int4,
+             col_id TYPE c LENGTH 10,
+           END OF ls_cell.
+    DATA : lt_cell LIKE TABLE OF ls_cell.
+
+    CASE e_ucomm.
+      WHEN 'CUST_CHG'.
+*        MESSAGE i000(ymc00) WITH 'Customer Button'.
+*        CALL METHOD cl_gui_cfw=>set_new_ok_code
+*          EXPORTING
+*            new_code = 'ENTER'.
+
+        CLEAR lt_cell.
+        LOOP AT gt_prcat INTO gs_prcat.
+          IF gs_prcat-light = 3.
+            CLEAR ls_cell.
+            ls_cell-row_id = sy-tabix.
+            ls_cell-col_id = 'VNPRC'.
+            APPEND ls_cell TO lt_cell.
+          ENDIF.
+        ENDLOOP.
+
+        LOOP AT lt_cell INTO ls_cell.
+
+          READ TABLE gt_prcat INDEX ls_cell-row_id INTO gs_prcat.
+
+          IF gs_prcat-cellstyl IS INITIAL.
+            PERFORM fcat_cell USING  ls_cell-col_id
+                                     cl_gui_alv_grid=>mc_style_enabled
+                            CHANGING gs_prcat.
+          ELSE.
+            CLEAR gs_prcat-cellstyl.
+          ENDIF.
+
+          MODIFY gt_prcat FROM gs_prcat INDEX ls_cell-row_id .
+
+
+        ENDLOOP.
+
+        DATA : LV_TEST TYPE INT4.
+
+*        go_alv->is_ready_for_input(
+*          RECEIVING
+*            ready_for_input =  LV_TEST   " Editable
+*        ).
+        IF go_alv->is_ready_for_input( ) EQ 0.
+        CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
+          EXPORTING
+            i_ready_for_input = 1. " Edit 활성화 "
+        ELSE.
+        CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
+          EXPORTING
+            i_ready_for_input = 0. " Edit 비활성화 "
+
+        ENDIF.
+
+*        CALL METHOD go_alv->refresh_table_display
+*          EXPORTING
+*            i_soft_refresh = 'X'.
+
+*
+*        CALL METHOD cl_gui_cfw=>set_new_ok_code
+*          EXPORTING
+*            new_code = 'ENTER'.
+
+        PERFORM refresh_alv USING go_alv gs_layo gt_fcat.
+
+
+      WHEN 'CUST_SAV'.
+        PERFORM update_prcat_data  CHANGING gv_subrc.
+
+        IF gv_subrc <> 0.
+          CLEAR gv_subrc.
+          MESSAGE i999(zmcss) WITH '가격변경 실패'.
+        ELSE.
+          MESSAGE i999(zmcss) WITH '가격변경 성공'.
+
+          CLEAR lt_cell.
+          LOOP AT gt_prcat INTO gs_prcat.
+            IF gs_prcat-light = 3.
+              CLEAR ls_cell.
+              ls_cell-row_id = sy-tabix.
+              ls_cell-col_id = 'VNPRC'.
+              APPEND ls_cell TO lt_cell.
+            ENDIF.
+          ENDLOOP.
+
+          LOOP AT lt_cell INTO ls_cell.
+
+            READ TABLE gt_prcat INDEX ls_cell-row_id INTO gs_prcat.
+
+            IF gs_prcat-cellstyl IS INITIAL.
+              PERFORM fcat_cell USING  ls_cell-col_id
+                                       cl_gui_alv_grid=>mc_style_enabled
+                              CHANGING gs_prcat.
+            ELSE.
+              CLEAR gs_prcat-cellstyl.
+            ENDIF.
+
+            MODIFY gt_prcat FROM gs_prcat INDEX ls_cell-row_id .
+
+            CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
+              EXPORTING
+                i_ready_for_input = 1. " Edit 활성화 "
+*
+*            CALL METHOD go_alv->refresh_table_display
+*              EXPORTING
+*                i_soft_refresh = 'X'.
+
+          ENDLOOP.
+
+          CALL METHOD cl_gui_cfw=>set_new_ok_code
+            EXPORTING
+              new_code = 'ENTER'.
+
+        ENDIF.
+    ENDCASE.
+  ENDMETHOD.
+  METHOD on_data_changed.
+    DATA ls_cell LIKE LINE OF er_data_changed->mt_good_cells.
+    DATA ls_prcat LIKE gs_prcat.
+
+    LOOP AT er_data_changed->mt_good_cells INTO ls_cell.
+      CASE ls_cell-fieldname.
+        WHEN 'VNPRC'.
+
+          er_data_changed->get_cell_value(
+                      EXPORTING
+                        i_row_id = ls_cell-row_id
+                        i_fieldname = ls_cell-fieldname
+                      IMPORTING
+                        e_value = ls_prcat-vnprc
+                    ).
+
+          er_data_changed->modify_cell(
+            EXPORTING
+              i_row_id = ls_cell-row_id
+              i_tabix = ls_cell-tabix
+              i_fieldname = ls_cell-fieldname
+              i_value = ls_prcat-vnprc
+          ).
+
+      ENDCASE.
+    ENDLOOP.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

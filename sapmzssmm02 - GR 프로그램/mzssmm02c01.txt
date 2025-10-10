@@ -39,9 +39,8 @@ ENDCLASS.
 CLASS lcl_layout_builder IMPLEMENTATION.
   METHOD create.
 
-    rs_layo-cwidth_opt = 'X'.
+    rs_layo-cwidth_opt = 'A'.
     rs_layo-sel_mode   = 'A'.
-    rs_layo-col_opt    = 'X'.
     rs_layo-grid_title = iv_title.
 
     IF iv_info_fname IS NOT INITIAL.
@@ -67,6 +66,7 @@ CLASS lcl_layout_builder IMPLEMENTATION.
     IF iv_ctab_fname IS NOT INITIAL.
       rs_layo-ctab_fname = iv_ctab_fname.
     ENDIF.
+
   ENDMETHOD.
 ENDCLASS.
 

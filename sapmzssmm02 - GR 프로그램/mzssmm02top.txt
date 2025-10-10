@@ -95,17 +95,26 @@ DATA : go_alv_editgr TYPE REF TO cl_gui_alv_grid,
 * 300번 - 입고상세조회
 * ============================================
 
-DATA : go_con_detail type ref to cl_gui_custom_container,
-       go_alv_detail type ref to cl_gui_alv_grid.
+DATA : go_con_detail TYPE REF TO cl_gui_custom_container,
+       go_alv_detail TYPE REF TO cl_gui_alv_grid.
+
+
+" 302번
+
+DATA : go_con_vnprc TYPE REF TO cl_gui_custom_container,
+       go_alv_vnprc TYPE REF TO cl_gui_alv_grid.
+
 
 
 * ============================================
 * 102번 - 데이터
 * ============================================
 
+" ==== 입고 대기 구매오더 리스트
+
 DATA: BEGIN OF gs_podata,
         light  TYPE char8,
-        icon   LIKE icon-name,
+*        icon   LIKE icon-name,
         it_col TYPE lvc_t_scol.
     INCLUDE TYPE zsssmm0212.
 DATA : END OF gs_podata,
@@ -183,6 +192,17 @@ DATA : BEGIN OF gs_gri,
 
 
 
+* ============================================
+* 300번 - 데이터
+* ============================================
+
+" 벤더 - 가격 상세정보
+DATA : BEGIN OF gs_vnprc,
+         color(4).
+    INCLUDE TYPE zsssmm0219.
+DATA : END OF gs_vnprc,
+gt_vnprc LIKE TABLE OF gs_vnprc.
+
 
 * ============================================
 * Layout, Field Catalog
@@ -223,6 +243,12 @@ DATA : gs_layo8 TYPE lvc_s_layo,
        gs_fcat8 TYPE lvc_s_fcat.
 
 
+" 벤더-가격조회
+DATA : gs_layo9 TYPE lvc_s_layo,
+       gt_fcat9 TYPE lvc_t_fcat,
+       gs_fcat9 TYPE lvc_s_fcat.
+
+
 
 DATA : gt_sort TYPE lvc_t_sort,
        gs_sort TYPE lvc_s_sort.
@@ -244,6 +270,7 @@ TYPES : BEGIN OF ty_money,
 " Text 메모 변수
 DATA : go_mod  TYPE REF TO cl_gui_custom_container,
        go_edit TYPE REF TO cl_gui_textedit.
+
 TYPES: BEGIN OF t_text,
          text TYPE ztssgrh-stext,
        END OF t_text,
@@ -259,6 +286,37 @@ DATA : gv_gr_num TYPE c LENGTH 11,
        gv_fi_num TYPE c LENGTH 11,
        gv_wh_num TYPE c LENGTH 11.
 
+" Domain
+DATA : gt_dd07v TYPE TABLE OF dd07v.
+DATA : gv_temp_edit type c.
+
+" field - catalog types
+
+TYPES : BEGIN OF ty_field_conf,
+          grid_id    TYPE c LENGTH 2,
+          fieldname  TYPE lvc_fname,
+          coltext    TYPE scrtext_l,
+          scrtext_s  TYPE scrtext_s,     " 짧은 텍스트
+          scrtext_m  TYPE scrtext_m,     " 중간 텍스트
+          scrtext_l  TYPE scrtext_l,     " 긴 텍스트
+          outputlen  TYPE lvc_outlen,    " 컬럼 너비
+          icon       TYPE c,             " 아이콘 여부
+          just       TYPE lvc_just,      " 정렬 (L/C/R)
+          emphasize  TYPE lvc_emphsz,    " 강조 색상
+          key        TYPE c,             " 키 필드 여부
+          intlen     TYPE i,  " ← 추가
+          fix_column TYPE c,           " ← 추가
+          no_out     TYPE c,             " 숨김
+          edit       TYPE c,             " 편집 가능
+          hotspot    TYPE c,             " 핫스팟
+          checkbox   TYPE c,             " 체크박스
+          style      TYPE lvc_style,
+          col_pos    TYPE i,
+          lzero      TYPE c,
+        END OF ty_field_conf. " 프로그램 타입
+
+
+TYPES : ty_t_field_conf TYPE TABLE OF ty_field_conf.
 
 * ============================================
 * COND
@@ -273,6 +331,10 @@ DATA : gs_cond2 TYPE zsssmm0211.
 
 " 입고확정 모달창화면
 TABLES : zsssmm0214.
+TABLES : zsssmm0218.
+DATA : gs_cond_ven TYPE zsssmm0218.
+
+TABLES : zsssmm0220.
 
 
 

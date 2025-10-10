@@ -6,6 +6,7 @@ FUNCTION z_call_material_detail.
 *"     REFERENCE(IV_ISMODAL) TYPE  CHAR1 DEFAULT 'X'
 *"  EXCEPTIONS
 *"      QUERY_FAILED
+*"      UNKNOWN_FLAG
 *"----------------------------------------------------------------------
   CLEAR gs_info_0100.
 
@@ -15,7 +16,7 @@ FUNCTION z_call_material_detail.
 
   IF gv_subrc <> 0.
     MESSAGE i999(zmcss) WITH '자재 정보를 불러오는 중 에러가 발생했습니다.'.
-    raise query_failed.
+    RAISE query_failed.
   ENDIF.
 
   CASE iv_ismodal .

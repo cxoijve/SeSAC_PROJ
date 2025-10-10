@@ -167,6 +167,32 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             USING  'MEINS' '7' '기본 단위'.
       PERFORM set_fcat_hotspot TABLES pt_fcat
                            USING pv_aflag.
+    WHEN '0400'.
+      PERFORM modify_fcat : TABLES pt_fcat
+                            USING  'WDATE' '1' '반입일',
+                            TABLES pt_fcat
+                            USING  'WARID' '2' '재고 변동 번호',
+                            TABLES pt_fcat
+                            USING  'MATNR' '3' '자재 코드',
+                            TABLES pt_fcat
+                            USING  'MATNM' '4' '자재명',
+                            TABLES pt_fcat
+                            USING  'WTYPE' '-1' '미표시',
+                            TABLES pt_fcat
+                            USING  'WTYPE_T' '5' '재고 유형',
+                            TABLES pt_fcat
+                            USING  'BDAMT' '6' '현재 재고량',
+                            TABLES pt_fcat
+                            USING  'DEAMT' '7' '폐기 재고량',
+                            TABLES pt_fcat
+                            USING  'ADAMT' '8' '잔여 재고량',
+                            TABLES pt_fcat
+                            USING  'MEINS' '9' '기본 단위'.
+      PERFORM set_fcat_hotspot TABLES pt_fcat
+                               USING pv_aflag.
+
+*      PERFORM set_fcat_edit TABLES pt_fcat
+*                            USING pv_aflag.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -280,6 +306,11 @@ FORM set_layo  USING    VALUE(pv_aflag)
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'CELLSCOL'.
       ps_layo-sel_mode = 'A'. "A, B C D
+    WHEN '0400'.
+      ps_layo-ctab_fname = 'CELLSCOL'.
+      ps_layo-cwidth_opt = 'X'.
+      ps_layo-no_rowins = 'X'. "Standard Edit X
+    WHEN OTHERS.
   ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -499,7 +530,7 @@ FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
 
   LOOP AT pt_info_0100.
 
-    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
         iv_endda         = '99991231'
@@ -716,6 +747,14 @@ FORM c200_0100 .
   " Clear 200 Related
   CLEAR : gt_info_0210, gt_info_0220, gs_alvtitle_0200.
 
+  " REQUERY 100
+  PERFORM get_info_0100 TABLES gt_info_0100
+                        USING  zsssmd0801
+                        CHANGING  gs_alvtitle_0100
+                                  gs_sideinfo_0100
+                                  gv_subrc.
+
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SELECT_ROW_0100
@@ -812,7 +851,7 @@ FORM get_info_0200  TABLES   pt_info_0210 STRUCTURE gs_info_0200
          lt_info_astcks TYPE zsssmd0809 WITH HEADER LINE,
          lt_info_0220   TYPE zsssmd0809 WITH HEADER LINE.
 
-  CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+  CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
     EXPORTING
       iv_begda         = '11110101'
       iv_endda         = '99991231'
@@ -977,6 +1016,14 @@ FORM set_alv_handler  USING    po_alv     TYPE REF TO cl_gui_alv_grid
                                VALUE(pv_hname).
   po_handler->lv_hname = pv_hname.
   SET HANDLER po_handler->on_hotspot_click        FOR po_alv.
+
+  CASE pv_hname.
+    WHEN '0400'.
+      SET HANDLER po_handler->on_data_changed        FOR po_alv.
+      CALL METHOD po_alv->register_edit_event
+        EXPORTING
+          i_event_id = cl_gui_alv_grid=>mc_evt_modified. " "Enter Key + F4
+  ENDCASE.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT_HOTSPOT
@@ -1008,6 +1055,16 @@ FORM set_fcat_hotspot  TABLES   pt_fcat STRUCTURE lvc_s_fcat
           WHEN 'WARID'.
             pt_fcat-hotspot = 'X'.
           WHEN 'RDOC'.
+            pt_fcat-hotspot = 'X'.
+        ENDCASE.
+        MODIFY pt_fcat.
+      ENDLOOP.
+    WHEN '0400'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'MATNR'.
+            pt_fcat-hotspot = 'X'.
+          WHEN 'WARID'.
             pt_fcat-hotspot = 'X'.
         ENDCASE.
         MODIFY pt_fcat.
@@ -1365,6 +1422,7 @@ ENDFORM.
 FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
                     USING    VALUE(ps_cond_0310) TYPE zsssmd0813
                     CHANGING pv_meins TYPE zessmeins
+                             pv_infotext TYPE ddtext
                              pv_subrc LIKE sy-subrc.
 
   CLEAR : pv_subrc , pv_meins.
@@ -1375,10 +1433,45 @@ FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
   DATA lt_req TYPE TABLE OF ztssreq WITH HEADER LINE.
   DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
 
+  " INFO TEXT 용
+  DATA : lv_befamt   TYPE int4,
+         lv_aftamt   TYPE int4,
+         lv_befamt_t TYPE string,
+         lv_aftamt_t TYPE string.
+
   PERFORM check_cond_0310 USING ps_cond_0310
                           CHANGING lv_subrc.
 
   IF lv_subrc <> 0. pv_subrc = 4. RETURN. ENDIF.
+
+  " SET INFOTEXT
+  CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
+    EXPORTING
+      iv_begda         = '11110101'
+      iv_endda         = '99991231'
+      iv_stoid         = 'SL02'
+      iv_matnr         = ps_cond_0310-matnr
+    IMPORTING
+      ev_astck         = lv_befamt
+    EXCEPTIONS
+      material_unfound = 1
+      minus_avail      = 2
+      query_failed     = 3
+      OTHERS           = 4.
+  IF sy-subrc <> 0. pv_subrc = 4. RETURN. ENDIF.
+
+  lv_aftamt = lv_befamt + ps_cond_0310-amount.
+  lv_befamt_t = lv_befamt.
+  lv_aftamt_t = lv_aftamt.
+
+  CONCATENATE
+    lv_befamt_t
+    'EA'
+    '→'
+    lv_aftamt_t
+    'EA'
+  INTO pv_infotext
+  SEPARATED BY space.
 
   SELECT *
     FROM ztssreq
@@ -1402,7 +1495,7 @@ FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
       WHERE matnr EQ pt_info_0310-matnr
       AND langu EQ sy-langu.
 
-    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
         iv_endda         = '99991231'
@@ -1597,7 +1690,7 @@ FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
 
   CASE ps_cond_time-isbook.
     WHEN 'X'.
-      CALL FUNCTION 'Z_SCHEDULE_MRP'
+      CALL FUNCTION 'Z_FMSS_SCHEDULE_MRP'
         EXPORTING
           iv_startdate        = ps_cond_time-sdlstrtdt
           iv_starttime        = ps_cond_time-sdlstrttm
@@ -1612,7 +1705,7 @@ FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
           not_enough_outwares = 6
           OTHERS              = 7.
     WHEN OTHERS.
-      CALL FUNCTION 'Z_SCHEDULE_MRP'
+      CALL FUNCTION 'Z_FMSS_SCHEDULE_MRP'
         EXPORTING
           iv_startimm         = 'X'
           is_inware           = ps_inware
@@ -1633,6 +1726,603 @@ FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
   ENDIF.
 
   pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm  USING VALUE(pv_title) TYPE string
+                             VALUE(pv_tquestion) TYPE string
+                             VALUE(pv_tbtn01) TYPE string
+                             VALUE(pv_tbtn02) TYPE string
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA lv_answer.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = pv_title
+      text_question         = pv_tquestion
+      text_button_1         = pv_tbtn01
+      text_button_2         = pv_tbtn02
+      display_cancel_button = ''
+    IMPORTING
+      answer                = lv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  CASE lv_answer.
+    WHEN '1' .
+      pv_subrc = 0.
+    WHEN '2' .
+      pv_subrc = 4.
+    WHEN OTHERS.
+      pv_subrc = 4.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_EDIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_FCAT  text
+*      -->P_PV_AFLAG  text
+*----------------------------------------------------------------------*
+FORM set_fcat_edit  TABLES   pt_fcat STRUCTURE lvc_s_fcat
+                    USING    VALUE(pv_aflag).
+
+  IF pt_fcat[] IS INITIAL.
+    MESSAGE a999(zmcss) WITH 'FCAT EDIT ERROR'.
+  ENDIF.
+
+  CASE pv_aflag.
+    WHEN '0400'.
+      LOOP AT pt_fcat.
+        CASE pt_fcat-fieldname.
+          WHEN 'DEAMT'.
+            pt_fcat-edit = 'X'.
+            MODIFY pt_fcat.
+        ENDCASE.
+      ENDLOOP.
+
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_WARE_AVAILABLITY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_INFO  text
+*      <--P_LV_ADAMT  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_ware_availablity  USING    VALUE(ps_info) LIKE gs_info_0400
+                             CHANGING pv_adamt TYPE zessamount
+                                      pv_matnr TYPE zessmatnr
+                                      pv_matnm TYPE zessmatnm
+                                      pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  IF ps_info-deamt = 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  IF ps_info-bdamt - ps_info-deamt < 0.
+    pv_subrc = 5.
+    pv_matnr = ps_info-matnr.
+    pv_matnm = ps_info-matnm.
+    RETURN.
+  ENDIF.
+
+  pv_adamt = ps_info-bdamt - ps_info-deamt.
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_ALV_UPDATED
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_0400  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_alv_updated  USING    po_alv TYPE REF TO cl_gui_alv_grid
+                        CHANGING pv_subrc LIKE sy-subrc.
+
+  DATA : lv_valid TYPE char01.
+  CLEAR pv_subrc.
+
+  CALL METHOD po_alv->check_changed_data
+    IMPORTING
+      e_valid = lv_valid
+*    CHANGING
+*     c_refresh = 'X'
+    .
+
+  IF lv_valid = 'X'.
+    pv_subrc = 0.
+  ELSE.
+    pv_subrc = 4.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELITM_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM delitm_0200 .
+
+  DATA lt_info_0220 LIKE gt_info_0220.
+  DATA ls_row_0100 LIKE gs_info_0100. " For Requery
+  " SELECT ROW 0220.
+
+  PERFORM select_row_0220 TABLES gt_info_0220
+                                 lt_info_0220
+                          CHANGING gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+
+  " GET INFO 0400.
+  PERFORM get_info_0400_from_0220 TABLES gt_info_0400
+                                         lt_info_0220
+                                  CHANGING ls_row_0100
+                                           gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+  " CALL SCREEN 0400 STARTING AT 10 10.
+
+  CALL SCREEN 400 STARTING AT 10 10.
+
+  " CLEAR INFO 0400.
+  CLEAR : gt_info_0400.
+
+  " REQUERY 0220.
+  PERFORM get_info_0200 TABLES   gt_info_0210
+                                 gt_info_0220
+                        USING    ls_row_0100
+                                 gs_alvtitle_0100
+                        CHANGING gs_alvtitle_0200
+                                 gv_subrc.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_0220
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0220  text
+*      -->P_LT_INFO_0220  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_row_0220  TABLES   pt_info_0220 STRUCTURE gs_info_0200
+                               plt_info_0220 STRUCTURE gs_info_0200
+                      CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, plt_info_0220[].
+
+  DATA : lt_row   TYPE lvc_t_roid,
+         ls_row   LIKE LINE OF lt_row,
+         lv_index TYPE i.
+
+  CALL METHOD go_alv_0220->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 1.
+      pv_subrc = 0.
+    WHEN 0.
+      MESSAGE i999(zmcss) WITH '폐기할 재고를 하나 이상 선택해 주세요.'.
+      pv_subrc = 4.
+      RETURN.
+    WHEN OTHERS.
+      pv_subrc = 0.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    READ TABLE pt_info_0220 INDEX ls_row-row_id.
+    APPEND pt_info_0220 TO plt_info_0220.
+    CLEAR : ls_row, pt_info_0220.
+  ENDLOOP.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0400_FROM_0220
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0400  text
+*      -->P_LT_INFO_0220  text
+*      <--P_LS_ROW_0100  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0400_from_0220  TABLES   pt_info_0400 STRUCTURE gs_info_0400
+                                       pt_info_0220 STRUCTURE gs_info_0200
+                              CHANGING ps_row_0100 LIKE gs_info_0100
+                                       pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_info_0400[], ps_row_0100.
+  READ TABLE pt_info_0220 INDEX 1.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '선택된 행이 없습니다'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  SELECT SINGLE a~matnr b~matnm
+    FROM ztssware AS a
+    INNER JOIN ztssmat_t AS b
+    ON a~matnr EQ b~matnr
+    AND b~langu EQ sy-langu
+    INTO CORRESPONDING FIELDS OF ps_row_0100
+    WHERE a~warid EQ pt_info_0220-warid.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '선택된 행의 자재가 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  LOOP AT pt_info_0220.
+    CASE pt_info_0220-wtype_t.
+      WHEN '불량'.
+        MOVE-CORRESPONDING pt_info_0220 TO pt_info_0400.
+        " WTYPE WTYPE_T MEINS WARID WDATE
+
+        pt_info_0400-bdamt = pt_info_0220-amount.
+        pt_info_0400-deamt = pt_info_0220-amount.
+        pt_info_0400-adamt = '0'.
+        pt_info_0400-matnm = ps_row_0100-matnm.
+        pt_info_0400-matnr = ps_row_0100-matnr.
+        APPEND pt_info_0400.
+    ENDCASE.
+  ENDLOOP.
+
+  IF pt_info_0400[] IS INITIAL.
+    MESSAGE i999(zmcss) WITH '선택된 불량 재고가 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+  pv_subrc = 0.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  WASTE_WARE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0400  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM waste_ware  TABLES   pt_info_0400 STRUCTURE gs_info_0400
+                 CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+
+  DATA : ls_ztssware TYPE ztssware.
+  DATA : lv_dbcnt TYPE n LENGTH 5 VALUE '00000'.
+
+  LOOP AT pt_info_0400.
+    CLEAR ls_ztssware.
+
+    ls_ztssware-matnr =  pt_info_0400-matnr.
+    ls_ztssware-meins = pt_info_0400-meins.
+    ls_ztssware-wtype = 'D'.
+    ls_ztssware-amount = pt_info_0400-deamt.
+    ls_ztssware-wdate = sy-datum.
+
+    CASE ls_ztssware-matnr+0(1).
+      WHEN 'R'.
+        ls_ztssware-stoid = 'SL01'.
+        ls_ztssware-rgtor = 'E0000012'.
+      WHEN 'F'.
+        ls_ztssware-stoid = 'SL02'.
+        ls_ztssware-rgtor = 'E0000024'.
+      WHEN OTHERS.
+        MESSAGE i999(zmcss) WITH 'UNPREDICTED MATNR.'.
+        pv_subrc = 4.
+        RETURN.
+    ENDCASE.
+
+    CALL FUNCTION 'Z_FMSS_INSERT_NEXT_WARE'
+      EXPORTING
+        is_ztssware     = ls_ztssware
+      IMPORTING
+        ev_warid        = ls_ztssware-warid
+      EXCEPTIONS
+        numrange_failed = 1
+        insert_failed   = 2
+        zero_amount     = 3
+        init_detected   = 4
+        OTHERS          = 5.
+    IF sy-subrc <> 0.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    lv_dbcnt = lv_dbcnt + 1.
+
+  ENDLOOP.
+
+  MESSAGE i999(zmcss) WITH lv_dbcnt '건의 재고를 폐기하였습니다.'.
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELALL_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM delall_0100 .
+
+  DATA lt_info_0100 LIKE gt_info_0100.
+
+  " SELECT ROWS 0100.
+  PERFORM select_rows_0100 TABLES gt_info_0100
+                                  lt_info_0100
+                           CHANGING gv_subrc.
+
+  IF gv_subrc <> 0.
+    CASE gv_subrc.
+      WHEN '4'. RETURN.
+      WHEN '5'.
+        " 선택된 행이 없습니다. 현재 화면의 모든 불량 재고를 폐기하겠습니까?
+        PERFORM popup_to_confirm USING  '선택 불량재고 없음'
+                                        '선택된 행이 없습니다. 현재 화면의 모든 불량 재고를 폐기하겠습니까?'
+                                        '확인'
+                                        '취소'
+                                 CHANGING gv_subrc.
+
+        IF gv_subrc <> 0. RETURN. ENDIF.
+        APPEND LINES OF gt_info_0100 TO lt_info_0100.
+
+    ENDCASE.
+  ENDIF.
+
+  " GET INFO 0400
+  PERFORM get_info_0400_from_0100 TABLES gt_info_0400
+                                         lt_info_0100
+                                  CHANGING gv_subrc.
+
+  IF gv_subrc <> 0. RETURN. ENDIF.
+
+  CALL SCREEN 400 STARTING AT 10 10.
+
+  CLEAR : gt_info_0400.
+
+  PERFORM get_info_0100 TABLES   gt_info_0100
+                        USING    zsssmd0801
+                        CHANGING gs_alvtitle_0100
+                                 gs_sideinfo_0100
+                                 gv_subrc.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROWS_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0100  text
+*      -->P_LT_INFO_0100  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM select_rows_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
+                                plt_info_0100 STRUCTURE gs_info_0100
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, plt_info_0100[].
+
+  DATA : lt_row   TYPE lvc_t_roid,
+         ls_row   LIKE LINE OF lt_row,
+         lv_index TYPE i.
+
+  CALL METHOD go_alv_0100->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row.
+
+  DESCRIBE TABLE lt_row LINES lv_index.
+
+  CASE lv_index.
+    WHEN 1.
+      pv_subrc = 0.
+    WHEN 0.
+      pv_subrc = 5.
+      RETURN.
+    WHEN OTHERS.
+      pv_subrc = 0.
+  ENDCASE.
+
+  LOOP AT lt_row INTO ls_row.
+    READ TABLE pt_info_0100 INDEX ls_row-row_id.
+    APPEND pt_info_0100 TO plt_info_0100.
+    CLEAR : ls_row, pt_info_0100.
+  ENDLOOP.
+
+  pv_subrc = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_0400_FROM_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_INFO_0400  text
+*      -->P_LT_INFO_0100  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_0400_from_0100  TABLES   pt_info_0400 STRUCTURE gs_info_0400
+                                       pt_info_0100 STRUCTURE gs_info_0100
+                              CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR : pv_subrc, pt_info_0400[].
+
+  DATA : lt_info_fstck TYPE TABLE OF ztssware WITH HEADER LINE,
+         lv_stoid      TYPE zessstoid.
+
+  LOOP AT pt_info_0100.
+    CLEAR : lt_info_fstck[], lv_stoid.
+    CASE pt_info_0100-fstck.
+      WHEN '0'.
+        CONTINUE.
+    ENDCASE.
+
+    CASE pt_info_0100-matnr+0(1).
+      WHEN 'R'. lv_stoid = 'SL01'.
+      WHEN 'F'. lv_stoid = 'SL02'.
+    ENDCASE.
+
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = '99991231'
+        iv_stoid         = lv_stoid
+        iv_matnr         = pt_info_0100-matnr
+      TABLES
+        pt_fstcks        = lt_info_fstck
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '가용 재고 조회 중 에러가 발생헸습니다.'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    IF lt_info_fstck[] IS INITIAL.
+      CONTINUE.
+    ENDIF.
+
+    LOOP AT lt_info_fstck.
+      MOVE-CORRESPONDING lt_info_fstck TO pt_info_0400.
+      " WARID WTYPE MEINS MATNR
+
+      pt_info_0400-wtype_t = '불량'.
+      pt_info_0400-bdamt = lt_info_fstck-amount.
+      pt_info_0400-deamt = pt_info_0400-bdamt.
+      pt_info_0400-adamt = '0'.
+      pt_info_0400-matnm = pt_info_0100-matnm.
+
+      APPEND pt_info_0400.
+      CLEAR : lt_info_fstck, pt_info_0400.
+    ENDLOOP.
+  ENDLOOP.
+
+  IF pt_info_0400[] IS INITIAL.
+    MESSAGE i999(zmcss) WITH '폐기할 불량재고가 없습니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  pv_subrc = 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_SCREEN_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_screen_0100 .
+
+  DATA ls_info_0100 LIKE gs_info_0100.
+  DATA lv_no_fstck VALUE 'X'.
+
+  LOOP AT gt_info_0100 INTO ls_info_0100.
+    CASE ls_info_0100-fstck.
+      WHEN '0'.
+        CONTINUE.
+      WHEN OTHERS.
+        CLEAR lv_no_fstck.
+        EXIT.
+    ENDCASE.
+  ENDLOOP.
+
+  CASE lv_no_fstck.
+    WHEN 'X'.
+      LOOP AT SCREEN.
+        CASE screen-group1.
+          WHEN 'BTN'.
+            screen-active = '0'.
+        ENDCASE.
+        MODIFY SCREEN.
+      ENDLOOP.
+    WHEN OTHERS.
+      CASE screen-group1.
+        WHEN 'BTN'.
+          screen-active = '1'.
+      ENDCASE.
+      MODIFY SCREEN.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_SCREEN_0220
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_screen_0220 .
+  DATA ls_info_0220 LIKE gs_info_0200.
+  DATA lv_no_fstck VALUE 'X'.
+
+  LOOP AT gt_info_0220 INTO ls_info_0220.
+    CASE ls_info_0220-wtype_t.
+      WHEN '불량'.
+        CLEAR lv_no_fstck.
+        EXIT.
+    ENDCASE.
+  ENDLOOP.
+
+  CASE lv_no_fstck.
+    WHEN 'X'.
+      LOOP AT SCREEN.
+        CASE screen-group1.
+          WHEN 'BTN'.
+            screen-active = '0'.
+        ENDCASE.
+        MODIFY SCREEN.
+      ENDLOOP.
+    WHEN OTHERS.
+      LOOP AT SCREEN.
+        CASE screen-group1.
+          WHEN 'BTN'.
+            screen-active = '1'.
+        ENDCASE.
+        MODIFY SCREEN.
+      ENDLOOP.
+  ENDCASE.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

@@ -1,0 +1,27 @@
+FUNCTION Z_FMSS_GET_VEN_ID.
+*"--------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_VNAME) TYPE  ZESSVNAME
+*"  EXPORTING
+*"     REFERENCE(EV_VENID) TYPE  ZESSVENID
+*"--------------------------------------------------------------------
+
+  DATA : lv_vname TYPE ztssvend-vname.
+
+  lv_vname = '%' && iv_vname && '%'.
+
+  SELECT SINGLE venid
+  INTO ev_venid
+  FROM ztssvend
+  WHERE vname LIKE  lv_vname.
+
+  IF sy-subrc <> 0.
+  ENDIF.
+
+
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

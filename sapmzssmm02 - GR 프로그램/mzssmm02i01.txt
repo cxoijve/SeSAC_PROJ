@@ -20,17 +20,20 @@ MODULE user_command_0100 INPUT.
     WHEN 'TAB1' OR 'TAB2'.
       IF ok_code = 'TAB1'.
         gv_screen = 1.
-        CLEAR : gt_item, gt_confirm.
+        gv_radio_screen = 0.
+        CLEAR : gt_item, gt_confirm, zsssmm0210-venid, zsssmm0210-vname.
       ELSE.
         gv_screen = 0.
+        CLEAR : gt_item, gt_confirm, zsssmm0210-venid, zsssmm0210-vname.
+        gv_radio_screen = 0.
       ENDIF.
       t_info-activetab = ok_code.
-
     WHEN 'RA1'.
       IF gv_radio_vname = 'X'. gv_radio_screen  = 0. ELSEIF gv_radio_venid = 'X'. gv_radio_screen  = 1. ENDIF.
     WHEN 'P_BTN'.
       gv_entire_screen = 1.
     WHEN 'B_BTN'.
+      CLEAR zsssmm0210-ponum.
       gv_entire_screen = 0.
     WHEN OTHERS.
   ENDCASE.
@@ -107,7 +110,9 @@ MODULE user_command_0200 INPUT.
     WHEN 'BACK'.
       CLEAR: zsssmm0211,
            gs_cond2,
-           gt_edit_item.
+           gt_edit_item,
+           gt_gritem.
+
       PERFORM open_edit_to_close.
       LEAVE TO SCREEN 0.
     WHEN 'EDIT'.
@@ -146,6 +151,8 @@ MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'DAB1' OR 'DAB2' OR 'DAB3'.
+      t_info-activetab = ok_code.
 
     WHEN OTHERS.
   ENDCASE.
@@ -163,6 +170,39 @@ MODULE exit_0300 INPUT.
       LEAVE TO SCREEN 0.
 
     WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0120  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0120 INPUT.
+  CASE ok_code.
+    WHEN 'CANCLE'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0130  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0130 INPUT.
+  CASE ok_code.
+    WHEN 'CANCLE'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0140  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0140 INPUT.
+  CASE ok_code.
+    WHEN 'CANCLE'.
+      LEAVE TO SCREEN 0.
   ENDCASE.
 ENDMODULE.
 

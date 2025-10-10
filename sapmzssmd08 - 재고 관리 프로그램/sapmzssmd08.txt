@@ -48,13 +48,20 @@ LOAD-OF-PROGRAM.
                             TABLES    gt_fcat_0310
                                       gt_sort_0310
                             USING     '0310'
-                            CHANGING  gs_layo_0310.
+                            CHANGING  gs_layo_0310,
+
+                            TABLES    gt_fcat_0400
+                                      gt_sort_0400
+                            USING     '0400'
+                            CHANGING  gs_layo_0400.
 
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 재고 관리 프로그램
 * T200 --> 재고 변동 상세 내역
-* T300 --> Material Resource Planning
+* T300 --> 자재 생산 계획 현황
+* T310 --> 신규 자재 생산 계획 생성
+* T400 --> 재고 폐기
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

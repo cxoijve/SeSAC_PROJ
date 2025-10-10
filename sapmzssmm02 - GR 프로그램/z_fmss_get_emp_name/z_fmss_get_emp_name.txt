@@ -1,0 +1,29 @@
+FUNCTION Z_FMSS_GET_EMP_NAME.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_EMPID) TYPE  ZESSPERNR
+*"  EXPORTING
+*"     REFERENCE(EV_ENAME) TYPE  CHAR40
+*"----------------------------------------------------------------------
+
+
+  DATA: lv_lname TYPE ztssemp-lname,
+        lv_fname TYPE ztssemp-fname.
+
+  CLEAR ev_ename.
+
+  SELECT SINGLE lname fname
+    INTO (lv_lname, lv_fname)
+    FROM ztssemp
+    WHERE pernr = iv_empid.
+
+  IF sy-subrc = 0.
+    ev_ename = lv_lname && lv_fname.
+  ENDIF.
+
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
