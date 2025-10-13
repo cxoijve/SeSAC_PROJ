@@ -1,0 +1,379 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM02F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  SET_SCREEN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_screen .
+
+  LOOP AT SCREEN.
+
+    CASE 'X'.
+      WHEN pa_rb1.
+
+        CASE screen-group1.
+          WHEN 'MD1'.
+            screen-active = '0'. "비활성화 처리
+            MODIFY SCREEN.
+        ENDCASE.
+
+      WHEN pa_rb2.
+
+        CASE screen-group1.
+          WHEN 'MD2'.
+            screen-active = '0'. "비활성화 처리
+            MODIFY SCREEN.
+        ENDCASE.
+
+    ENDCASE.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_data .
+
+  PERFORM get_exp_datas USING zsssmm0210.
+  PERFORM get_final.
+
+  cl_demo_output=>display_data( gt_expdata ).
+
+*  IF sy-subrc NE 0.
+*    MESSAGE s000 WITH '조회할 데이터가 없습니다' DISPLAY LIKE 'E'.
+*    EXIT.
+**  ELSE.
+**    CALL SCREEN '0100'.
+*  ENDIF.
+*
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXP_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0210  text
+*----------------------------------------------------------------------*
+FORM get_exp_datas  USING    p_cond TYPE zsssmm0210.
+
+  PERFORM calulat_pick_expdata USING p_cond.
+  PERFORM modify_exp_datas TABLES gt_expdata.
+  SORT gt_expdata BY dudat ASCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALULAT_PICK_EXPDATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_COND  text
+*----------------------------------------------------------------------*
+FORM calulat_pick_expdata  USING   p_cond TYPE zsssmm0210.
+
+
+  DATA : lt_po_sum LIKE TABLE OF gs_itamt,
+         lt_gr_sum LIKE TABLE OF gs_itamt.
+
+  CLEAR gt_expdata.
+
+  PERFORM get_po_sum CHANGING lt_po_sum.
+  PERFORM get_gr_sum CHANGING lt_gr_sum.
+
+  PERFORM create_exp_list USING  lt_po_sum lt_gr_sum CHANGING gt_expdata.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PO_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LT_PO_SUM  text
+*----------------------------------------------------------------------*
+FORM get_po_sum  CHANGING ct_po_sum LIKE gt_itamt.
+
+  DATA: lt_po_raw TYPE STANDARD TABLE OF ztsspoi,
+        ls_po_raw LIKE LINE OF lt_po_raw,
+        ls_po_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_po_raw
+    FROM ztsspoi.
+
+  IF sy-subrc <> 0. RETURN. ENDIF.
+
+  LOOP AT lt_po_raw INTO ls_po_raw.
+    ls_po_sum-ponum  = ls_po_raw-ponum.
+    ls_po_sum-itnum  = ls_po_raw-itnum.
+    ls_po_sum-amount = ls_po_raw-amount.
+    COLLECT ls_po_sum INTO ct_po_sum.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LT_GR_SUM  text
+*----------------------------------------------------------------------*
+FORM get_gr_sum   CHANGING ct_gr_sum LIKE gt_itamt.
+
+
+  DATA: lt_gr_raw TYPE TABLE OF ztssgri,
+        ls_gr_raw LIKE LINE OF lt_gr_raw,
+        ls_gr_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_gr_raw
+    FROM ztssgri.
+
+  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '입고내역이 존재하지 않습니다!'. RETURN. ENDIF.
+
+  LOOP AT lt_gr_raw INTO ls_gr_raw.
+    ls_gr_sum-ponum  = ls_gr_raw-ponum.
+    ls_gr_sum-itnum  = ls_gr_raw-itnum.
+    ls_gr_sum-amount = ls_gr_raw-amount.
+    COLLECT ls_gr_sum INTO ct_gr_sum.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_EXP_LIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PO_SUM  text
+*      -->P_LT_GR_SUM  text
+*      <--P_GT_EXPDATA  text
+*----------------------------------------------------------------------*
+FORM create_exp_list  USING    pt_po_sum LIKE gt_itamt
+                              pt_gr_sum LIKE gt_itamt
+                     CHANGING ct_expdata LIKE gt_expdata.
+
+
+  DATA: ls_po_sum LIKE gs_itamt,
+        ls_gr_sum LIKE gs_itamt,
+        ls_po     LIKE LINE OF gt_expdata,
+        lv_where  TYPE string,
+        lv_venid  TYPE ztssvend-venid.
+
+  CLEAR : lv_where, lv_venid.
+
+  PERFORM set_where_cond USING zsssmm0210 CHANGING lv_venid lv_where.
+
+  LOOP AT pt_po_sum INTO ls_po_sum.
+
+    " PO 헤더정보
+    CLEAR ls_po.
+
+    SELECT SINGLE ponum podat venid dudat stext rgtor
+      INTO CORRESPONDING FIELDS OF ls_po
+      FROM ztsspoh
+      WHERE ponum = ls_po_sum-ponum
+      AND dudat <= sy-datum
+      AND (lv_where).
+
+    CHECK sy-subrc = 0.
+
+    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+                                                 itnum = ls_po_sum-itnum.
+    IF sy-subrc <> 0.
+      APPEND ls_po TO ct_expdata.
+    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+      APPEND ls_po TO ct_expdata.
+    ENDIF.
+  ENDLOOP.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_EXP_DATAS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_EXPDATA  text
+*----------------------------------------------------------------------*
+FORM modify_exp_datas  TABLES   t_data STRUCTURE gs_expdata.
+
+
+  LOOP AT t_data.
+    PERFORM set_expired_date USING t_data-dudat CHANGING t_data-ludat.
+    PERFORM set_expired_status USING t_data-dudat CHANGING t_data.
+    PERFORM get_vendor_name USING t_data-venid CHANGING t_data-vname.
+    PERFORM get_emp_name USING t_data-rgtor CHANGING t_data-ename.
+
+    MODIFY t_data.
+    CLEAR t_data.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_EXPIRED_DATE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_DUDAT  text
+*      <--P_T_DATA_LUDAT  text
+*----------------------------------------------------------------------*
+FORM set_expired_date  USING  pv_dat TYPE sy-datum
+                       CHANGING cv_dat.
+
+  cv_dat = sy-datum - pv_dat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_EXPIRED_STATUS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_DUDAT  text
+*      <--P_T_DATA  text
+*----------------------------------------------------------------------*
+FORM set_expired_status     USING VALUE(pv_dudat) TYPE ztsspoh-dudat
+                            CHANGING cs_data LIKE gs_expdata.
+
+
+
+  DATA ls_col TYPE lvc_s_scol.
+
+
+  ls_col-fname = 'LUDAT'.
+  ls_col-color-col = '6'.
+  ls_col-color-int = '1'.
+  ls_col-color-inv = '0'.
+  APPEND ls_col TO cs_data-it_col.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_VENID  text
+*      <--P_T_DATA_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_vendor_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
+                      CHANGING p_vname TYPE zsssmm0210-vname.
+
+  CALL FUNCTION 'Z_FMSS_GET_VEN_NAME'
+    EXPORTING
+      iv_venid = p_venid
+    IMPORTING
+      ev_vname = p_vname.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_RGTOR  text
+*      <--P_T_DATA_ENAME  text
+*----------------------------------------------------------------------*
+FORM get_emp_name  USING    VALUE(p_empid) TYPE zsssmm0211-rgtor
+                   CHANGING p_ename TYPE zsssmm0211-ename.
+
+  CALL FUNCTION 'Z_FMSS_GET_EMP_NAME'
+    EXPORTING
+      iv_empid = p_empid
+    IMPORTING
+      ev_ename = p_ename.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_WHERE_COND
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0210  text
+*      <--P_LV_VENID  text
+*      <--P_LV_WHERE  text
+*----------------------------------------------------------------------*
+FORM set_where_cond  USING VALUE(p_cond) TYPE zsssmm0210
+                     CHANGING cv_venid TYPE ztssvend-venid
+                              cv_where TYPE string.
+
+  DATA : lv_venid TYPE ztssvend-venid.
+
+  CLEAR : cv_where,
+          lv_venid.
+
+  IF p_cond-venid IS NOT INITIAL.
+    lv_venid = p_cond-venid.
+    CLEAR p_cond-vname.
+    cv_where = 'VENID eq LV_VENID'.
+  ELSEIF p_cond-vname IS NOT INITIAL.
+    PERFORM get_vendor_id USING p_cond-vname CHANGING lv_venid.
+    cv_where = 'VENID eq LV_VENID'.
+  ENDIF.
+  cv_venid = lv_venid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_ID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_COND_VNAME  text
+*      <--P_LV_VENID  text
+*----------------------------------------------------------------------*
+FORM get_vendor_id  USING  VALUE(p_vname) TYPE zsssmm0210-vname
+                    CHANGING p_venid TYPE zsssmm0210-venid.
+
+
+  CALL FUNCTION 'Z_FMSS_GET_VEN_ID'
+    EXPORTING
+      iv_vname = p_vname
+    IMPORTING
+      ev_venid = p_venid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_FINAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_final .
+
+
+  IF pa_rb1 = 'X'.
+    DELETE gt_expdata WHERE venid <> pa_vid.
+  ENDIF.
+
+
+*  LOOP AT gt_expdata INTO DATA(ls_data) WHERE dudat IN so_year.
+*
+*    IF pa_rb1 = 'X'.
+*
+*
+*
+*
+*
+*    ELSE.
+*
+*    ENDIF.
+*
+*  ENDLOOP.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

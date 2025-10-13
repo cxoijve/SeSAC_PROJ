@@ -621,36 +621,6 @@ MODULE exit_with_warning INPUT.
       PERFORM exit.
   ENDCASE.
 ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  USER_COMMAND_0999  INPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE user_command_0999 INPUT.
-  CASE ok_code.
-    WHEN 'CONFIRM'.
-      SET SCREEN 0.
-      gv_exit = 'X'.
-    WHEN 'DENY'.
-      SET SCREEN 0.
-      CLEAR gv_exit.
-  ENDCASE.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  USER_COMMAND_0998  INPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE user_command_0998 INPUT.
-  CASE ok_code.
-    WHEN 'CONFIRM'.
-      SET SCREEN 0.
-      gv_exit = 'X'.
-    WHEN 'DENY'.
-      SET SCREEN 0.
-      CLEAR gv_exit.
-  ENDCASE.
-ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

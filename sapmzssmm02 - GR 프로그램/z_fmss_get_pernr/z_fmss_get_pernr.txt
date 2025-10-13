@@ -1,0 +1,86 @@
+FUNCTION z_fmss_get_pernr.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_ID) TYPE  SY-UNAME
+*"     REFERENCE(IV_MODULE) TYPE  CHAR3
+*"  EXPORTING
+*"     REFERENCE(EV_PERNR) TYPE  ZTSSEMP-PERNR
+*"----------------------------------------------------------------------
+  " FI - 회계
+  " MM - 구매
+  " WM - 물류(GR, MIV, GI, SIV)
+  " SD - 판매
+
+  CASE iv_id. "SAP 게정
+    WHEN 'SPRO-26'.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000014'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000015'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000003'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000022'.
+      ENDCASE.
+    WHEN 'SPRO-27'.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000014'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000015'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000009'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000004'.
+      ENDCASE.
+    WHEN 'SPRO-28'.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000007'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000016'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000019'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000023'.
+      ENDCASE.
+    WHEN 'SPRO-29'.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000007'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000002'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000019'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000021'.
+      ENDCASE.
+    WHEN 'SPRO-30'.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000001'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000016'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000020'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000021'.
+      ENDCASE.
+    WHEN OTHERS.
+      CASE iv_module.
+        WHEN 'FI'.
+          ev_pernr = 'E0000001'.
+        WHEN 'MM'.
+          ev_pernr = 'E0000002'.
+        WHEN 'WM'.
+          ev_pernr = 'E0000003'.
+        WHEN 'SD'.
+          ev_pernr = 'E0000004'.
+      ENDCASE.
+  ENDCASE.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

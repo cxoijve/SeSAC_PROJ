@@ -67,6 +67,9 @@ DATA : gt_jei_3 TYPE TABLE OF ztssjei,
        gt_jeh_3 TYPE TABLE OF ztssjeh,
        gs_jeh_3 LIKE LINE OF gt_jeh_3.
 
+DATA : gt_ceqda LIKE TABLE OF zsssmm03013,
+       gs_ceqda LIKE LINE OF gt_ceqda.
+
 
 DATA : BEGIN OF gs_logi,
          pernr TYPE zesspernr,
@@ -84,7 +87,8 @@ CONTROLS my_tab_2 TYPE TABSTRIP.
 DATA : gt_data TYPE TABLE OF zsssmm03002,
        gs_data LIKE LINE OF gt_data.
 
-DATA : gs_layo TYPE lvc_s_layo.
+DATA : gs_layo_0100 TYPE lvc_s_layo,
+       gs_layo      TYPE lvc_s_layo.
 
 DATA : gt_fval TYPE TABLE OF dd07v,
        gs_fval LIKE LINE OF gt_fval.
@@ -92,19 +96,33 @@ DATA : gt_fval TYPE TABLE OF dd07v,
 DATA : gt_mstat TYPE TABLE OF dd07v,
        gs_mstat LIKE LINE OF gt_mstat.
 
-DATA : gt_fcat TYPE lvc_t_fcat,
-       gs_fcat LIKE LINE OF gt_fcat.
+DATA: gt_dropdown_logi TYPE vrm_values,
+      gs_dropdown_logi LIKE LINE OF gt_dropdown_logi.
 
-DATA : go_con   TYPE  REF TO cl_gui_custom_container,
-       go_alv   TYPE REF TO cl_gui_alv_grid,
-       go_con_3 TYPE  REF TO cl_gui_custom_container,
-       go_alv_3 TYPE REF TO cl_gui_alv_grid,
-       go_con_4 TYPE  REF TO cl_gui_custom_container,
-       go_alv_4 TYPE REF TO cl_gui_alv_grid,
-       go_con_5 TYPE  REF TO cl_gui_custom_container,
-       go_alv_5 TYPE REF TO cl_gui_alv_grid,
-       go_con_6 TYPE  REF TO cl_gui_custom_container,
-       go_alv_6 TYPE REF TO cl_gui_alv_grid.
+
+DATA : gt_fcat_0100 TYPE lvc_t_fcat,
+       gs_fcat_0100 LIKE LINE OF gt_fcat_0100,
+       gt_fcat      TYPE lvc_t_fcat,
+       gs_fcat      LIKE LINE OF gt_fcat,
+       gt_fcat_0300 TYPE lvc_t_fcat,
+       gs_fcat_0300 LIKE LINE OF gt_fcat_0300,
+       gt_fcat_0400 TYPE lvc_t_fcat,
+       gs_fcat_0400 LIKE LINE OF gt_fcat_0400,
+       gt_fcat_0600 TYPE lvc_t_fcat,
+       gs_fcat_0600 LIKE LINE OF gt_fcat_0600,
+       gt_fcat_0500 TYPE lvc_t_fcat,
+       gs_fcat_0500 LIKE LINE OF gt_fcat_0500.
+
+DATA : go_con_0100 TYPE  REF TO cl_gui_custom_container,
+       go_alv_0100 TYPE REF TO cl_gui_alv_grid,
+       go_con_3    TYPE  REF TO cl_gui_custom_container,
+       go_alv_3    TYPE REF TO cl_gui_alv_grid,
+       go_con_4    TYPE  REF TO cl_gui_custom_container,
+       go_alv_4    TYPE REF TO cl_gui_alv_grid,
+       go_con_5    TYPE  REF TO cl_gui_custom_container,
+       go_alv_5    TYPE REF TO cl_gui_alv_grid,
+       go_con_6    TYPE  REF TO cl_gui_custom_container,
+       go_alv_6    TYPE REF TO cl_gui_alv_grid.
 
 DATA : gt_excl TYPE ui_functions.
 DATA : gs_toolbar TYPE stb_button.
@@ -118,6 +136,34 @@ DATA : gv_tbex TYPE ui_functions.
 *      IMPORTING e_column es_row_no.
 *ENDCLASS.
 *DATA go_handler TYPE REF TO lcl_handler.
+
+*CLASS lcl_event_receiver01 DEFINITION.
+*
+*  PUBLIC SECTION.
+*
+*    METHODS handle_double_click
+*          FOR EVENT double_click OF cl_gui_alv_grid
+*      IMPORTING
+*          e_column
+*          e_row
+*          es_row_no.
+*
+*  PROTECTED SECTION.
+*  PRIVATE SECTION.
+*
+*ENDCLASS.
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING es_row_no e_column_id.
+
+    CLASS-METHODS on_toolbar FOR EVENT toolbar OF cl_gui_alv_grid
+      IMPORTING e_object.
+
+    CLASS-METHODS on_user_command FOR EVENT user_command OF cl_gui_alv_grid
+      IMPORTING e_ucomm.
+ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

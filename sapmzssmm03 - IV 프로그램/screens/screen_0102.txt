@@ -8,7 +8,7 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0102I0102      2 65192 37  0  0 27125  0G E                              20251001185344																																
+SAPMZSSMM03                             0102I0102      2 69192 37  0  0 27126  0G E                              20251013152028																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -20,6 +20,7 @@ B_TXT_2	0	CHAR	 13	00	00	00	30	00	  1	 54		  0	  0	  0		  0					  0	  0								�
 ZSSSMM03003-CHECK	C	CHAR	  1	A0	00	80	00	00	  1	 70		  0	  0	  0		  0	C				  2	  0	101							_	                                       00	
 ZSSSMM03003-RGTOR	0	CHAR	 15	30	00	04	30	00	  2	  3		  0	  0	  0		  0					  0	  0								입고문서 등록자	                                                                                                                                                                                                                                                        X	
 ZSSSMM03003-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 24		  0	  0	  0		  0					 16	  0			ZSHSSMM01					________	X                                      00	
+ZSSSMM03003-RGNME	C	CHAR	 20	A0	02	80	31	00	  2	 33		  0	  0	  0		  0					 40	  0								____________________	                                       00	
 B_TXT_3	0	CHAR	 15	00	00	00	30	00	  2	 54		  0	  0	  0		  0					  0	  0								송장검증 미완료		
 ZSSSMM03003-CHEKE	C	CHAR	  1	A0	00	80	00	00	  2	 70		  0	  0	  0		  0	C				  2	  0	102							_	                                       00	
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
@@ -27,6 +28,12 @@ ZSSSMM03003-CHEKE	C	CHAR	  1	A0	00	80	00	00	  2	 70		  0	  0	  0		  0	C				  2	 
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0102.																																
   MODULE set_default_0102.																																
+																																
+																																
 *																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0102.																																
+																																
+																																
+PROCESS ON VALUE-REQUEST.																																
+  FIELD zsssmm03003-rgtor MODULE logi_pernr .																																

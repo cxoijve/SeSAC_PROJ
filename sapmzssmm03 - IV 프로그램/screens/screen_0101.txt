@@ -8,7 +8,7 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0101I0101      2 63192 37  0  0 27129  0G E                              20251001171614																																
+SAPMZSSMM03                             0101I0101      2 69192 37  0  0 27133  0G E                              20251013144544																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -17,16 +17,22 @@ ZSSSMM03001-BEGDA	D	DATE	 10	A0	00	80	00	08	  1	 24		  0	  0	  0		  0					 16	  
 B_TXT	0	CHAR	  1	00	00	00	30	00	  1	 36		  0	  0	  0		  0					  0	  0								~		
 ZSSSMM03001-ENDDA	D	DATE	 10	A0	00	80	00	08	  1	 39		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 B_TXT_2	0	CHAR	  9	00	00	00	30	00	  1	 58		  0	  0	  0		  0					  0	  0								지급 완료		
-ZSSSMM03001-CHECK	C	CHAR	  1	A0	00	80	00	00	  1	 70		  0	  0	  0		  0	C				  2	  0	103							_	                                       00	
+ZSSSMM03001-CHECK	C	CHAR	  1	A0	00	80	00	00	  1	 70		  0	  0	  0		  0	C				  2	  0	101							_	                                       00	
 ZSSSMM03001-RGTOR	0	CHAR	 15	30	00	04	30	00	  2	  3		  0	  0	  0		  0					  0	  0								송장문서 등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM03001-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 24		  0	  0	  0		  0					 16	  0			ZSHSSMM01					________	X                                      00	
+ZSSSMM03001-RGTOR	C	CHAR	  8	A0	00	84	00	18	  2	 24		  0	  0	  0		  0					 16	  0								________	X                                      00	
+ZSSSMM03001-RGNME	C	CHAR	 20	A0	02	80	31	00	  2	 35		  0	  0	  0		  0					 40	  0								____________________	                                       00	
 B_TXT_3	0	CHAR	 11	00	00	00	30	00	  2	 58		  0	  0	  0		  0					  0	  0								지급 미완료		
-ZSSSMM03001-CHEKE	C	CHAR	  1	A0	00	80	00	00	  2	 70		  0	  0	  0		  0	C				  2	  0	101							_	                                       00	
+ZSSSMM03001-CHEKE	C	CHAR	  1	A0	00	80	00	00	  2	 70		  0	  0	  0		  0	C				  2	  0	102							_	                                       00	
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 *  MODULE status_0101.																																
+*  MODULE set_dropdown_0101.																																
   MODULE set_dafault_0101.																																
 																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0101.																																
+																																
+																																
+PROCESS ON VALUE-REQUEST.																																
+  FIELD zsssmm03001-rgtor MODULE logi_pernr .																																

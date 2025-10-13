@@ -27,7 +27,7 @@ CLASS lcl_handler IMPLEMENTATION.
 
     CASE e_column_id-fieldname.
       WHEN 'SOMNR'.
-        CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
           EXPORTING
             iv_matnr     = lv_matnr
             iv_ismodal   = 'X'
@@ -40,7 +40,19 @@ CLASS lcl_handler IMPLEMENTATION.
         ENDIF.
 
       WHEN 'SONUM'.
-        MESSAGE i999(zmcss) WITH lv_sonum.
+        "MESSAGE i999(zmcss) WITH lv_sonum.
+        CALL FUNCTION 'Z_FMSS_CALL_SO_DETAIL'
+          EXPORTING
+            iv_sonum     = lv_sonum
+            iv_ismodal   = ''
+          EXCEPTIONS
+            query_failed = 1
+            OTHERS       = 2.
+        IF sy-subrc <> 0.
+          MESSAGE i999(zmcss) WITH '선택한 판매오더 정보' lv_sonum '를 확인할 수 없습니다.'.
+          RETURN.
+        ENDIF.
+
     ENDCASE.
 
   ENDMETHOD.

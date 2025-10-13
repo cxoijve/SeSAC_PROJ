@@ -108,6 +108,19 @@ MODULE set_status_0300 OUTPUT.
     ENDLOOP.
   ENDIF.
 ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0100 OUTPUT.
+
+  IF zsssmd04002-check IS INITIAL AND zsssmd04002-cheke IS INITIAL.
+    zsssmd04002-check = 'X'.
+    zsssmd04002-cheke = 'X'.
+  ENDIF.
+
+ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

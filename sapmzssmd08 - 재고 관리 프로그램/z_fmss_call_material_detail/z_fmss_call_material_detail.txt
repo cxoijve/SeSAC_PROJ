@@ -1,5 +1,5 @@
-FUNCTION Z_FMSS_CALL_MATERIAL_DETAIL.
-*"--------------------------------------------------------------------
+FUNCTION z_fmss_call_material_detail.
+*"----------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
 *"     REFERENCE(IV_MATNR) TYPE  ZESSMATNR
@@ -7,11 +7,11 @@ FUNCTION Z_FMSS_CALL_MATERIAL_DETAIL.
 *"  EXCEPTIONS
 *"      QUERY_FAILED
 *"      UNKNOWN_FLAG
-*"--------------------------------------------------------------------
-  CLEAR gs_info_0100.
+*"----------------------------------------------------------------------
+  CLEAR gs_infod_0100.
 
   PERFORM get_info_0100 USING     iv_matnr
-                        CHANGING  gs_info_0100
+                        CHANGING  gs_infod_0100
                                   gv_subrc.
 
   IF gv_subrc <> 0.
@@ -28,7 +28,7 @@ FUNCTION Z_FMSS_CALL_MATERIAL_DETAIL.
       RAISE unknown_flag.
   ENDCASE.
 
-  CLEAR gs_info_0100.
+  CLEAR gs_infod_0100.
 
 ENDFUNCTION.
 

@@ -8,7 +8,7 @@ SAPMZSSMM02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM02                             0300 0300     33242192 37  0  0200255  0G E                              20251010002159																																
+SAPMZSSMM02                             0300 0300     33242192 37  0  0200255  0G E                              20251013230310																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -33,10 +33,11 @@ ZSSSMM0211-JENUM	2	CHAR	 20	30	00	04	30	00	  5	 92		  0	  0	  0		  0					  0	  0
 ZSSSMM0211-JENUM	C	CHAR	 11	A0	00	84	30	08	  5	113		  0	  0	  0		  0					 22	  0								___________	X                                      00	
 ZSSSMM0211-RGDAT	2	CHAR	 20	30	00	00	30	00	  6	  4		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0211-RGDAT	D	DATE	 10	A0	00	80	30	08	  6	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+JE_DETAIL		CHAR	 12	00	00	00	30	00	  6	113		  0	  0	  0		  0	P				  0	  0	107							전표상세정보	                                                                                                                                                                        T_JE	
 ZSSSMM0211-RGTOR	2	CHAR	 20	30	00	04	30	00	  7	  4		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 ZSSSMM0211-RGTOR	C	CHAR	  8	A0	00	84	30	08	  7	 25		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSMM0211-ENAME	C	CHAR	 40	A0	02	80	30	00	  7	 34		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
-CON_DETAIL			126	00	00	00	30	00	 10	  2		  0	  0	  0		 24	U				  1	  1	107									
+CON_DETAIL			126	00	00	00	30	00	 10	  2		  0	  0	  0		 24	U				  1	  1	108									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

@@ -53,6 +53,13 @@ MODULE user_command_0100 INPUT.
         CLEAR : gt_item,
                 zsssmm0103.
       ENDIF.
+    WHEN 'G_BTN'.
+      DATA : lv_grnum TYPE zessgrnum.
+      lv_grnum = 'G2025000046'.
+
+      SET PARAMETER ID 'ZSSGR' FIELD lv_grnum.
+      CALL TRANSACTION 'ZSSMM02'.
+
   ENDCASE.
 
 ENDMODULE.

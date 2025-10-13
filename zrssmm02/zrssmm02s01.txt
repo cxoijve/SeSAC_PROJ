@@ -1,0 +1,27 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM02S01
+*&---------------------------------------------------------------------*
+
+SELECTION-SCREEN BEGIN OF BLOCK b01 WITH FRAME TITLE TEXT-t01.
+
+SELECT-OPTIONS : so_year FOR zsssmm0210-dudat_s.
+
+
+SELECTION-SCREEN END OF BLOCK b01.
+
+
+SELECTION-SCREEN BEGIN OF BLOCK b02 WITH FRAME TITLE TEXT-t02.
+SELECTION-SCREEN BEGIN OF LINE.
+PARAMETERS: pa_rb1 RADIOBUTTON GROUP grp1 DEFAULT 'X' USER-COMMAND clk.
+SELECTION-SCREEN COMMENT 3(15) TEXT-001 FOR FIELD pa_rb1.
+PARAMETERS: pa_rb2 RADIOBUTTON GROUP grp1.
+SELECTION-SCREEN COMMENT 20(15) TEXT-002 FOR FIELD pa_rb2.
+SELECTION-SCREEN END OF LINE.
+
+PARAMETERS : pa_vnme TYPE ztssvend-venid MODIF ID md1,
+             pa_vid  TYPE ztssvend-vname MODIF ID md2.
+
+SELECTION-SCREEN END OF BLOCK b02.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

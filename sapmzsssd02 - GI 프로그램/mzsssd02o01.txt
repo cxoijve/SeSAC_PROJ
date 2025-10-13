@@ -226,53 +226,43 @@ MODULE status_0303 OUTPUT.
   SET PF-STATUS 'S303'.
   SET TITLEBAR 'T303'.
 ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0999  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE status_0999 OUTPUT.
-  SET PF-STATUS 'S999'.
-  SET TITLEBAR 'T999' WITH '경고'.
-ENDMODULE.
+
 *&---------------------------------------------------------------------*
 *&      Module  SET_EXIT_MSG  OUTPUT
 *&---------------------------------------------------------------------*
 *       text
 *----------------------------------------------------------------------*
 MODULE set_exit_msg OUTPUT.
-  CLEAR : gv_exit_msg, gv_canc_msg.
-  CLEAR : gv_exit.
+  CLEAR : gv_exit_msg, gv_canc_msg, gv_etitle, gv_ctitle.
   CASE sy-dynnr.
     WHEN '0100'.
+      gv_etitle = '프로그램 종료'.
+      gv_ctitle = gv_etitle.
       gv_exit_msg = '프로그램을 종료하시겠습니까?'.
       gv_canc_msg = '프로그램을 종료하시겠습니까?'.
     WHEN '0200'.
+      gv_etitle = '프로그램 종료'.
       gv_exit_msg = '프로그램을 종료하시겠습니까?'.
     WHEN '0300'.
+      gv_etitle = '프로그램 종료'.
+      gv_ctitle = '신규 출고 취소'.
       gv_exit_msg = '프로그램을 종료하시겠습니까? 미 저장 내역은 삭제됩니다.'.
-      gv_canc_msg = '신규 출고 생성을 취소하시겠습니까?'.
+      gv_canc_msg = '신규 출고 생성을 취소하시겠습니까? 미 저장 내역은 삭제됩니다.'.
     WHEN '0500'.
       CASE gv_eflag_0500.
         WHEN 'X'.
+          gv_etitle = '프로그램 종료'.
+          gv_ctitle = '출고 변경 취소'.
           gv_exit_msg = '프로그램을 종료하시겠습니까? 미 저장 내역은 삭제됩니다.'.
-          gv_canc_msg = '출고 문서 변경을 취소하시겠습니까?'.
+          gv_canc_msg = '출고 문서 변경을 취소하시겠습니까? 미 저장 내역은 삭제됩니다.'.
         WHEN ''.
+          gv_etitle = '프로그램 종료'.
           gv_exit_msg = '프로그램을 종료하시겠습니까?'.
       ENDCASE.
 
     WHEN OTHERS.
       MESSAGE a999(zmcss) WITH 'NO ENTRY'.
   ENDCASE.
-ENDMODULE.
-*&---------------------------------------------------------------------*
-*&      Module  STATUS_0998  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE status_0998 OUTPUT.
-  SET PF-STATUS 'S998'.
-  SET TITLEBAR 'T998'.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  MODIFY_SCREEN_0300  OUTPUT
@@ -329,6 +319,14 @@ ENDMODULE.
 MODULE set_default_0104 OUTPUT.
   PERFORM set_default_0104.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DEFAULT_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_default_0300 OUTPUT.
+  PERFORM set_default_0300.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

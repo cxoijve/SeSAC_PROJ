@@ -2,91 +2,6 @@
 *&  Include           MZSSMM03F01
 *&---------------------------------------------------------------------*
 *&---------------------------------------------------------------------*
-*&      Form  CREATE_ALV_0200
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*  -->  p1        text
-*  <--  p2        text
-*----------------------------------------------------------------------*
-FORM create_alv_0200 .
-  IF go_con IS NOT INITIAL. RETURN. ENDIF.
-
-  CREATE OBJECT go_con
-    EXPORTING
-*     parent                      =
-      container_name              = 'CON'
-*     style                       =
-*     lifetime                    = lifetime_default
-*     repid                       =
-*     dynnr                       =
-*     no_autodef_progid_dynnr     =
-    EXCEPTIONS
-      cntl_error                  = 1
-      cntl_system_error           = 2
-      create_error                = 3
-      lifetime_error              = 4
-      lifetime_dynpro_dynpro_link = 5
-      OTHERS                      = 6.
-  IF sy-subrc <> 0.
-*   MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
-*              WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
-  ENDIF.
-
-  CREATE OBJECT go_alv
-    EXPORTING
-*     i_shellstyle      = 0
-*     i_lifetime        =
-      i_parent          = go_con
-*     i_appl_events     = space
-*     i_parentdbg       =
-*     i_applogparent    =
-*     i_graphicsparent  =
-*     i_name            =
-*     i_fcat_complete   = SPACE
-    EXCEPTIONS
-      error_cntl_create = 1
-      error_cntl_init   = 2
-      error_cntl_link   = 3
-      error_dp_create   = 4
-      OTHERS            = 5.
-  IF sy-subrc <> 0.
-* MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
-*            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
-  ENDIF.
-
-ENDFORM.
-*&---------------------------------------------------------------------*
-*&      Form  DISPLAY_ALV_0200
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*  -->  p1        text
-*  <--  p2        text
-*----------------------------------------------------------------------*
-FORM display_alv_0200 .
-  PERFORM set_alv_layo.
-
-
-  CALL METHOD go_alv->set_table_for_first_display
-    EXPORTING
-      i_structure_name              = 'ZSSSMM03002'
-      is_layout                     = gs_layo
-    CHANGING
-      it_outtab                     = gt_data
-      it_fieldcatalog               = gt_fcat
-*     it_sort                       =
-*     it_filter                     =
-    EXCEPTIONS
-      invalid_parameter_combination = 1
-      program_error                 = 2
-      too_many_lines                = 3
-      OTHERS                        = 4.
-  IF sy-subrc <> 0.
-* Implement suitable error handling here
-  ENDIF.
-ENDFORM.
-*&---------------------------------------------------------------------*
 *&      Form  SET_ALV_LAYO
 *&---------------------------------------------------------------------*
 *       text
@@ -121,12 +36,38 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
+  DATA : ls_data LIKE LINE OF gt_data.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
 
   SELECT ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
     FROM ztssmivh
     INTO CORRESPONDING FIELDS OF TABLE gt_data
     WHERE rgdat IN gt_date
       AND rgtor IN gt_rgtor.
+
+  LOOP AT gt_data INTO ls_data.
+
+    IF ls_data-apnum EQ ''.
+      ls_data-light2 = '1'.
+    ELSEIF ls_data-apnum NE ''.
+      ls_data-light2 = '3'.
+    ENDIF.
+
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO CORRESPONDING FIELDS OF ls_name
+      WHERE pernr = ls_data-rgtor.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_data-rgnme.
+
+    MODIFY gt_data FROM ls_data.
+  ENDLOOP.
+
+
 
 
   IF  sy-subrc <> 0.
@@ -294,10 +235,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM check_tab3_field CHANGING cv_subrc TYPE sy-subrc.
 
-  IF zsssmm03004-endda IS INITIAL AND zsssmm03004-begda IS INITIAL .
-
-  ELSEIF zsssmm03004-endda IS INITIAL OR zsssmm03004-begda IS INITIAL.
-    MESSAGE s999(zmcss) WITH '올바른 기간을 입력해주세요'.
+  IF zsssmm03004-endda IS INITIAL OR zsssmm03004-begda IS INITIAL.
+    MESSAGE i999(zmcss) WITH '올바른 기간을 입력해주세요'.
     cv_subrc = 4.
   ENDIF.
 
@@ -330,6 +269,12 @@ FORM get_ap_data .
          END OF ls_apinf.
   DATA lt_apinf LIKE TABLE OF ls_apinf.
 
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+
 
   CLEAR gt_data.
 
@@ -353,6 +298,20 @@ FORM get_ap_data .
       APPEND ls_data TO gt_data.
     ENDIF.
   ENDLOOP.
+
+  CLEAR ls_data.
+  LOOP AT gt_data INTO ls_data.
+
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO CORRESPONDING FIELDS OF ls_name
+      WHERE pernr = ls_data-aptor.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_data-apnme.
+
+    MODIFY gt_data FROM ls_data.
+  ENDLOOP.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -410,6 +369,13 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
         END OF ls_grnum.
   DATA lt_grnum LIKE TABLE OF ls_grnum.
 
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+
   CLEAR : gt_data,
           gs_data.
 
@@ -464,6 +430,21 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
     ENDIF.
 
   ENDLOOP.
+
+  LOOP AT gt_data INTO ls_data.
+
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO CORRESPONDING FIELDS OF ls_name
+      WHERE pernr = ls_data-grtor.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_data-grnme.
+
+    MODIFY gt_data FROM ls_data.
+  ENDLOOP.
+
+
+
 
   IF zsssmm03003-check NE '' AND zsssmm03003-cheke EQ ''.
     DELETE gt_data WHERE ivnum EQ ''.
@@ -560,46 +541,6 @@ FORM set_fcat USING VALUE(p_fieldname) TYPE lvc_fname
   gs_fcat-coltext = p_coltext.
   gs_fcat-no_out    = p_no_out.
   APPEND gs_fcat TO gt_fcat.
-ENDFORM.
-*&---------------------------------------------------------------------*
-*&      Form  GET_DETAIL_INFO
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-*      <--P_GV_SUBRC  text
-*----------------------------------------------------------------------*
-FORM get_detail_info  CHANGING pv_subrc.
-  DATA: lt_row_no TYPE lvc_t_roid,
-        ls_row_no LIKE LINE OF lt_row_no,
-        lv_cnt    TYPE i.
-
-  CLEAR pv_subrc.
-
-  CALL METHOD go_alv->get_selected_rows
-    IMPORTING
-*     et_index_rows =
-      et_row_no = lt_row_no.
-
-  "Case 1
-  IF lt_row_no IS INITIAL.
-    pv_subrc = 4.
-    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
-    RETURN.
-  ENDIF.
-
-  "Case 2
-  DESCRIBE TABLE lt_row_no LINES lv_cnt.
-  IF lv_cnt > 1.
-    pv_subrc = 4.
-    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
-    RETURN.
-  ENDIF.
-
-  CLEAR ls_row_no.
-  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
-
-  CLEAR gs_data.
-  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_GR_ITEM
@@ -822,6 +763,7 @@ FORM display_alv_0300 .
 
   PERFORM set_alv_layo.
 
+  PERFORM set_fcat_0300 CHANGING gt_fcat_0300.
 
   CALL METHOD go_alv_3->set_table_for_first_display
     EXPORTING
@@ -829,7 +771,7 @@ FORM display_alv_0300 .
       is_layout                     = gs_layo
     CHANGING
       it_outtab                     = gt_gri
-*     it_fieldcatalog               =
+      it_fieldcatalog               = gt_fcat_0300
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -883,9 +825,6 @@ FORM check_iv_field CHANGING cv_subrc TYPE sy-subrc.
     cv_subrc = 4.
     MESSAGE i999(zmcss) WITH '등록자를 입력해주세요'.
   ENDIF.
-
-
-
 
 
   IF zsssmm03007-ivdat < zsssmm03006-grdat.
@@ -1063,6 +1002,9 @@ FORM get_gr_header USING VALUE(pv_grnum) TYPE zessgrnum.
     MESSAGE i999(zmcss) WITH 'GET_GR_HEADER 실패'.
   ENDIF.
 
+  PERFORM set_rgtor_name USING zsssmm03006-rgtor
+                      CHANGING zsssmm03006-rgnme.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CREATE_ALV_0400
@@ -1116,7 +1058,7 @@ FORM create_alv_0400 .
 * MESSAGE ID SY-MSGID TYPE SY-MSGTY NUMBER SY-MSGNO
 *            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
-
+  PERFORM req_event_for_alv_0400.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  DISPLAY_ALV_0400
@@ -1129,8 +1071,7 @@ ENDFORM.
 FORM display_alv_0400 .
   PERFORM set_alv_layo.
 
-  PERFORM set_event.
-
+  PERFORM set_fcat_0400 CHANGING gt_fcat_0400.
 
   CALL METHOD go_alv_4->set_table_for_first_display
     EXPORTING
@@ -1139,7 +1080,7 @@ FORM display_alv_0400 .
 *     it_toolbar_excluding          = gv_tbex
     CHANGING
       it_outtab                     = gt_grh
-*     it_fieldcatalog               =
+      it_fieldcatalog               = gt_fcat_0400
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -1164,12 +1105,25 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_iv_update_data USING VALUE(pv_ivnum) TYPE zessivnum
                               CHANGING cs_ivh TYPE zsssmm03013.
+  DATA lv_grnum TYPE zessgrnum.
+
 
   SELECT SINGLE ivnum stext rgtor ivdat
          FROM ztssmivh
          INTO CORRESPONDING FIELDS OF cs_ivh
          WHERE ivnum = pv_ivnum.
 
+  SELECT SINGLE grnum
+         FROM ztssmivi
+         INTO lv_grnum
+         WHERE ivnum = pv_ivnum.
+
+  cs_ivh-grnum2 = lv_grnum.
+
+  PERFORM set_rgtor_name USING cs_ivh-rgtor
+                      CHANGING cs_ivh-rgnme.
+
+  MOVE-CORRESPONDING cs_ivh TO gs_ceqda.
 
   IF sy-subrc <> 0.
     MESSAGE i999(zmcss) WITH 'GET_IV_UPDATE_DATA 실패'.
@@ -1189,6 +1143,11 @@ FORM get_gr_all_header_data.
          lt_grh   LIKE TABLE OF zsssmm03006,
          ls_grh   LIKE LINE OF lt_grh.
 
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
   SELECT grnum rstat grdat jenum fyear stext rgdat rgtor
     FROM ztssgrh
     INTO CORRESPONDING FIELDS OF TABLE lt_grh
@@ -1197,14 +1156,23 @@ FORM get_gr_all_header_data.
   CLEAR gt_grh.
   LOOP AT lt_grh INTO ls_grh.
 
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO ls_name
+      WHERE pernr = ls_grh-rgtor.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_grh-rgnme.
+
     SELECT SINGLE ivnum
       FROM ztssmivi
       INTO lv_ivnum
       WHERE grnum = ls_grh-grnum
         AND del EQ ''.
 
+
     IF sy-subrc <> 0.
       APPEND ls_grh TO gt_grh.
+
     ENDIF.
   ENDLOOP.
 
@@ -1276,13 +1244,15 @@ ENDFORM.
 FORM display_alv_0500 .
   PERFORM set_alv_layo.
 
+  PERFORM set_fcat_0500 CHANGING gt_fcat_0500.
+
   CALL METHOD go_alv_5->set_table_for_first_display
     EXPORTING
       i_structure_name              = 'ZSSSMM03005'
       is_layout                     = gs_layo
     CHANGING
       it_outtab                     = gt_gri_2
-*     it_fieldcatalog               =
+      it_fieldcatalog               = gt_fcat_0500
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -1396,7 +1366,7 @@ FORM set_fi_update_data .
   gs_jei-jeseq = 001.
   gs_jei-debit = lv_toprc * -1.
   gs_jei-curky = 'KRW'.
-  gs_jei-glacc = '310000'.
+  gs_jei-glacc = '910000'.
 
   APPEND gs_jei TO gt_jei.
   CLEAR gs_jei.
@@ -1404,13 +1374,24 @@ FORM set_fi_update_data .
   gs_jei-jeseq = 002.
   gs_jei-credit = lv_toprc * -1.
   gs_jei-curky = 'KRW'.
-  gs_jei-glacc = '910000'.
+  gs_jei-glacc = '240000'.
 
   APPEND gs_jei TO gt_jei.
   CLEAR gs_jei.
 
-  gs_jeh-rgdat = sy-datum.
-  gs_jeh-jtype = 'WE'.
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      day_in            = sy-datum
+    IMPORTING
+      last_day_of_month = gs_jeh-rgdat
+    EXCEPTIONS
+      day_in_no_date    = 1
+      OTHERS            = 2.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+  gs_jeh-jtype = 'KR'.
 
   PERFORM set_fi_number CHANGING ls_jeset-jenum
                                ls_jeset-fyear.
@@ -1452,7 +1433,7 @@ FORM set_fi_old_data .
     WHERE jenum = lv_jenum.
 
   gs_jeh_2-rev = 'X'.
-  gs_jeh_2-rrson = 'IV 수정'.
+  gs_jeh_2-rrson = |{ zsssmm03013-ivnum } 수정으로 인한 역분개|.
   gs_jeh_2-rjnum = gs_jeh-jenum.
 
 ENDFORM.
@@ -1632,6 +1613,8 @@ FORM create_alv_0600 .
 *            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
 
+  PERFORM req_event_for_alv_0600.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  DISPLAY_ALV_0600
@@ -1644,6 +1627,7 @@ ENDFORM.
 FORM display_alv_0600 .
   PERFORM set_alv_layo.
 
+  PERFORM set_fcat_0600 CHANGING gt_fcat_0600.
 
   CALL METHOD go_alv_6->set_table_for_first_display
     EXPORTING
@@ -1651,7 +1635,7 @@ FORM display_alv_0600 .
       is_layout                     = gs_layo
     CHANGING
       it_outtab                     = gt_mivi_2
-*     it_fieldcatalog               =
+      it_fieldcatalog               = gt_fcat_0600
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -1696,8 +1680,15 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM check_iv_update_field CHANGING cv_subrc TYPE sy-subrc.
-  DATA : lv_ivdat TYPE zessivdat,
-         lv_grdat TYPE zessgrdat.
+  DATA : lv_ivdat  TYPE zessivdat,
+         lv_grdat  TYPE zessgrdat,
+         lv_grdat2 TYPE zessgrdat.
+
+
+  IF zsssmm03013 EQ gs_ceqda.
+    cv_subrc = 4.
+    MESSAGE i999(zmcss) WITH '동일한 정보입니다.'.
+  ENDIF.
 
 
   IF zsssmm03013-ivdat IS INITIAL.
@@ -1718,8 +1709,18 @@ FORM check_iv_update_field CHANGING cv_subrc TYPE sy-subrc.
       cv_subrc = 4.
       MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
     ENDIF.
+  ENDIF.
 
+  IF zsssmm03013-grnum2 NE ''.
+    SELECT SINGLE grdat
+      FROM ztssgrh
+      INTO lv_grdat2
+      WHERE grnum = zsssmm03013-grnum2.
 
+    IF zsssmm03013-ivdat < lv_grdat2.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
+    ENDIF.
   ENDIF.
 
   IF zsssmm03001-rgtor IS NOT INITIAL.
@@ -1839,6 +1840,10 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_detail_iv_data USING VALUE(pv_ivnum) TYPE zessivnum.
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
 
 
   SELECT SINGLE ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
@@ -1846,10 +1851,20 @@ FORM set_detail_iv_data USING VALUE(pv_ivnum) TYPE zessivnum.
     INTO CORRESPONDING FIELDS OF zsssmm03014
     WHERE ivnum = pv_ivnum.
 
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO ls_name
+    WHERE pernr = zsssmm03014-rgtor.
+
+  CONCATENATE ls_name-lname ls_name-fname INTO zsssmm03014-rgnme.
+
   SELECT ivnum ivseq grnum grseq ivprc curky del
     FROM ztssmivi
     INTO CORRESPONDING FIELDS OF TABLE gt_mivi_2
     WHERE ivnum = pv_ivnum.
+
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2189,7 +2204,6 @@ FORM check_grnum_field USING VALUE(pv_grnum) TYPE zessgrnum
     FROM ztssmivi
     INTO TABLE lt_grnum.
 
-
   READ TABLE lt_grnum WITH KEY grnum = pv_grnum INTO ls_grnum.
 
   IF sy-subrc <> 0.
@@ -2210,8 +2224,6 @@ FORM check_grnum_field USING VALUE(pv_grnum) TYPE zessgrnum
 
   IF sy-subrc <> 0.
     cv_subrc = 4.
-  ELSE.
-    cv_subrc = 0.
   ENDIF.
 
 ENDFORM.
@@ -2298,6 +2310,10 @@ ENDFORM.
 FORM set_gr_header_0400  USING VALUE(pv_grnum) TYPE zessgrnum
                          CHANGING cs_header TYPE zsssmm03006.
 
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fnmae TYPE zessfname,
+         END OF ls_name.
 
   SELECT SINGLE grnum grdat jenum fyear stext rgdat rgtor
      FROM ztssgrh
@@ -2307,6 +2323,13 @@ FORM set_gr_header_0400  USING VALUE(pv_grnum) TYPE zessgrnum
   IF sy-subrc <> 0.
     MESSAGE i999(zmcss) WITH 'SET_GT_HEADER_0400 실패'.
   ENDIF.
+
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO ls_name
+    WHERE pernr = cs_header-rgtor.
+
+  CONCATENATE ls_name-lname ls_name-fnmae INTO cs_header-rgnme.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2340,29 +2363,32 @@ ENDFORM.
 *      -->P_E_ROW  text
 *      -->P_ES_ROW_NO  text
 *----------------------------------------------------------------------*
-FORM alv_cl_double_click  USING    pv_column
-                                   pv_row
-                                   pv_row_no.
+FORM alv_cl_double_click  USING pv_column_id
+                                pv_row_no.
 
-  DATA : ls_grh LIKE LINE OF gt_grh.
+  DATA : ls_grh   LIKE LINE OF gt_grh,
+         ls_mivi  LIKE LINE OF gt_mivi_2,
+         lv_grnum TYPE zessgrnum.
 
-  CASE pv_column.
-    WHEN 'GRNUM'.
-      READ TABLE gt_grh INTO ls_grh INDEX pv_row.
+  IF gt_grh IS INITIAL.
+    READ TABLE gt_mivi_2 INTO ls_mivi INDEX pv_row_no.
+    lv_grnum = ls_mivi-grnum.
+  ELSE.
+    READ TABLE gt_grh INTO ls_grh INDEX pv_row_no.
+    lv_grnum = ls_grh-grnum.
+  ENDIF.
 
-      " SCREEN 0400 GR HEADER
-      PERFORM set_gr_header_0400 USING ls_grh-grnum
-                              CHANGING zsssmm03006.
 
-      " SCREEN 0400 GR ITEM ALV_4
-      PERFORM set_gr_item_0400   TABLES gt_gri_2
-                                USING ls_grh-grnum.
+  PERFORM set_gr_header_0400 USING lv_grnum
+                          CHANGING zsssmm03006.
 
-      CALL SCREEN 500.
-      CLEAR : zsssmm03006,
-                 gt_gri_2.
+  PERFORM set_gr_item_0400   TABLES gt_gri_2
+                              USING lv_grnum.
 
-  ENDCASE.
+
+  CALL SCREEN 500.
+  CLEAR : zsssmm03006,
+             gt_grh.
 
 
 ENDFORM.
@@ -2376,10 +2402,10 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_event .
 
-  CREATE OBJECT g_event_receiver01.
-
-  SET HANDLER
-    g_event_receiver01->handle_double_click FOR go_alv_4.
+*  CREATE OBJECT g_event_receiver01.
+*
+*  SET HANDLER
+*    g_event_receiver01->handle_double_click FOR go_alv_4.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2421,6 +2447,964 @@ FORM get_calc_date  USING    VALUE(p_datum)
     IMPORTING
       calc_date = p_begda.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0100 .
+  IF go_con_0100 IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT go_con_0100
+    EXPORTING
+*     parent         =
+      container_name = 'CON_0100'
+    EXCEPTIONS
+      OTHERS         = 6.
+  IF sy-subrc <> 0.
+    "& Object Exceptions
+    MESSAGE a003(ymc00) WITH 'CL_GUI_CUSTOM_CONTAINER'.
+  ENDIF.
+
+  CREATE OBJECT go_alv_0100
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent = go_con_0100
+    EXCEPTIONS
+      OTHERS   = 5.
+  IF sy-subrc <> 0.
+    "& Object Exceptions
+    MESSAGE a003(ymc00) WITH 'CL_GUI_ALV_GRID'.
+  ENDIF.
+
+  PERFORM req_event_for_alv.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYOUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GS_LAYO  text
+*----------------------------------------------------------------------*
+FORM set_layout_0100  CHANGING ps_layo TYPE lvc_s_layo.
+
+  IF my_tab-activetab = 'TAB1'.
+    CLEAR ps_layo.
+    ps_layo-sel_mode = 'A'.
+    ps_layo-cwidth_opt = 'A'.
+    ps_layo-zebra = 'X'.
+    ps_layo-excp_fname = 'LIGHT2'.
+    ps_layo-excp_led = 'X'.
+
+  ELSEIF my_tab-activetab = 'TAB2'.
+    CLEAR ps_layo.
+    ps_layo-sel_mode = 'A'.
+    ps_layo-cwidth_opt = 'A'.
+    ps_layo-zebra = 'X'.
+*  ps_layo-no_rowins = 'X'. "Standard Edit X
+    ps_layo-excp_fname = 'LIGHT'.
+    ps_layo-excp_led = 'X'.
+
+  ELSEIF my_tab-activetab = 'TAB3'.
+    CLEAR ps_layo.
+    ps_layo-cwidth_opt = 'A'.
+    ps_layo-zebra = 'X'.
+    ps_layo-sel_mode = 'A'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMM03002'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+
+    IF my_tab-activetab = 'TAB1'.
+      CASE ls_fcat-fieldname.
+        WHEN 'LIGHT2'.
+          ls_fcat-coltext = '지급여부'.
+          ls_fcat-col_pos = '1'.
+        WHEN 'RGDAT'.
+          ls_fcat-col_pos = '2'.
+        WHEN 'RGTOR'.
+          ls_fcat-col_pos = '3'.
+        WHEN 'RGNME'.
+          ls_fcat-col_pos = '4'.
+          ls_fcat-coltext = '이름'.
+
+
+        WHEN 'GRNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'IVNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'LIGHT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APFYR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRTEXT'.
+          ls_fcat-no_out = 'X'.
+      ENDCASE.
+    ELSEIF my_tab-activetab = 'TAB2' AND zsssmm03003-check NE ''.
+
+      CASE ls_fcat-fieldname.
+        WHEN 'LIGHT'.
+          ls_fcat-coltext = 'IV여부'.
+          ls_fcat-col_pos = '1'.
+        WHEN 'GRTOR'.
+          ls_fcat-col_pos = '3'.
+        WHEN 'GRDAT'.
+          ls_fcat-col_pos = '2'.
+        WHEN 'GRNME'.
+          ls_fcat-col_pos = '4'.
+          ls_fcat-coltext = '이름'.
+
+        WHEN 'LIGHT2'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APFYR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'FYEAR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'JENUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'STEXT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGTOR'.
+          ls_fcat-no_out = 'X'.
+
+      ENDCASE.
+
+    ELSEIF zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
+      CASE ls_fcat-fieldname.
+        WHEN 'LIGHT'.
+          ls_fcat-coltext = '송장검증여부'.
+          ls_fcat-col_pos = '1'.
+        WHEN 'GRDAT'.
+          ls_fcat-col_pos = '2'.
+        WHEN 'GRTOR'.
+          ls_fcat-col_pos = '3'.
+        WHEN 'GRNME'.
+          ls_fcat-col_pos = '4'.
+          ls_fcat-coltext = '이름'.
+
+        WHEN 'LIGHT2'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'IVDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'JENUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'FYEAR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'APFYR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'TOPRC'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'STEXT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'CURKY'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'IVNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGDAT'.
+          ls_fcat-no_out = 'X'.
+      ENDCASE.
+
+    ELSEIF my_tab-activetab = 'TAB3'. "AP 조회창
+      CASE ls_fcat-fieldname.
+
+
+        WHEN 'APDAT'.
+          ls_fcat-coltext = '지급 등록일'.
+          ls_fcat-col_pos = '1'.
+        WHEN 'APTOR'.
+          ls_fcat-coltext = '지급 등록자'.
+          ls_fcat-col_pos = '2'.
+        WHEN 'APNME'.
+          ls_fcat-col_pos = '3'.
+        WHEN 'APNUM'.
+          ls_fcat-col_pos = '4'.
+        WHEN 'APFYR'.
+          ls_fcat-col_pos = '5'.
+        WHEN 'JENUM'.
+          ls_fcat-coltext = '송장문서 전표'.
+
+
+        WHEN 'LIGHT2'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'RGNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRNME'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'LIGHT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRNUM'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRTOR'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRDAT'.
+          ls_fcat-no_out = 'X'.
+        WHEN 'GRTEXT'.
+          ls_fcat-no_out = 'X'.
+      ENDCASE.
+
+    ENDIF.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_EMP  text
+*      -->P_GS_LAYO  text
+*      -->P_GT_FCAT  text
+*      -->P_GO_ALV  text
+*----------------------------------------------------------------------*
+FORM display_alv_0100 TABLES pt_data STRUCTURE zsssmm03002
+                      USING VALUE(ps_layo) TYPE lvc_s_layo
+                                  pt_fcat TYPE lvc_t_fcat
+                              po_alv TYPE REF TO cl_gui_alv_grid.
+
+
+  CALL METHOD po_alv->set_table_for_first_display
+    EXPORTING
+*     i_buffer_active               =
+*     i_bypassing_buffer            =
+*     i_consistency_check           =
+*     i_structure_name              =
+*     is_variant                    =
+*     i_save                        =
+*     i_default                     = 'X'
+      is_layout                     = ps_layo
+*     is_print                      =
+*     it_special_groups             =
+*     it_toolbar_excluding          =
+*     it_hyperlink                  =
+*     it_alv_graphics               =
+*     it_except_qinfo               =
+*     ir_salv_adapter               =
+    CHANGING
+      it_outtab                     = pt_data[]
+      it_fieldcatalog               = pt_fcat
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+    "& Object Exceptions
+    MESSAGE a003(ymc00) WITH 'ALV DISPLAY'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_0100  text
+*      -->P_GS_LAYO_0100  text
+*      -->P_GT_FCAT_0100  text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0100  USING    po_alv TYPE REF TO cl_gui_alv_grid
+                                ps_layo TYPE lvc_s_layo
+                                pt_fcat TYPE lvc_t_fcat.
+* ALV Refresh
+  DATA: ls_stbl TYPE lvc_s_stbl.
+
+*    "ALV Refresh
+*  CALL METHOD po_alv->set_frontend_fieldcatalog
+*    EXPORTING
+*      it_fieldcatalog = pt_fcat.
+*
+  CALL METHOD po_alv->set_frontend_layout
+    EXPORTING
+      is_layout = ps_layo.
+
+  ls_stbl-row = 'X'.  "( row scroll Fix )
+  ls_stbl-col = 'X'. "( col scroll Fix )
+  go_alv_0100->refresh_table_display( EXPORTING i_soft_refresh = 'X'
+                                           is_stable      = ls_stbl  ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv .
+
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_0100.
+  SET HANDLER lcl_handler=>on_user_command         FOR go_alv_0100.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DETAIL_INFO_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_detail_info_0100  CHANGING cv_subrc.
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no LIKE LINE OF lt_row_no,
+        lv_cnt    TYPE i.
+
+  CLEAR cv_subrc.
+
+  CALL METHOD go_alv_0100->get_selected_rows
+    IMPORTING
+*     et_index_rows =
+      et_row_no = lt_row_no.
+
+  "Case 1
+  IF lt_row_no IS INITIAL.
+    cv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터를 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  "Case 2
+  DESCRIBE TABLE lt_row_no LINES lv_cnt.
+  IF lv_cnt > 1.
+    cv_subrc = 4.
+    MESSAGE i999(zmcb29) WITH '한 건의 데이터만 선택해주세요'.
+    RETURN.
+  ENDIF.
+
+  CLEAR ls_row_no.
+  READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
+
+  CLEAR gs_data.
+  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0600
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0600  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0600  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'zsssmm03012'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'DEL'.
+        ls_fcat-coltext = '삭제여부'.
+      WHEN 'IVNUM'.
+        ls_fcat-no_out = 'X'.
+      WHEN 'GRNUM'.
+        ls_fcat-outputlen = '8'.
+        ls_fcat-fix_column = 'X'.
+        ls_fcat-hotspot = 'X'.
+
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0300  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMM03005'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'DEL'.
+        ls_fcat-coltext = '삭제여부'.
+      WHEN 'GRNUM'.
+        ls_fcat-no_out = 'X'.
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0400  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0400  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMM03006'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'GRNUM'. "
+        ls_fcat-outputlen = '8'.
+        ls_fcat-fix_column = 'X'.
+        ls_fcat-hotspot = 'X'.
+      WHEN 'RSTAT'.
+        ls_fcat-no_out = 'X'.
+      WHEN 'JENUM'.
+        ls_fcat-no_out = 'X'.
+      WHEN 'FYEAR'.
+        ls_fcat-no_out = 'X'.
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DROPDOWN_LOGI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_dropdown_logi .
+  IF gt_dropdown_logi IS INITIAL.
+    gs_dropdown_logi-key = 'E0000003'.
+    gs_dropdown_logi-text  = 'ㅣ 물류 부서 ㅣ 팀장 ㅣ 신원희'.
+    APPEND gs_dropdown_logi TO gt_dropdown_logi.
+    CLEAR gs_dropdown_logi.
+
+    gs_dropdown_logi-key = 'E0000009'.
+    gs_dropdown_logi-text  = 'ㅣ 물류 부서 ㅣ 대리 ㅣ 박시리'.
+    APPEND gs_dropdown_logi TO gt_dropdown_logi.
+    CLEAR gs_dropdown_logi.
+
+    gs_dropdown_logi-key = 'E0000019'.
+    gs_dropdown_logi-text  = 'ㅣ 물류 부서 ㅣ 사원 ㅣ 이효정'.
+    APPEND gs_dropdown_logi TO gt_dropdown_logi.
+    CLEAR gs_dropdown_logi.
+
+    gs_dropdown_logi-key = 'E0000020'.
+    gs_dropdown_logi-text  = 'ㅣ 물류 부서 ㅣ 사원 ㅣ 유영신'.
+    APPEND gs_dropdown_logi TO gt_dropdown_logi.
+    CLEAR gs_dropdown_logi.
+
+  ENDIF.
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      id              = 'ZSSSMM03001-RGTOR'
+      values          = gt_dropdown_logi
+    EXCEPTIONS
+      id_illegal_name = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_RGTOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM03001_RGTOR  text
+*----------------------------------------------------------------------*
+FORM set_rgtor_name  USING VALUE(pv_rgtor) TYPE c
+                        CHANGING cv_rgnme TYPE zessfname.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO ls_name
+    WHERE pernr = pv_rgtor.
+
+  IF sy-subrc <> 0.
+    CLEAR cv_rgnme.
+  ELSE.
+    CONCATENATE ls_name-lname ls_name-fname INTO cv_rgnme.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GROUP_RGTOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM group_rgtor_name .
+  IF my_tab-activetab = 'TAB1'.
+    PERFORM set_rgtor_name USING zsssmm03001-rgtor
+                        CHANGING zsssmm03001-rgnme.
+  ELSEIF my_tab-activetab = 'TAB2'.
+    PERFORM set_rgtor_name USING zsssmm03003-rgtor
+                        CHANGING zsssmm03003-rgnme.
+  ELSEIF my_tab-activetab = 'TAB3'.
+    PERFORM set_rgtor_name USING zsssmm03004-rgtor
+                        CHANGING zsssmm03004-rgnme.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0400 .
+  SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0500  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0500  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMM03005'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'DEL'.
+        ls_fcat-coltext = '삭제여부'.
+
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0600
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0600 .
+  SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_6.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_PERNR_LOGI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_pernr_logi .
+  DATA: BEGIN OF ls_f4,
+          pernr TYPE zessrgtor,
+          persg TYPE zesspersg,
+          penme TYPE zesspenme,
+          lname TYPE zesslname,
+          fname TYPE zessfname,
+          rgnme TYPE zessfname,
+        END OF ls_f4,
+        lt_f4    LIKE TABLE OF ls_f4,
+        lv_rgtor TYPE zessrgtor.
+
+  DATA: BEGIN OF ls_f4d,
+          pernr TYPE zessrgtor,
+          penme TYPE zesspenme,
+          rgnme TYPE zessfname,
+        END OF ls_f4d,
+        lt_f4d LIKE TABLE OF ls_f4d.
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return LIKE LINE OF lt_return.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+
+  PERFORM get_domain_fixed_value  TABLES gt_fval
+                                  USING  'ZDSSPERSG'.
+
+  SELECT pernr persg lname fname
+    INTO CORRESPONDING FIELDS OF TABLE lt_f4
+    FROM ztssemp
+    WHERE depid = 'D003'.
+
+
+  LOOP AT lt_f4 INTO ls_f4.
+
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO ls_name
+      WHERE pernr = ls_f4-pernr.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_f4-rgnme.
+
+
+    READ TABLE gt_fval WITH KEY domvalue_l = ls_f4-persg INTO gs_fval.
+    ls_f4-penme = gs_fval-ddtext.
+
+    MOVE-CORRESPONDING ls_f4 TO ls_f4d.
+    APPEND ls_f4d TO lt_f4d.
+  ENDLOOP.
+
+
+
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'PERNR' " Internal Table Field
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'ZSSSMM03001-RGTOR' " Dynpro Field
+      window_title    = 'LOGI_PERNR'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_f4d
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc = 0.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FVAL  text
+*      -->P_0017   text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_value TABLES   ct_dd07v STRUCTURE gs_fval
+                             USING  VALUE(pv_donme).
+  DATA : lt_dd07v TYPE TABLE OF dd07v.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = pv_donme
+    TABLES
+      values_tab      = lt_dd07v
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_domain_fixed_value 실패'.
+  ENDIF.
+
+  APPEND LINES OF lt_dd07v TO ct_dd07v.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_PERNR_FI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_pernr_fi .
+  DATA: BEGIN OF ls_f4,
+          pernr TYPE zessrgtor,
+          persg TYPE zesspersg,
+          penme TYPE zesspenme,
+          lname TYPE zesslname,
+          fname TYPE zessfname,
+          rgnme TYPE zessfname,
+        END OF ls_f4,
+        lt_f4    LIKE TABLE OF ls_f4,
+        lv_rgtor TYPE zessrgtor.
+
+  DATA: BEGIN OF ls_f4d,
+          pernr TYPE zessrgtor,
+          penme TYPE zesspenme,
+          rgnme TYPE zessfname,
+        END OF ls_f4d,
+        lt_f4d LIKE TABLE OF ls_f4d.
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return LIKE LINE OF lt_return.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+
+  PERFORM get_domain_fixed_value  TABLES gt_fval
+                                  USING  'ZDSSPERSG'.
+
+  SELECT pernr persg lname fname
+    INTO CORRESPONDING FIELDS OF TABLE lt_f4
+    FROM ztssemp
+    WHERE depid = 'D001'.
+
+
+  LOOP AT lt_f4 INTO ls_f4.
+
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO ls_name
+      WHERE pernr = ls_f4-pernr.
+
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_f4-rgnme.
+
+
+    READ TABLE gt_fval WITH KEY domvalue_l = ls_f4-persg INTO gs_fval.
+    ls_f4-penme = gs_fval-ddtext.
+
+    MOVE-CORRESPONDING ls_f4 TO ls_f4d.
+    APPEND ls_f4d TO lt_f4d.
+  ENDLOOP.
+
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'PERNR' " Internal Table Field
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'ZSSSMM03001-RGTOR' " Dynpro Field
+      window_title    = 'FI_PERNR'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_f4d
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc = 0.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_GRNUM_CHECK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_grnum_check .
+
+  DATA: BEGIN OF ls_f4,
+          grnum TYPE zessgrnum,
+          grrsn TYPE zessfname,
+        END OF ls_f4,
+        lt_f4    LIKE TABLE OF ls_f4,
+        lv_rgtor TYPE zessrgtor.
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return LIKE LINE OF lt_return.
+
+  SELECT grnum
+    INTO CORRESPONDING FIELDS OF TABLE lt_f4
+    FROM ztssgrh.
+
+  LOOP AT lt_f4 INTO ls_f4.
+
+
+    PERFORM check_grnum_field USING ls_f4-grnum
+                             CHANGING gv_subrc.
+
+    IF gv_subrc <> 0.
+      CLEAR gv_subrc.
+      ls_f4-grrsn = ''.
+    ELSE.
+      CLEAR gv_subrc.
+      ls_f4-grrsn = '기입가능'.
+    ENDIF.
+
+    MODIFY lt_f4 FROM ls_f4.
+  ENDLOOP.
+
+  DELETE lt_f4 WHERE grrsn EQ ''.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'GRNUM' " Internal Table Field
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'ZSSSMM03016-GRNUM' " Dynpro Field
+      window_title    = '입고문서'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_f4
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc = 0.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_IVNUM_CHECK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_ivnum_check .
+  DATA: BEGIN OF ls_f4,
+          ivnum TYPE zessivnum,
+          ivrsn TYPE zessfname,
+        END OF ls_f4,
+        lt_f4    LIKE TABLE OF ls_f4,
+        lv_rgtor TYPE zessrgtor.
+  DATA: BEGIN OF ls_f4d,
+          ivnum TYPE zessivnum,
+        END OF ls_f4d,
+        lt_f4d LIKE TABLE OF ls_f4d.
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return LIKE LINE OF lt_return.
+
+
+  "전체 송장문서들
+  SELECT ivnum
+    FROM ztssmivh
+    INTO CORRESPONDING FIELDS OF TABLE lt_f4.
+
+
+  "AP 완료 송장문서들
+  SELECT ivnum
+    FROM ztssmivh
+    INTO CORRESPONDING FIELDS OF TABLE lt_f4d
+    WHERE apnum NE ''.
+
+
+  LOOP AT lt_f4 INTO ls_f4.
+
+    READ TABLE lt_f4d WITH KEY ls_f4-ivnum INTO ls_f4d.
+
+    IF sy-subrc <> 0.
+      ls_f4-ivrsn = '기입가능'.
+    ELSE.
+      ls_f4-ivrsn = ''.
+    ENDIF.
+
+
+    MODIFY lt_f4 FROM ls_f4.
+  ENDLOOP.
+
+  DELETE lt_f4 WHERE ivrsn EQ ''.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'IVNUM' " Internal Table Field
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'ZSSSMM03017-IVNUM' " Dynpro Field
+      window_title    = '송장문서'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_f4
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+  IF sy-subrc = 0.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

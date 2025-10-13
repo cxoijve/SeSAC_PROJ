@@ -14,24 +14,23 @@ INCLUDE mzssmm03o01                             .  " PBO-Modules
 INCLUDE mzssmm03i01                             .  " PAI-Modules
 INCLUDE mzssmm03f01                             .  " FORM-Routines
 
+
+
+
+LOAD-OF-PROGRAM.
+
+  PERFORM get_domain_fixed_value  TABLES gt_fval
+                                  USING  'ZDSSPERSG'.
+
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 송장검증 프로그램
-* T200 --> 조회 결과창
-* T300 --> IV 생성창
+* T300 --> 송장문서 검증창
 * T310 --> 생성 확인창
-* T400 --> IV 수정창
+* T400 --> 송장문서 수정창
 * T410 --> 생성 확인창
-* T500 --> GR 상세정보
-* T600 --> IV 상세조회
-* T100 --> 송장검증 프로그램
-* T200 --> 조회 결과창
-* T300 --> IV 생성창
-* T310 --> 생성 확인창
-* T400 --> IV 수정창
-* T410 --> 생성 확인창
-* T500 --> GR 상세정보
-* T600 --> IV 상세조회
+* T500 --> 입고문서 상세정보
+* T600 --> 송장문서 상세조회
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

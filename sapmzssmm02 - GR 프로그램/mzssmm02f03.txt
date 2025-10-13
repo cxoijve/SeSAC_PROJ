@@ -22,15 +22,17 @@ FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
       PERFORM add_toolbar_button USING 'I_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
     WHEN go_alv_po_confirm.
       PERFORM add_toolbar_button USING 'I_GR' TEXT-b04 icon_check CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_CON_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
     WHEN go_alv_gr_list.
       PERFORM add_toolbar_button USING 'I_DETAIL' TEXT-b06 icon_check CHANGING pcl_toolbar.
-
     WHEN go_alv_editgr.
-      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
       PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b05 icon_workflow_activity CHANGING pcl_toolbar.
       PERFORM add_toolbar_button USING 'I_EDIT_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
       PERFORM add_toolbar_button USING 'I_EDIT_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
   ENDCASE.
+
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  ADD_TOOLBAR_BUTTON
@@ -88,7 +90,6 @@ FORM handle_user_command  USING    pv_ucomm TYPE sy-ucomm.
   CASE pv_ucomm.
     WHEN 'I_ADD'.
       PERFORM handle_add_item.
-
     WHEN 'I_DEL'.
       PERFORM handle_delete_item.
     WHEN 'I_ALL_DEL'.
@@ -103,6 +104,8 @@ FORM handle_user_command  USING    pv_ucomm TYPE sy-ucomm.
       PERFORM handle_edit_delete_all.
     WHEN 'I_DETAIL'.
       PERFORM handle_detail_info.
+    WHEN 'I_CON_DEL'.
+      PERFORM handle_delete_confirm.
   ENDCASE.
 
 
@@ -147,8 +150,8 @@ FORM add_item_data .
         IF <fs_line>-reqty <= 0.
           APPEND VALUE #( fieldname = 'ORQTY'
                       style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
-          APPEND VALUE #( fieldname = 'STOID'
-                      style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
+*          APPEND VALUE #( fieldname = 'STOID'
+*                      style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
 
         ENDIF.
 
@@ -158,6 +161,7 @@ FORM add_item_data .
 
     ENDIF.
     PERFORM refresh_alv_0102.
+
   ENDIF.
 
 
@@ -803,6 +807,9 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM handle_go_gr .
+
+  zsssmm0214-rgtor = gv_rgtor.
+  PERFORM get_emp_name USING gv_rgtor CHANGING zsssmm0214-ename.
   CALL SCREEN '0110' STARTING AT 10 5 ENDING AT 80 30.
   PERFORM get_po_datas USING zsssmm0210.
 *  PERFORM clear_editor.
@@ -816,17 +823,25 @@ ENDFORM.
 *      -->P_E_COLUMN  text
 *----------------------------------------------------------------------*
 FORM handle_double_click  USING ps_row     TYPE lvc_s_row
-                                ps_column  TYPE lvc_s_col.
+                                ps_column  TYPE lvc_s_col
+                                p_sender TYPE REF TO cl_gui_alv_grid.
 
-  CASE ps_column.
-    WHEN 'LTEXT'.
-      PERFORM handle_editpage USING ps_row.
-    WHEN 'VNAME'.
-      PERFORM handle_vname_click USING ps_row.
-    WHEN 'ENAME'.
-      PERFORM handle_emp_click USING ps_row.
-*   WHEN .
-*   WHEN OTHERS.
+  CASE p_sender.
+    WHEN go_alv_gr_list.
+      CASE ps_column.
+        WHEN 'LTEXT'.
+          PERFORM handle_editpage USING ps_row.
+        WHEN 'VNAME'.
+          PERFORM handle_vname_click USING ps_row.
+        WHEN 'ENAME'.
+          PERFORM handle_emp_click USING ps_row.
+      ENDCASE.
+    WHEN go_alv_po_waiting.
+      CASE ps_column.
+        WHEN 'DUDAT'.
+          PERFORM handle_dudat_click USING ps_row.
+        WHEN OTHERS.
+      ENDCASE.
   ENDCASE.
 
 ENDFORM.
@@ -976,14 +991,14 @@ FORM handle_enable_edit_mode .
     APPEND VALUE #( fieldname = 'AMOUNT' edit = '' ) TO gt_fcat7.
   ENDIF.
 
-  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
-    WITH KEY fieldname = 'STOID'.
-
-  IF sy-subrc = 0.
-    <fs_fcat>-edit = 'X'.
-  ELSE.
-    APPEND VALUE #( fieldname = 'STOID' edit = '' ) TO gt_fcat7.
-  ENDIF.
+*  READ TABLE gt_fcat7 ASSIGNING <fs_fcat>
+*    WITH KEY fieldname = 'STOID'.
+*
+*  IF sy-subrc = 0.
+*    <fs_fcat>-edit = 'X'.
+*  ELSE.
+*    APPEND VALUE #( fieldname = 'STOID' edit = '' ) TO gt_fcat7.
+*  ENDIF.
 
 
   PERFORM display_alv_grid_200.
@@ -1206,11 +1221,13 @@ FORM handle_hotspot  USING pv_index TYPE lvc_index
 
 
   CASE p_sender.
-*    WHEN go_alv_grlist.
-*      PERFORM handle_grlist_hotspot USING pv_index.
+    WHEN go_alv_gr_list.
+      PERFORM handle_grlist_hotspot USING pv_index.
     WHEN go_alv_editgr.
       PERFORM handle_editgr_hotspot USING pv_index.
     WHEN go_alv_polist.
+    WHEN go_alv_exp_list.
+      PERFORM handle_explist_hotspot USING pv_index.
 
   ENDCASE.
 
@@ -1392,6 +1409,8 @@ FORM handle_detail_info .
   CALL SCREEN '0300'.
 
 
+  CLEAR gt_gritem.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  HANDLE_VNAME_CLICK
@@ -1571,6 +1590,651 @@ FORM calculate_gr_quantities  USING    pv_ponum      TYPE ztsspoi-ponum
   LOOP AT gt_gri INTO gs_gri WHERE grnum = pv_grnum.
     cv_cur_qty = cv_cur_qty + gs_gri-amount.
   ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_EXPLIST_HOTSPOT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_INDEX  text
+*----------------------------------------------------------------------*
+FORM handle_explist_hotspot  USING pv_index TYPE lvc_index.
+
+  DATA: lv_venid TYPE ztssvend-venid.
+  DATA : lt_item LIKE gt_expitem,
+         ls_item LIKE LINE OF lt_item.
+*
+  DATA : ls_expdata LIKE LINE OF gt_expdata.
+
+  READ TABLE gt_expdata INTO ls_expdata INDEX pv_index.
+  CHECK sy-subrc = 0.
+
+  READ TABLE gt_expitem INTO ls_item WITH  KEY ponum = ls_expdata-ponum.
+  IF sy-subrc = 0.
+    MESSAGE i999(zmcss) WITH '이미 추가된 po번호입니다!'.
+    PERFORM refresh_table_display CHANGING go_alv_exp_list.
+    PERFORM refresh_table_display CHANGING go_alv_exp_item.
+    RETURN.
+  ENDIF.
+
+  SELECT ponum itnum amount meins pomnr
+  FROM ztsspoi
+  INTO CORRESPONDING FIELDS OF TABLE lt_item
+  WHERE ponum = ls_expdata-ponum.
+
+*  PERFORM fetch_add_poitems USING lt_row_no lv_venid CHANGING lt_item.
+
+*  PERFORM get_item_data USING lv_venid CHANGING lt_item.
+  PERFORM get_exp_item_data USING ls_expdata-venid CHANGING lt_item.
+
+
+  APPEND LINES OF lt_item TO gt_expitem.
+*  PERFORM renumber_gr_number.
+
+
+*  PERFORM fetch_po_items_for_confirm USING gs_edit_item-ponum lv_venid.
+
+  PERFORM refresh_table_display CHANGING go_alv_exp_list.
+  PERFORM refresh_table_display CHANGING go_alv_exp_item.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXP_ITEM_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LT_ITEM  text
+*----------------------------------------------------------------------*
+FORM get_exp_item_data    USING VALUE(p_venid) TYPE ztssvend-venid
+                          CHANGING ct_item LIKE gt_expitem.
+
+  DATA : lt_grsum LIKE TABLE OF gs_itamt,
+         ls_grsum LIKE gs_itamt.
+
+  FIELD-SYMBOLS: <fs_item> LIKE LINE OF ct_item.
+  PERFORM get_gr_sum CHANGING lt_grsum.
+
+  LOOP AT ct_item ASSIGNING <fs_item>.
+
+    IF <fs_item>-venid IS INITIAL.
+      <fs_item>-venid = p_venid.
+    ENDIF.
+    PERFORM get_vendor_name USING <fs_item>-venid CHANGING <fs_item>-vname.
+    PERFORM get_mat_name USING <fs_item>-pomnr CHANGING <fs_item>-matnm.
+
+    READ TABLE lt_grsum INTO ls_grsum WITH KEY ponum = <fs_item>-ponum
+                                               itnum = <fs_item>-itnum.
+
+    IF sy-subrc = 0. <fs_item>-grqty = ls_grsum-amount. ENDIF.
+    <fs_item>-reqty = <fs_item>-amount - <fs_item>-grqty.
+    IF <fs_item>-stoid IS INITIAL. <fs_item>-stoid = 'SL01'. ENDIF.
+
+    IF <fs_item>-reqty <>  0.
+      DATA ls_col TYPE lvc_s_scol.
+
+
+      ls_col-fname = 'REQTY'.
+      ls_col-color-col = '7'.
+      ls_col-color-int = '1'.
+      ls_col-color-inv = '1'.
+      APPEND ls_col TO <fs_item>-it_col.
+      <fs_item>-color = 'C601'.
+      <fs_item>-light = 1.
+    ELSEIF <fs_item>-amount > <fs_item>-reqty.
+      <fs_item>-light = 3.
+    ELSE.
+      <fs_item>-light = 3.
+
+
+    ENDIF.
+
+
+    PERFORM get_storage_name USING <fs_item>-stoid CHANGING <fs_item>-stonm.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_PO_STATUS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_T_DATA  text
+*----------------------------------------------------------------------*
+FORM set_po_status  CHANGING cs_data LIKE gs_podata.
+
+  DATA : lt_grdata LIKE TABLE OF zsssmm0213.
+
+  SELECT  ponum
+    INTO CORRESPONDING FIELDS OF TABLE lt_grdata
+    FROM ztssgri
+    WHERE ponum = cs_data-ponum
+    AND del <> 'X'.
+  READ TABLE lt_grdata ASSIGNING FIELD-SYMBOL(<fs_cnt>) WITH KEY ponum = cs_data-ponum.
+  IF sy-subrc = 0.
+    cs_data-light = '2'.
+  ELSE.
+    cs_data-light = '3'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_DUDAT_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PS_ROW  text
+*----------------------------------------------------------------------*
+FORM handle_dudat_click  USING ps_row     TYPE lvc_s_row.
+
+  DATA : ls_podata LIKE LINE OF gt_podata.
+  DATA : lv_temp_date TYPE int4.
+
+  READ TABLE gt_podata INTO ls_podata INDEX ps_row-index.
+
+  lv_temp_date = ls_podata-dudat - sy-datum.
+  IF lv_temp_date < 10.
+
+    MESSAGE s999(zmcss) WITH '납기일이 얼마남지 않았습니다!' lv_temp_date '일'.
+  ELSE.
+    MESSAGE s999(zmcss) WITH '납기일 남은 일수 : ' lv_temp_date '일'.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_DELETE_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM handle_delete_confirm .
+
+  DATA: lt_row_no TYPE lvc_t_roid,
+        ls_row_no TYPE lvc_s_roid,
+        lv_index  TYPE sy-tabix.
+
+  CLEAR gv_msg.
+
+  CALL METHOD go_alv_po_confirm->get_selected_rows
+    IMPORTING
+      et_row_no = lt_row_no.
+
+  IF lt_row_no IS INITIAL.
+    MESSAGE i999(zmcss) WITH '삭제할 행을 선택하세요'.
+    RETURN.
+  ENDIF.
+
+  LOOP AT lt_row_no INTO ls_row_no.
+    lv_index = ls_row_no-row_id.
+    DELETE gt_confirm INDEX lv_index.
+  ENDLOOP.
+
+  PERFORM renumber_confirm_number.
+  PERFORM refresh_alv_0102.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  RENUMBER_CONFIRM_NUMBER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM renumber_confirm_number .
+
+  DATA : lv_grseq TYPE n LENGTH 3 VALUE '001'.
+
+  FIELD-SYMBOLS : <fs_item> LIKE LINE OF gt_confirm.
+
+  LOOP AT gt_confirm ASSIGNING <fs_item>.
+    <fs_item>-grseq = lv_grseq.
+    lv_grseq = lv_grseq + 1.
+  ENDLOOP.
+
+  gv_seqnum = lv_grseq - 1.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_NODE_DOUBLE_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_NODE_KEY  text
+*      -->P_SENDER  text
+*----------------------------------------------------------------------*
+FORM handle_node_double_click  USING    p_node.
+
+  DATA : lv_venid TYPE ztssvend-venid,
+         lv_vname TYPE ztssvend-vname.
+
+  CASE p_node.
+    WHEN '1000'.
+    WHEN OTHERS.
+      CLEAR gt_vdudat.
+      lv_venid = p_node.
+      READ TABLE gt_vendor INTO DATA(ls_vendor) WITH KEY venid = lv_venid.
+      IF sy-subrc = 0.
+        lv_vname = ls_vendor-vname.
+        PERFORM get_exp_detail_data USING lv_venid.
+        PERFORM refresh_alv_0400.
+      ENDIF.
+
+
+  ENDCASE.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EXP_DETAIL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_VENID  text
+*----------------------------------------------------------------------*
+FORM get_exp_detail_data  USING    pv_venid TYPE ztssvend-venid.
+
+
+
+  DATA : lt_po_sum LIKE TABLE OF gs_itamt,
+         lt_gr_sum LIKE TABLE OF gs_itamt.
+
+
+  CLEAR gt_podata.
+
+  PERFORM get_posum_by_venid USING pv_venid CHANGING lt_po_sum.
+  PERFORM get_grsum_by_venid USING pv_venid CHANGING lt_gr_sum.
+
+  PERFORM create_expdudat USING lt_po_sum lt_gr_sum pv_venid CHANGING gt_vdudat.
+  PERFORM modify_expdudat TABLES gt_vdudat.
+*  PERFORM get_posum_by_venid USING pv_venid CHANGING gt_vdudat.
+*  PERFORM get_grsum_by_venid USING pv_venid CHANGING gt_vdudat.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_POSUM_BY_VENID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_VENID  text
+*      <--P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM get_posum_by_venid  USING    pv_venid TYPE ztssvend-venid
+                         CHANGING ct_data LIKE gt_itamt.
+
+
+  SELECT i~ponum i~itnum
+         SUM( i~amount ) AS amount
+    INTO CORRESPONDING FIELDS OF TABLE ct_data
+    FROM ztsspoi AS i
+    INNER JOIN ztsspoh AS h ON i~ponum = h~ponum
+    WHERE h~venid = pv_venid
+    GROUP BY i~ponum i~itnum.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GRSUM_BY_VENID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_VENID  text
+*      <--P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM get_grsum_by_venid  USING    pv_venid TYPE ztssvend-venid
+                         CHANGING ct_data LIKE gt_itamt.
+
+
+  DATA: lt_gr_raw TYPE TABLE OF ztssgri,
+        ls_gr_raw LIKE LINE OF lt_gr_raw,
+        ls_gr_sum LIKE gs_itamt.
+
+  SELECT i~ponum i~itnum i~amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_gr_raw
+    FROM ztssgri AS i
+    INNER JOIN ztsspoh AS h ON i~ponum = h~ponum
+    WHERE h~venid = pv_venid
+    GROUP BY i~ponum i~itnum i~amount.
+
+  LOOP AT lt_gr_raw INTO ls_gr_raw.
+    ls_gr_sum-ponum  = ls_gr_raw-ponum.
+    ls_gr_sum-itnum  = ls_gr_raw-itnum.
+    ls_gr_sum-amount = ls_gr_raw-amount.
+    COLLECT ls_gr_sum INTO ct_data.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_EXPDUDAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PO_SUM  text
+*      -->P_LT_GR_SUM  text
+*      <--P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM create_expdudat  USING    pt_po_sum LIKE gt_itamt
+                               pt_gr_sum LIKE gt_itamt
+                               pv_venid TYPE ztssvend-venid
+                      CHANGING ct_data LIKE gt_vdudat.
+
+  DATA: ls_po_sum LIKE gs_itamt,
+        ls_gr_sum LIKE gs_itamt,
+        ls_data   LIKE LINE OF ct_data,
+        ls_po     LIKE LINE OF gt_vdudat.
+
+  DATA : BEGIN OF ls_grdata,
+           grnum  TYPE ztssgrh-grnum,
+           grdat  TYPE ztssgrh-grdat,
+           ponum  TYPE ztssgri-ponum,
+           itnum  TYPE ztssgri-itnum,
+           stoid  TYPE ztssgri-stoid,
+           amount TYPE ztssgri-amount,
+           meins  TYPE ztssgri-meins,
+         END OF ls_grdata.
+
+  DATA: lv_total_cnt  TYPE i,           "전체 PO 건수
+        lv_delay_cnt  TYPE i,           "지연 건수
+        lv_delay_rate TYPE p DECIMALS 2. "지연율
+
+  LOOP AT pt_po_sum INTO ls_po_sum.
+    CLEAR ls_po.
+
+    SELECT SINGLE h~ponum h~venid h~dudat i~itnum i~pomnr i~amount i~meins i~plant i~pomnr
+      INTO CORRESPONDING FIELDS OF ls_po
+      FROM ztsspoh AS h
+      INNER JOIN ztsspoi AS i
+      ON h~ponum = i~ponum
+      WHERE h~ponum = ls_po_sum-ponum
+      AND h~venid = pv_venid
+      AND i~itnum = ls_po_sum-itnum.
+
+
+    SELECT SINGLE h~grdat h~grnum i~grnum i~ponum i~itnum i~stoid i~amount i~meins
+      INTO CORRESPONDING FIELDS OF ls_grdata
+      FROM ztssgrh AS h
+      INNER JOIN ztssgri AS i
+      ON h~grnum = i~grnum
+      WHERE i~ponum = ls_po_sum-ponum
+      AND i~itnum = ls_po_sum-itnum.
+
+    ls_po-stoid = 'SL01'.
+    " GR에 진짜 없을때 - 하나도 입고 X
+    IF sy-subrc <> 0.
+
+      IF ls_po-dudat < sy-datum.
+        ls_po-reqty = ls_po-amount.
+        ls_po-ludat = sy-datum - ls_po-dudat.
+
+
+
+
+        APPEND ls_po TO ct_data.
+
+      ENDIF.
+    ENDIF.
+    " 부분입고는 되었지만 개수가 다를때
+
+
+*
+
+*    ls_po-stoid = ls_grdata-stoid.
+*    ls_po-reqty = ls_po-amount = ls_grdata-amount.
+*
+*
+*    IF ls_grdata-grdat > ls_po-dudat.
+*      IF ls_grdata-grdat IS NOT INITIAL.
+*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+*      ELSE.
+*        ls_po-ludat = sy-datum - ls_po-dudat.
+*      ENDIF.
+*      APPEND ls_po TO ct_data.
+*    ENDIF.
+*
+    " 부분입고는 되었지만 개수가 다를 때. 부분입고는 되었지만 날짜가 늘어났을 때
+    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+                                                 itnum = ls_po_sum-itnum.
+
+    IF ls_gr_sum-amount <> ls_po-amount.
+*      IF ls_po-dudat < sy-datum.
+*        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+*        ls_po-ludat = sy-datum - ls_po-dudat.
+*        APPEND ls_po TO ct_data.
+      IF ls_po-dudat < ls_grdata-grdat.
+        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+      ENDIF.
+    ENDIF.
+
+*  "==================== 납기지연율 계산 ====================
+    lv_total_cnt = lines( pt_po_sum ).        "전체 PO 건수
+    lv_delay_cnt = lines( ct_data ).          "지연된 건수
+
+    IF lv_total_cnt > 0.
+      lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
+      ls_po-duded = lv_delay_rate.
+      gv_delay_rate = lv_delay_rate.
+    ENDIF.
+    "========================================================
+*    IF sy-subrc <> 0.
+*      IF ls_grdata-grdat IS NOT INITIAL.
+*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+*      ELSE.
+*        ls_po-ludat = sy-datum - ls_po-dudat.
+*      ENDIF.
+*      APPEND ls_po TO ct_data.
+*    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+*      IF ls_grdata-grdat IS NOT INITIAL.
+*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+*      ELSE.
+*        ls_po-ludat = sy-datum - ls_po-dudat.
+*      ENDIF.
+*      APPEND ls_po TO ct_data.
+*    ELSE.
+*      ls_po-grdat = ls_grdata-grdat.
+*
+*    ENDIF.
+*    ls_po-grdat = ls_grdata-grdat.
+*
+*    IF ls_grdata-grdat IS NOT INITIAL.
+*      ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+*    ELSE.
+*      ls_po-ludat = sy-datum - ls_po-dudat.
+*    ENDIF.
+*
+*    WRITE '/'.
+*
+*    IF sy-subrc <> 0.
+*      READ TABLE ct_data TRANSPORTING NO FIELDS  WITH KEY ponum = ls_po_sum-ponum.
+*      IF sy-subrc <> 0.
+*        APPEND ls_po TO ct_data.
+*      ENDIF.
+**     IF ls_po_sum-dudat < ls_gr_sum-
+*    ENDIF.
+
+
+  ENDLOOP.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat_0101 .
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_EXPDUDAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM modify_expdudat  TABLES   t_data STRUCTURE gs_vdudat.
+
+  LOOP AT t_data.
+    t_data-duded = gv_delay_rate.
+    PERFORM get_vendor_name USING t_data-venid CHANGING t_data-vname.
+    PERFORM get_mat_name USING t_data-pomnr CHANGING t_data-matnm.
+    PERFORM get_storage_name USING t_data-stoid CHANGING t_data-stonm.
+    PERFORM get_plant_name USING t_data-plant CHANGING t_data-pname.
+    MODIFY t_data.
+    CLEAR t_data.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_GRLIST_HOTSPOT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_INDEX  text
+*----------------------------------------------------------------------*
+FORM handle_grlist_hotspot  USING pv_index TYPE lvc_index.
+
+
+  DATA : ls_grdata LIKE LINE OF gt_grdata.
+
+  READ TABLE gt_grdata INTO ls_grdata  INDEX pv_index.
+
+  " 함수 그대로 복사해오기
+  IF gt_gritem IS INITIAL.
+    PERFORM get_gr_item_list USING pv_index .
+  ENDIF.
+  MOVE-CORRESPONDING ls_grdata TO zsssmm0211.
+  MOVE-CORRESPONDING ls_grdata TO gs_cond2.
+  MOVE-CORRESPONDING gt_gritem TO gt_edit_item.
+  LOOP AT gt_edit_item ASSIGNING FIELD-SYMBOL(<fs_eitem>).
+    IF <fs_eitem>-del = 'X'.
+      <fs_eitem>-color = 'C601'.
+    ENDIF.
+  ENDLOOP.
+  CALL SCREEN '0310'.
+
+*  CLEAR gt_gritem.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALLED_EXE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM called_exe .
+
+  CLEAR gv_call_num.
+  GET PARAMETER ID 'ZSSGR' FIELD gv_call_num.
+  IF gv_call_num IS NOT INITIAL.
+    gv_call_auto = 'X'.
+    PERFORM get_call_grdata.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CALL_GRDATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_call_grdata .
+
+  DATA : ls_grhead LIKE LINE OF gt_grdata,
+         lt_gritem LIKE gt_gritem,
+         ls_gritem LIKE LINE OF lt_gritem.
+  DATA : lv_pomnr TYPE ztsspoi-pomnr.
+  DATA : lv_venid TYPE ztsspoh-venid.
+  DATA : lv_stonm TYPE ztssstrg-stonm.
+
+  DATA ls_scol TYPE lvc_s_scol.
+  DATA : BEGIN OF ls_vnprc,
+           vnprc TYPE ztssprcat-vnprc,
+           curky TYPE ztssprcat-curky,
+         END OF ls_vnprc,
+         lt_vnprc LIKE TABLE OF ls_vnprc.
+
+  SELECT SINGLE grnum rstat grdat jenum fyear stext rgdat rgtor
+   INTO CORRESPONDING FIELDS OF ls_grhead
+   FROM ztssgrh
+   WHERE grnum = gv_call_num.
+
+
+
+  SELECT grnum grseq ponum itnum stoid amount meins del
+    INTO CORRESPONDING FIELDS OF TABLE lt_gritem
+    FROM ztssgri
+    WHERE grnum = gv_call_num.
+
+  CLEAR gs_gritem.
+  LOOP AT lt_gritem INTO ls_gritem.
+
+    SELECT SINGLE pomnr
+      INTO lv_pomnr
+      FROM ztsspoi
+      WHERE ponum = ls_gritem-ponum
+      AND itnum = ls_gritem-itnum.
+
+    ls_gritem-pomnr = lv_pomnr.
+
+    SELECT SINGLE venid
+      INTO lv_venid
+      FROM ztsspoh
+      WHERE ponum = ls_gritem-ponum.
+
+    ls_gritem-venid = lv_venid.
+
+    PERFORM get_vendor_name USING lv_venid CHANGING ls_gritem-vname.
+    PERFORM get_mat_name USING lv_pomnr CHANGING ls_gritem-matnm.
+
+
+    SELECT SINGLE vnprc curky
+      INTO ls_vnprc
+      FROM ztssprcat
+      WHERE venid = lv_venid
+      AND rawnr = lv_pomnr.
+
+    ls_gritem-toprc = ls_vnprc-vnprc * ls_gritem-amount.
+    ls_gritem-curky = ls_vnprc-curky.
+
+    CLEAR ls_scol.
+    ls_scol-fname = 'TOPRC'.
+    ls_scol-color-col = 3.
+    ls_scol-color-int = 1.
+    ls_scol-color-inv = 0.
+    APPEND ls_scol TO ls_gritem-it_col.
+
+    SELECT SINGLE stonm
+      INTO lv_stonm
+      FROM ztssstrg
+      WHERE stoid = ls_gritem-stoid.
+    ls_gritem-stonm = lv_stonm.
+
+    MODIFY lt_gritem FROM ls_gritem.
+    CLEAR ls_gritem.
+  ENDLOOP.
+
+  MOVE-CORRESPONDING ls_grhead TO zsssmm0211.
+  MOVE-CORRESPONDING lt_gritem TO gt_gritem.
+
+  CALL SCREEN '0310'.
 
 ENDFORM.
 

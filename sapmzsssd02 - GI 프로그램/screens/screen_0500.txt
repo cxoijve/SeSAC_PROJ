@@ -8,7 +8,7 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0500 0500     29121192 37  0  0 31134  0G E                              20251010182357																																
+SAPMZSSSD02                             0500 0500     29121192 37  0  0 31135  0G E                              20251011144641																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -27,25 +27,25 @@ GS_INFO_0500H-STEXT	C	CHAR	 60	80	02	80	30	00	  5	 19		  0	  0	  0		  0					  0	
 T500_06	0	CHAR	  6	00	00	00	30	00	  7	  3		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-RGDAT	D	DATS	 10	80	00	80	30	00	  7	 19		  0	  0	  0		  0					  0	  0								__________		
 T500_07	0	CHAR	  6	00	00	00	30	00	  7	 46		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-GS_INFO_0500H-RGTOR	C	CHAR	  8	80	00	80	30	08	  7	 62		  0	  0	  0		  0					  0	  0			ZSHSSSD0202	ED2				________		
+GS_INFO_0500H-RGTOR	C	CHAR	  8	80	00	80	30	08	  7	 62		  0	  0	  0		  0					  0	  0			ZSHSSSD0202					________		
 GS_INFO_0500H-ENAME	C	CHAR	 40	80	00	80	31	00	  7	 73		  0	  0	  0		  0					  0	  0								________________________________________		
 B100_JE		CHAR	 34	00	00	00	30	00	  9	  2		  0	  0	  0		  7	R				  0	  0	102			CLD				출고 전표		
 B500_03		CHAR	 34	00	00	00	30	00	  9	 45		  0	  0	  0		  7	R				  0	  0	103			CLD				청구 문서		
 B500_02		CHAR	 34	00	00	00	30	00	  9	 89		  0	  0	  0		  7	R				  0	  0	104			CLD				수금 전표		
 T500_JENUM	0	CHAR	  9	00	00	00	30	00	 10	  3		  0	  0	  0		  0					  0	  0				CLD				출고 전표	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-JENUM	C	CHAR	 11	80	00	80	30	00	 10	 15		  0	  0	  0		  0					  0	  0				CLD				___________		
-BTN001		CHAR	 89	00	00	00	30	00	 10	 27		  0	  0	  0		  2	P				  0	  0	105			CLD	DTL	GI		@16\Q출고 전표 상세 정보@	                                                                                                                                                                        JEDTL	
+BTN001		CHAR	 97	00	00	00	30	00	 10	 27		  0	  0	  0		  2	P				  0	  0	105			CLD	DTL	GI		@16\Q출고 전표 상세 정보@	                                                                                                                                                                        JEDTL	
 T500_BINUM	0	CHAR	  9	00	00	00	30	00	 10	 46		  0	  0	  0		  0					  0	  0				CLD				청구 문서	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-BINUM	C	CHAR	 11	80	00	80	30	00	 10	 58		  0	  0	  0		  0					  0	  0				CLD				___________		
-BTN002		CHAR	 91	00	00	00	30	00	 10	 70		  0	  0	  0		  2	P				  0	  0	106			CLD	DTL	BI		@16\Q청구 문서 상세 정보@	                                                                                                                                                                        BIDTL	
+BTN002		CHAR	 99	00	00	00	30	00	 10	 70		  0	  0	  0		  2	P				  0	  0	106			CLD	DTL	BI		@16\Q청구 문서 상세 정보@	                                                                                                                                                                        BIDTL	
 B500_ARJNUM	0	CHAR	  9	00	00	00	30	00	 10	 90		  0	  0	  0		  0					  0	  0				CLD				수금 전표	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-ARNUM	C	CHAR	 11	80	00	80	30	00	 10	102		  0	  0	  0		  0					  0	  0				CLD				___________		
-BTN004		CHAR	 91	00	00	00	30	00	 10	114		  0	  0	  0		  2	P				  0	  0	107			CLD	DTL	AR		@16\Q수금 전표 상세 정보@	                                                                                                                                                                        ARDTL	
+BTN004		CHAR	 99	00	00	00	30	00	 10	114		  0	  0	  0		  2	P				  0	  0	107			CLD	DTL	AR		@16\Q수금 전표 상세 정보@	                                                                                                                                                                        ARDTL	
 T500_fyear	0	CHAR	  9	00	00	00	30	00	 11	  3		  0	  0	  0		  0					  0	  0				CLD				회계 연도	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-FYEAR	N	NUMC	  4	80	00	80	30	00	 11	 15		  0	  0	  0		  0					  0	  0				CLD				____		
 T500_BJNUM	0	CHAR	  9	00	00	00	30	00	 11	 46		  0	  0	  0		  0					  0	  0				CLD				청구 전표	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-BJNUM	C	CHAR	 11	80	00	80	30	00	 11	 58		  0	  0	  0		  0					  0	  0				CLD				___________		
-BTN003		CHAR	 91	00	00	00	30	00	 11	 70		  0	  0	  0		  2	P				  0	  0	108			CLD	DTL	BI		@16\Q청구 전표 상세 정보@	                                                                                                                                                                        BJDTL	
+BTN003		CHAR	 99	00	00	00	30	00	 11	 70		  0	  0	  0		  2	P				  0	  0	108			CLD	DTL	BI		@16\Q청구 전표 상세 정보@	                                                                                                                                                                        BJDTL	
 B500_ARFYR	0	CHAR	  9	00	00	00	30	00	 11	 90		  0	  0	  0		  0					  0	  0				CLD				회계 연도	                                                                                                                                                                                                                                                        X	
 GS_INFO_0500H-ARFYR	N	NUMC	  4	80	00	80	30	00	 11	102		  0	  0	  0		  0					  0	  0				CLD				____		
 T500_LARR01	0	CHAR	  2	00	00	00	30	00	 12	 40		  0	  0	  0		  0					  0	  0				CLD				▶		

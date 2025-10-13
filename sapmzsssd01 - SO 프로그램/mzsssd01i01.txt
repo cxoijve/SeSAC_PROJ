@@ -337,10 +337,12 @@ MODULE user_command_0400 INPUT.
         INTO gs_head_crt-cname
        WHERE cstid = gs_head_crt-cstid.
 
-      " 사원 정보 가져오기
-      PERFORM get_emp_info CHANGING gs_head_crt.
+*      " 사원 정보 가져오기
+*      PERFORM get_emp_info CHANGING gs_head_crt.
+*      zssssd0103-ename = gs_head_crt-ename.
+*      zssssd0103-persg_t = gs_head_crt-persg_t.
 
-    WHEN 'INSERT'.
+    when 'INSERT'.
       " DB에 인서트 - 헤더 / 아이템
       gv_valid = abap_false.
       PERFORM check_required.       " 헤더, 아이템 체크

@@ -1,0 +1,43 @@
+*&---------------------------------------------------------------------*
+*& Include ZRSSMM02TOP                                       Report ZRSSMM02
+*&
+*&---------------------------------------------------------------------*
+REPORT zrssmm02 MESSAGE-ID zmcss.
+
+TABLES : zsssmm0210.
+
+DATA : BEGIN OF gs_expdata,
+         color(4),
+         it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0221.
+DATA : END OF gs_expdata,
+gt_expdata LIKE TABLE OF gs_expdata.
+
+Data : gs_expdata2 like gs_expdata,
+       gt_expdata2 like table of gs_expdata2.
+
+* Custom Container
+DATA : go_cust_exp TYPE REF TO cl_gui_custom_container.
+
+* Split Container
+DATA : go_split_exp TYPE REF TO cl_gui_splitter_container.
+
+* Container
+DATA : go_con_exp_left  TYPE REF TO cl_gui_container,
+       go_con_exp_right TYPE REF TO cl_gui_container.
+
+* ALV grids
+DATA : go_alv_exp_list TYPE REF TO cl_gui_alv_grid,
+       go_alv_exp_item TYPE REF TO cl_gui_alv_grid.
+
+
+
+DATA : BEGIN OF gs_itamt,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+       END OF gs_itamt,
+       gt_itamt LIKE TABLE OF gs_itamt.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

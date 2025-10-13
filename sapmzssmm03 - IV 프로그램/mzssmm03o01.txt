@@ -64,15 +64,6 @@ MODULE fill_dynnr OUTPUT.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
-*&      Module  SET_ALV_0200  OUTPUT
-*&---------------------------------------------------------------------*
-*       text
-*----------------------------------------------------------------------*
-MODULE set_alv_0200 OUTPUT.
-  PERFORM create_alv_0200.
-  PERFORM display_alv_0200.
-ENDMODULE.
-*&---------------------------------------------------------------------*
 *&      Module  STATUS_0300  OUTPUT
 *&---------------------------------------------------------------------*
 *       text
@@ -115,7 +106,6 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0400 OUTPUT.
   PERFORM create_alv_0400.
-
   PERFORM display_alv_0400.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -185,13 +175,17 @@ MODULE set_dafault_0101 OUTPUT.
   DATA: gs_con   TYPE yssk1002,
         gv_begda LIKE gs_con-begda.
 
-  zsssmm03001-cheke = 'X'.
-  zsssmm03001-endda = sy-datum.
-  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                        CHANGING gv_begda.
 
-  zsssmm03001-begda = gv_begda.
-*ENDIF.
+  IF zsssmm03001 IS INITIAL.
+    zsssmm03001-check = 'X'.
+    zsssmm03001-cheke = 'X'.
+    zsssmm03001-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
+
+    zsssmm03001-begda = gv_begda.
+  ENDIF.
+
 
 
 ENDMODULE.
@@ -202,12 +196,16 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_default_0102 OUTPUT.
 
-  zsssmm03003-cheke = 'X'.
-  zsssmm03003-endda = sy-datum.
-  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                        CHANGING gv_begda.
 
-  zsssmm03003-begda = gv_begda.
+  IF zsssmm03003 IS INITIAL.
+    zsssmm03003-check = 'X'.
+    zsssmm03003-cheke = 'X'.
+    zsssmm03003-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
+
+    zsssmm03003-begda = gv_begda.
+  ENDIF.
 
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -237,12 +235,43 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_dafault_0103 OUTPUT.
 
-  zsssmm03004-endda = sy-datum.
-  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                        CHANGING gv_begda.
 
-  zsssmm03004-begda = gv_begda.
+  IF zsssmm03004 IS INITIAL.
+    zsssmm03004-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
 
+    zsssmm03004-begda = gv_begda.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0100  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0100 OUTPUT.
+
+  PERFORM init_alv_0100.
+
+  PERFORM set_layout_0100 CHANGING gs_layo_0100.
+
+  CLEAR gt_fcat_0100.
+  PERFORM set_fcat_0100 CHANGING gt_fcat_0100.
+
+  PERFORM display_alv_0100 TABLES gt_data
+                           USING  gs_layo_0100
+                                  gt_fcat_0100
+                                  go_alv_0100.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_DROPDOWN_0101  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_dropdown_0101 OUTPUT.
+  PERFORM set_dropdown_logi.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

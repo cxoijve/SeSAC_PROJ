@@ -38,6 +38,7 @@ MODULE set_alv_0100 OUTPUT.
                      CHANGING gs_layo_bi.
     gs_layo_bi-excp_fname = 'LIGHT'.
     gs_layo_bi-excp_led = 'X'.
+    gs_layo_bi-ctab_fname = 'IT_COL'.
     PERFORM set_fcat_bi.
     PERFORM set_sort USING 'GIDAT'
                      CHANGING gt_sort_bi
@@ -52,6 +53,9 @@ MODULE set_alv_0100 OUTPUT.
     " 2. 청구문서 ALV
     PERFORM set_layo USING '청구문서 리스트'
                      CHANGING gs_layo_doc.
+    gs_layo_doc-excp_fname = 'LIGHT'.
+    gs_layo_doc-excp_led = 'X'.
+    gs_layo_doc-ctab_fname = 'IT_COL'.
     PERFORM set_fcat_doc.
     PERFORM set_sort USING 'BIDAT'
                      CHANGING gt_sort_doc
@@ -117,6 +121,70 @@ MODULE set_screen_0100 OUTPUT.
       CONTINUE.
     ENDIF.
   ENDLOOP.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0300 OUTPUT.
+  SET PF-STATUS 'S300'.
+  SET TITLEBAR 'T300'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0200 OUTPUT.
+  IF go_con2 IS INITIAL.
+    PERFORM create_alv USING 'CON2'
+                       CHANGING go_con2
+                                go_alv2.
+    PERFORM set_layo USING ''
+                     CHANGING gs_layo2.
+    PERFORM set_fcat2.
+    PERFORM display_alv USING 'ZSSSSD0305'
+                        CHANGING go_alv2
+                                 gs_layo2
+                                 gt_gi_item
+                                 gt_fcat2
+                                 gt_sort2.
+  ELSE.
+    PERFORM refresh_alv CHANGING go_alv2.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0300  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0300 OUTPUT.
+  IF go_con3 IS INITIAL.
+    PERFORM create_alv USING 'CON3'
+                       CHANGING go_con3
+                                go_alv3.
+    PERFORM set_layo USING ''
+                     CHANGING gs_layo3.
+    PERFORM set_fcat3.
+    PERFORM display_alv USING 'ZSSSSD0307'
+                        CHANGING go_alv3
+                                 gs_layo3
+                                 gt_iv_item
+                                 gt_fcat3
+                                 gt_sort3.
+  ELSE.
+    PERFORM refresh_alv CHANGING go_alv3.
+  ENDIF.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

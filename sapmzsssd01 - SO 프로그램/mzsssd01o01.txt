@@ -23,8 +23,8 @@ MODULE status_0100 OUTPUT.
 
   " 아이콘 세팅
   MOVE '@08@' TO gv_icon_g.
-  MOVE ICON_YELLOW_LIGHT TO gv_icon_y.
-  MOVE ICON_RED_LIGHT    TO gv_icon_r.
+  MOVE icon_yellow_light TO gv_icon_y.
+  MOVE icon_red_light    TO gv_icon_r.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0100  OUTPUT
@@ -280,6 +280,28 @@ MODULE set_head_0200 OUTPUT.
   PERFORM set_toprc USING gt_item_udt
                     CHANGING gs_head_udt.
   MOVE-CORRESPONDING gs_head_udt TO zssssd0103.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  GET_PERNR_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE get_pernr_0400 OUTPUT.
+  DATA lv_pernr TYPE ztssemp-pernr.
+
+  CALL FUNCTION 'Z_FMSS_GET_PERNR'
+    EXPORTING
+      iv_id     = sy-uname
+      iv_module = 'SD'
+    IMPORTING
+      ev_pernr  = lv_pernr.
+
+  gs_head_crt-rgtor = lv_pernr.
+
+  " 사원 정보 가져오기
+  PERFORM get_emp_info CHANGING gs_head_crt.
+  zssssd0103-ename = gs_head_crt-ename.
+  zssssd0103-persg_t = gs_head_crt-persg_t.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

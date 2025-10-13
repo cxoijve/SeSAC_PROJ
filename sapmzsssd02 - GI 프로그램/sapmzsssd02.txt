@@ -24,7 +24,7 @@ LOAD-OF-PROGRAM.
   " 공통 세팅 : exclude (ALV위에 툴바)
   PERFORM set_alv_exclude CHANGING gt_exclude.
 
-  " alv의 기본 세팅 - 0200
+  " alv의 기본 세팅
   PERFORM set_default_alv : TABLES    gt_fcat_0200
                                       gt_sort_0200
                             USING     '0200'
@@ -52,39 +52,7 @@ LOAD-OF-PROGRAM.
 
   " CALLED CHECK
   IF sy-calld = 'X'.
-    CLEAR gv_c_ginum.
-    GET PARAMETER ID 'ZSSGI' FIELD gv_c_ginum.
-*    MESSAGE s999(zmcss) WITH 'CALLED :' gv_c_ginum.
-
-    " CASE - 미출고 문서
-    IF  gv_c_ginum IS INITIAL.
-      "MESSAGE i999(zmcss) WITH '미출고 문서입니다.'.
-      RETURN.
-    ELSE.
-      " CASE - 출고 문서
-      " 라인 하나에 대한 세부 정보 쿼리
-      PERFORM get_info_0500 TABLES gt_info_0500
-                            USING  gv_c_ginum
-                            CHANGING gs_info_0500h
-                                     gv_subrc.
-      IF gv_subrc <> 0.
-        RETURN.
-      ENDIF.
-
-      PERFORM set_default_0500 TABLES   gt_info_0500
-                                        gt_info_o_0500
-                               USING    gs_info_0500h
-                               CHANGING gs_info_o_0500h
-                                        gv_stseq_0500.
-      CLEAR gv_eflag_0500.
-
-      CALL SCREEN 500.
-      " gt_info_500 과 관련 데이터 클리어
-      CLEAR : gs_info_0500h, gt_info_0500[], gs_info_o_0500h, gt_info_o_0500[], gv_stseq_0500, gv_c_ginum.
-*      LEAVE PROGRAM.
-    ENDIF.
-
-
+    PERFORM called_operation.
   ENDIF.
 
 *GUI Texts
@@ -97,18 +65,6 @@ LOAD-OF-PROGRAM.
 * T302 --> 판매 오더로 출고 아이템 선택
 * T303 --> 고객 정보로 출고 아이템 선택
 * T500 --> 출고 문서 & &
-* T998 --> 프로그램 종료
-* T999 --> &
-* T100 --> 출고 문서 조회 - 검색 조건
-* T105 --> 검색조건 테스트 스크린
-* T200 --> 출고 문서 조회
-* T300 --> 신규 출고 생성
-* T301 --> 출고 아이템 추가 - 추가 경로 선택
-* T302 --> 판매 오더로 출고 아이템 선택
-* T303 --> 고객 정보로 출고 아이템 선택
-* T500 --> 출고 문서 & &
-* T998 --> 프로그램 종료
-* T999 --> &
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

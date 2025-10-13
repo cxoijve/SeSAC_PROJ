@@ -8,7 +8,7 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0400 0400     23117192 37  0  0 27147  0G E                              20251002130814																																
+SAPMZSSSD01                             0400 0400     23117192 37  0  0 27148  0G E                              20251011184932																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -16,7 +16,7 @@ HEAD		CHAR	116	00	00	00	30	00	  2	  3		  0	  0	  0		  9	R				  0	  0	101							�
 ZSSSSD0103-SONUM	2	CHAR	 20	30	00	04	30	00	  4	  8		  0	  0	  0		  0					  0	  0								판매오더 번호	                                                                                                                                                                                                                                                        X	
 GS_HEAD_CRT-SONUM	C	CHAR	 11	80	00	84	31	08	  4	 29		  0	  0	  0		  0					 22	  0								___________	X	
 ZSSSSD0103-RGTOR	2	CHAR	 20	30	00	04	30	00	  4	 65		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-GS_HEAD_CRT-RGTOR	C	CHAR	  8	80	00	84	00	08	  4	 86		  0	  0	  0		  0					 16	  0								________	X	
+GS_HEAD_CRT-RGTOR	C	CHAR	  8	80	00	84	30	08	  4	 86		  0	  0	  0		  0					 16	  0								________	X	
 ZSSSSD0103-ENAME	C	CHAR	  5	B0	02	80	31	00	  4	 97		  0	  0	  0		  0					 40	  0								_____	                                       00	
 ZSSSSD0103-PERSG_T	C	CHAR	  5	B0	00	80	31	00	  4	103		  0	  0	  0		  0					 20	  0								_____	                                       00	
 ZSSSSD0103-SODAT	2	CHAR	 20	30	00	00	30	00	  5	  8		  0	  0	  0		  0					  0	  0								판매오더일	                                                                                                                                                                                                                                                        X	
@@ -41,6 +41,7 @@ OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								_
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0400.																																
+  MODULE get_pernr_0400.																																
   MODULE set_alv_0400.																																
 																																
 PROCESS AFTER INPUT.																																

@@ -8,17 +8,18 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0500 0500     20 87192 37  0  0 27122  0G E                              20251001110440																																
+SAPMZSSMM03                             0500 0500     20 97192 37  0  0 27124  0G E                              20251013090747																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-ZSSSMM03006-GRNUM	0	CHAR	 14	30	00	00	30	00	  1	 16		  0	  0	  0		  0					  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
-ZSSSMM03006-GRNUM	C	CHAR	 11	A0	00	80	30	00	  1	 31		  0	  0	  0		  0					 22	  0								___________	                                       00	
-ZSSSMM03006-RGDAT	0	CHAR	  6	30	00	00	30	00	  1	 49		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
-ZSSSMM03006-RGDAT	D	DATE	 10	A0	00	80	30	08	  1	 56		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-ZSSSMM03006-RGTOR	0	CHAR	  6	30	00	00	30	00	  1	 73		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM03006-RGTOR	C	CHAR	  8	A0	00	80	30	00	  1	 80		  0	  0	  0		  0					 16	  0								________	                                       00	
-B_BOX_1		CHAR	 87	00	00	00	30	00	  2	  2		  0	  0	  0		 19	R				  0	  0	101							GR 상세정보		
+ZSSSMM03006-GRNUM	0	CHAR	 14	30	00	00	30	00	  1	 11		  0	  0	  0		  0					  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
+ZSSSMM03006-GRNUM	C	CHAR	 11	A0	00	80	30	00	  1	 26		  0	  0	  0		  0					 22	  0								___________	                                       00	
+ZSSSMM03006-RGDAT	0	CHAR	  6	30	00	00	30	00	  1	 44		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
+ZSSSMM03006-RGDAT	D	DATE	 10	A0	00	80	30	08	  1	 51		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+ZSSSMM03006-RGTOR	0	CHAR	  6	30	00	00	30	00	  1	 68		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
+ZSSSMM03006-RGTOR	C	CHAR	  8	A0	00	80	30	00	  1	 75		  0	  0	  0		  0					 16	  0								________	                                       00	
+ZSSSMM03006-RGNME	C	CHAR	 20	A0	02	80	31	00	  1	 84		  0	  0	  0		  0					 40	  0								____________________	                                       00	
+B_BOX_1		CHAR	 87	00	00	00	30	00	  2	  2		  0	  0	  0		 19	R				  0	  0	102							GR 상세정보		
 ZSSSMM03006-GRDAT	2	CHAR	 20	30	00	00	30	00	  4	  4		  0	  0	  0		  0					  0	  0								입고일	                                                                                                                                                                                                                                                        X	
 ZSSSMM03006-GRDAT	D	DATE	 10	A0	00	80	30	08	  4	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSMM03006-JENUM	2	CHAR	 20	30	00	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								전표번호	                                                                                                                                                                                                                                                        X	
@@ -27,7 +28,7 @@ ZSSSMM03006-FYEAR	2	CHAR	 20	30	00	00	30	00	  6	  4		  0	  0	  0		  0					  0	  
 ZSSSMM03006-FYEAR	N	NUMC	  4	A0	00	80	30	00	  6	 25		  0	  0	  0		  0					  8	  0								____	                                       00	
 ZSSSMM03006-STEXT	2	CHAR	 20	30	02	00	30	00	  7	  4		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
 ZSSSMM03006-STEXT	C	CHAR	 60	A0	02	80	30	00	  7	 25		  0	  0	  0		  0					120	  0								____________________________________________________________	                                       00	
-CON_5			 85	00	00	00	30	00	  9	  3		  0	  0	  0		 11	U				  1	  1	102									
+CON_5			 85	00	00	00	30	00	  9	  3		  0	  0	  0		 11	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

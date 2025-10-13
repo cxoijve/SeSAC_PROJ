@@ -1,0 +1,23 @@
+FUNCTION z_fmss_call_so_detail.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_SONUM) TYPE  ZESSSONUM
+*"     REFERENCE(IV_ISMODAL) TYPE  CHAR1
+*"  EXCEPTIONS
+*"      QUERY_FAILED
+*"----------------------------------------------------------------------
+
+  PERFORM get_info_0200 USING iv_sonum
+                        CHANGING gv_subrc.
+  IF gv_subrc <> 0. RETURN. ENDIF.
+  CASE iv_ismodal.
+    WHEN 'X'.
+      CALL SCREEN 210 STARTING AT 10 10.
+    WHEN ''.
+      CALL SCREEN 200.
+  ENDCASE.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

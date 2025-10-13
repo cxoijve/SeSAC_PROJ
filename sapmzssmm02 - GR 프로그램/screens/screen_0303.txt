@@ -8,7 +8,7 @@ SAPMZSSMM02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM02                             0303I0303     13 84192 37  0  0 26129  0G E                              20251010003356																																
+SAPMZSSMM02                             0303I0303     13 84192 37  0  0 26129  0G E                              20251013164549																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																

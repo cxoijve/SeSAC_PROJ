@@ -170,8 +170,23 @@ FORM set_fcat_doc .
   APPEND gs_fcat_doc TO gt_fcat_doc.
   CLEAR gs_fcat_doc.
 
+  gs_fcat_doc-fieldname = 'ARFYR'.
+  gs_fcat_doc-no_out = 'X'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
+  gs_fcat_doc-fieldname = 'ARNUM'.
+  gs_fcat_doc-no_out = 'X'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
   gs_fcat_doc-fieldname = 'RGDAT'.
   gs_fcat_doc-no_out = 'X'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
+  gs_fcat_doc-fieldname = 'LIGHT'.
+  gs_fcat_doc-coltext = '수금 현황'.
   APPEND gs_fcat_doc TO gt_fcat_doc.
   CLEAR gs_fcat_doc.
 ENDFORM.
@@ -232,32 +247,36 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_bi_list .
   DATA: lr_gidat TYPE RANGE OF sy-datum,
-        lv_exist TYPE c LENGTH 1.
+        lv_num   TYPE c LENGTH 11,
+        ls_color TYPE lvc_s_scol.
 
   " 출고일 범위
   PERFORM date_range USING gs_cond-gidat_b gs_cond-gidat_e
                      CHANGING lr_gidat.
 
   CLEAR gt_bi.
-  SELECT a~gidat a~ginum d~cstid d~cname a~stext a~fyear a~jenum a~rgdat
+  SELECT DISTINCT
+     a~gidat a~ginum d~cstid d~cname a~stext a~fyear a~jenum c~curky a~rgdat
     INTO CORRESPONDING FIELDS OF TABLE gt_bi
     FROM ztssgih AS a
-      INNER JOIN ztssgii AS b ON a~ginum EQ b~ginum
-      INNER JOIN ztsssoh AS c ON b~sonum EQ c~sonum
-      INNER JOIN ztsscust AS d ON c~cstid EQ d~cstid
+     INNER JOIN ztssgii AS b ON a~ginum = b~ginum
+                             AND b~del <> 'X'
+     INNER JOIN ztsssoh AS c ON b~sonum = c~sonum
+     INNER JOIN ztsscust AS d ON c~cstid = d~cstid
    WHERE a~gidat IN lr_gidat
-     AND b~ginum <> space.     " 아이템 없는 헤더 제외(이너조인해서 아이템없는 헤더는 조회 안되겠지만)
+     AND a~istat = 'A'.
 
-  " 고객코드 필터링
+  " 고객명 표시, 고객코드 필터링
   IF gs_cond-cstid IS NOT INITIAL.
+    PERFORM get_cname.
     DELETE gt_bi WHERE cstid <> gs_cond-cstid.
   ENDIF.
 
-  " 청구여부 신호등
+  " 청구여부 신호등, 출고문서번호 셀컬러
   LOOP AT gt_bi INTO gs_bi.
-    CLEAR lv_exist.
+    CLEAR lv_num.
     SELECT SINGLE ginum
-      INTO lv_exist
+      INTO lv_num
       FROM ztsssivi
      WHERE ginum EQ gs_bi-ginum.
 
@@ -267,6 +286,15 @@ FORM get_bi_list .
       gs_bi-light = '1'.
     ENDIF.
     MODIFY gt_bi FROM gs_bi.
+
+    CLEAR ls_color.
+    ls_color-fname = 'GINUM'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '0'.
+    ls_color-color-col = '3'.
+    APPEND ls_color TO gs_bi-it_col.
+    MODIFY gt_bi FROM gs_bi.
+    CLEAR ls_color.
   ENDLOOP.
 
   IF gt_bi IS INITIAL.
@@ -282,8 +310,8 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM get_doc_list .
-  DATA: lr_bidat TYPE RANGE OF sy-datum.
-*        ls_bidat LIKE LINE OF lr_bidat.
+  DATA: lr_bidat TYPE RANGE OF sy-datum,
+        ls_color TYPE lvc_s_scol.
 
   " 청구일 범위
   PERFORM date_range USING gs_cond-bidat_b gs_cond-bidat_e
@@ -291,7 +319,7 @@ FORM get_doc_list .
 
   CLEAR gt_doc.
   SELECT a~bidat a~binum e~cstid e~cname a~stext a~fyear a~jenum
-         a~toprc a~curky a~arfyr a~arnum a~rgdat
+         a~toprc a~curky c~ginum a~arfyr a~arnum a~rgdat
     INTO CORRESPONDING FIELDS OF TABLE gt_doc
     FROM ztsssivh AS a
       INNER JOIN ztsssivi AS b ON a~binum EQ b~binum
@@ -302,8 +330,28 @@ FORM get_doc_list .
 
   " 고객코드 필터링
   IF gs_cond-cstid IS NOT INITIAL.
+    PERFORM get_cname.
     DELETE gt_doc WHERE cstid <> gs_cond-cstid.
   ENDIF.
+
+  " 수금여부 신호등, 출고문서번호 셀컬러
+  LOOP AT gt_doc INTO gs_doc.
+    IF gs_doc-arnum IS NOT INITIAL.
+      gs_doc-light = '3'.
+    ELSE.
+      gs_doc-light = '1'.
+    ENDIF.
+    MODIFY gt_doc FROM gs_doc.
+
+    CLEAR ls_color.
+    ls_color-fname = 'GINUM'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '0'.
+    ls_color-color-col = '3'.
+    APPEND ls_color TO gs_doc-it_col.
+    MODIFY gt_doc FROM gs_doc.
+    CLEAR ls_color.
+  ENDLOOP.
 
   " 수금여부 필터링
   IF gs_cond-archk_y = 'X' AND gs_cond-archk_n = 'X'.
@@ -380,6 +428,383 @@ FORM date_range USING ps_dat_b TYPE dats
 
   APPEND ls_row TO cr_range.
   CLEAR ls_row.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CNAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_cname .
+  IF gs_cond-cstid IS NOT INITIAL.
+    SELECT SINGLE cname
+      FROM ztsscust
+      INTO gs_cond-cname
+     WHERE cstid EQ gs_cond-cstid.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_BI
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row_bi CHANGING cv_subrc.
+  CLEAR gs_bi.
+
+  DATA: lt_rows TYPE lvc_t_row,
+        ls_rows LIKE LINE OF lt_rows,
+        lv_cnt  TYPE sy-tabix.
+
+  CALL METHOD go_alv_bi->get_selected_rows
+    IMPORTING
+      et_index_rows = lt_rows.
+*     et_row_no     =
+  DESCRIBE TABLE lt_rows LINES lv_cnt.
+
+  CASE lv_cnt.
+    WHEN '0'.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '청구할 출고문서를 선택해 주세요.'.
+      EXIT.
+    WHEN '1'.
+      READ TABLE lt_rows INDEX 1 INTO ls_rows.
+      CLEAR gs_bi.
+      READ TABLE gt_bi INDEX ls_rows-index INTO gs_bi.
+
+      IF gs_bi-light = '3'.   " 이미 청구된 출고건
+        cv_subrc = 4.
+        MESSAGE i999(zmcss) WITH '이미 청구된 출고문서입니다.'.
+        EXIT.
+      ELSE.
+        cv_subrc = 0.
+      ENDIF.
+    WHEN OTHERS.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '1개의 출고문서만 선택해 주세요.'.
+      EXIT.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SELECT_ROW_DOC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM select_row_doc CHANGING cv_subrc.
+  CLEAR gs_doc.
+
+  DATA: lt_rows TYPE lvc_t_row,
+        ls_rows LIKE LINE OF lt_rows,
+        lv_cnt  TYPE sy-tabix.
+
+  CALL METHOD go_alv_doc->get_selected_rows
+    IMPORTING
+      et_index_rows = lt_rows.
+*     et_row_no     =
+  DESCRIBE TABLE lt_rows LINES lv_cnt.
+
+  CASE lv_cnt.
+    WHEN '0'.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '상세조회할 청구문서를 선택해 주세요.'.
+      EXIT.
+    WHEN '1'.
+      cv_subrc = 0.
+      READ TABLE lt_rows INDEX 1 INTO ls_rows.
+      CLEAR gs_doc.
+      READ TABLE gt_doc INDEX ls_rows-index INTO gs_doc.
+    WHEN OTHERS.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '1개의 청구문서만 선택해 주세요.'.
+      EXIT.
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_RGTOR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_rgtor_gi.
+  DATA: lv_lname TYPE char20,
+        lv_fname TYPE char20,
+        lv_ename TYPE char20,
+        lv_persg TYPE char1.
+  DATA: ls_dom TYPE dd07v,
+        lt_dom TYPE TABLE OF dd07v.
+
+  " 등록자 가져오기
+  SELECT SINGLE rgtor
+    FROM ztssgih
+    INTO gs_gi_head-rgtor.
+
+  " 사원명, 직급 가져오기
+  SELECT SINGLE lname fname persg
+    FROM ztssemp
+    INTO (lv_lname, lv_fname, lv_persg)
+   WHERE pernr EQ gs_gi_head-rgtor.
+
+  CONCATENATE lv_lname lv_fname INTO lv_ename.
+  gs_gi_head-ename = lv_ename.
+  gs_gi_head-persg = lv_persg.
+
+  " 직급 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSPERSG'
+    TABLES
+      values_tab      = lt_dom
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+
+  READ TABLE lt_dom WITH KEY domvalue_l = gs_gi_head-persg INTO ls_dom.
+  IF sy-subrc EQ 0.
+    gs_gi_head-persg_t = ls_dom-ddtext.
+  ENDIF.
+
+  CLEAR: lv_lname, lv_fname, lv_ename, lv_persg, ls_dom, lt_dom.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GI_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_gi_item .
+  CLEAR gs_gi_item.
+  SELECT a~giseq b~somnr a~amount a~meins b~soprc b~curky
+    FROM ztssgii AS a
+      INNER JOIN ztsssoi AS b ON a~sonum = b~sonum
+                              AND a~itnum = b~itnum
+    INTO CORRESPONDING FIELDS OF TABLE gt_gi_item
+   WHERE a~ginum EQ gs_gi_head-ginum
+     AND a~del <> 'X'.
+
+  " 자재명 matnm 가져오기
+  LOOP AT gt_gi_item INTO gs_gi_item.
+    CLEAR gs_mat.
+    READ TABLE gt_mat INTO gs_mat WITH KEY matnr = gs_gi_item-somnr.
+    IF sy-subrc EQ 0.
+      gs_gi_item-matnm = gs_mat-matnm.
+    ENDIF.
+    MODIFY gt_gi_item FROM gs_gi_item.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MATNM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_matnm .
+  CLEAR gs_mat.
+  SELECT matnr matnm
+    FROM ztssmat_t
+    INTO CORRESPONDING FIELDS OF TABLE gt_mat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alv USING p_connm
+                CHANGING c_con TYPE REF TO cl_gui_custom_container
+                         c_alv TYPE REF TO cl_gui_alv_grid.
+
+  IF c_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT c_con
+    EXPORTING
+      container_name              = p_connm
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  CREATE OBJECT c_alv
+    EXPORTING
+      i_parent          = c_con
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TOPRC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_toprc .
+  DATA: lv_toprc TYPE zssssd0304-toprc.
+
+  CLEAR lv_toprc.
+  LOOP AT gt_gi_item INTO gs_gi_item.
+    lv_toprc = lv_toprc + ( gs_gi_item-soprc * gs_gi_item-amount ).
+  ENDLOOP.
+  gs_gi_head-toprc = lv_toprc.
+
+*  IF zssssd0304-curky IS INITIAL.
+*    zssssd0304-curky = 'KRW'.
+*  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat2 .
+  CLEAR gt_fcat2.
+
+  gs_fcat2-fieldname = 'GISEQ'.
+  gs_fcat2-coltext = '출고 아이템번호'.
+  gs_fcat2-outputlen = 3.
+  gs_fcat2-lzero = 'X'.
+  APPEND gs_fcat2 TO gt_fcat2.
+  CLEAR gs_fcat2.
+
+  gs_fcat2-fieldname = 'SOMNR'.
+  gs_fcat2-coltext = '자재코드'.
+  APPEND gs_fcat2 TO gt_fcat2.
+  CLEAR gs_fcat2.
+
+  gs_fcat2-fieldname = 'MATNM'.
+  gs_fcat2-coltext = '자재명'.
+  APPEND gs_fcat2 TO gt_fcat2.
+  CLEAR gs_fcat2.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_RGTOR_IV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_rgtor_iv .
+  DATA: lv_lname TYPE char20,
+        lv_fname TYPE char20,
+        lv_ename TYPE char20,
+        lv_persg TYPE char1.
+  DATA: ls_dom TYPE dd07v,
+        lt_dom TYPE TABLE OF dd07v.
+
+  " 등록자 가져오기
+  SELECT SINGLE rgtor
+    FROM ztsssivh
+    INTO gs_iv_head-rgtor.
+
+  " 사원명, 직급 가져오기
+  SELECT SINGLE lname fname persg
+    FROM ztssemp
+    INTO (lv_lname, lv_fname, lv_persg)
+   WHERE pernr EQ gs_iv_head-rgtor.
+
+  CONCATENATE lv_lname lv_fname INTO lv_ename.
+  gs_iv_head-ename = lv_ename.
+  gs_iv_head-persg = lv_persg.
+
+  " 직급 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSPERSG'
+    TABLES
+      values_tab      = lt_dom
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+
+  READ TABLE lt_dom WITH KEY domvalue_l = gs_iv_head-persg INTO ls_dom.
+  IF sy-subrc EQ 0.
+    gs_iv_head-persg_t = ls_dom-ddtext.
+  ENDIF.
+
+  CLEAR: lv_lname, lv_fname, lv_ename, lv_persg, ls_dom, lt_dom.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat3 .
+  CLEAR gt_fcat3.
+
+  gs_fcat3-fieldname = 'BISEQ'.
+  gs_fcat3-coltext = '청구 아이템번호'.
+  gs_fcat3-outputlen = 3.
+  gs_fcat3-lzero = 'X'.
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+
+  gs_fcat3-fieldname = 'GISEQ'.
+  gs_fcat3-coltext = '출고 아이템번호'.
+  gs_fcat3-outputlen = 3.
+  gs_fcat3-lzero = 'X'.
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+
+  gs_fcat3-fieldname = 'BIPRC'.
+  gs_fcat3-coltext = '가격'.
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+
+  gs_fcat3-fieldname = 'DEL'.
+  gs_fcat3-no_out = 'X'.
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_IV_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_iv_item .
+  CLEAR gt_iv_item.
+  SELECT biseq ginum giseq biprc curky
+    FROM ztsssivi
+    INTO TABLE gt_iv_item
+   WHERE binum EQ gs_iv_head-binum.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

@@ -8,10 +8,10 @@ FUNCTION z_call_material_detail.
 *"      QUERY_FAILED
 *"      UNKNOWN_FLAG
 *"----------------------------------------------------------------------
-  CLEAR gs_info_0100.
+  CLEAR gs_infod_0100.
 
   PERFORM get_info_0100 USING     iv_matnr
-                        CHANGING  gs_info_0100
+                        CHANGING  gs_infod_0100
                                   gv_subrc.
 
   IF gv_subrc <> 0.
@@ -28,7 +28,7 @@ FUNCTION z_call_material_detail.
       RAISE unknown_flag.
   ENDCASE.
 
-  CLEAR gs_info_0100.
+  CLEAR gs_infod_0100.
 
 ENDFUNCTION.
 

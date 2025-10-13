@@ -73,13 +73,22 @@ MODULE user_command_0100 INPUT.
 *      ENDIF.
 
     WHEN 'ENTER'.
-      PERFORM check_field_condition CHANGING gv_subrc.
-      IF gv_subrc <> 0.
-        CLEAR gv_subrc.
-        RETURN.
+
+      IF zsssmd04002-penid IS NOT INITIAL.
+        PERFORM set_rgtor_name USING zsssmd04002-penid
+                                  CHANGING zsssmd04002-name.
+      ELSE.
+        CLEAR zsssmd04002-name.
       ENDIF.
 
-*	WHEN OTHERS.
+      IF zsssmd04002-cstid IS NOT INITIAL.
+        PERFORM set_cstid_name USING zsssmd04002-cstid
+                            CHANGING zsssmd04002-cname.
+      ELSE.
+        CLEAR zsssmd04002-cname.
+      ENDIF.
+
+
   ENDCASE.
 
 ENDMODULE.

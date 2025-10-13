@@ -318,6 +318,43 @@ FORM popup_to_confirm   USING     iv_title
 
 
 ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_RGTORS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_rgtors USING VALUE(p_uname) TYPE sy-uname
+                      VALUE(p_mod)
+                CHANGING cv_pernr TYPE ztssemp-pernr.
+
+  CALL FUNCTION 'Z_FMSS_GET_PERNR'
+    EXPORTING
+      iv_id     = sy-uname
+      iv_module = 'WM'
+    IMPORTING
+      ev_pernr  = gv_rgtor.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PLANT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_T_DATA_PLANT  text
+*      <--P_T_DATA_PNAME  text
+*----------------------------------------------------------------------*
+FORM get_plant_name  USING   value(p_id) type ztssplant-plant
+                     CHANGING p_name type ztssplant-pname.
+
+  select single pname
+    into p_name
+    from ztssplant
+    where plant = p_id.
+
+ENDFORM.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

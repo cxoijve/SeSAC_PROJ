@@ -24,7 +24,7 @@ CLASS lcl_event_handler IMPLEMENTATION.
 *
   METHOD handle_double_click.
 
-    PERFORM handle_double_click USING e_row e_column.
+    PERFORM handle_double_click USING e_row e_column sender.
 
   ENDMETHOD.
 *
@@ -35,6 +35,14 @@ CLASS lcl_event_handler IMPLEMENTATION.
   ENDMETHOD.
 
 ENDCLASS.
+
+
+CLASS lcl_handler_tree IMPLEMENTATION.
+  METHOD on_node_double_click.
+    perform handle_node_double_click using node_key.
+  ENDMETHOD.
+ENDCLASS.
+
 
 CLASS lcl_layout_builder IMPLEMENTATION.
   METHOD create.

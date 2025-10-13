@@ -217,7 +217,7 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             TABLES pt_fcat
                             USING 'SODON_T' '1' '판매 오더 출고 완료 여부',
                             TABLES pt_fcat
-                            USING 'DUDAT' '2' '납기일',
+                            USING 'DUDAT' '2' '납품일',
                             TABLES pt_fcat
                             USING 'SOMNR' '-1' '미노출',
                             TABLES pt_fcat
@@ -442,7 +442,7 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
                             TABLES pt_fcat
                             USING  'CNAME' '1' '고객명',
                             TABLES pt_fcat
-                            USING  'DUDAT' '1' '납기일',
+                            USING  'DUDAT' '1' '납품일',
                             TABLES pt_fcat
                             USING  'PLANT' '1' '플랜트',
                             TABLES pt_fcat
@@ -452,7 +452,7 @@ FORM set_fcat  TABLES   pt_fcat  STRUCTURE lvc_s_fcat
       PERFORM modify_fcat : TABLES pt_fcat
                             USING  'CNAME' '1' '고객명',
                             TABLES pt_fcat
-                            USING  'DUDAT' '1' '납기일',
+                            USING  'DUDAT' '1' '납품일',
                             TABLES pt_fcat
                             USING  'SONUM' '1' '판매오더 번호',
                             TABLES pt_fcat
@@ -3202,14 +3202,17 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM canc .
-
   IF gv_canc_msg IS INITIAL.
     LEAVE TO SCREEN 0.
 
   ELSE.
-    CALL SCREEN 999 STARTING AT 50 5 ENDING AT 100 9.
+    PERFORM popup_to_confirm USING gv_ctitle
+                                   gv_canc_msg
+                                   '확인'
+                                   '취소'
+                          CHANGING gv_subrc.
 
-    IF gv_exit = 'X'.
+    IF gv_subrc = 0.
       LEAVE TO SCREEN 0.
     ENDIF.
   ENDIF.
@@ -3228,9 +3231,13 @@ FORM exit .
     LEAVE PROGRAM.
 
   ELSE.
-    CALL SCREEN 998 STARTING AT 50 5 ENDING AT 100 9.
+    PERFORM popup_to_confirm USING gv_etitle
+                                   gv_exit_msg
+                                   '확인'
+                                   '취소'
+                          CHANGING gv_subrc.
 
-    IF gv_exit = 'X'.
+    IF gv_subrc = 0.
       LEAVE PROGRAM.
     ENDIF.
   ENDIF.
@@ -5766,8 +5773,125 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM call_je  USING  VALUE(pv_jenum) TYPE zessjenum.
 
-  SET PARAMETER ID 'JEN' FIELD pv_jenum.
-  CALL TRANSACTION 'ZSSFI01' .
+  CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
+    EXPORTING
+      i_jenum = pv_jenum.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0300 .
+  CASE sy-uname.
+    WHEN 'SPRO-26'.
+      zssssd0207-rgtor = 'E0000003'.
+    WHEN 'SPRO-27'.
+      zssssd0207-rgtor = 'E0000009'.
+    WHEN 'SPRO-28'.
+      zssssd0207-rgtor = 'E0000019'.
+    WHEN 'SPRO-29'.
+      zssssd0207-rgtor = 'E0000019'.
+    WHEN 'SPRO-30'.
+      zssssd0207-rgtor = 'E0000020'.
+    WHEN OTHERS.
+      MESSAGE i999(zmcss) WITH '신규 출고 문서 생성 권한이 없습니다.'.
+      LEAVE TO SCREEN 0.
+  ENDCASE.
+
+  PERFORM get_emp_name USING zssssd0207-rgtor
+                       CHANGING zssssd0207-ename.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm  USING VALUE(pv_title) TYPE string
+                             VALUE(pv_tquestion) TYPE string
+                             VALUE(pv_tbtn01) TYPE string
+                             VALUE(pv_tbtn02) TYPE string
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA lv_answer.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = pv_title
+      text_question         = pv_tquestion
+      text_button_1         = pv_tbtn01
+      text_button_2         = pv_tbtn02
+      display_cancel_button = ''
+    IMPORTING
+      answer                = lv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  CASE lv_answer.
+    WHEN '1' .
+      pv_subrc = 0.
+    WHEN '2' .
+      pv_subrc = 4.
+    WHEN OTHERS.
+      pv_subrc = 4.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALLED_OPERATION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM called_operation .
+
+  CLEAR gv_c_ginum.
+  GET PARAMETER ID 'ZSSGI' FIELD gv_c_ginum.
+*    MESSAGE s999(zmcss) WITH 'CALLED :' gv_c_ginum.
+
+  " CASE - 미출고 문서
+  IF  gv_c_ginum IS INITIAL.
+    "MESSAGE i999(zmcss) WITH '미출고 문서입니다.'.
+    RETURN.
+  ELSE.
+    " CASE - 출고 문서
+    " 라인 하나에 대한 세부 정보 쿼리
+    PERFORM get_info_0500 TABLES gt_info_0500
+                          USING  gv_c_ginum
+                          CHANGING gs_info_0500h
+                                   gv_subrc.
+    IF gv_subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    PERFORM set_default_0500 TABLES   gt_info_0500
+                                      gt_info_o_0500
+                             USING    gs_info_0500h
+                             CHANGING gs_info_o_0500h
+                                      gv_stseq_0500.
+    CLEAR gv_eflag_0500.
+
+    CALL SCREEN 500.
+    " gt_info_500 과 관련 데이터 클리어
+    CLEAR : gs_info_0500h, gt_info_0500[], gs_info_o_0500h, gt_info_o_0500[], gv_stseq_0500, gv_c_ginum.
+*      LEAVE PROGRAM.
+  ENDIF.
 
 ENDFORM.
 

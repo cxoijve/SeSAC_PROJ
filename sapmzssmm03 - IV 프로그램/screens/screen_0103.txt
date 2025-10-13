@@ -8,7 +8,7 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0103I0103      2 47192 37  0  0 27125  0G E                              20251001185518																																
+SAPMZSSMM03                             0103I0103      2 51192 37  0  0 27126  0G E                              20251013152117																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -18,6 +18,7 @@ B_TXT_1	0	CHAR	  1	00	00	00	30	00	  1	 36		  0	  0	  0		  0					  0	  0								~
 ZSSSMM03004-ENDDA	D	DATE	 10	A0	00	80	00	08	  1	 39		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSMM03004-RGTOR	0	CHAR	 15	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	  0								지급전표 등록자	                                                                                                                                                                                                                                                        X	
 ZSSSMM03004-RGTOR	C	CHAR	  8	A0	00	84	00	08	  2	 24		  0	  0	  0		  0					 16	  0			ZSHSSMM02					________	X                                      00	
+ZSSSMM03004-RGNME	C	CHAR	 20	A0	02	80	31	00	  2	 33		  0	  0	  0		  0					 40	  0								____________________	                                       00	
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
@@ -27,3 +28,7 @@ PROCESS BEFORE OUTPUT.
 *																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0103.																																
+																																
+																																
+PROCESS ON VALUE-REQUEST.																																
+  FIELD zsssmm03004-rgtor MODULE fi_pernr .																																

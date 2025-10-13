@@ -107,7 +107,7 @@ FORM get_customer_data .
       AND penid IN gt_penid.
 
   IF sy-subrc <> 0.
-    MESSAGE i999(zmcss) WITH 'GET_CUSTOMER_DATA 데이터 없음'.
+    MESSAGE i999(zmcss) WITH '조회되는 결과가 없습니다'.
   ENDIF.
 
   PERFORM modify_customer_data.
@@ -126,6 +126,8 @@ FORM set_alv_layo .
   gs_layo-cwidth_opt = 'X'.
   gs_layo-zebra = 'X'.
   gs_layo-sel_mode = 'A'.
+  gs_layo-excp_fname = 'LIGHT'.
+  gs_layo-excp_led = 'X'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  MODIFY_CUSTOMER_DATA
@@ -136,7 +138,13 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM modify_customer_data .
-  DATA : ls_data LIKE LINE OF gt_data.
+  DATA : ls_data  LIKE LINE OF gt_data,
+         lv_sonum TYPE zesssonum.
+
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
 
   LOOP AT gt_data INTO ls_data.
 
@@ -148,11 +156,34 @@ FORM modify_customer_data .
 
     CONCATENATE ls_data-eid ls_data-ednme INTO ls_data-email SEPARATED BY '@'.
 
+    READ TABLE gt_fval WITH KEY domvalue_l = ls_data-ctype INTO gs_fval.
+    ls_data-cdnme = gs_fval-ddtext.
 
+    SELECT SINGLE lname fname
+      FROM ztssemp
+      INTO ls_name
+      WHERE pernr = ls_data-penid.
 
+    CONCATENATE ls_name-lname ls_name-fname INTO ls_data-rgnme.
+
+    SELECT SINGLE sonum
+      FROM ztsssoh
+      INTO lv_sonum
+      WHERE cstid = ls_data-cstid.
+
+    IF sy-subrc <> 0.
+      ls_data-light = '3'.
+    ELSE.
+      ls_data-light = '1'.
+    ENDIF.
+
+    IF ls_data-endda < sy-datum.
+      ls_data-light = '1'..
+    ENDIF.
 
     MODIFY gt_data FROM ls_data.
   ENDLOOP.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -175,12 +206,30 @@ FORM check_alv_condition .
     APPEND gt_cstid.
   ENDIF.
 
-  IF zsssmd04002-ctype IS NOT INITIAL.
+  IF zsssmd04002-check NE '' AND zsssmd04002-cheke EQ ''.
+    CLEAR gt_ctype.
     gt_ctype-sign = 'I'.
     gt_ctype-option = 'EQ'.
-    gt_ctype-low = zsssmd04002-ctype.
+    gt_ctype-low = 'O'.
     APPEND gt_ctype.
   ENDIF.
+
+  IF zsssmd04002-check EQ '' AND zsssmd04002-cheke NE ''.
+    CLEAR gt_ctype.
+    gt_ctype-sign = 'I'.
+    gt_ctype-option = 'EQ'.
+    gt_ctype-low = 'F'.
+    APPEND gt_ctype.
+  ENDIF.
+
+  IF zsssmd04002-check EQ '' AND zsssmd04002-cheke EQ ''.
+    CLEAR gt_ctype.
+    gt_ctype-sign = 'I'.
+    gt_ctype-option = 'EQ'.
+    gt_ctype-low = ''.
+    APPEND gt_ctype.
+  ENDIF.
+
 
   IF zsssmd04002-penid IS NOT INITIAL.
     gt_penid-sign = 'I'.
@@ -209,6 +258,10 @@ FORM set_all_fcat .
   PERFORM set_fcat USING 'EDNME' '' '' 'X'.
   PERFORM set_fcat USING 'EMAIL' '' '이메일' ''.
   PERFORM set_fcat USING 'CPNME' '' '고객사 담당자' ''.
+  PERFORM set_fcat USING 'CTYPE' '' '' 'X'.
+  PERFORM set_fcat USING 'CDNME' '' '온오프라인 여부' ''.
+  PERFORM set_fcat USING 'RGNME' '' '담당자 이름' ''.
+  PERFORM set_fcat USING 'LIGHT' '' '조정여부' ''.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -827,6 +880,73 @@ FORM check_sacat_customer  CHANGING cv_subrc.
     MESSAGE i999(zmcss) WITH '판매 카탈로그에에 존재하는 고객입니다'.
   ENDIF.
 
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_FIXED_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_domain_fixed_value TABLES   ct_dd07v STRUCTURE gs_fval
+                             USING  VALUE(pv_donme).
+  DATA : lt_dd07v TYPE TABLE OF dd07v.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = pv_donme
+    TABLES
+      values_tab      = lt_dd07v
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_domain_fixed_value 실패'.
+  ENDIF.
+
+  APPEND LINES OF lt_dd07v TO ct_dd07v.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_RGTOR_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_rgtor_name USING VALUE(pv_penid) TYPE zesspenid
+                        CHANGING cv_name TYPE zessfname.
+  DATA : BEGIN OF ls_name,
+           lname TYPE zesslname,
+           fname TYPE zessfname,
+         END OF ls_name.
+
+
+  SELECT SINGLE lname fname
+    FROM ztssemp
+    INTO ls_name
+    WHERE pernr = pv_penid.
+
+  CONCATENATE ls_name-lname ls_name-fname INTO cv_name.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_CSTID_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD04002_CSTID  text
+*      <--P_ZSSSMD04002_CNAME  text
+*----------------------------------------------------------------------*
+FORM set_cstid_name  USING VALUE(pv_cstid) TYPE zesscstid
+                     CHANGING cv_cname TYPE zesscname.
+
+  SELECT SINGLE cname
+    FROM ztsscust
+    INTO cv_cname
+    WHERE cstid = pv_cstid.
 
 ENDFORM.
 

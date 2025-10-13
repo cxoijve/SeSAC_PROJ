@@ -1,31 +1,213 @@
 *&---------------------------------------------------------------------*
 *&  Include           MZSSMM03C01
 *&---------------------------------------------------------------------*
-CLASS lcl_event_receiver01 DEFINITION.
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+    DATA :row_id TYPE i.
 
-  PUBLIC SECTION.
+    row_id = es_row_no-row_id.
 
-    METHODS handle_double_click
-          FOR EVENT double_click OF cl_gui_alv_grid
-      IMPORTING
-          e_column
-          e_row
-          es_row_no.
+    PERFORM alv_cl_double_click USING e_column_id
+                                      row_id.
 
-  PROTECTED SECTION.
-  PRIVATE SECTION.
 
-ENDCLASS.                    "LCL_EVENT_RECEIVER01 DEFINITION"
-CLASS lcl_event_receiver01 IMPLEMENTATION.
-  METHOD handle_double_click.
-    PERFORM alv_cl_double_click USING e_column
-                                      e_row
-                                      es_row_no.
+  ENDMETHOD.
+  METHOD on_toolbar.
+    DATA ls_button TYPE stb_button.
+
+    CLEAR e_object->mt_toolbar.
+
+    ls_button-butn_type = '3'. "Separator
+    APPEND ls_button TO e_object->mt_toolbar.
+
+
+    IF my_tab-activetab = 'TAB1'.
+
+      CLEAR ls_button.
+      ls_button-function = 'CUST_UPDATE'.
+*      ls_button-icon = icon_change.
+      ls_button-butn_type = '0'.
+      ls_button-text = '송장문서수정'.
+      APPEND ls_button TO e_object->mt_toolbar.
+
+
+      CLEAR ls_button.
+      ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+      ls_button-butn_type = '0'.
+      ls_button-text = '세부사항'.
+      APPEND ls_button TO e_object->mt_toolbar.
+
+
+    ELSEIF my_tab-activetab = 'TAB2'.
+
+      CLEAR ls_button.
+      ls_button-function = 'CUST_INSERT'.
+*      ls_button-icon = icon_create.
+      ls_button-butn_type = '0'.
+      ls_button-text = '송장검증'.
+      APPEND ls_button TO e_object->mt_toolbar.
+
+      CLEAR ls_button.
+      ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+      ls_button-butn_type = '0'.
+      ls_button-text = '세부사항'.
+      APPEND ls_button TO e_object->mt_toolbar.
+
+    ELSEIF my_tab-activetab = 'TAB3'.
+
+      CLEAR ls_button.
+      ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+      ls_button-butn_type = '0'.
+      ls_button-text = '세부사항'.
+      APPEND ls_button TO e_object->mt_toolbar.
+
+    ENDIF.
+
+
+
+
+
   ENDMETHOD.
 
-ENDCLASS.                    "LCL_EVENT_RECEIVER IMPLEMENTATION"
+  METHOD on_user_command.
+    DATA: lt_row_no TYPE lvc_t_roid,
+          ls_row_no LIKE LINE OF lt_row_no.
 
-DATA g_event_receiver01 TYPE REF TO lcl_event_receiver01.
+    CASE e_ucomm.
+      WHEN 'CUST_INSERT'.
+        IF my_tab-activetab NE 'TAB2' .
+          MESSAGE s999(zmcss) WITH 'GR 정보를 선택해주세요'.
+          RETURN.
+        ENDIF.
+
+        PERFORM get_detail_info_0100 CHANGING gv_subrc.
+        IF  gv_subrc IS INITIAL.
+          CLEAR : gv_subrc,
+                  gt_gri,
+                  gt_mivi,
+                  gs_mivi,
+                  gs_mivh.
+          IF  gs_data-ivnum NE ''.
+            MESSAGE i999(zmcss) WITH 'IV 미완료된 데이터를 선택해주세요'.
+            RETURN.
+          ENDIF.
+
+          "300 screen ALV 구성 및 스크린 구성
+          "--------------------------------------------------------------------
+          PERFORM get_gr_item TABLES gt_gri
+                              USING gs_data-grnum.
+          PERFORM get_gr_header USING gs_data-grnum.
+          "---------------------------------------------------------------------
+
+          PERFORM set_insert_data CHANGING gv_subrc.
+
+          IF gv_subrc <> 0.
+            CLEAR gv_subrc.
+            RETURN.
+          ENDIF.
+
+          CALL FUNCTION 'Z_FMSS_GET_PERNR'
+            EXPORTING
+              iv_id     = sy-uname
+              iv_module = 'WM'
+            IMPORTING
+              ev_pernr  = zsssmm03007-rgtor.
+
+          IF zsssmm03007-rgtor IS NOT INITIAL.
+            PERFORM set_rgtor_name USING zsssmm03007-rgtor
+                                CHANGING zsssmm03007-rgnme.
+          ELSE.
+            CLEAR zsssmm03007-rgnme.
+          ENDIF.
+
+          gv_eflag = 'A'.
+          CALL SCREEN 300.
+          CLEAR : gv_eflag,
+                  gt_grh,
+                  gs_grh,
+                  gt_gri,
+                  gs_gri,
+               zsssmm03006,
+               zsssmm03007.
+          IF gv_subrc_de = 4.
+            CLEAR gv_subrc_de.
+            CALL SCREEN 600.
+            CLEAR : zsssmm03014,
+                      gt_mivi_2,
+                      gt_data.
+
+            CALL METHOD cl_gui_cfw=>set_new_ok_code
+              EXPORTING
+                new_code = 'SEARCH'.
+
+          ENDIF.
+        ELSE.
+          CLEAR gv_subrc.
+        ENDIF.
+
+      WHEN 'CUST_UPDATE'.
+        PERFORM get_detail_info_0100 CHANGING gv_subrc.
+        IF  gv_subrc IS INITIAL.
+
+          IF gs_data-apnum NE ''.
+            MESSAGE i999(zmcss) WITH '지급완료된 데이터 입니다'.
+            RETURN.
+          ENDIF.
+          "400 screen alv 구성 및 스크린 구성
+          "---------------------------------------------------------------------
+          PERFORM get_iv_update_data USING gs_data-ivnum
+                                     CHANGING zsssmm03013.
+
+          PERFORM get_gr_all_header_data.
+          "---------------------------------------------------------------------
+          gv_eflag = 'A'.
+          CALL SCREEN 400.
+          CLEAR :gv_eflag,
+                   gt_grh,
+              zsssmm03013,
+              zsssmm03017.
+
+
+          IF gv_subrc_de = 4.
+            CLEAR gv_subrc_de.
+            CALL SCREEN 600.
+            CLEAR : zsssmm03014,
+                      gt_mivi_2,
+                      gt_data.
+
+            CALL METHOD cl_gui_cfw=>set_new_ok_code
+              EXPORTING
+                new_code = 'SEARCH'.
+
+          ENDIF.
+        ELSE.
+          CLEAR gv_subrc.
+        ENDIF.
+
+      WHEN 'CUST_DETAIL'.
+        PERFORM get_detail_info_0100 CHANGING gv_subrc.
+        IF  gv_subrc IS INITIAL.
+          CLEAR  gv_subrc.
+          IF gs_data-ivnum IS INITIAL.
+            MESSAGE i999(zmcss) WITH 'IV 문서가 존재하지 않습니다'.
+            RETURN.
+          ELSE.
+            PERFORM set_detail_iv_data USING gs_data-ivnum.
+
+            CALL SCREEN 600.
+            CLEAR : zsssmm03014,
+                      gt_mivi_2.
+          ENDIF.
+        ELSE.
+          CLEAR gv_subrc.
+        ENDIF.
+    ENDCASE.
+  ENDMETHOD.
+
+ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

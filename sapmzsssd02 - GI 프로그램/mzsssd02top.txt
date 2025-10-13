@@ -8,9 +8,10 @@ PROGRAM sapmzsssd02.
 DATA : ok_code     LIKE sy-ucomm,
        gv_subrc    LIKE sy-subrc,
        gv_dynnr    LIKE sy-dynnr,
+       gv_etitle   TYPE string,
+       gv_ctitle   TYPE string,
        gv_canc_msg TYPE string, "캔슬 메시지
-       gv_exit_msg TYPE string, "종료 메시지
-       gv_exit. "확인 여부
+       gv_exit_msg TYPE string. "종료 메시지
 
 " ALV Objects 공통
 DATA : gt_exclude TYPE ui_functions.
@@ -18,7 +19,7 @@ DATA : gt_exclude TYPE ui_functions.
 " ALV Handler
 CLASS lcl_handler DEFINITION.
   PUBLIC SECTION.
-    DATA : hname TYPE C LENGTH 4.
+    DATA : hname TYPE c LENGTH 4.
 
     METHODS on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
       IMPORTING es_row_no e_column_id.

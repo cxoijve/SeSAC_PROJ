@@ -13,6 +13,11 @@ FORM modify_screen_0100 .
 
   LOOP AT SCREEN.
 
+    IF screen-name = 'ZSSSMM0210-GRNUM'.
+      screen-input = 0.
+      screen-active = 0.
+    ENDIF.
+
     IF gv_radio_screen = 0.
       CASE screen-group3.
         WHEN 'RA1'.
@@ -37,7 +42,14 @@ FORM modify_screen_0100 .
       MODIFY SCREEN.
     ENDIF.
 
-    IF gv_screen = 0.
+    IF gv_screen = 0 OR gv_screen = 2.
+      IF gv_screen = 0.
+        CASE screen-group3.
+          WHEN 'EX2'.
+            screen-input = 0.
+            screen-active = 0.
+        ENDCASE.
+      ENDIF.
       CASE screen-group1.
         WHEN 'GR2'.
           screen-input = 0.
@@ -65,6 +77,18 @@ FORM modify_screen_0100 .
         MODIFY SCREEN.
       ENDIF.
     ENDIF.
+
+    IF gv_screen = 2.
+      CASE screen-group3.
+        WHEN 'EX1'.
+          screen-input = 0.
+          screen-active = 0.
+
+      ENDCASE.
+      MODIFY SCREEN.
+
+    ENDIF.
+
   ENDLOOP.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -287,7 +311,9 @@ FORM req_event_for_alv_0102 .
                  lcl_event_handler=>handle_user_command FOR go_alv_po_items,
                  lcl_event_handler=>handle_user_command FOR go_alv_po_confirm,
                  lcl_event_handler=>handle_toolbar FOR go_alv_po_items,
-                 lcl_event_handler=>handle_data_changed FOR go_alv_po_items.
+                 lcl_event_handler=>handle_data_changed FOR go_alv_po_items,
+                 lcl_event_handler=>handle_double_click FOR go_alv_po_waiting.
+
 *
   CALL METHOD go_alv_po_items->register_edit_event
     EXPORTING
@@ -324,8 +350,27 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM display_alvs_0102 .
 
-  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0212' gs_layo gt_exclude CHANGING gt_podata gt_fcat gt_sort go_alv_po_waiting.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0212' gs_layo gt_exclude CHANGING gt_podata gt_fcat gt_sort_polist go_alv_po_waiting.
   PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0213' gs_layo2 gt_exclude CHANGING gt_item gt_fcat2 gt_sort go_alv_po_items.
+*  go_alv_po_items->set_table_for_first_display(
+*     EXPORTING
+*       i_structure_name = 'ZSSSMM0213'
+*       is_layout = gs_layo2
+*       it_toolbar_excluding = gt_exclude
+*     CHANGING
+*       it_outtab = gt_item
+*       it_fieldcatalog = gt_fcat2
+**       it_sort = gt_sort
+*     EXCEPTIONS
+*       invalid_parameter_combination = 1
+*       program_error = 23
+*       too_many_lines = 3
+*       OTHERS = 4
+*   ).
+*  IF sy-subrc <> 0.
+*    MESSAGE a100(zmcss) WITH sy-uname. " 시스템 오류입니다. 담당자 &에게 문의해주세요!
+*  ENDIF.
+
   PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0213' gs_layo3 gt_exclude CHANGING gt_confirm gt_fcat3 gt_sort go_alv_po_confirm.
 
 
@@ -457,8 +502,19 @@ FORM set_alv_0101 .
   IF go_cust_gr IS INITIAL.
     PERFORM init_alv_0101.
   ELSE.
-    PERFORM refresh_alv_0101.
+    PERFORM set_fcat5_change.
+    CALL METHOD go_alv_gr_list->set_frontend_fieldcatalog
+      EXPORTING
+        it_fieldcatalog = gt_fcat5.
 
+    CALL METHOD go_alv_gr_list->refresh_table_display
+      EXPORTING
+        is_stable      = VALUE #( row = 'X' col = 'X' )
+        i_soft_refresh = 'X'
+      EXCEPTIONS
+        finished       = 1
+        OTHERS         = 2.
+*    PERFORM refresh_alv_0101.
   ENDIF.
 
 
@@ -472,6 +528,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM init_alv_0101 .
+
   PERFORM create_container_0101.
   PERFORM create_alvs_0101.
   PERFORM display_alvs_0101.
@@ -517,7 +574,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM display_alvs_0101 .
 
-  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0211' gs_layo5 gt_exclude CHANGING gt_grdata gt_fcat5 gt_sort go_alv_gr_list.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0211' gs_layo5 gt_exclude CHANGING gt_grdata gt_fcat5 gt_sort_grlist go_alv_gr_list.
 *  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo6 gt_exclude CHANGING gt_gritem gt_fcat6 gt_sort go_alv_gr_item.
 
 ENDFORM.
@@ -668,8 +725,8 @@ FORM req_event_for_alv_0101 .
 
   SET HANDLER :    lcl_event_handler=>handle_double_click FOR go_alv_gr_list,
                    lcl_event_handler=>handle_toolbar FOR go_alv_gr_list,
-                   lcl_event_handler=>handle_user_command FOR go_alv_gr_list.
-*                     lcl_event_handler=>handle_hotspot FOR go_alv_gr_list.
+                   lcl_event_handler=>handle_user_command FOR go_alv_gr_list,
+                     lcl_event_handler=>handle_hotspot FOR go_alv_gr_list.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_ALV_0200
@@ -908,7 +965,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM display_alv_grid_0300 .
-  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo6 gt_exclude CHANGING gt_gritem gt_fcat6 gt_sort go_alv_detail.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo12 gt_exclude CHANGING gt_gritem gt_fcat12 gt_sort go_alv_detail.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1041,6 +1098,599 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM refresh_alv_0302 .
   PERFORM refresh_table_display CHANGING go_alv_vnprc.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0109 .
+
+  IF go_cust_exp IS INITIAL.
+    PERFORM init_alv_0109.
+  ELSE.
+    PERFORM refresh_alv_0109.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0109 .
+
+  PERFORM create_container_0109.
+  PERFORM create_alvs_0109.
+  PERFORM display_alvs_0109.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_CONTAINER_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_container_0109 .
+
+  PERFORM create_cust_obj  USING 'CON_EXP' CHANGING go_cust_exp.
+
+
+  PERFORM create_split_obj_cust USING go_cust_exp 1 2 CHANGING go_split_exp.
+  PERFORM set_row_height USING 1 30 CHANGING go_split_exp.
+  PERFORM set_col_width USING 1 40 CHANGING go_split_exp.
+
+
+  PERFORM get_split_container USING 1 1 CHANGING go_split_exp go_con_exp_left.
+  PERFORM get_split_container USING 1 2 CHANGING go_split_exp go_con_exp_right.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALVS_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alvs_0109 .
+
+  PERFORM create_alv USING go_con_exp_left CHANGING go_alv_exp_list.
+  PERFORM create_alv USING go_con_exp_right CHANGING go_alv_exp_item.
+
+  PERFORM req_event_for_alv_0109.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALVS_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alvs_0109 .
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0221' gs_layo10 gt_exclude CHANGING gt_expdata gt_fcat10 gt_sort go_alv_exp_list.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0222' gs_layo11 gt_exclude CHANGING gt_expitem gt_fcat11 gt_sort go_alv_exp_item.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0109 .
+  PERFORM refresh_table_display CHANGING go_alv_exp_list.
+  PERFORM refresh_table_display CHANGING go_alv_exp_item.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0109
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0109 .
+  SET HANDLER :    lcl_event_handler=>handle_hotspot FOR go_alv_exp_list,
+   lcl_event_handler=>handle_double_click FOR go_alv_exp_list.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0102
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat_0102 .
+  PERFORM set_fcat_change.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_CHANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat_change .
+  DATA : lt_field_conf TYPE TABLE OF ty_field_conf,
+         ls_conf       TYPE ty_field_conf,
+         ls_fcat       TYPE lvc_s_fcat.
+
+  IF gv_flag = 1.  " 또는 검색 조건 체크
+    lt_field_conf = VALUE #(
+      ( fieldname = 'LIGHT' coltext = TEXT-t01  outputlen = 15 fix_column = 'X' col_pos = 1 )
+      ( fieldname = 'VNAME' col_pos = 2 )  " 순서 변경
+      ( fieldname = 'DUDAT' col_pos = 3 )  " 순서 변경
+      ( fieldname = 'PODAT' col_pos = 4 )
+      ( fieldname = 'ENAME' col_pos = 5 coltext = '담당자 이름' )
+      ( fieldname = 'STEXT' col_pos = 6 )
+      ( fieldname = 'PONUM' col_pos = 7 )
+      ( fieldname = 'VENID' no_out = 'X' )
+      ( fieldname = 'RGTOR' no_out = 'X' )
+    ).
+  ELSE.
+    " 기본 순서
+    lt_field_conf = VALUE #(
+      ( fieldname = 'LIGHT' coltext = TEXT-t01  outputlen = 15 fix_column = 'X' col_pos = 1 )
+      ( fieldname = 'DUDAT' col_pos = 2 )
+      ( fieldname = 'VNAME' col_pos = 3 )
+      ( fieldname = 'PODAT' col_pos = 4 )
+      ( fieldname = 'ENAME' col_pos = 5 coltext = '담당자 이름' )
+      ( fieldname = 'STEXT' col_pos = 6 )
+      ( fieldname = 'PONUM' col_pos = 7 )
+      ( fieldname = 'VENID' no_out = 'X' )
+      ( fieldname = 'RGTOR' no_out = 'X' )
+    ).
+  ENDIF.
+
+  PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0400  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0400 OUTPUT.
+  SET PF-STATUS 'S400'.
+  SET TITLEBAR 'T400'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_CUSTOM_TREE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0223   text
+*      <--P_GO_CON_TREE  text
+*      <--P_GO_ALV_TREE  text
+*----------------------------------------------------------------------*
+FORM create_alv_custom_tree  USING VALUE(p_con) TYPE c
+                 CHANGING  co_con TYPE REF TO cl_gui_custom_container
+                           co_tree TYPE REF TO cl_gui_simple_tree.
+
+  IF co_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT co_con
+    EXPORTING
+*     parent                      =
+      container_name              = p_con
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+
+
+  IF co_tree IS NOT INITIAL. RETURN. ENDIF.
+  CREATE OBJECT co_tree
+    EXPORTING
+*     lifetime            =
+      parent              = co_con
+*     shellstyle          =
+      node_selection_mode = cl_gui_simple_tree=>node_sel_mode_single
+*     hide_selection      =
+*     name                =
+    EXCEPTIONS
+      OTHERS              = 6.
+
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0400 .
+
+  DATA: ls_event TYPE cntl_simple_event,
+        lt_event LIKE TABLE OF ls_event.
+
+  ls_event-eventid = cl_gui_simple_tree=>eventid_node_double_click.
+*  ls_event-appl_event = 'X'. " PAI Event
+  APPEND ls_event TO lt_event.
+  CALL METHOD go_alv_tree->set_registered_events
+    EXPORTING
+      events = lt_event.
+
+  SET HANDLER lcl_handler_tree=>on_node_double_click FOR go_alv_tree.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_TREE_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GO_ALV_TREE  text
+*----------------------------------------------------------------------*
+FORM display_tree_0400  CHANGING co_tree TYPE REF TO cl_gui_simple_tree.
+
+  PERFORM get_tree_data.
+
+  CALL METHOD co_tree->add_nodes
+    EXPORTING
+      table_structure_name = 'MTREESNODE'
+      node_table           = gt_tree
+*  EXCEPTIONS
+*     error_in_node_table  = 1
+*     failed               = 2
+*     dp_error             = 3
+*     table_structure_name_not_found = 4
+*     others               = 5
+    .
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+* Expand Level
+*  CALL METHOD go_tree->expand_root_nodes
+*    EXPORTING
+*      level_count    = 1
+*      expand_subtree = ''.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_TREE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_tree_data .
+
+  IF gt_tree IS NOT INITIAL. RETURN. ENDIF.
+
+  DATA: lv_node_key TYPE tm_nodekey VALUE 1000.
+
+  " 연도 폴더
+  gs_tree-node_key = '1000'.
+  gs_tree-relatkey = ''.
+  gs_tree-isfolder = 'X'.
+  gs_tree-text = '2024'.
+  APPEND gs_tree TO gt_tree.
+
+  LOOP AT gt_vendor INTO DATA(ls_vendor).
+    lv_node_key = lv_node_key + 1.
+
+    CLEAR gs_tree.
+    gs_tree-node_key = ls_vendor-venid.  " 'V1000001'
+    gs_tree-relatkey = '1000'.
+    gs_tree-isfolder = ''.
+    gs_tree-text = ls_vendor-vname.
+    APPEND gs_tree TO gt_tree.
+  ENDLOOP.
+
+ENDFORM.
+
+
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1000'.
+*  gs_tree-isfolder = 'X'. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '2024'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1100'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '현대양념'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1200'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '제일제면'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1300'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '김롯데소스'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1400'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '존윅미트'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1500'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '주나수산'.
+*  APPEND gs_tree TO gt_tree.
+*
+*  CLEAR gs_tree.
+*  gs_tree-node_key = '1600'.
+*  gs_tree-relatkey = '1000'.
+*  gs_tree-isfolder = ''. " Folder Image
+*  gs_tree-expander = ''. " Open
+*  gs_tree-text = '한국제면'.
+*  APPEND gs_tree TO gt_tree.
+*&---------------------------------------------------------------------*
+*&      Form  FREE_TREE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM free_tree .
+
+  FREE: go_alv_tree, go_con_tree.
+  CLEAR : go_alv_tree, go_con_tree.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0400 .
+
+  IF go_con_exp_tree IS INITIAL.
+    PERFORM init_alv_0400.
+  ELSE.
+    PERFORM refresh_alv_0400.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0400 .
+  PERFORM create_alv_custom USING 'CON_TDATA'  CHANGING go_con_exp_tree   go_alv_exp_tree.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0223' gs_layo13 gt_exclude CHANGING gt_vdudat gt_fcat13 gt_sort go_alv_exp_tree.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0400
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0400 .
+  PERFORM refresh_table_display CHANGING go_alv_exp_tree.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT5_CHANGE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat5_change .
+
+
+  DATA : lt_field_conf TYPE TABLE OF ty_field_conf,
+         ls_conf       TYPE ty_field_conf,
+         ls_fcat       TYPE lvc_s_fcat.
+  IF gv_flag2 = 0.
+
+    lt_field_conf = VALUE #(
+    " == 입고 완료 리스트
+     ( fieldname = 'RSTAT' no_out = 'X' )
+     ( fieldname = 'VENID' no_out = 'X' )
+     ( fieldname = 'RGTOR' no_out = 'X' )
+     ( fieldname = 'JENUM' no_out = 'X' )
+     ( fieldname = 'FYEAR' no_out = 'X' )
+     ( fieldname = 'RSTAT_T' col_pos = 1 )
+     ( fieldname = 'GRDAT' col_pos = 2 )
+     ( fieldname = 'VNAME' col_pos = 3 )
+     ( fieldname = 'ENAME' col_pos = 4 )
+     ( fieldname = 'STEXT' col_pos = 5 )
+     ( fieldname = 'RGDAT' col_pos = 6 )
+     ( fieldname = 'GRNUM' col_pos = 7 hotspot = 'X' )
+     ( fieldname = 'LTEXT' coltext = '문서 수정' just = 'C' outputlen = 10 col_pos = 8 )
+   ).
+    PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat5.
+  ELSEIF gv_flag2 = 1.
+    lt_field_conf = VALUE #(
+ " == 입고 완료 리스트
+  ( fieldname = 'RSTAT' no_out = 'X' )
+  ( fieldname = 'VENID' no_out = 'X' )
+  ( fieldname = 'RGTOR' no_out = 'X' )
+  ( fieldname = 'JENUM' no_out = 'X' )
+  ( fieldname = 'FYEAR' no_out = 'X' )
+  ( fieldname = 'GRNUM' hotspot = 'X' )
+  ( fieldname = 'RSTAT_T' col_pos = 1 )
+  ( fieldname = 'VNAME' col_pos = 2 )
+  ( fieldname = 'GRDAT' col_pos = 3 )
+  ( fieldname = 'ENAME' col_pos = 4 )
+  ( fieldname = 'STEXT' col_pos = 5 )
+  ( fieldname = 'RGDAT' col_pos = 6 )
+  ( fieldname = 'GRNUM' col_pos = 7  hotspot = 'X' )
+  ( fieldname = 'LTEXT' coltext = '문서 수정' just = 'C' outputlen = 10 col_pos = 8 )
+).
+    PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat5.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SEARCH_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM search_0100 .
+
+  IF zsssmm0210-grnum IS NOT INITIAL.
+    CLEAR gt_grdata.
+    DATA : lv_grnum  TYPE ztssgrh-grnum,
+           ls_grdata LIKE LINE OF gt_grdata.
+
+    SELECT SINGLE  grnum rstat grdat jenum fyear stext rgdat rgtor
+    INTO CORRESPONDING FIELDS OF ls_grdata
+    FROM ztssgrh
+     WHERE grnum = zsssmm0210-grnum.
+    APPEND ls_grdata TO gt_grdata.
+    PERFORM modify_grdatas TABLES gt_grdata.
+    RETURN .
+  ENDIF.
+
+  IF zsssmm0210-venid IS INITIAL.
+    CLEAR zsssmm0210-vsnme.
+  ENDIF.
+  IF gv_screen = 0.
+    PERFORM get_po_datas USING zsssmm0210.
+    IF gt_podata IS INITIAL.
+      MESSAGE i999(zmcss) WITH '조건과 일치하는 정보가 존재하지 않습니다.'.
+    ENDIF.
+    CLEAR gr_ponum.
+  ELSEIF gv_screen = 1.
+    IF gv_chk1 IS INITIAL AND gv_chk2 = 'X'..
+      PERFORM get_gr_complete USING zsssmm0210.
+    ELSEIF gv_chk1 = 'X' AND gv_chk2 IS INITIAL.
+      PERFORM get_iv_complete USING zsssmm0210.
+    ELSEIF gv_chk1 IS NOT INITIAL AND gv_chk2 IS NOT INITIAL.
+      PERFORM get_gr_datas USING zsssmm0210.
+    ELSE.
+      CLEAR gt_grdata.
+    ENDIF.
+    IF gt_grdata IS INITIAL.
+      MESSAGE i999(zmcss) WITH '조건과 일치하는 정보가 존재하지 않습니다.'.
+    ENDIF.
+  ELSEIF gv_screen = 2.
+    PERFORM get_exp_datas USING zsssmm0210.
+    IF gt_expdata IS INITIAL.
+      MESSAGE i999(zmcss) WITH '조건과 일치하는 정보가 존재하지 않습니다.'.
+    ENDIF.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0310 .
+
+  IF go_con_simple IS INITIAL.
+    PERFORM init_alv_0310.
+  ELSE.
+    PERFORM refresh_alv_0310.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0310 .
+  PERFORM create_alvs_0310.
+  PERFORM display_alv_grid_0310.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALVS_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM create_alvs_0310 .
+  PERFORM create_alv_custom USING 'CON_DETAIL'  CHANGING go_con_simple go_alv_simple.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV_GRID_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv_grid_0310 .
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo12 gt_exclude CHANGING gt_gritem gt_fcat12 gt_sort go_alv_simple.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALV_0310
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alv_0310 .
+  PERFORM refresh_table_display CHANGING go_alv_simple.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

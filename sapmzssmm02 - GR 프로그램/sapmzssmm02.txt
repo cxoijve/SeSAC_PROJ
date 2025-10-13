@@ -20,6 +20,9 @@ INCLUDE mzssmm02f03                             .  " Class-FORM-Routines
 
 LOAD-OF-PROGRAM.
   PERFORM set_default.
+  IF sy-calld = 'X'.
+    perform called_exe.
+  ENDIF.
 
 *GUI Texts
 *----------------------------------------------------------
@@ -29,12 +32,15 @@ LOAD-OF-PROGRAM.
 * T140 --> 담당자 정보 조회
 * T200 --> 입고수정
 * T300 --> 입고 상세 조회
-* T100 --> 입고 프로그램
-* T110 --> 입고하기
-* T120 --> 벤더 정보 조회
-* T140 --> 담당자 정보 조회
-* T200 --> 입고수정
-* T300 --> 입고 상세 조회
+* T310 --> 입고 내역 조회
+* T400 --> 입고 - 벤더별 납기 현황
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: Hard coded
+*   개 PO번호 선택됨
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

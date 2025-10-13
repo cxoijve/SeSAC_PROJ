@@ -7,7 +7,7 @@ PROGRAM sapmzsssd03.
 " Common
 DATA: ok_code    TYPE sy-ucomm,
       gv_subrc   TYPE sy-subrc,
-      gv_dynnr   TYPE sy-dynnr,
+*      gv_dynnr   TYPE sy-dynnr,
       gv_first   TYPE abap_bool,
       gt_toolbar TYPE ui_functions.
 
@@ -16,41 +16,87 @@ DATA : gv_rb_bi  TYPE c VALUE 'X',      " 没备 措惑
        gv_rb_doc TYPE c.                " 没备 巩辑
 
 " Screen 100 - Condition
-DATA: BEGIN OF gs_cond.
-    INCLUDE STRUCTURE zssssd0301.
-DATA: END OF gs_cond,
+DATA: gs_cond TYPE zssssd0301,
       gt_cond LIKE TABLE OF gs_cond.
 
 " Screen 100 - ALV (没备 措惑)
 DATA: BEGIN OF gs_bi,
-        light.
+        light,
+        it_col TYPE lvc_t_scol.
     INCLUDE STRUCTURE zssssd0302.
 DATA: END OF gs_bi,
       gt_bi LIKE TABLE OF gs_bi.
 
 " Screen 100 - ALV (没备 巩辑)
-DATA: BEGIN OF gs_doc.
+DATA: BEGIN OF gs_doc,
+        light,
+        it_col TYPE lvc_t_scol.
     INCLUDE STRUCTURE zssssd0303.
 DATA: END OF gs_doc,
       gt_doc LIKE TABLE OF gs_doc.
 
 " ALV (100)
-DATA: go_con1  TYPE REF TO cl_gui_custom_container,
-      go_split TYPE REF TO cl_gui_splitter_container,
-      go_con_bi TYPE REF TO cl_gui_container,             " 没备 措惑
+DATA: go_con1    TYPE REF TO cl_gui_custom_container,
+      go_split   TYPE REF TO cl_gui_splitter_container,
+      go_con_bi  TYPE REF TO cl_gui_container,             " 没备 措惑
       go_con_doc TYPE REF TO cl_gui_container.            " 没备 巩辑
-DATA: go_alv_bi  TYPE REF TO cl_gui_alv_grid,
+DATA: go_alv_bi   TYPE REF TO cl_gui_alv_grid,
       go_alv_doc  TYPE REF TO cl_gui_alv_grid,
-      gs_layo_bi TYPE lvc_s_layo,
+      gs_layo_bi  TYPE lvc_s_layo,
       gs_layo_doc TYPE lvc_s_layo,
-      gt_fcat_bi TYPE lvc_t_fcat,
-      gs_fcat_bi LIKE LINE OF gt_fcat_bi,
+      gt_fcat_bi  TYPE lvc_t_fcat,
+      gs_fcat_bi  LIKE LINE OF gt_fcat_bi,
       gt_fcat_doc TYPE lvc_t_fcat,
       gs_fcat_doc LIKE LINE OF gt_fcat_doc,
-      gt_sort_bi TYPE lvc_t_sort,
-      gs_sort_bi LIKE LINE OF gt_sort_bi,
+      gt_sort_bi  TYPE lvc_t_sort,
+      gs_sort_bi  LIKE LINE OF gt_sort_bi,
       gt_sort_doc TYPE lvc_t_sort,
       gs_sort_doc LIKE LINE OF gt_sort_doc.
+
+" Screen 200
+DATA: gs_gi_head TYPE zssssd0304,
+      gt_gi_head LIKE TABLE OF gs_gi_head,
+      gt_mat TYPE TABLE OF ztssmat_t,
+      gs_mat LIKE LINE OF gt_mat.
+DATA: gs_head_ist TYPE ztsssivh,
+      gt_head_ist LIKE TABLE OF gs_head_ist.
+
+" Screen 200 - ALV
+DATA: BEGIN OF gs_gi_item.
+    INCLUDE STRUCTURE zssssd0305.
+DATA: END OF gs_gi_item,
+      gt_gi_item LIKE TABLE OF gs_gi_item.
+
+DATA: BEGIN OF gs_item_ist.
+    INCLUDE STRUCTURE zssssd0307.
+DATA: END OF gs_item_ist,
+      gt_item_ist LIKE TABLE OF gs_item_ist.
+
+" ALV (200)
+DATA: go_con2 TYPE REF TO cl_gui_custom_container,
+      go_alv2 TYPE REF TO cl_gui_alv_grid,
+      gs_layo2 TYPE lvc_s_layo,
+      gt_fcat2  TYPE lvc_t_fcat,
+      gs_fcat2  LIKE LINE OF gt_fcat2,
+      gt_sort2 TYPE lvc_t_sort.
+
+" Screen 300
+DATA: gs_iv_head TYPE zssssd0306,
+      gt_iv_head LIKE TABLE OF gs_iv_head.
+
+" Screen 300 - ALV
+DATA: BEGIN OF gs_iv_item.
+    INCLUDE STRUCTURE zssssd0307.
+DATA: END OF gs_iv_item,
+      gt_iv_item LIKE TABLE OF gs_iv_item.
+
+" ALV (300)
+DATA: go_con3 TYPE REF TO cl_gui_custom_container,
+      go_alv3 TYPE REF TO cl_gui_alv_grid,
+      gs_layo3 TYPE lvc_s_layo,
+      gt_fcat3  TYPE lvc_t_fcat,
+      gs_fcat3  LIKE LINE OF gt_fcat3,
+      gt_sort3 TYPE lvc_t_sort.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

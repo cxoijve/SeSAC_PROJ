@@ -1,0 +1,25 @@
+*&---------------------------------------------------------------------*
+*& Report  ZRSSMM02
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrssmm02top                             .    " global Data
+
+INCLUDE zrssmm02s01                             .  " Selection-screen
+INCLUDE zrssmm02o01                             .  " PBO-Modules
+INCLUDE zrssmm02i01                             .  " PAI-Modules
+INCLUDE zrssmm02f01                             .  " FORM-Routines
+
+INITIALIZATION.
+
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_screen.
+
+START-OF-SELECTION.
+  PERFORM get_data.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

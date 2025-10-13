@@ -95,7 +95,28 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM SET_INIT .
 
+  ZSSSFI0301-RRSON_T = '04'.
 
+  ZSSSFI0301-RGDAT_T = SY-DATUM+0(6).  " 전기기간
+
+  DATA: LV_DATE_START TYPE SY-DATUM,
+        LV_LAST_DATE  TYPE SY-DATUM.
+
+  " 전기기간(YYYYMM)에서 '01'일자를 붙여서 날짜 생성
+  CONCATENATE ZSSSFI0301-RGDAT_T '01' INTO LV_DATE_START.
+
+  " 해당 월의 마지막 일자를 구하는 함수 호출
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      DAY_IN            = LV_DATE_START
+    IMPORTING
+      LAST_DAY_OF_MONTH = LV_LAST_DATE.
+
+  " 결과를 전기일 필드에 대입
+  ZSSSFI0301-RGDAT = LV_LAST_DATE.
+
+
+  PERFORM SET_SCREEN_0200.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CREATE_ALV_0200
@@ -160,17 +181,19 @@ FORM SET_FCAT_0200 .
 
   PERFORM FCAT USING:
         'LIGHT' '1' '역분개 여부',
-        'REV' '2' '역분개 여부',
-        'JTYPE' '3' '전표 유형 코드',
-        'JTYPE_T' '4' '전표 유형',
+        'JTYPE_T' '2' '전표 유형',
+        'REV' '3' '역분개 여부',
+        'JTYPE' '4' '전표 유형 코드',
         'FYEAR' '5' '기존 회계연도',
-        'JENUM' '6' '기존 전표번호',
-        'RGDAT' '7' '기존 전기일',
+        'RGDAT' '6' '기존 전기일',
+        'JENUM' '7' '기존 전표번호',
         'STEXT' '8' '비고',
-        'RGTOR_T' '9' '등록자명',
-        'RGTOR' '10' '등록자 코드',
-        'RRSON' '11' '역분개 사유',
-        'RJNUM' '12' '역분개 전표번호'.
+        'TOPRC' '9' '총 금액',
+        'CURKY' '10' '통화키',
+        'RGTOR_T' '11' '등록자명',
+        'RGTOR' '12' '등록자 코드',
+        'RRSON' '13' '역분개 사유',
+        'RJNUM' '14' '역분개 전표번호'.
 
   CLEAR GS_FCAT.
 
@@ -193,6 +216,13 @@ FORM SET_FCAT_0200 .
 
     ELSEIF GS_FCAT-FIELDNAME = 'REV'.
       GS_FCAT-NO_OUT = 'X'.
+
+    ELSEIF GS_FCAT-FIELDNAME = 'RGTOR_T'.
+      GS_FCAT-NO_OUT = 'X'.
+
+    ELSEIF GS_FCAT-FIELDNAME = 'TOPRC'.
+      GS_FCAT-CFIELDNAME = 'CURKY'.
+
 
     ENDIF.
 
@@ -365,15 +395,16 @@ FORM SET_SORT_0300 .
   CLEAR: GT_SORT2, GS_SORT2.
 
   GS_SORT2-SPOS = '1'.
-  GS_SORT2-FIELDNAME = 'RJNUM'.
+  GS_SORT2-FIELDNAME = 'FYEAR'.
   GS_SORT2-DOWN = 'X'.
   APPEND GS_SORT2 TO GT_SORT2.
 
-**
-**  GS_SORT-SPOS = '1'.
-**  GS_SORT-FIELDNAME = 'REV'.
-**  GS_SORT-DOWN = 'X'.
-**  APPEND GS_SORT TO GT_SORT.
+
+  CLEAR GS_SORT2.
+  GS_SORT2-SPOS = '2'.
+  GS_SORT2-FIELDNAME = 'RJNUM'.
+  GS_SORT2-DOWN = 'X'.
+  APPEND GS_SORT2 TO GT_SORT2.
 
 
 ENDFORM.
@@ -391,18 +422,19 @@ FORM SET_FCAT_0300 .
 
   PERFORM FCAT USING:
         'REV' '2' '역분개 여부',
-        'RJNUM' '3' '역분개 전표번호',
-        'RRSON' '4' '역분개 사유',
-        'JTYPE' '5' '전표 유형 코드',
-        'JTYPE_T' '6' '전표 유형',
-        'TOPRC' '7' '총 금액',
-        'CURKY' '8' '통화 키',
-        'RGTOR' '9' '등록자 코드',
-        'RGTOR_T' '10' '등록자명',
-        'REFDOC' '11' '참조문서',
-        'FYEAR' '12' '기존 회계연도',
-        'RGDAT' '13' '기존 전기일',
-        'JENUM' '14' '기존 전표번호',
+        'JTYPE' '3' '전표 유형 코드',
+        'JTYPE_T' '4' '전표 유형',
+        'FYEAR' '5' '회계연도',
+        'RRGDAT' '6' '역분개 전기일',
+        'RJNUM' '7' '역분개 전표번호',
+        'RRSON' '8' '역분개 사유',
+        'RTOPRC' '9' '총 금액',
+        'CURKY' '10' '통화 키',
+        'RGTOR' '11' '등록자 코드',
+        'RGTOR_T' '12' '등록자명',
+        'REFDOC' '13' '참조문서',
+        'RGDAT' '14' '기존 전기일',
+        'JENUM' '15' '기존 전표번호',
         'LIGHT' '1' '역분개 여부'.
 
   CLEAR GS_FCAT.
@@ -412,7 +444,7 @@ FORM SET_FCAT_0300 .
     IF GS_FCAT-FIELDNAME = 'JENUM'.
       GS_FCAT-HOTSPOT = 'X'. " 핫스팟
 
-    ELSEIF GS_FCAT-FIELDNAME = 'TOPRC'.
+    ELSEIF GS_FCAT-FIELDNAME = 'RTOPRC'.
       GS_FCAT-CFIELDNAME = 'CURKY'.
 
     ELSEIF GS_FCAT-FIELDNAME = 'RJNUM'.
@@ -429,6 +461,9 @@ FORM SET_FCAT_0300 .
 
     ELSEIF GS_FCAT-FIELDNAME = 'REV'.
       GS_FCAT-NO_OUT = 'X'.
+
+*    ELSEIF GS_FCAT-FIELDNAME = 'RGTOR_T'.
+*      GS_FCAT-NO_OUT = 'X'.
 
     ENDIF.
 
@@ -518,6 +553,7 @@ FORM GET_TOPRC_INFO .
          FROM ZTSSJEI
          INTO CORRESPONDING FIELDS OF TABLE GT_TOPRC.
 
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  MODIFY_DATA
@@ -603,7 +639,9 @@ FORM MODIFY_RANGE_0200.
   IF ZSSSFI0302-REV IS INITIAL.
     GS_RREV-SIGN   = 'I'.
     GS_RREV-OPTION = 'EQ'.
-    GS_RREV-LOW    = ZSSSFI0302-REV. " SPACE.
+
+    GS_RREV-LOW = ' '. " 공백 (REV이 비어있는 값만)
+*    GS_RREV-LOW    = ZSSSFI0302-REV. " SPACE.
     APPEND GS_RREV TO GT_RREV.
   ENDIF.
 
@@ -714,6 +752,7 @@ FORM SET_SCREEN_0200 .
 
   PERFORM GET_NON_REV_DATA.
 
+
   LOOP AT GT_HDATA INTO GS_HDATA.
     IF GS_HDATA-REV = 'X'.
       GS_HDATA-LIGHT = '1'.
@@ -730,11 +769,17 @@ FORM SET_SCREEN_0200 .
       GS_HDATA-TOPRC = GS_TOPRC-CREDIT.
     ENDIF.
 
+
+
     PERFORM MODIFY_DATA_0200.      " 추가 정보 취득
 
     MODIFY GT_HDATA FROM GS_HDATA.
 
   ENDLOOP.
+
+  DELETE GT_HDATA WHERE TOPRC < 0.
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -754,6 +799,7 @@ FORM SET_SCREEN_0300 .
   PERFORM GET_ALL_JEH_DATA.
 
 
+
   LOOP AT GT_ADATA INTO GS_ADATA.
     IF GS_ADATA-REV = 'X'.
       GS_ADATA-LIGHT = '1'.
@@ -770,7 +816,21 @@ FORM SET_SCREEN_0300 .
       GS_ADATA-TOPRC = GS_TOPRC-CREDIT.
     ENDIF.
 
-    PERFORM MODIFY_DATA_0300.      " 추가 정보 취득
+    " 추가 정보 취득
+    PERFORM MODIFY_DATA_0300.
+
+    " 역분개 전표번호에 해당하는 전기일
+    PERFORM GET_RRGDAT.
+
+    " 역분개 전표번호에 해당하는 총 금액
+    READ TABLE GT_TOPRC INTO GS_TOPRC WITH KEY JENUM = GS_ADATA-RJNUM.
+
+    GS_ADATA-RTOPRC = GS_TOPRC-DEBIT.
+
+    IF GS_ADATA-RTOPRC  = 0.
+      GS_ADATA-RTOPRC = GS_TOPRC-CREDIT.
+    ENDIF.
+
 
     MODIFY GT_ADATA FROM GS_ADATA.
 
@@ -912,6 +972,391 @@ FORM SET_EVENT_0300 .
   SET HANDLER:
   GO_EVENT->DATA_CHANGED FOR GO_ALV2,
   GO_EVENT->HANDLE_HOTSPOT_CLICK FOR GO_ALV2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  F4_RRSON
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM F4_RRSON .
+
+  DATA: LT_RETURN TYPE TABLE OF DDSHRETVAL,
+        LS_RETURN TYPE DDSHRETVAL,
+        LT_TAB    TYPE TABLE OF DFIES,
+        LS_TAB    TYPE DFIES,
+        LT_TEXT   TYPE TABLE OF DSELC,
+        LS_TEXT   TYPE DSELC.
+
+  GT_REV_REASON = VALUE #(
+    ( CODE = '01' )
+    ( CODE = '입력 오류' )
+    ( CODE = '02' )
+    ( CODE = '중복 입력' )
+    ( CODE = '03' )
+    ( CODE = '계정 오류' )
+    ( CODE = '04' )
+    ( CODE = '수정으로 인한 역분개' )
+  ).
+
+  LT_TAB = VALUE #(
+    ( FIELDNAME = 'RRSON_T' OUTPUTLEN = 4 LENG = 4
+      INTLEN = 4 REPTEXT = '코드' )
+    ( FIELDNAME = 'RRSON_TEXT' OUTPUTLEN = 40 LENG = 40
+      INTLEN = 40 REPTEXT = '설명' )
+  ).
+
+  LT_TEXT = VALUE #(
+      ( FLDNAME = 'RRSON_T' DYFLDNAME = 'ZSSSFI0301-RRSON_T')
+      ( FLDNAME = 'RRSON_TEXT' DYFLDNAME = 'ZSSSFI0301-RRSON_TEXT')
+  ).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      RETFIELD        = 'CODE'
+      DYNPPROG        = SY-REPID
+      DYNPNR          = SY-DYNNR
+      DYNPROFIELD     = 'ZSSSFI0301-RRSON_T'
+      VALUE_ORG       = 'C'  " S
+    TABLES
+      VALUE_TAB       = GT_REV_REASON
+      FIELD_TAB       = LT_TAB
+      DYNPFLD_MAPPING = LT_TEXT
+      RETURN_TAB      = LT_RETURN
+    EXCEPTIONS
+      OTHERS          = 1.
+
+  IF SY-SUBRC = 0 AND LT_RETURN IS NOT INITIAL.
+    READ TABLE LT_RETURN INTO LS_RETURN INDEX 1.
+    IF SY-SUBRC = 0.
+      " 선택된 CODE 값을 화면필드에 넣음
+      ZSSSFI0301-RRSON_T = LS_RETURN-FIELDVAL.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_RRGDAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM GET_RRGDAT .
+
+  SELECT SINGLE RGDAT
+    INTO GS_ADATA-RRGDAT
+    FROM ZTSSJEH
+    WHERE RJNUM = GS_ADATA-RJNUM.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SEL_ROWS_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM SEL_ROWS_0200  CHANGING PV_SUBRC.
+  " 행 선택 처리
+  DATA: LV_LINE TYPE I.
+
+  PERFORM GET_SELECTED_ROWS CHANGING GT_ROWS.
+
+  DESCRIBE TABLE GT_ROWS LINES LV_LINE.
+  CASE LV_LINE.
+    WHEN '0'.
+      MESSAGE S999(ZMCSS) WITH '수정할 데이터를 선택해주세요.' DISPLAY LIKE 'E'.
+      PV_SUBRC = 4.
+      RETURN.
+*      EXIT.
+
+    WHEN OTHERS.
+      LOOP AT GT_ROWS INTO GS_ROWS.
+        READ TABLE GT_HDATA INTO GS_HDATA INDEX GS_ROWS-INDEX.
+
+      ENDLOOP.
+
+  ENDCASE.
+
+  READ TABLE GT_HDATA INTO GS_HDATA INDEX GS_ROWS-INDEX .
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_SELECTED_ROWS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_ROWS  text
+*----------------------------------------------------------------------*
+FORM GET_SELECTED_ROWS CHANGING PT_ROWS TYPE LVC_T_ROW.
+
+  CLEAR: PT_ROWS.
+
+  CALL METHOD GO_ALV->GET_SELECTED_ROWS
+    IMPORTING
+      ET_INDEX_ROWS = PT_ROWS.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  F4_RRSON_2  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE F4_RRSON_0201 INPUT.
+
+  PERFORM F4_RRSON_0201.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  F4_RRSON_2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM F4_RRSON_0201 .
+
+  DATA: LT_RETURN TYPE TABLE OF DDSHRETVAL,
+        LS_RETURN TYPE DDSHRETVAL,
+        LT_TAB    TYPE TABLE OF DFIES,
+        LS_TAB    TYPE DFIES,
+        LT_TEXT   TYPE TABLE OF DSELC,
+        LS_TEXT   TYPE DSELC.
+
+  GT_REV_REASON = VALUE #(
+    ( CODE = '01' )
+    ( CODE = '입력 오류' )
+    ( CODE = '02' )
+    ( CODE = '중복 입력' )
+    ( CODE = '03' )
+    ( CODE = '계정 오류' )
+    ( CODE = '04' )
+    ( CODE = '수정으로 인한 역분개' )
+  ).
+
+  LT_TAB = VALUE #(
+    ( FIELDNAME = 'RRSON_T' OUTPUTLEN = 4 LENG = 4
+      INTLEN = 4 REPTEXT = '코드' )
+    ( FIELDNAME = 'RRSON_TT' OUTPUTLEN = 40 LENG = 40
+      INTLEN = 40 REPTEXT = '설명' )
+  ).
+
+  LT_TEXT = VALUE #(
+      ( FLDNAME = 'RRSON_T' DYFLDNAME = 'ZSSSFI0304-RRSON_T')
+      ( FLDNAME = 'RRSON_TT' DYFLDNAME = 'ZSSSFI0304-RRSON_TT')
+  ).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      RETFIELD        = 'CODE'
+      DYNPPROG        = SY-REPID
+      DYNPNR          = SY-DYNNR
+      DYNPROFIELD     = 'ZSSSFI0304-RRSON_T'
+      VALUE_ORG       = 'C'  " S
+    TABLES
+      VALUE_TAB       = GT_REV_REASON
+      FIELD_TAB       = LT_TAB
+      DYNPFLD_MAPPING = LT_TEXT
+      RETURN_TAB      = LT_RETURN
+    EXCEPTIONS
+      OTHERS          = 1.
+
+  IF SY-SUBRC = 0 AND LT_RETURN IS NOT INITIAL.
+    READ TABLE LT_RETURN INTO LS_RETURN INDEX 1.
+    IF SY-SUBRC = 0.
+      " 선택된 CODE 값을 화면필드에 넣음
+      ZSSSFI0304-RRSON_T = LS_RETURN-FIELDVAL.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM INSERT_DATA .
+
+  LOOP AT GT_ROWS INTO GS_ROWS.
+    READ TABLE GT_HDATA INTO GS_HDATA INDEX GS_ROWS-INDEX.
+
+    " 헤더
+    " 전표 번호 채번
+    DATA: LV_NUM(6)   TYPE N,
+          LV_NUM2(13) TYPE C.
+    CALL FUNCTION 'NUMBER_GET_NEXT'
+      EXPORTING
+        NR_RANGE_NR             = '01'
+        OBJECT                  = 'ZNRSSFI01'
+        TOYEAR                  = SY-DATUM+0(4)
+      IMPORTING
+        NUMBER                  = LV_NUM
+      EXCEPTIONS  " M TYPE -> A
+        INTERVAL_NOT_FOUND      = 1
+        NUMBER_RANGE_NOT_INTERN = 2
+        OBJECT_NOT_FOUND        = 3
+        QUANTITY_IS_0           = 4
+        QUANTITY_IS_NOT_1       = 5
+        INTERVAL_OVERFLOW       = 6
+        BUFFER_OVERFLOW         = 7
+        OTHERS                  = 8.
+    IF SY-SUBRC = 0.
+      LV_NUM2 = 'J' && SY-DATUM+0(4) && LV_NUM.
+      WRITE LV_NUM2.
+    ENDIF.
+
+    DATA: LV_MONTH  TYPE CHAR6,
+          LV_START  TYPE SY-DATUM,
+          LV_NEXTMM TYPE CHAR6,
+          LV_NEXT01 TYPE SY-DATUM.
+
+* 1. 기존 전표 월 추출
+    LV_MONTH = GS_HDATA-RGDAT+0(6).
+
+* 2. 다음달 구하기
+
+    DATA: LV_YEAR TYPE CHAR4,
+          LV_MON  TYPE CHAR2.
+    LV_YEAR = LV_MONTH+0(4).
+    LV_MON  = LV_MONTH+4(2).
+
+    LV_MON = LV_MON + 1.
+    IF LV_MON > 12.
+      LV_MON = '01'.
+      LV_YEAR = LV_YEAR + 1.
+    ENDIF.
+    CONCATENATE LV_YEAR LV_MON INTO LV_NEXTMM.
+
+* 3. 다음 달 1일 날짜 만들기
+    CONCATENATE LV_NEXTMM '01' INTO LV_NEXT01.
+
+
+    " 역분개 전표 데이터(REV/RRSON/RJNUM 없음)
+    MOVE-CORRESPONDING GS_HDATA TO GS_ZTSSJEH.
+
+    GS_ZTSSJEH-JENUM = LV_NUM2.
+    GS_ZTSSJEH-RGDAT = LV_NEXT01.
+    GS_ZTSSJEH-RGDAT = LV_NEXT01.
+    GS_ZTSSJEH-RGTOR = 'E0000001'.
+    GS_ZTSSJEH-REV   = ''.
+    GS_ZTSSJEH-RRSON = ''.
+    GS_ZTSSJEH-RJNUM = ''.
+    APPEND GS_ZTSSJEH TO GT_HDATA.
+
+
+    " 1. 헤더 DB INSERT
+    INSERT ZTSSJEH FROM GS_ZTSSJEH.
+    IF SY-SUBRC <> 0.
+      ROLLBACK WORK.
+      MESSAGE S999(ZMCSS) WITH '헤더 생성 오류' DISPLAY LIKE 'E'.
+      EXIT.
+    ELSE.
+      COMMIT WORK.
+    ENDIF.
+
+    " 신규 전표번호/JENUM, FYEAR 저장
+    DATA: LV_NEW_JENUM TYPE ZTSSJEH-JENUM,
+          LV_NEW_FYEAR TYPE ZTSSJEH-FYEAR.
+
+    LV_NEW_JENUM = GS_ZTSSJEH-JENUM.
+    LV_NEW_FYEAR = GS_ZTSSJEH-FYEAR.
+
+
+
+    " 2. 아이템 INSERT (신규 전표번호/연도로 연결)
+    LOOP AT GT_IDATA INTO GS_IDATA WHERE JENUM = GS_HDATA-JENUM.
+
+      CLEAR GS_ZTSSJEI.
+      MOVE-CORRESPONDING GS_IDATA TO GS_ZTSSJEI.
+
+      " 새 전표번호 변경 후 저장
+      GS_ZTSSJEI-JENUM = LV_NEW_JENUM.
+      GS_ZTSSJEI-FYEAR = LV_NEW_FYEAR.
+
+      " 금액 필드는 음수로 전환 (0이면 0 유지)
+      GS_ZTSSJEI-DEBIT  = - ABS( GS_ZTSSJEI-DEBIT ).
+      GS_ZTSSJEI-CREDIT = - ABS( GS_ZTSSJEI-CREDIT ).
+
+      INSERT ZTSSJEI FROM GS_ZTSSJEI.
+
+      IF SY-SUBRC <> 0.
+        ROLLBACK WORK.
+        MESSAGE S999(ZMCSS) WITH '아이템 생성 오류' DISPLAY LIKE 'E'.
+        EXIT.
+      ELSE.
+        COMMIT WORK.
+      ENDIF.
+    ENDLOOP.
+
+
+    " 문자열 템플릿, 호스트 변수 @{} escape 포함
+    DATA(LV_RRSON) = |{ GS_HDATA-JENUM } 수정으로 인한 역분개|.
+
+    UPDATE ZTSSJEH SET REV   = 'X',
+                       RRSON = @LV_RRSON,
+                       RJNUM = @GS_ZTSSJEH-JENUM
+                 WHERE JENUM = @GS_HDATA-JENUM
+                   AND FYEAR = @GS_HDATA-FYEAR.
+
+    IF SY-SUBRC <> 0.
+      MESSAGE S999(ZMCSS) WITH '전표 역분개 필드 업데이트 오류' DISPLAY LIKE 'E'.
+      EXIT.
+    ELSE.
+      COMMIT WORK.
+
+    ENDIF.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_JEI_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM GET_JEI_DATA .
+
+  " 라인아이템 정보 취득
+  SELECT JENUM FYEAR JESEQ DEBIT CREDIT CURKY GLACC
+    FROM ZTSSJEI
+    INTO CORRESPONDING FIELDS OF TABLE GT_IDATA.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DATA_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM SET_DATA_0200 .
+
+  PERFORM GET_JEI_DATA.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALLD_PROCESS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM CALLD_PROCESS .
+
 
 ENDFORM.
 

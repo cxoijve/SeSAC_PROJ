@@ -24,12 +24,69 @@ MODULE user_command_0100 INPUT.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
-
+      PERFORM get_cname.
     WHEN 'SEARCH'.
-      PERFORM get_bi_list.
-      PERFORM get_doc_list.
+      IF gv_rb_bi = 'X'.
+        PERFORM get_bi_list.
+      ELSEIF gv_rb_doc = 'X'.
+        PERFORM get_doc_list.
+      ENDIF.
+    WHEN 'REFRESH'.
+      " 조회 조건 초기화
+      CLEAR: gs_cond-gidat_b, gs_cond-bidat_b, gs_cond-cstid, gs_cond-cname.
+      " 수금여부 체크박스
+      gs_cond-archk_y = 'X'.
+      gs_cond-archk_n = 'X'.
+    WHEN 'BILL'.
+      " 청구하기
+      PERFORM select_row_bi CHANGING gv_subrc.
+      IF gv_subrc EQ 0.
+        MOVE-CORRESPONDING gs_bi TO gs_gi_head.
+*        zssssd0304-curky = 'KRW'.
+        PERFORM get_rgtor_gi.
+        PERFORM get_matnm.    " -> read table
+        PERFORM get_gi_item.
+        PERFORM set_toprc.
+        CALL SCREEN 0200.
+        CLEAR: gs_gi_head, gs_gi_item.
+        PERFORM get_bi_list.
+        PERFORM get_doc_list.
+      ENDIF.
+    WHEN 'DETAIL'.
+      " 청구문서 상세조회
+      PERFORM select_row_doc CHANGING gv_subrc.
+      IF gv_subrc EQ 0.
+        MOVE-CORRESPONDING gs_doc TO gs_iv_head.
+        PERFORM get_rgtor_iv.
+        PERFORM get_iv_item.
+        CALL SCREEN 0300.
+      ENDIF.
     WHEN OTHERS.
 
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
   ENDCASE.
 ENDMODULE.
 

@@ -8,25 +8,28 @@ SAPMZSSMD04
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD04                             0100 0100      5121192 37  0  0 27209  0G E                              20250915161656																																
+SAPMZSSMD04                             0100 0100      4121192 37  0  0 27210  0G E                              20251012234016																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_1		CHAR	121	00	00	00	30	00	  2	  2		  0	  0	  0		  4	R				  0	  0	102							CONDITION		
-ZSSSMD04002-CSTID	2	CHAR	 20	30	00	04	30	00	  3	  4		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
-ZSSSMD04002-CSTID	C	CHAR	  8	A0	00	8C	00	08	  3	 25		  0	  0	  0		  0					 16	  0								________	X                                      00	
-ZSSSMD04002-CNAME	C	CHAR	 24	B0	02	80	31	00	  3	 34		  0	  0	  0		  0					 80	  0								________________________	                                       00	
-ZSSSMD04002-PENID	2	CHAR	 10	30	00	04	30	00	  3	 61		  0	  0	  0		  0					  0	  0								우리회사담당자 코드	                                                                                                                                                                                                                                                        X	
-ZSSSMD04002-PENID	C	CHAR	  8	A0	00	8C	00	08	  3	 82		  0	  0	  0		  0					 16	  0			ZSHSSMD07					________	X                                      00	
-ZSSSMD04002-NAME	C	CHAR	 20	A0	02	80	31	00	  3	 91		  0	  0	  0		  0					 40	  0								____________________	                                       00	
-ZSSSMD04002-CTYPE	2	CHAR	 20	30	00	01	30	00	  4	 61		  0	  0	  0		  0					  0	  0								온오프라인 여부	                                                                                                                                                                                                                                                        X	
-ZSSSMD04002-CTYPE	C	CHAR	  1	A0	00	81	00	08	  4	 82		  0	  0	  0		  0					  2	  0								_	X                                      00	
-CON			176	00	00	00	30	00	  9	  2		  0	  0	  0		 14	U				  1	  1	103									
+B_BOX_1		CHAR	135	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	103							CONDITION		
+ZSSSMD04002-CSTID	0	CHAR	  9	30	00	04	30	00	  2	  3		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
+ZSSSMD04002-CSTID	C	CHAR	  8	A0	00	8C	00	08	  2	 13		  0	  0	  0		  0					 16	  0			ZSHSSMD11					________	X                                      00	
+ZSSSMD04002-CNAME	C	CHAR	 24	B0	02	80	31	00	  2	 22		  0	  0	  0		  0					 80	  0								________________________	                                       00	
+ZSSSMD04002-PENID	0	CHAR	 14	30	00	04	30	00	  2	 55		  0	  0	  0		  0					  0	  0								우리회사담당자	                                                                                                                                                                                                                                                        X	
+ZSSSMD04002-PENID	C	CHAR	  8	A0	00	8C	00	08	  2	 70		  0	  0	  0		  0					 16	  0			ZSHSSMD07					________	X                                      00	
+ZSSSMD04002-NAME	C	CHAR	 20	A0	02	80	31	00	  2	 79		  0	  0	  0		  0					 40	  0								____________________	                                       00	
+B_TXT_1	0	CHAR	  6	00	00	00	30	00	  3	 55		  0	  0	  0		  0					  0	  0								온라인		
+ZSSSMD04002-CHECK	C	CHAR	  1	A0	00	80	00	00	  3	 62		  0	  0	  0		  0	C				  2	  0	104							_	                                       00	
+B_TXT_2	0	CHAR	  8	00	00	00	30	00	  3	 66		  0	  0	  0		  0					  0	  0								오프라인		
+ZSSSMD04002-CHEKE	C	CHAR	  1	A0	00	80	00	00	  3	 75		  0	  0	  0		  0	C				  2	  0	105							_	                                       00	
+CON			135	00	00	00	30	00	  5	  2		  0	  0	  0		 14	U				  1	  1	101									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0100.																																
   MODULE set_alv_0100.																																
+  MODULE set_default_0100.																																
 *																																
 PROCESS AFTER INPUT.																																
   MODULE exit AT EXIT-COMMAND.																																

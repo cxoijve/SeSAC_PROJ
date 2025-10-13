@@ -25,7 +25,22 @@ DATA : gv_radio_vname TYPE c VALUE 'X',
 DATA : gr_dudat TYPE RANGE OF ztsspoh-dudat,
        gr_grdat TYPE RANGE OF ztssgrh-grdat.
 
+DATA : gr_ponum TYPE RANGE OF ztsspoh-ponum.
+
 DATA : gt_po_header TYPE STANDARD TABLE OF ztsspoh.
+
+DATA : gv_rgtor TYPE ztssemp-pernr.
+
+DATA : gv_chk1(1),
+       gv_chk2(1).
+
+DATA : gv_flag(1),
+       gv_flag2(1).
+
+DATA : gv_delay_rate TYPE p DECIMALS 2.
+
+DATA : gv_call_num type zessgrnum,
+       gv_call_auto type c.
 
 *-----------------------------------------------
 * ALV
@@ -79,6 +94,26 @@ DATA: go_con_gr_top    TYPE REF TO cl_gui_container,  " 좌측 (GR List)
 DATA: go_alv_gr_list TYPE REF TO cl_gui_alv_grid,  " GR 목록
       go_alv_gr_item TYPE REF TO cl_gui_alv_grid.  " GR 아이템
 
+
+* ============================================
+* 102번 - 납기일 만료 리스트
+* ============================================
+
+* Custom Container
+DATA : go_cust_exp TYPE REF TO cl_gui_custom_container.
+
+* Split Container
+DATA : go_split_exp TYPE REF TO cl_gui_splitter_container.
+
+* Container
+DATA : go_con_exp_left  TYPE REF TO cl_gui_container,
+       go_con_exp_right TYPE REF TO cl_gui_container.
+
+* ALV grids
+DATA : go_alv_exp_list TYPE REF TO cl_gui_alv_grid,
+       go_alv_exp_item TYPE REF TO cl_gui_alv_grid.
+
+
 * ============================================
 * 200번 - 입고수정
 * ============================================
@@ -100,9 +135,32 @@ DATA : go_con_detail TYPE REF TO cl_gui_custom_container,
 
 
 " 302번
-
 DATA : go_con_vnprc TYPE REF TO cl_gui_custom_container,
        go_alv_vnprc TYPE REF TO cl_gui_alv_grid.
+
+* ============================================
+* 310번 - 입고상세조회(간단버전)
+* ============================================
+
+DATA : go_con_simple TYPE REF TO cl_gui_custom_container,
+       go_alv_simple TYPE REF TO cl_gui_alv_grid.
+
+
+* ============================================
+* 400번 - 벤더별 납기일 정보
+* ============================================
+
+* Tree Object
+DATA : go_con_tree TYPE REF TO cl_gui_custom_container,
+       go_alv_tree TYPE REF TO cl_gui_simple_tree.
+
+* Tree Node
+DATA : gs_tree TYPE mtreesnode,
+       gt_tree LIKE TABLE OF gs_tree.
+
+DATA : go_con_exp_tree TYPE REF TO cl_gui_custom_container,
+       go_alv_exp_tree TYPE REF TO cl_gui_alv_grid.
+
 
 
 
@@ -166,6 +224,28 @@ gt_gritem LIKE TABLE OF gs_gritem.
 
 
 * ============================================
+* 103번 - 데이터 (납기일 만료 리스트)
+* ============================================
+
+DATA : BEGIN OF gs_expdata,
+         color(4),
+         it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0221.
+DATA : END OF gs_expdata,
+gt_expdata LIKE TABLE OF gs_expdata.
+
+
+DATA : BEGIN OF gs_expitem,
+         light,
+         it_col   TYPE lvc_t_scol,
+         color(4).
+    INCLUDE TYPE zsssmm0222.
+DATA : END OF gs_expitem,
+gt_expitem LIKE TABLE OF gs_expitem.
+
+
+
+* ============================================
 * 200번 - 데이터
 * ============================================
 
@@ -202,6 +282,18 @@ DATA : BEGIN OF gs_vnprc,
     INCLUDE TYPE zsssmm0219.
 DATA : END OF gs_vnprc,
 gt_vnprc LIKE TABLE OF gs_vnprc.
+
+* ============================================
+* 400번 - 데이터
+* ============================================
+
+" 벤더별 납기 현황
+DATA : BEGIN OF gs_vdudat.
+    INCLUDE TYPE zsssmm0223.
+DATA : END OF gs_vdudat,
+gt_vdudat LIKE TABLE OF gs_vdudat.
+
+
 
 
 * ============================================
@@ -249,12 +341,35 @@ DATA : gs_layo9 TYPE lvc_s_layo,
        gs_fcat9 TYPE lvc_s_fcat.
 
 
+" 납기일 만료 리스트
+DATA : gs_layo10 TYPE lvc_s_layo,
+       gt_fcat10 TYPE lvc_t_fcat,
+       gs_fcat10 TYPE lvc_s_fcat.
+
+" 납기일 만료 아이템
+DATA : gs_layo11 TYPE lvc_s_layo,
+       gt_fcat11 TYPE lvc_t_fcat,
+       gs_fcat11 TYPE lvc_s_fcat.
+
+" 입고 상세 조회 아이템
+DATA : gs_layo12 TYPE lvc_s_layo,
+       gt_fcat12 TYPE lvc_t_fcat,
+       gs_fcat12 TYPE lvc_s_fcat.
+
+
+" 벤더별 납기 현황
+DATA : gs_layo13 TYPE lvc_s_layo,
+       gt_fcat13 TYPE lvc_t_fcat,
+       gs_fcat13 TYPE lvc_s_fcat.
+
 
 DATA : gt_sort TYPE lvc_t_sort,
        gs_sort TYPE lvc_s_sort.
 
-
-
+DATA : gt_sort_polist TYPE lvc_t_sort,
+       gs_sort_polist TYPE lvc_s_sort.
+DATA : gt_sort_grlist TYPE lvc_t_sort,
+       gs_sort_grlist TYPE lvc_s_sort.
 
 
 * ============================================
@@ -288,7 +403,7 @@ DATA : gv_gr_num TYPE c LENGTH 11,
 
 " Domain
 DATA : gt_dd07v TYPE TABLE OF dd07v.
-DATA : gv_temp_edit type c.
+DATA : gv_temp_edit TYPE c.
 
 " field - catalog types
 
@@ -313,10 +428,14 @@ TYPES : BEGIN OF ty_field_conf,
           style      TYPE lvc_style,
           col_pos    TYPE i,
           lzero      TYPE c,
+          do_sum     type lvc_dosum,
         END OF ty_field_conf. " 프로그램 타입
 
 
 TYPES : ty_t_field_conf TYPE TABLE OF ty_field_conf.
+
+DATA : gt_vendor TYPE TABLE OF ztssvend,
+       gs_vendor LIKE LINE OF gt_vendor.
 
 * ============================================
 * COND
@@ -350,9 +469,18 @@ CLASS lcl_event_handler DEFINITION FINAL.
       handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
       handle_data_changed FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
       handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
-      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column,
+      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column sender,
       handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
 ENDCLASS.
+
+CLASS lcl_handler_tree DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-METHODS on_node_double_click FOR EVENT node_double_click OF cl_gui_simple_tree IMPORTING node_key.
+ENDCLASS.
+
+
+
 
 CLASS lcl_layout_builder DEFINITION.
   PUBLIC SECTION.
