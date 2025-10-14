@@ -997,7 +997,9 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
          ls_ztssreq      TYPE ztssreq,
          lv_updatability TYPE i VALUE 0,
          lt_ztssreq      TYPE TABLE OF ztssreq WITH HEADER LINE,
-         lv_tabix        LIKE sy-tabix.
+         lv_tabix        LIKE sy-tabix,
+         lv_tabix_s      TYPE string,
+         lv_tmpraw       TYPE zessmatnr.
 
   DESCRIBE TABLE pt_info_0300r LINES lt_lines.
   IF lt_lines NE pv_info_0300r.
@@ -1026,10 +1028,40 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
   ENDIF.
 
   LOOP AT pt_info_0300r.
-    CLEAR : ls_ztssreq, lv_tabix.
+    CLEAR : ls_ztssreq, lv_tabix, lv_tmpraw.
     lv_tabix = sy-tabix.
+    lv_tabix_s = lv_tabix.
+
+    CONCATENATE 'C' lv_tabix_s INTO lv_tmpraw.
 
     MOVE-CORRESPONDING pt_info_0300r TO ls_ztssreq.
+    READ TABLE lt_ztssreq INDEX lv_tabix.
+
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE a999(zmcss) WITH '<update_req>' '치명적인 에러가 발생했습니다. 아이템의 갯수가 맞지 않습니다.'.
+    ENDIF.
+
+    UPDATE ztssreq SET rawnr = lv_tmpraw
+      WHERE prdnr = ps_cond_0300-matnr AND rawnr = lt_ztssreq-rawnr.
+
+    IF sy-subrc <> 0.
+      ROLLBACK WORK.
+      MESSAGE i999(zmcss) WITH 'CHANGING TMP ERROR!'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+  LOOP AT pt_info_0300r.
+    CLEAR : ls_ztssreq, lv_tabix, lv_tmpraw.
+    lv_tabix = sy-tabix.
+    lv_tabix_s = lv_tabix.
+
+    CONCATENATE 'C' lv_tabix_s INTO lv_tmpraw.
+
+    MOVE-CORRESPONDING pt_info_0300r TO ls_ztssreq.
+
 
     READ TABLE lt_ztssreq INDEX lv_tabix.
 
@@ -1039,15 +1071,30 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
     ENDIF.
 
     UPDATE ztssreq SET rawnr = ls_ztssreq-rawnr amount = ls_ztssreq-amount
-      WHERE prdnr = ps_cond_0300-matnr AND rawnr = lt_ztssreq-rawnr.
+      WHERE prdnr = ps_cond_0300-matnr AND rawnr = lv_tmpraw.
 
     IF sy-subrc <> 0.
-      ROLLBACK WORK.
-      MESSAGE i999(zmcss) WITH '<update_req>' '변경이 실패했습니다'.
-      pv_subrc = 4.
-      RETURN.
+      CONTINUE.
+      "ROLLBACK WORK.
+      "MESSAGE i999(zmcss) WITH '<update_req>' '변경이 실패했습니다'.
+*      pv_subrc = 4.
+*      RETURN.
     ENDIF.
   ENDLOOP.
+
+  CLEAR lt_ztssreq[].
+  SELECT prdnr rawnr amount meins
+    FROM ztssreq
+    INTO CORRESPONDING FIELDS OF TABLE lt_ztssreq
+    WHERE prdnr = ps_cond_0300-matnr.
+  DESCRIBE TABLE lt_ztssreq LINES lt_lines.
+
+  IF lt_lines NE pv_info_0300r.
+    MESSAGE i999(zmcss) WITH '변경에 실패했습니다.'.
+    ROLLBACK WORK.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
 
   COMMIT WORK.
   MESSAGE i999(zmcss) WITH '<update_req> 완제품' ps_cond_0300-matnm '의 레시피를 변경했습니다'.

@@ -806,6 +806,412 @@ FORM get_iv_item .
     INTO TABLE gt_iv_item
    WHERE binum EQ gs_iv_head-binum.
 ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT4
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat4 .
+  CLEAR gt_fcat4.
+
+  gs_fcat4-fieldname = 'BISEQ'.
+  gs_fcat4-coltext = '청구 아이템번호'.
+  gs_fcat4-outputlen = 3.
+  gs_fcat4-lzero = 'X'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+
+  gs_fcat4-fieldname = 'GISEQ'.
+  gs_fcat4-coltext = '출고 아이템번호'.
+  gs_fcat4-outputlen = 3.
+  gs_fcat4-lzero = 'X'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+
+  gs_fcat4-fieldname = 'BIPRC'.
+  gs_fcat4-coltext = '가격'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+
+  gs_fcat4-fieldname = 'DEL'.
+  gs_fcat4-no_out = 'X'.
+  APPEND gs_fcat4 TO gt_fcat4.
+  CLEAR gs_fcat4.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PERNR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_pernr .
+  DATA: lv_lname TYPE char20,
+        lv_fname TYPE char20,
+        lv_ename TYPE char20,
+        lv_persg TYPE char1.
+  DATA: ls_dom TYPE dd07v,
+        lt_dom TYPE TABLE OF dd07v.
+
+  " 사원명, 직급 가져오기
+  SELECT SINGLE lname fname persg
+    FROM ztssemp
+    INTO (lv_lname, lv_fname, lv_persg)
+   WHERE pernr = gs_head_ist-rgtor.
+
+  CONCATENATE lv_lname lv_fname INTO lv_ename.
+  gs_head_ist-ename = lv_ename.
+  gs_head_ist-persg = lv_persg.
+
+  " 직급 fixed value
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZDSSPERSG'
+    TABLES
+      values_tab      = lt_dom
+    EXCEPTIONS
+      no_values_found = 1
+      OTHERS          = 2.
+
+  READ TABLE lt_dom WITH KEY domvalue_l = gs_head_ist-persg INTO ls_dom.
+  IF sy-subrc EQ 0.
+    gs_head_ist-persg_t = ls_dom-ddtext.
+  ENDIF.
+
+  CLEAR: lv_lname, lv_fname, lv_ename, lv_persg, ls_dom, lt_dom.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_BI_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_bi_item .
+  DATA lv_seq TYPE numc3.
+
+  LOOP AT gt_gi_item INTO gs_gi_item.
+    lv_seq = lv_seq + 1.
+
+    CLEAR gs_item_ist.
+    gs_item_ist-biseq = lv_seq.
+    gs_item_ist-ginum = gs_gi_head-ginum.
+    gs_item_ist-giseq = gs_gi_item-giseq.
+    gs_item_ist-biprc = gs_gi_item-amount * gs_gi_item-soprc.
+    gs_item_ist-curky = gs_gi_item-curky.
+    gs_item_ist-del = ''.
+
+    APPEND gs_item_ist TO gt_item_ist.
+  ENDLOOP.
+  CLEAR lv_seq.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_BI_HEAD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_bi_head .
+  " 출고헤더 정보를 청구헤더에 매핑
+  gs_head_ist-cstid = gs_gi_head-cstid.
+  gs_head_ist-cname = gs_gi_head-cname.
+  gs_head_ist-toprc = gs_gi_head-toprc.
+  gs_head_ist-curky = 'KRW'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALL_SAVE_POPUP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM call_back_popup .
+  DATA lv_answer TYPE char1.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '청구'
+      text_question         = '청구문서를 저장하지 않고 나가시겠습니까?'
+      text_button_1         = '예'
+*     ICON_BUTTON_1         = ' '
+      text_button_2         = '아니오'
+*     ICON_BUTTON_2         = ' '
+      default_button        = '2'
+      display_cancel_button = 'X'
+    IMPORTING
+      answer                = lv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+  IF lv_answer = '1'.       " 예
+    LEAVE TO SCREEN 0.
+  ELSEIF lv_answer = '2'.   " 아니오
+    RETURN.
+  ENDIF.
+  CLEAR lv_answer.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALL_SAVE_POPUP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM call_save_popup .
+  DATA lv_answer TYPE char1.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '청구'
+      text_question         = '대금을 청구하시겠습니까?'
+      text_button_1         = '예'
+*     ICON_BUTTON_1         = ' '
+      text_button_2         = '아니오'
+*     ICON_BUTTON_2         = ' '
+      default_button        = '2'
+      display_cancel_button = 'X'
+    IMPORTING
+      answer                = lv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+  IF lv_answer = '1'.       " 예
+    PERFORM insert_doc CHANGING gv_subrc.
+    IF gv_subrc EQ 0.
+      PERFORM insert_je.
+    ENDIF.
+    CLEAR gv_subrc.
+  ELSEIF lv_answer = '2'.   " 아니오
+    RETURN.
+  ENDIF.
+  CLEAR lv_answer.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_DOC
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_doc CHANGING cv_subrc TYPE sy-subrc.
+  DATA: ls_head TYPE ztsssivh,
+        ls_item TYPE ztsssivi.
+
+  " 청구문서 번호 Number Range
+  PERFORM set_binum.
+
+  " DB Insert
+  CLEAR ls_head.
+  MOVE-CORRESPONDING gs_head_ist TO ls_head.
+  INSERT ztsssivh FROM ls_head.
+
+  IF sy-subrc EQ 0.
+    LOOP AT gt_item_ist INTO gs_item_ist.
+      CLEAR ls_item.
+      MOVE-CORRESPONDING gs_item_ist TO ls_item.
+      ls_item-binum = gs_head_ist-binum.
+      INSERT ztsssivi FROM ls_item.
+    ENDLOOP.
+    COMMIT WORK.
+    MESSAGE i999(zmcss) WITH '청구문서' gs_head_ist-binum '생성 성공' DISPLAY LIKE 'S'.
+    cv_subrc = 0.   " 성공
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '청구문서 생성 실패' DISPLAY LIKE 'E'.
+    cv_subrc = 4.   " 실패,
+    RETURN.
+  ENDIF.
+  CLEAR: ls_head, ls_item.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_BINUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_binum .
+  DATA: lv_number TYPE n LENGTH 6,   " 넘버링 번호
+        lv_char   TYPE char6.
+
+  CLEAR lv_number.
+
+  " 넘버레인지에서 다음 번호 가져오기
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSSD03'
+*     toyear                  = sy-datum(4)   " 연도별 관리 → 2025
+*     quantity                = '1'
+    IMPORTING
+      number                  = lv_number
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc EQ 0.
+    lv_char = lv_number.
+    " 최종 청구문서 번호 = 'B' + 연도 + 넘버링
+    CONCATENATE 'B' sy-datum(4) lv_char INTO gs_head_ist-binum.
+  ELSE.
+    MESSAGE e999(zmcss) WITH '청구문서 번호 생성 실패'.
+    EXIT.
+  ENDIF.
+  CLEAR: lv_number, lv_char.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_JENUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_jenum .
+  DATA: lv_number TYPE n LENGTH 6.   " 넘버링 번호
+
+  " 넘버레인지에서 다음 번호 가져오기
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr             = '01'
+      object                  = 'ZNRSSFI01'
+      toyear                  = sy-datum(4)
+    IMPORTING
+      number                  = lv_number
+    EXCEPTIONS
+      interval_not_found      = 1
+      number_range_not_intern = 2
+      object_not_found        = 3
+      quantity_is_0           = 4
+      quantity_is_not_1       = 5
+      interval_overflow       = 6
+      buffer_overflow         = 7
+      OTHERS                  = 8.
+
+  IF sy-subrc EQ 0.
+    " 최종 전표 번호 = 'J' + 연도 + 넘버링
+    gv_number = 'J' && sy-datum(4) && lv_number.
+*    gs_jeh-jenum = lv_char.
+*    gs_jeh-fyear = sy-datum(4).
+  ELSE.
+    MESSAGE e999(zmcss) WITH '전표번호 생성 실패'.
+    EXIT.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_JE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_je .
+  " 전표 번호 Number Range
+  PERFORM set_jenum.
+
+  " DB Insert - 전표 헤더
+  CLEAR gs_jeh.
+  gs_jeh-jenum = gv_number.
+  gs_jeh-fyear = sy-datum(4).
+  gs_jeh-jtype = 'DR'.
+  gs_jeh-stext = gs_head_ist-binum && ' 의 자동전표'.
+  gs_jeh-curky = 'KRW'.
+  gs_jeh-rgdat = sy-datum.
+
+  INSERT ztssjeh FROM gs_jeh.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '전표 생성 실패' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  " DB Insert - 전표 아이템
+  CLEAR gs_jei.
+  gs_jei-jenum = gv_number.
+  gs_jei-fyear = sy-datum(4).
+  gs_jei-jeseq = '001'.
+  gs_jei-debit = gs_head_ist-toprc.
+  gs_jei-credit = 0.
+  gs_jei-curky = 'KRW'.
+  gs_jei-glacc = '140000'.      " 매출채권
+  APPEND gs_jei TO gt_jei.
+
+  CLEAR gs_jei.
+  gs_jei-jenum = gv_number.
+  gs_jei-fyear = sy-datum(4).
+  gs_jei-jeseq = '002'.
+  gs_jei-debit = 0.
+  gs_jei-credit = gs_head_ist-toprc.
+  gs_jei-curky = 'KRW'.
+  gs_jei-glacc = '410000'.      " 매출
+  APPEND gs_jei TO gt_jei.
+
+  INSERT ztssjei FROM TABLE gt_jei.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '전표 생성 실패' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  " 청구 헤더에 전표번호, 회계연도 Update
+  UPDATE ztsssivh
+     SET jenum = gv_number
+         fyear = sy-datum(4)
+     WHERE binum = gs_head_ist-binum.
+  IF sy-subrc <> 0.
+    ROLLBACK WORK.
+    MESSAGE i999(zmcss) WITH '청구문서 전표번호 업데이트 실패' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  COMMIT WORK.
+  MESSAGE i999(zmcss) WITH '전표' gv_number '생성 완료' DISPLAY LIKE 'S'.
+  PERFORM refresh_alv CHANGING go_alv_bi.
+  PERFORM refresh_alv CHANGING go_alv_doc.
+  CLEAR gv_number.
+  LEAVE TO SCREEN 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_DATE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM check_date CHANGING cv_ok TYPE char1.
+  cv_ok = ''.
+
+  " 청구일 체크
+  IF gs_head_ist-bidat < gs_gi_head-gidat OR gs_head_ist-bidat > sy-datum.
+    MESSAGE s999(zmcss) WITH '청구일은 출고일과 오늘 날짜 사이여야 합니다.' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  " 등록일 체크
+  IF gs_head_ist-rgdat < gs_gi_head-gidat OR gs_head_ist-bidat > sy-datum.
+    MESSAGE s999(zmcss) WITH '등록일은 출고일과 오늘 날짜 사이여야 합니다.' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  cv_ok = 'X'.      " 날짜 모두 정상
+ENDFORM.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

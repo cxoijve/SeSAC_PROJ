@@ -19,7 +19,7 @@ DATA : gv_rb_bi  TYPE c VALUE 'X',      " 청구 대상
 DATA: gs_cond TYPE zssssd0301,
       gt_cond LIKE TABLE OF gs_cond.
 
-" Screen 100 - ALV (청구 대상)
+" Screen 100 - ALV (출고 문서)
 DATA: BEGIN OF gs_bi,
         light,
         it_col TYPE lvc_t_scol.
@@ -58,16 +58,20 @@ DATA: gs_gi_head TYPE zssssd0304,
       gt_gi_head LIKE TABLE OF gs_gi_head,
       gt_mat TYPE TABLE OF ztssmat_t,
       gs_mat LIKE LINE OF gt_mat.
-DATA: gs_head_ist TYPE ztsssivh,
+DATA: gs_head_ist TYPE zssssd0306,        " 청구헤더(insert)
       gt_head_ist LIKE TABLE OF gs_head_ist.
+DATA: gt_jeh LIKE TABLE OF ztssjeh,       " 전표헤더
+      gs_jeh LIKE LINE OF gt_jeh,
+      gt_jei LIKE TABLE OF ztssjei,       " 전표아이템
+      gs_jei LIKE LINE OF gt_jei.
+DATA: gv_number TYPE char11.
 
 " Screen 200 - ALV
 DATA: BEGIN OF gs_gi_item.
     INCLUDE STRUCTURE zssssd0305.
 DATA: END OF gs_gi_item,
       gt_gi_item LIKE TABLE OF gs_gi_item.
-
-DATA: BEGIN OF gs_item_ist.
+DATA: BEGIN OF gs_item_ist.               " 청구아이템(insert)
     INCLUDE STRUCTURE zssssd0307.
 DATA: END OF gs_item_ist,
       gt_item_ist LIKE TABLE OF gs_item_ist.
@@ -79,6 +83,12 @@ DATA: go_con2 TYPE REF TO cl_gui_custom_container,
       gt_fcat2  TYPE lvc_t_fcat,
       gs_fcat2  LIKE LINE OF gt_fcat2,
       gt_sort2 TYPE lvc_t_sort.
+DATA: go_con4 TYPE REF TO cl_gui_custom_container,
+      go_alv4 TYPE REF TO cl_gui_alv_grid,
+      gs_layo4 TYPE lvc_s_layo,
+      gt_fcat4  TYPE lvc_t_fcat,
+      gs_fcat4  LIKE LINE OF gt_fcat4,
+      gt_sort4 TYPE lvc_t_sort.
 
 " Screen 300
 DATA: gs_iv_head TYPE zssssd0306,

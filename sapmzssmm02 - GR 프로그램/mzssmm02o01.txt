@@ -59,6 +59,14 @@ MODULE set_alv_0102 OUTPUT.
     EXCEPTIONS
       finished       = 1
       OTHERS         = 2.
+  PERFORM refresh_table_display CHANGING go_alv_po_items.
+  CALL METHOD go_alv_po_items->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE #( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'
+    EXCEPTIONS
+      finished       = 1
+      OTHERS         = 2.
 
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -223,7 +231,7 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE set_alv_0310 OUTPUT.
-  perform set_alv_0310.
+  PERFORM set_alv_0310.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

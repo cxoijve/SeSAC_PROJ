@@ -130,6 +130,16 @@ ENDMODULE.
 MODULE status_0200 OUTPUT.
   SET PF-STATUS 'S200'.
   SET TITLEBAR 'T200'.
+
+  " 청구일 기본값 설정
+  IF gs_head_ist-bidat IS INITIAL.
+    gs_head_ist-bidat = sy-datum.
+  ENDIF.
+
+  " 등록일 기본값 설정
+  IF gs_head_ist-rgdat IS INITIAL.
+    gs_head_ist-rgdat = sy-datum.
+  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0300  OUTPUT
@@ -162,6 +172,23 @@ MODULE set_alv_0200 OUTPUT.
   ELSE.
     PERFORM refresh_alv CHANGING go_alv2.
   ENDIF.
+
+  IF go_con4 IS INITIAL.
+    PERFORM create_alv USING 'CON4'
+                       CHANGING go_con4
+                                go_alv4.
+    PERFORM set_layo USING ''
+                     CHANGING gs_layo4.
+    PERFORM set_fcat4.
+    PERFORM display_alv USING 'ZSSSSD0307'
+                        CHANGING go_alv4
+                                 gs_layo4
+                                 gt_item_ist
+                                 gt_fcat4
+                                 gt_sort4.
+  ELSE.
+    PERFORM refresh_alv CHANGING go_alv4.
+  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  SET_ALV_0300  OUTPUT
@@ -185,6 +212,26 @@ MODULE set_alv_0300 OUTPUT.
   ELSE.
     PERFORM refresh_alv CHANGING go_alv3.
   ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  GET_PERNR_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE get_pernr_0200 OUTPUT.
+  DATA lv_pernr TYPE ztssemp-pernr.
+
+  CALL FUNCTION 'Z_FMSS_GET_PERNR'
+    EXPORTING
+      iv_id     = sy-uname
+      iv_module = 'WM'
+    IMPORTING
+      ev_pernr  = lv_pernr.
+
+  gs_head_ist-rgtor = lv_pernr.
+
+  " 사원 정보 가져오기
+  PERFORM get_pernr.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

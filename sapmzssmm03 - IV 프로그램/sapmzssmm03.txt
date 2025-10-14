@@ -22,6 +22,31 @@ LOAD-OF-PROGRAM.
   PERFORM get_domain_fixed_value  TABLES gt_fval
                                   USING  'ZDSSPERSG'.
 
+
+  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                        CHANGING gv_begda.
+
+  zsssmm03003-begda = gv_begda.
+  zsssmm03003-endda = sy-datum.
+  zsssmm03003-check = 'x'.
+  zsssmm03003-cheke = 'x'.
+
+  "CONDITION 유효성 검사
+  PERFORM get_pernr_logi.
+  PERFORM check_tab2_field CHANGING gv_subrc.
+  IF gv_subrc <> 0.
+    CLEAR gv_subrc.
+    RETURN.
+  ENDIF.
+
+  "ALV 데이터 생성
+  PERFORM check_alv_condition.
+  PERFORM get_gr_data CHANGING gv_subrc.
+  IF gv_subrc = 4.
+    CLEAR zsssmm03003.
+    CLEAR gv_subrc.
+  ENDIF.
+
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 송장검증 프로그램

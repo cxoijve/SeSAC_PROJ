@@ -47,8 +47,11 @@ MODULE user_command_0100 INPUT.
         PERFORM get_matnm.    " -> read table
         PERFORM get_gi_item.
         PERFORM set_toprc.
+
+        PERFORM get_bi_head.
+        PERFORM get_bi_item.
         CALL SCREEN 0200.
-        CLEAR: gs_gi_head, gs_gi_item.
+        CLEAR: gs_gi_head, gt_gi_item, gs_head_ist, gt_item_ist.
         PERFORM get_bi_list.
         PERFORM get_doc_list.
       ENDIF.
@@ -60,7 +63,11 @@ MODULE user_command_0100 INPUT.
         PERFORM get_rgtor_iv.
         PERFORM get_iv_item.
         CALL SCREEN 0300.
+        CLEAR: gs_iv_head, gt_iv_item.
+        PERFORM get_bi_list.
+        PERFORM get_doc_list.
       ENDIF.
+      CLEAR gv_subrc.
     WHEN OTHERS.
 
   ENDCASE.
@@ -71,9 +78,17 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE user_command_0200 INPUT.
+  DATA: lv_ok TYPE char1.
+
   CASE ok_code.
     WHEN 'BACK'.
-      LEAVE TO SCREEN 0.
+      PERFORM call_back_popup.
+    WHEN 'INSERT'.
+      PERFORM check_date CHANGING lv_ok.
+      IF lv_ok <> 'X'.
+        EXIT.
+      ENDIF.
+      PERFORM call_save_popup.
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.

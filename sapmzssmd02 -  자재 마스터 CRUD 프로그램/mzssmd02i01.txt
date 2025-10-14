@@ -102,7 +102,7 @@ MODULE user_command_0100 INPUT.
         RETURN.
       ENDIF.
 
-      CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+      CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
         EXPORTING
           iv_matnr     = gs_row_0100-matnr
           iv_ismodal   = 'X'
@@ -110,6 +110,7 @@ MODULE user_command_0100 INPUT.
           query_failed = 1
           OTHERS       = 2.
       IF sy-subrc <> 0.
+        MESSAGE i999(zmcss) WITH '자재 정보를 불러올 수 없습니다.'.
         RETURN.
       ENDIF.
 
@@ -141,6 +142,15 @@ MODULE user_command_0200 INPUT.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
     WHEN 'INSERT'.
+      PERFORM popup_to_confirm USING '신규 자재 생성'
+                                     '자재를 생성하시겠습니까?'
+                                     '확인'
+                                     '취소'
+                               CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '사용자가 자재 생성을 취소하였습니다.'.
+        RETURN.
+      ENDIF.
 
       PERFORM insert_material USING gs_cond_0200
                               CHANGING gv_subrc.
@@ -183,6 +193,16 @@ MODULE user_command_0300 INPUT.
       LEAVE TO SCREEN 0.
     WHEN 'DELETE'.
 
+      PERFORM popup_to_confirm USING '자재 삭제'
+                                     '자재를 삭제하시겠습니까?'
+                                     '확인'
+                                     '취소'
+                               CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '사용자가 자재 삭제를 취소하였습니다.'.
+        RETURN.
+      ENDIF.
+
       PERFORM update_del USING    gs_cond_0300
                                   'I'
                          CHANGING gv_subrc.
@@ -200,6 +220,16 @@ MODULE user_command_0300 INPUT.
                                    gs_cond_0300
                              CHANGING gv_subrc.
       IF gv_subrc <> 0.
+        RETURN.
+      ENDIF.
+
+      PERFORM popup_to_confirm USING '자재 변경'
+                                     '자재를 변경하시겠습니까?'
+                                     '확인'
+                                     '취소'
+                               CHANGING gv_subrc.
+      IF gv_subrc <> 0.
+        MESSAGE s999(zmcss) WITH '사용자가 자재 변경을 취소하였습니다.'.
         RETURN.
       ENDIF.
 

@@ -8,7 +8,7 @@ SAPMZSSMM02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM02                             0100 0100     73243192 37  0  0127255  0G E                              20251013225915																																
+SAPMZSSMM02                             0100 0100     73243192 37  0  0127255  0G E                              20251014135651																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -17,8 +17,8 @@ ZSSSMM0210-GRDAT_S	2	CHAR	 20	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	 
 ZSSSMM0210-GRDAT_S	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0				GR2	BT2			__________	X                                      00	
 TILT1	0	CHAR	  1	00	00	00	30	00	  2	 37		  0	  0	  0		  0					  0	  0				GR2				~		
 ZSSSMM0210-GRDAT_E	D	DATE	 10	A0	00	80	00	08	  2	 42		  0	  0	  0		  0					 16	  0				GR2				__________	X                                      00	
-ZSSSMM0210-GRNUM	2	CHAR	 20	30	00	04	30	00	  2	 83		  0	  0	  0		  0					  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
-ZSSSMM0210-GRNUM	C	CHAR	 11	A0	00	84	00	08	  2	104		  0	  0	  0		  0					 22	  0								___________	X                                      00	
+ZSSSMM0210-GRNUM	2	CHAR	 20	30	00	04	30	00	  2	 83		  0	  0	  0		  0			ZSSGR		  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
+ZSSSMM0210-GRNUM	C	CHAR	 11	A0	00	84	00	08	  2	104		  0	  0	  0		  0			ZSSGR		 22	  0								___________	X                                      00	
 ZSSSMM0210-DUDAT_S	2	CHAR	 20	30	00	00	30	00	  3	  3		  0	  0	  0		  0					  0	  0				GR1	BT2	EX1		납기일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0210-DUDAT_S	D	DATE	 10	A0	00	80	00	08	  3	 24		  0	  0	  0		  0					 16	  0				GR1	BT2	EX1		__________	X                                      00	
 GR1TILT2	0	CHAR	  1	00	00	00	30	00	  3	 37		  0	  0	  0		  0					  0	  0				GR1	BT2	EX1		~		

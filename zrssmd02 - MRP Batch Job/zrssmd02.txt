@@ -14,7 +14,7 @@ DATA : gv_log TYPE string.
 
 START-OF-SELECTION.
   LOOP AT pa_ware INTO gs_ware.
-    CALL FUNCTION 'Z_INSERT_NEXT_WARE'
+    CALL FUNCTION 'Z_FMSS_INSERT_NEXT_WARE'
       EXPORTING
         is_ztssware     = gs_ware
       IMPORTING

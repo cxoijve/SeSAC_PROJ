@@ -5,6 +5,8 @@ CLASS lcl_handler IMPLEMENTATION.
 
   METHOD on_toolbar.
     DATA ls_button TYPE stb_button.
+
+    CLEAR e_object->mt_toolbar..
     ls_button-butn_type = '3'. "Separator
     APPEND ls_button TO e_object->mt_toolbar.
 
@@ -67,20 +69,20 @@ CLASS lcl_handler IMPLEMENTATION.
 
         ENDLOOP.
 
-        DATA : LV_TEST TYPE INT4.
+        DATA : lv_test TYPE int4.
 
 *        go_alv->is_ready_for_input(
 *          RECEIVING
 *            ready_for_input =  LV_TEST   " Editable
 *        ).
         IF go_alv->is_ready_for_input( ) EQ 0.
-        CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
-          EXPORTING
-            i_ready_for_input = 1. " Edit 활성화 "
+          CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
+            EXPORTING
+              i_ready_for_input = 1. " Edit 활성화 "
         ELSE.
-        CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
-          EXPORTING
-            i_ready_for_input = 0. " Edit 비활성화 "
+          CALL METHOD go_alv->set_ready_for_input " 조회모드 -> 편집모드 "
+            EXPORTING
+              i_ready_for_input = 0. " Edit 비활성화 "
 
         ENDIF.
 

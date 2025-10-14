@@ -330,6 +330,8 @@ MODULE user_command_0500 INPUT.
     WHEN 'ARDTL'.
       "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-arnum '/' gs_info_0500h-arfyr.
       PERFORM call_je USING gs_info_0500h-arnum.
+    WHEN 'PEDTL'.
+      PERFORM call_per USING gs_info_0500h-rgtor.
   ENDCASE.
 
   IF gt_info_0500 IS NOT INITIAL.

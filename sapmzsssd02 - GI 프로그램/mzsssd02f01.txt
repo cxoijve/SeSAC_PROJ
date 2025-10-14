@@ -2781,7 +2781,8 @@ FORM get_so_with_so  TABLES   pt_info_0302 STRUCTURE gs_info_0302
   SELECT sonum itnum somnr amount AS soamt meins plant soprc curky
     FROM ztsssoi
     INTO CORRESPONDING FIELDS OF TABLE lt_soi
-    WHERE sonum = ls_soh-sonum.
+    WHERE sonum = ls_soh-sonum
+    AND del NE 'X'.
 
   IF sy-subrc <> 0.
     pv_subrc = 4.
@@ -3470,7 +3471,8 @@ FORM get_so  USING    VALUE(pv_sonum) TYPE zesssonum
     FROM ztsssoi
     INTO CORRESPONDING FIELDS OF ps_ztsssoi
     WHERE sonum = pv_sonum
-    AND itnum = lv_itnum.
+    AND itnum = lv_itnum
+    AND del NE 'X'.
 
   IF sy-subrc <> 0.
     pv_subrc = 4.
@@ -3498,7 +3500,7 @@ FORM get_avail_stock  USING    VALUE(pv_matnr) TYPE zessmatnr
   DATA : lv_astck TYPE int4.
 
   " 현재 시점의 가용재고 확인
-  CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+  CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
     EXPORTING
       iv_begda         = '11110101'
       iv_endda         = sy-datum
@@ -3694,6 +3696,12 @@ FORM check_gidat  TABLES   pt_info STRUCTURE zssssd0206
 
   DATA : lr_sonum TYPE RANGE OF zesssonum WITH HEADER LINE.
   DATA : lt_lastso LIKE TABLE OF ztsssoh WITH HEADER LINE.
+
+  IF pv_gidat > sy-datum.
+    MESSAGE i999(zmcss) WITH '출고 예정은 불가능합니다.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
 
   IF pt_info[] IS INITIAL.
     " Line Item이 없는 상태.
@@ -4217,12 +4225,24 @@ ENDFORM.
 *      -->P_GV_EFLAG_0500  text
 *----------------------------------------------------------------------*
 FORM modify_screen_0500  USING    VALUE(pv_eflag).
+  DATA lv_pernr TYPE zesspernr.
+  CALL FUNCTION 'Z_FMSS_GET_PERNR'
+    EXPORTING
+      iv_id     = sy-uname
+      iv_module = 'SD'
+    IMPORTING
+      ev_pernr  = lv_pernr.
 
   IF sy-calld EQ 'X'.
     LOOP AT SCREEN.
       CASE screen-group1.
         WHEN 'CLD'.
-          screen-active = '0'.
+          IF screen-group3 EQ 'PER'.
+            screen-active = '1'.
+          ELSE.
+            screen-active = '0'.
+          ENDIF.
+
         WHEN 'SED'. " 수정 버튼 숨기기
           screen-active = '0'.
         WHEN 'EED'. " 수정 완료 버튼 숨기기.
@@ -4258,6 +4278,11 @@ FORM modify_screen_0500  USING    VALUE(pv_eflag).
                   IF gs_info_0500h-arnum IS INITIAL.
                     screen-active = '0'.
                   ENDIF.
+                WHEN 'PER'.
+                  IF gs_info_0500h-rgtor EQ lv_pernr.
+                    screen-active = '0'.
+                  ENDIF.
+
               ENDCASE.
           ENDCASE.
         WHEN 'SED'. " 수정 버튼 숨기기
@@ -4399,7 +4424,8 @@ FORM get_so_doamt  USING    VALUE(pv_sonum)
     FROM ztssgii
     INTO pv_doamt
     WHERE sonum = pv_sonum
-    AND itnum = pv_itnum.
+    AND itnum = pv_itnum
+    AND del NE 'X'.
 
   IF pv_doamt < 0.
     MESSAGE i999(zmcss) WITH 'MINUS DOAMT'.
@@ -4708,7 +4734,10 @@ FORM update_je  TABLES   pt_jei STRUCTURE ztssjei
 
     ls_r_jeh-jtype = 'WA'.
     ls_r_jeh-curky = 'KRW'.
-    ls_r_jeh-rgdat = sy-datum.
+
+    PERFORM get_last_day_of_month USING sy-datum
+                                  CHANGING ls_r_jeh-rgdat.
+
     CLEAR lv_jstxt.
     CONCATENATE ps_gih_0500-ginum '의 수정에 따른 역분개 전표' INTO lv_jstxt SEPARATED BY space.
     ls_r_jeh-stext = lv_jstxt.
@@ -5205,7 +5234,8 @@ FORM get_matnr_from_so  USING    VALUE(pv_sonum) TYPE zesssonum
     FROM ztsssoi
     INTO pv_matnr
     WHERE sonum = pv_sonum
-    AND itnum = pv_itnum.
+    AND itnum = pv_itnum
+    AND del NE 'X'.
 
   IF sy-subrc <> 0.
     MESSAGE a999(zmcss) WITH 'NO SO MATNR!'.
@@ -5891,6 +5921,52 @@ FORM called_operation .
     " gt_info_500 과 관련 데이터 클리어
     CLEAR : gs_info_0500h, gt_info_0500[], gs_info_o_0500h, gt_info_o_0500[], gv_stseq_0500, gv_c_ginum.
 *      LEAVE PROGRAM.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALL_PER
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_INFO_0500H_RGTOR  text
+*----------------------------------------------------------------------*
+FORM call_per  USING    VALUE(pv_pernr) TYPE zesspernr.
+
+  CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+    EXPORTING
+      iv_pernr     = pv_pernr
+      iv_ismodal   = 'X'
+      iv_dtllv     = 'A'
+    EXCEPTIONS
+      query_failed = 1
+      unknown_flag = 2
+      OTHERS       = 3.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH '사원 정보를 불러오는 데 실패했습니다.'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_LAST_DAY_OF_MONTH
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_SY_DATUM  text
+*      <--P_LS_R_JEH_RGDAT  text
+*----------------------------------------------------------------------*
+FORM get_last_day_of_month  USING    VALUE(pv_datum) LIKE sy-datum
+                            CHANGING pv_ldat LIKE sy-datum.
+  CALL FUNCTION 'RP_LAST_DAY_OF_MONTHS'
+    EXPORTING
+      day_in            = pv_datum
+    IMPORTING
+      last_day_of_month = pv_ldat
+    EXCEPTIONS
+      day_in_no_date    = 1
+      OTHERS            = 2.
+  IF sy-subrc <> 0.
+    MESSAGE a999(zmcss) WITH '역분개 일자 생성 오류'.
   ENDIF.
 
 ENDFORM.

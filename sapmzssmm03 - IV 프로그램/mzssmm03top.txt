@@ -26,7 +26,16 @@ TABLES : zsssmm03001,
          zsssmm03014,
          zsssmm03015,
          zsssmm03016,
-         zsssmm03017.
+         zsssmm03017,
+         zsssmm03018.
+*
+*TYPES: BEGIN OF ty_out,
+*         include TYPE zsssmm03018,
+*         color   TYPE lvc_t_scol,
+*       END OF ty_out.
+*DATA: gt_gri TYPE TABLE OF ty_out,
+*      gs_gri LIKE LINE OF gt_gri.
+
 
 DATA : gt_date  TYPE RANGE OF sy-datum  WITH HEADER LINE,
        gt_apnum TYPE RANGE OF zessapnum WITH HEADER LINE,
@@ -35,8 +44,8 @@ DATA : gt_date  TYPE RANGE OF sy-datum  WITH HEADER LINE,
        gt_aptor TYPE RANGE OF zessrgtor WITH HEADER LINE,
        gt_grtor TYPE RANGE OF zessrgtor WITH HEADER LINE,
        gt_grdat TYPE RANGE OF zessrgdat WITH HEADER LINE.
-
-DATA : gt_gri TYPE TABLE OF ztssgri,
+*
+DATA : gt_gri TYPE TABLE OF zsssmm03018,
        gs_gri LIKE LINE OF gt_gri,
        gt_grh TYPE TABLE OF zsssmm03006,
        gs_grh LIKE LINE OF gt_grh.

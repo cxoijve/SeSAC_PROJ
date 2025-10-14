@@ -1,4 +1,4 @@
-FUNCTION Z_FMSS_SCHEDULE_MRP.
+FUNCTION z_fmss_schedule_mrp.
 *"--------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
@@ -36,7 +36,7 @@ FUNCTION Z_FMSS_SCHEDULE_MRP.
                        CHANGING gv_subrc.
     IF gv_subrc <> 0. RAISE invalid_outwares. ENDIF.
     " OUTWARES의 재고량이 충분한가?
-    CALL FUNCTION 'Z_GET_AVAIL_STOCKS'
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
         iv_endda         = '99991231'

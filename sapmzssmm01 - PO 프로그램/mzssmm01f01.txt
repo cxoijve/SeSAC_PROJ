@@ -144,7 +144,12 @@ FORM set_default .
 
   PERFORM get_po_data CHANGING zsssmm0101.
   PERFORM modify_po_data.
+  SORT gt_data BY podat DESCENDING.
   gv_item_num = gv_item_num + 1.
+
+  gv_chk1 = 'X'.
+  gv_chk2 = 'X'.
+  gv_chk3 = 'X'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -170,6 +175,11 @@ FORM set_layout_screen.
   gs_layo4-zebra = 'X'.
   gs_layo5-cwidth_opt = 'X'.
   gs_layo5-zebra = 'X'.
+
+*  gs_layo2-cwidth_opt = 'A'.
+*  gs_layo2-zebra = 'X'.
+
+
 
 
 ENDFORM.
@@ -1254,32 +1264,79 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_field_catalog .
 
-  "field-catalog ##
-  PERFORM set_fs_field : USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2 gt_fcat2.
+  PERFORM set_fcat.
 
-  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'COLTEXT' '단가' 'X' CHANGING gs_fcat2 gt_fcat2.
+*  perform set_fc
 
 
-  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat2 gt_fcat2,
-                         USING 'COLTEXT' '총 가격' 'X' CHANGING gs_fcat2 gt_fcat2.
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat3 gt_fcat3,
-                             USING 'COLTEXT' '거래가격' 'X' CHANGING gs_fcat3 gt_fcat3.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat3 gt_fcat3,
-                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat3 gt_fcat3.
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat4 gt_fcat4,
-                             USING 'COLTEXT' '거래가격' 'X' CHANGING gs_fcat4 gt_fcat4.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat4 gt_fcat4,
-                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat4 gt_fcat4.
-
-
-  PERFORM set_fs_field : USING 'FIELDNAME' 'VNPRC' '' CHANGING gs_fcat5 gt_fcat5,
-                           USING 'COLTEXT' '자재원가' 'X' CHANGING gs_fcat5 gt_fcat5.
-  PERFORM set_fs_field : USING 'FIELDNAME' 'DEL' '' CHANGING gs_fcat5 gt_fcat5,
-                         USING 'COLTEXT' '삭제 여부' 'X' CHANGING gs_fcat5 gt_fcat5.
+*  "field-catalog ##
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'PODAT' '' CHANGING gs_fcat gt_fcat,
+*                         USING 'COL_POS' 'N' '' CHANGING gs_fcat gt_fcat.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'VENID' 'X' CHANGING gs_fcat gt_fcat,
+*                         USING 'COL_POS' 'N' '' CHANGING gs_fcat gt_fcat.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'VNAME' 'X' CHANGING gs_fcat gt_fcat,
+*                          USING 'COL_POS' 'N' '' CHANGING gs_fcat gt_fcat.
+*
+*  PERFORM set_fs_field :
+*  USING 'FIELDNAME' 'DUDAT' '' CHANGING gs_fcat gt_fcat,
+*  USING 'COL_POS' 'N' 'X' CHANGING gs_fcat gt_fcat.        " ← 추가!
+*
+*  " STEXT
+*  PERFORM set_fs_field :
+*    USING 'FIELDNAME' 'STEXT' '' CHANGING gs_fcat gt_fcat,
+*    USING 'COL_POS' 'N' 'X' CHANGING gs_fcat gt_fcat.        " ← 추가!
+*
+*  " PONUM
+*  PERFORM set_fs_field :
+*    USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat gt_fcat,
+*    USING 'COL_POS' 'N' 'X' CHANGING gs_fcat gt_fcat.        " ← 추가!
+*
+*
+*
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'ITNUM' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '아이템 번호' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'POMNR' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '자재코드' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'PNAME' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'AMOUNT' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '주문 수량' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat2 gt_fcat2,
+*                           USING 'COLTEXT' '주문 수량' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat2 gt_fcat2,
+*                         USING 'COLTEXT' '총 가격' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'PLANT' 'X' CHANGING gs_fcat2 gt_fcat2.
+*
+*
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat3 gt_fcat3,
+*                             USING 'COLTEXT' '거래가격' 'X' CHANGING gs_fcat3 gt_fcat3.
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat3 gt_fcat3,
+*                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat3 gt_fcat3.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'POPRC' '' CHANGING gs_fcat4 gt_fcat4,
+*                             USING 'COLTEXT' '거래 가격' 'X' CHANGING gs_fcat4 gt_fcat4.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'TOPRC' '' CHANGING gs_fcat4 gt_fcat4,
+*                             USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat4 gt_fcat4.
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'PONUM' '' CHANGING gs_fcat4 gt_fcat4,
+*                           USING 'NO_OUT' 'X' 'X' CHANGING gs_fcat4 gt_fcat4.
+*
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'VNPRC' '' CHANGING gs_fcat5 gt_fcat5,
+*                           USING 'COLTEXT' '자재원가' 'X' CHANGING gs_fcat5 gt_fcat5.
+*  PERFORM set_fs_field : USING 'FIELDNAME' 'DEL' '' CHANGING gs_fcat5 gt_fcat5,
+*                         USING 'COLTEXT' '삭제 여부' 'X' CHANGING gs_fcat5 gt_fcat5.
 
 *  *  PERFORM set_fs_field :
 *                      USING 'FIELDNAME' 'INDEX' '' CHANGING t_fcat t_fcat[],
@@ -1301,6 +1358,7 @@ FORM modify_po_data .
   DATA : ls_data LIKE LINE OF gt_data.
 
   LOOP AT gt_data INTO ls_data.
+    PERFORM set_curr_status USING ls_data-ponum CHANGING ls_data ls_data-pstat ls_data-pstat_t.
     PERFORM get_emp_name USING ls_data-rgtor CHANGING ls_data-ename.
     PERFORM get_vender_name USING ls_data-venid CHANGING ls_data-vname.
     MODIFY gt_data FROM ls_data.
@@ -1649,6 +1707,276 @@ FORM update_delete_infos  USING    VALUE(ps_item) LIKE gs_item.
   ELSE.
     ROLLBACK WORK.
   ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat .
+
+  DATA :
+    lt_field_conf TYPE TABLE OF ty_field_conf,
+    ls_conf       TYPE ty_field_conf,
+    ls_fcat       TYPE lvc_s_fcat.
+
+
+  PERFORM create_fcat USING 'ZSSSMM0102' 'GT_DATA' CHANGING gt_fcat.
+
+  APPEND VALUE #(
+    fieldname  = 'LIGHT'
+    coltext    = TEXT-t01      " '상태' 등
+    icon       = 'X'
+    outputlen  = 3
+    col_pos    = 1
+    fix_column = 'X'
+  ) TO gt_fcat.
+
+
+  lt_field_conf = VALUE #(
+  ( fieldname = 'PSTAT_T' )
+  ( fieldname = 'PODAT' )
+  ( fieldname = 'VNAME' )
+  ( fieldname = 'DUDAT' )
+  ( fieldname = 'STEXT' )
+  ( fieldname = 'ENAME' )
+  ( fieldname = 'PONUM' )
+* ( fieldname = 'LIGHT' coltext = TEXT-t01  outputlen = 15 fix_column = 'X' )
+* ( fieldname = 'VNAME' col_pos = 2 )  " 순서 변경
+* ( fieldname = 'DUDAT' col_pos = 3 )  " 순서 변경
+* ( fieldname = 'PODAT' col_pos = 4 )
+* ( fieldname = 'ENAME' col_pos = 5 coltext = '담당자 이름' )
+* ( fieldname = 'STEXT' col_pos = 6 )
+* ( fieldname = 'PONUM' col_pos = 7 )
+ ( fieldname = 'VENID' no_out = 'X' )
+ ( fieldname = 'CURKY' no_out = 'X' )
+ ( fieldname = 'RGTOR' no_out = 'X' )
+ ( fieldname = 'RGDAT' no_out = 'X' )
+ ( fieldname = 'PSTAT' no_out = 'X' )
+).
+
+
+  PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_CURR_STATUS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_DATA_PONUM  text
+*      <--P_LS_DATA_PSTAT_T  text
+*----------------------------------------------------------------------*
+FORM set_curr_status  USING    p_num TYPE ztsspoi-ponum
+                      CHANGING  cs_data like gs_data
+                                c_flag TYPE c
+                                c_stat TYPE zessetext.
+
+  DATA : lt_po_sum LIKE TABLE OF gs_itamt,
+         lt_gr_sum LIKE TABLE OF gs_itamt.
+
+  PERFORM get_po_sum USING p_num CHANGING lt_po_sum.
+  PERFORM get_gr_sum USING p_num CHANGING lt_gr_sum.
+
+  PERFORM cal_grsum USING lt_po_sum lt_gr_sum CHANGING cs_data c_flag c_stat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LT_GR_SUM  text
+*----------------------------------------------------------------------*
+FORM get_gr_sum USING p_num TYPE ztsspoi-ponum
+                CHANGING ct_gr_sum LIKE gt_itamt.
+
+  DATA: lt_gr_raw TYPE TABLE OF ztssgri,
+        ls_gr_raw LIKE LINE OF lt_gr_raw,
+        ls_gr_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_gr_raw
+    FROM ztssgri
+    WHERE ponum = p_num.
+
+*  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '입고내역이 존재하지 않습니다!'. RETURN. ENDIF.
+
+  LOOP AT lt_gr_raw INTO ls_gr_raw.
+    ls_gr_sum-ponum  = ls_gr_raw-ponum.
+    ls_gr_sum-itnum  = ls_gr_raw-itnum.
+    ls_gr_sum-amount = ls_gr_raw-amount.
+    COLLECT ls_gr_sum INTO ct_gr_sum.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_GRSUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_GR_SUM  text
+*      <--P_C_STAT  text
+*----------------------------------------------------------------------*
+FORM cal_grsum  USING pt_po_sum LIKE gt_itamt
+                      pt_gr_sum LIKE gt_itamt
+                CHANGING  cs_data like gs_data
+                          c_flag TYPE c
+                          c_stat TYPE zessetext.
+
+  DATA : ls_gr_sum LIKE LINE OF pt_gr_sum,
+         ls_po_sum LIKE gs_itamt,
+         lv_comp   TYPE abap_bool,
+         lv_incomp TYPE abap_bool.
+
+  LOOP AT pt_po_sum INTO ls_po_sum.
+
+    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+                                                 itnum = ls_po_sum-itnum.
+
+    IF sy-subrc <> 0.
+      " 미입고
+      lv_incomp = abap_true.
+    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+      " 입고중
+      lv_comp = abap_true.
+    ELSE.
+      " 입고완료
+      lv_comp = abap_true.
+    ENDIF.
+  ENDLOOP.
+
+  " 최종 상태 결정
+  IF lv_comp = abap_true AND lv_incomp = abap_true.
+*    cs_data-light = '2'.
+    cs_data-light = '@5D@'.
+    c_flag = 2.
+    c_stat = '입고중'.  " 섞여있음
+  ELSEIF lv_comp = abap_true.
+    cs_data-light = '@5B@'.
+*    cs_data-light = '3'.
+    c_flag = 1.
+    c_stat = '입고완료'.  " 모두 완료
+  ELSE.
+    cs_data-light = '@5C@'.
+*    cs_data-light = '1'.
+*    c_flag = 3.
+    c_stat = '미입고'.  " 모두 미입고 또는 입고중
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PO_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_NUM  text
+*      <--P_LT_PO_SUM  text
+*----------------------------------------------------------------------*
+FORM get_po_sum  USING    p_num TYPE ztsspoh-ponum
+                 CHANGING ct_po_sum LIKE gt_itamt.
+
+
+  DATA: lt_po_raw TYPE STANDARD TABLE OF ztsspoi,
+        ls_po_raw LIKE LINE OF lt_po_raw,
+        ls_po_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_po_raw
+    FROM ztsspoi
+    WHERE ponum = p_num.
+
+  IF sy-subrc <> 0. RETURN. ENDIF.
+
+  LOOP AT lt_po_raw INTO ls_po_raw.
+    ls_po_sum-ponum  = ls_po_raw-ponum.
+    ls_po_sum-itnum  = ls_po_raw-itnum.
+    ls_po_sum-amount = ls_po_raw-amount.
+    COLLECT ls_po_sum INTO ct_po_sum.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_2685   text
+*      -->P_2686   text
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM create_fcat  USING    VALUE(pv_str) TYPE dd02l-tabname
+                           VALUE(pv_itab) TYPE dd02l-tabname
+                  CHANGING ct_fcat TYPE lvc_t_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name   = pv_str
+      i_internal_tabname = pv_itab
+    CHANGING
+      ct_fieldcat        = ct_fcat
+    EXCEPTIONS
+      OTHERS             = 1.
+
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. "시스템 오류 : &에게 문의하세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  BUILD_FIELD_CATATLOG
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_FIELD_CONF  text
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM build_field_catatlog  USING    pt_field_conf TYPE ty_t_field_conf
+                           CHANGING ct_fcat       TYPE lvc_t_fcat.
+
+
+  DATA: ls_conf TYPE ty_field_conf,
+        ls_fcat TYPE lvc_s_fcat,
+        lv_pos  TYPE i VALUE 0.
+
+  FIELD-SYMBOLS: <fs_fcat> TYPE lvc_s_fcat.
+
+  LOOP AT pt_field_conf INTO ls_conf.
+    " 기존 필드 찾기
+    READ TABLE ct_fcat ASSIGNING <fs_fcat> WITH KEY fieldname = ls_conf-fieldname.
+    IF sy-subrc = 0.
+      " 찾으면 수정하기
+      MOVE-CORRESPONDING ls_conf TO <fs_fcat>.
+      IF ls_conf-col_pos > 0.
+        <fs_fcat>-col_pos = ls_conf-col_pos.
+      ENDIF.
+    ELSE.
+      " 존재하지않으면 새로 추가하기
+      CLEAR ls_fcat.
+      MOVE-CORRESPONDING ls_conf TO ls_fcat.
+      IF ls_conf-col_pos > 0.
+        ls_fcat-col_pos = ls_conf-col_pos.
+      ENDIF.
+      APPEND ls_fcat TO ct_fcat.
+    ENDIF.
+    lv_pos = lv_pos + 1.
+    <fs_fcat>-col_pos = lv_pos + 1.
+  ENDLOOP.
+  UNASSIGN <fs_fcat>.
+
+
+  LOOP AT ct_fcat INTO DATA(ls_fcat2).
+    IF ls_fcat2-fieldname = 'TOPRC'.
+      ls_fcat2-do_sum = 'X'.
+      MODIFY ct_fcat FROM ls_fcat2 TRANSPORTING do_sum.
+    ENDIF.
+  ENDLOOP.
 
 ENDFORM.
 

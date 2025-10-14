@@ -137,6 +137,7 @@ FORM set_layouts .
   gs_layo2-stylefname = 'STYLE'.
 
 
+
   gs_layo3 = lcl_layout_builder=>create(
       iv_title     = '입고 확정 구매오더 아이템'
       iv_no_rowins = abap_true
@@ -1923,9 +1924,15 @@ FORM build_field_catatlog  USING    pt_field_conf TYPE ty_t_field_conf
       IF ls_conf-col_pos > 0.
         <fs_fcat>-col_pos = ls_conf-col_pos.
       ENDIF.
+*      IF ls_conf-fieldname = 'TOPRC'.
+*        ls_conf-do_sum = 'X'.
+*      ENDIF.
     ELSE.
       " 존재하지않으면 새로 추가하기
       CLEAR ls_fcat.
+*      IF ls_conf-fieldname = 'TOPRC'.
+*        ls_conf-do_sum = 'X'.
+*      ENDIF.
       MOVE-CORRESPONDING ls_conf TO ls_fcat.
       IF ls_conf-col_pos > 0.
         ls_fcat-col_pos = ls_conf-col_pos.
@@ -1935,6 +1942,19 @@ FORM build_field_catatlog  USING    pt_field_conf TYPE ty_t_field_conf
 
   ENDLOOP.
   UNASSIGN <fs_fcat>.
+
+
+  LOOP AT ct_fcat INTO DATA(ls_fcat2).
+
+    IF ls_fcat2-fieldname = 'TOPRC'.
+
+      ls_fcat2-do_sum = 'X'.
+
+      MODIFY ct_fcat FROM ls_fcat2 TRANSPORTING do_sum.
+
+    ENDIF.
+
+  ENDLOOP.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1976,6 +1996,15 @@ FORM set_fcat02 .
          ls_fcat       TYPE lvc_s_fcat.
 
   PERFORM create_fcat USING 'ZSSSMM0213' 'GT_ITEM' CHANGING gt_fcat2.
+  APPEND VALUE #(
+  fieldname = 'STYLE'
+  tech      = 'X'  " 화면에 표시 안 함
+) TO gt_fcat2.
+  APPEND VALUE #(
+  fieldname = 'IT_COL'
+  tech      = 'X'
+) TO gt_fcat2.
+
 
   lt_field_conf = VALUE #(
   " === gt_fcat2: 입고 가능 구매오더 리스트 ===
@@ -1988,7 +2017,8 @@ FORM set_fcat02 .
   ( grid_id = '02' fieldname = 'AMOUNT' coltext = '구매오더 수량' )
   ( grid_id = '02' fieldname = 'GRQTY'  coltext = '입고수량' )
   ( grid_id = '02' fieldname = 'REQTY'  coltext = '주문가능수량' )
-  ( grid_id = '02' fieldname = 'ORQTY'  coltext = '주문수량' edit = 'X' )
+  ( grid_id = '02' fieldname = 'ORQTY'  coltext = '주문수량' edit = 'X' style = cl_gui_alv_grid=>mc_style_enabled )
+*  style = 'cl_gui_alv_grid=>mc_style_enabled' )
   ( grid_id = '02' fieldname = 'STOID'  coltext = '창고'  )
   ).
   PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat2.
@@ -2729,7 +2759,7 @@ FORM set_fcat12 .
   ( fieldname = 'STONM' col_pos = 4 )
   (  fieldname = 'AMOUNT' coltext = '입고수량' col_pos = 5 )
   (  fieldname = 'MEINS'  col_pos = 6 )
-  (  fieldname = 'TOPRC'  col_pos = 7 do_sum = 'X' )
+  (  fieldname = 'TOPRC'  col_pos = 7 )
   (  fieldname = 'CURKY'  col_pos = 8 )
   (  fieldname = 'PONUM' col_pos = 9 )
   (  fieldname = 'DEL' coltext = '삭제여부' col_pos = 10 )
@@ -2738,6 +2768,7 @@ FORM set_fcat12 .
   (  fieldname = 'VENID' no_out = 'X' )
   (  fieldname = 'STOID'  no_out = 'X' )
    ).
+
 
 *  DELETE gt_fcat11 WHERE fieldname = 'LIGHT'.
   PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat12.

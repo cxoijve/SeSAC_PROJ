@@ -145,13 +145,15 @@ FORM add_item_data .
 
       LOOP AT gt_item ASSIGNING FIELD-SYMBOL(<fs_line>).
 
-        REFRESH <fs_line>-style.
+        CLEAR <fs_line>-style.
         " 1번째 행: REQTY = 0 → 편집 불가
         IF <fs_line>-reqty <= 0.
-          APPEND VALUE #( fieldname = 'ORQTY'
-                      style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
-*          APPEND VALUE #( fieldname = 'STOID'
-*                      style     = cl_gui_alv_grid=>mc_style_disabled ) TO <fs_line>-style.
+          <fs_line>-style = VALUE #(
+          ( fieldname = 'ORQTY' style = cl_gui_alv_grid=>mc_style_disabled ) ).
+
+        ELSEIF <fs_line>-reqty > 0.
+          <fs_line>-style = VALUE #(
+          ( fieldname = 'ORQTY' style = cl_gui_alv_grid=>mc_style_enabled ) ).
 
         ENDIF.
 
@@ -159,8 +161,23 @@ FORM add_item_data .
 
       ENDLOOP.
 
+*      CALL METHOD go_alv_po_items->set_frontend_fieldcatalog
+*        EXPORTING
+*          it_fieldcatalog = gt_fcat2.
+*
+*      CALL METHOD go_alv_po_items->refresh_table_display
+*        EXPORTING
+*          is_stable = VALUE #( row = 'X' col = 'X' )  " 스크롤 위치 유지
+*        EXCEPTIONS
+*          finished  = 1
+*          OTHERS    = 2.
+*      PERFORM refresh_table_display CHANGING go_alv_po_items.
+*      PERFORM refresh_alv_0102.
+      gs_layo2-stylefname = 'STYLE'.
+      PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0213' gs_layo2 gt_exclude CHANGING gt_item gt_fcat2 gt_sort go_alv_po_items.
+
+
     ENDIF.
-    PERFORM refresh_alv_0102.
 
   ENDIF.
 
@@ -1408,8 +1425,8 @@ FORM handle_detail_info .
 
   CALL SCREEN '0300'.
 
-
-  CLEAR gt_gritem.
+*  CLEAR gt_gritem.
+*  PERFORM display_alv_grid_0300.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2124,6 +2141,7 @@ FORM handle_grlist_hotspot  USING pv_index TYPE lvc_index.
   ENDLOOP.
   CALL SCREEN '0310'.
 
+  PERFORM display_alv_grid_0310.
 *  CLEAR gt_gritem.
 
 
@@ -2176,8 +2194,6 @@ FORM get_call_grdata .
    FROM ztssgrh
    WHERE grnum = gv_call_num.
 
-
-
   SELECT grnum grseq ponum itnum stoid amount meins del
     INTO CORRESPONDING FIELDS OF TABLE lt_gritem
     FROM ztssgri
@@ -2199,10 +2215,12 @@ FORM get_call_grdata .
       FROM ztsspoh
       WHERE ponum = ls_gritem-ponum.
 
-    ls_gritem-venid = lv_venid.
+    ls_grhead-venid = lv_venid.
+    ls_grhead-venid = lv_venid.
 
-    PERFORM get_vendor_name USING lv_venid CHANGING ls_gritem-vname.
+    PERFORM get_vendor_name USING lv_venid CHANGING ls_grhead-vname.
     PERFORM get_mat_name USING lv_pomnr CHANGING ls_gritem-matnm.
+    PERFORM get_emp_name USING ls_grhead-rgtor CHANGING ls_grhead-ename.
 
 
     SELECT SINGLE vnprc curky
@@ -2235,6 +2253,7 @@ FORM get_call_grdata .
   MOVE-CORRESPONDING lt_gritem TO gt_gritem.
 
   CALL SCREEN '0310'.
+  LEAVE TO SCREEN 0.
 
 ENDFORM.
 

@@ -1,0 +1,41 @@
+*&---------------------------------------------------------------------*
+*& Include ZRSSMM01TOP                                       Report ZRSSMM01
+*&
+*&---------------------------------------------------------------------*
+REPORT ZRSSMM01 MESSAGE-ID zmcss.
+
+TABLES : zsssmm0102, ztssmat.
+
+DATA : gt_data type zsssmm0102_t,
+       gs_data like line of gt_data.
+
+" 구매오더 아이템
+TABLES : zsssmm0104.
+DATA : gs_cond_item TYPE zsssmm0104.
+
+" 구매오더 아이템 결과
+DATA : gt_item TYPE zsssmm0104_t,
+       gs_item LIKE LINE OF gt_item.
+
+
+DATA : BEGIN OF gs_total,
+    PONUM type ztsspoh-ponum,
+    PODAT type ztsspoh-podat,
+    VENID type ztsspoh-venid,
+    DUDAT type ztsspoh-dudat,
+    STEXT type ztsspoh-stext,
+    CURKY type ztsspoh-curky,
+    RGDAT type ztsspoh-rgdat,
+    RGTOR type ztsspoh-rgtor,
+    ITNUM type ztsspoi-itnum,
+    POMNR type ztsspoi-pomnr,
+    AMOUNT  type ztsspoi-amount,
+    MEINS type ztsspoi-meins,
+    PLANT type ztsspoi-plant,
+    POPRC type ztsspoi-poprc,
+    DEL   type ztsspoi-del,
+    end of gs_total,
+    gt_total like table of gs_total.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

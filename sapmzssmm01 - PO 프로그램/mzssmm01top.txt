@@ -13,6 +13,10 @@ DATA : ok_code  TYPE sy-ucomm,
 DATA : gt_domain TYPE dd07v_t,
        gs_domain LIKE LINE OF gt_domain.
 
+DATA : gv_chk1(1),
+       gv_chk2(1),
+       gv_chk3(1).
+
 *-------------------------------------------------------*
 * 100번 스크린 관련 변수들
 *-------------------------------------------------------*
@@ -32,9 +36,28 @@ TABLES : zsssmm0101.
 DATA : gs_cond TYPE zsssmm0101.
 
 " 100번 스크린 - 모든 PO 조회 결과
-DATA : gt_data TYPE zsssmm0102_t,
-       gs_data LIKE LINE OF gt_data.
 
+
+DATA : BEGIN OF gs_data,
+         light type char8.
+    INCLUDE TYPE zsssmm0102.
+DATA : END OF gs_data,
+gt_data LIKE TABLE OF gs_data.
+
+
+*DATA : gt_data TYPE zsssmm0102_t,
+*       gs_data LIKE LINE OF gt_data.
+
+*-------------------------------------------------------*
+* 100번 스크린 - 구매오더 전체 조회
+*-------------------------------------------------------*
+
+DATA : BEGIN OF gs_itamt,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+       END OF gs_itamt,
+       gt_itamt LIKE TABLE OF gs_itamt.
 
 *-------------------------------------------------------*
 * 200번 스크린 관련 변수들 & 구매오더 생성
@@ -124,7 +147,7 @@ DATA : gs_layo32 TYPE lvc_s_layo,
        gt_sort32 TYPE lvc_t_sort,
        gs_sort32 TYPE lvc_s_sort.
 
-DATA : gt_proto_item like gt_item.
+DATA : gt_proto_item LIKE gt_item.
 
 
 *-------------------------------------------------------*
@@ -159,6 +182,35 @@ DATA : gs_layo5 TYPE lvc_s_layo,
        gs_fcat5 TYPE lvc_s_fcat,
        gt_sort5 TYPE lvc_t_sort,
        gs_sort5 TYPE lvc_s_sort.
+
+
+" field - catalog types
+
+TYPES : BEGIN OF ty_field_conf,
+          grid_id    TYPE c LENGTH 2,
+          fieldname  TYPE lvc_fname,
+          coltext    TYPE scrtext_l,
+          scrtext_s  TYPE scrtext_s,     " 짧은 텍스트
+          scrtext_m  TYPE scrtext_m,     " 중간 텍스트
+          scrtext_l  TYPE scrtext_l,     " 긴 텍스트
+          outputlen  TYPE lvc_outlen,    " 컬럼 너비
+          icon       TYPE c,             " 아이콘 여부
+          just       TYPE lvc_just,      " 정렬 (L/C/R)
+          emphasize  TYPE lvc_emphsz,    " 강조 색상
+          key        TYPE c,             " 키 필드 여부
+          intlen     TYPE i,  " ← 추가
+          fix_column TYPE c,           " ← 추가
+          no_out     TYPE c,             " 숨김
+          edit       TYPE c,             " 편집 가능
+          hotspot    TYPE c,             " 핫스팟
+          checkbox   TYPE c,             " 체크박스
+          style      TYPE lvc_style,
+          col_pos    TYPE i,
+          lzero      TYPE c,
+          do_sum     TYPE lvc_dosum,
+        END OF ty_field_conf. " 프로그램 타입
+
+TYPES : ty_t_field_conf TYPE TABLE OF ty_field_conf.
 
 *-------------------------------------------------------*
 * class

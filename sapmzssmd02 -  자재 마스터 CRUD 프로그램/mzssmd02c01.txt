@@ -9,7 +9,7 @@ CLASS lcl_handler IMPLEMENTATION.
     READ TABLE gt_info_0100 INTO ls_info_0100 INDEX es_row_no-row_id.
     "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' e_column_id-fieldname ls_info_0100-matnr.
 
-    CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+    CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
       EXPORTING
         iv_matnr     = ls_info_0100-matnr
         iv_ismodal   = 'X'

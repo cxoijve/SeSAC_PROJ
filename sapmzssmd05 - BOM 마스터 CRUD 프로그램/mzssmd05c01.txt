@@ -36,7 +36,7 @@ CLASS lcl_handler IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    CALL FUNCTION 'Z_CALL_MATERIAL_DETAIL'
+    CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
       EXPORTING
         iv_matnr     = lv_matnr
         iv_ismodal   = 'X'

@@ -123,19 +123,19 @@ FORM check_alv_condition .
     APPEND gt_rgtor.
   ENDIF.
 
-  IF zsssmm03001-check = 'X'.
-    gt_apnum-sign = 'I'.
-    gt_apnum-option = 'NE'.
-    gt_apnum-low = ''.
-    CLEAR gt_apnum-high.
-    APPEND gt_apnum.
-  ELSE.
-    gt_apnum-sign = 'I'.
-    gt_apnum-option = 'EQ'.
-    gt_apnum-low = ''.
-    CLEAR gt_apnum-high.
-    APPEND gt_apnum.
-  ENDIF.
+*  IF zsssmm03001-check = 'X'.
+*    gt_apnum-sign = 'I'.
+*    gt_apnum-option = 'NE'.
+*    gt_apnum-low = ''.
+*    CLEAR gt_apnum-high.
+*    APPEND gt_apnum.
+*  ELSE.
+*    gt_apnum-sign = 'I'.
+*    gt_apnum-option = 'EQ'.
+*    gt_apnum-low = ''.
+*    CLEAR gt_apnum-high.
+*    APPEND gt_apnum.
+*  ENDIF.
 
   IF zsssmm03004-begda IS NOT INITIAL.
     gt_apdat-sign = 'I'.
@@ -550,8 +550,17 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM get_gr_item TABLES ct_data STRUCTURE ztssgri
+FORM get_gr_item TABLES ct_data STRUCTURE zsssmm03018
                  USING VALUE(pv_grnum) TYPE zessgrnum.
+
+  DATA : ls_data LIKE LINE OF ct_data.
+
+  DATA : BEGIN OF ls_menu,
+           pomnr TYPE zesspomnr, "자재코드
+           venid TYPE zessvenid,
+           vnprc TYPE zessvnprc,
+         END OF ls_menu.
+  DATA lt_menu LIKE TABLE OF ls_menu.
 
   SELECT grnum grseq ponum itnum stoid amount meins del
     FROM ztssgri
@@ -563,7 +572,28 @@ FORM get_gr_item TABLES ct_data STRUCTURE ztssgri
     MESSAGE i999(zmcss) WITH 'GR 데이터가 존재하지 않음'.
   ENDIF.
 
+  LOOP AT ct_data INTO ls_data.
 
+    PERFORM get_pomnr_data USING ls_data-ponum
+                                 ls_data-itnum
+                        CHANGING ls_menu-pomnr.
+
+    PERFORM get_venid_data USING ls_data-ponum
+                        CHANGING ls_menu-venid.
+
+    PERFORM get_vnprs_data USING ls_menu-pomnr
+                                 ls_menu-venid
+                        CHANGING ls_menu-vnprc
+                                 gv_subrc.
+
+    PERFORM check_venid_data USING ls_menu-venid
+                             CHANGING gv_subrc.
+
+    ls_data-grprc = ls_data-amount * ls_menu-vnprc.
+    ls_data-curky = 'KRW'.
+
+    MODIFY ct_data FROM ls_data.
+  ENDLOOP.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -586,7 +616,6 @@ FORM set_insert_data CHANGING cv_subrc TYPE sy-subrc.
            vnprc TYPE zessvnprc,
          END OF ls_menu.
   DATA lt_menu LIKE TABLE OF ls_menu.
-
 
   LOOP AT gt_gri INTO gs_gri.
     MOVE-CORRESPONDING gs_gri TO ls_mivi.
@@ -619,9 +648,13 @@ FORM set_insert_data CHANGING cv_subrc TYPE sy-subrc.
   LOOP AT gt_mivi INTO gs_mivi.
     ls_mivh-toprc = ls_mivh-toprc + gs_mivi-ivprc.
     ls_mivh-curky = 'KRW'.
-
-    MOVE-CORRESPONDING ls_mivh TO gs_mivh.
   ENDLOOP.
+  CLEAR : gt_mivi.
+
+  MOVE-CORRESPONDING ls_mivh TO gs_mivh.
+  CLEAR zsssmm03007-toprc.
+  zsssmm03007-toprc = gs_mivh-toprc.
+  zsssmm03007-curky = 'KRW'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -767,7 +800,7 @@ FORM display_alv_0300 .
 
   CALL METHOD go_alv_3->set_table_for_first_display
     EXPORTING
-      i_structure_name              = 'ZSSSMM03005'
+      i_structure_name              = 'zsssmm03018'
       is_layout                     = gs_layo
     CHANGING
       it_outtab                     = gt_gri
@@ -792,11 +825,15 @@ ENDFORM.
 *  -->  p1        text
 *  <--  p2        text
 *----------------------------------------------------------------------*
-FORM set_iv_insert_data.
+FORM set_iv_insert_data USING VALUE(pv_grnum) TYPE zessgrnum.
   DATA : lv_ivnum TYPE zessivnum,
          lv_fyear TYPE zessfyear.
 
   PERFORM set_iv_number CHANGING lv_ivnum.
+
+
+  PERFORM set_iv_item_data TABLES gt_mivi
+                            USING pv_grnum.
 
   LOOP AT gt_mivi INTO gs_mivi.
     gs_mivi-ivnum = lv_ivnum.
@@ -807,6 +844,10 @@ FORM set_iv_insert_data.
   gs_mivh-jenum = gs_jeh-jenum.
   gs_mivh-fyear = sy-datum+0(4).
   gs_mivh-rgdat = sy-datum.
+
+  "새로운 전표 비고에 송장문서번호 기입
+  gs_jeh-stext = |{ lv_ivnum } 의 자동전표|.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CHECK_IV_FIELD
@@ -830,6 +871,9 @@ FORM check_iv_field CHANGING cv_subrc TYPE sy-subrc.
   IF zsssmm03007-ivdat < zsssmm03006-grdat.
     cv_subrc = 4.
     MESSAGE i999(zmcss) WITH '입고일보다 이른 날짜 입니다'.
+  ELSEIF zsssmm03007-ivdat > sy-datum.
+    cv_subrc = 4.
+    MESSAGE i999(zmcss) WITH '송장 검증일이 현재 날짜를 초과할 수 없습니다'.
   ENDIF.
 
   IF zsssmm03007-rgtor IS NOT INITIAL.
@@ -884,7 +928,7 @@ FORM set_fi_insert_data .
 
   gs_jeh-jenum = ls_jeset-jenum.
   gs_jeh-fyear = ls_jeset-fyear.
-  gs_jeh-stext = zsssmm03008-stext.
+*  gs_jeh-stext = zsssmm03008-stext.
   gs_jeh-curky = 'KRW'.
 
 ENDFORM.
@@ -1075,7 +1119,7 @@ FORM display_alv_0400 .
 
   CALL METHOD go_alv_4->set_table_for_first_display
     EXPORTING
-      i_structure_name              = 'ZSSSMM03006'
+      i_structure_name              = 'zsssmm03006'
       is_layout                     = gs_layo
 *     it_toolbar_excluding          = gv_tbex
     CHANGING
@@ -1116,9 +1160,15 @@ FORM get_iv_update_data USING VALUE(pv_ivnum) TYPE zessivnum
   SELECT SINGLE grnum
          FROM ztssmivi
          INTO lv_grnum
-         WHERE ivnum = pv_ivnum.
+         WHERE ivnum = pv_ivnum
+           AND del EQ ''.
 
   cs_ivh-grnum2 = lv_grnum.
+
+  CLEAR cs_ivh-toprc1.
+  PERFORM get_ivprc_data USING lv_grnum
+                      CHANGING cs_ivh-toprc1
+                               cs_ivh-curky1.
 
   PERFORM set_rgtor_name USING cs_ivh-rgtor
                       CHANGING cs_ivh-rgnme.
@@ -1163,16 +1213,15 @@ FORM get_gr_all_header_data.
 
     CONCATENATE ls_name-lname ls_name-fname INTO ls_grh-rgnme.
 
+    " MIVH 테이블에 해당 IVNUM가 없다면 GR HEADER를 인터널 테이블에 올려라
     SELECT SINGLE ivnum
       FROM ztssmivi
       INTO lv_ivnum
       WHERE grnum = ls_grh-grnum
         AND del EQ ''.
 
-
     IF sy-subrc <> 0.
       APPEND ls_grh TO gt_grh.
-
     ENDIF.
   ENDLOOP.
 
@@ -1406,7 +1455,7 @@ FORM set_fi_update_data .
 
   gs_jeh-jenum = ls_jeset-jenum.
   gs_jeh-fyear = ls_jeset-fyear.
-  gs_jeh-stext = zsssmm03013-stext.
+*  gs_jeh-stext = zsssmm03013-stext.
   gs_jeh-curky = 'KRW'.
 
   PERFORM set_fi_old_data.
@@ -1488,10 +1537,14 @@ FORM set_fi_new_data .
 
   gs_jeh_3-jenum = ls_jeset-jenum.
   gs_jeh_3-fyear = ls_jeset-fyear.
-  gs_jeh_3-stext = zsssmm03013-stext.
+*  gs_jeh_3-stext = zsssmm03013-stext.
+  gs_jeh_3-stext = |{ gs_mivh-ivnum } 수정으로 인한 자동전표|.
   gs_jeh_3-curky = 'KRW'.
   gs_jeh_3-rgdat = sy-datum.
   gs_jeh_3-jtype = 'KR'.
+
+  "역분개 전표의 비고 세팅
+  gs_jeh-stext = |{ gs_mivh-ivnum } 수정으로 인한 역분개 자동전표|.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_DETAIL_INFO_2
@@ -1684,7 +1737,7 @@ FORM check_iv_update_field CHANGING cv_subrc TYPE sy-subrc.
          lv_grdat  TYPE zessgrdat,
          lv_grdat2 TYPE zessgrdat.
 
-
+  "같은 값은 수정할 수 없다
   IF zsssmm03013 EQ gs_ceqda.
     cv_subrc = 4.
     MESSAGE i999(zmcss) WITH '동일한 정보입니다.'.
@@ -1699,19 +1752,24 @@ FORM check_iv_update_field CHANGING cv_subrc TYPE sy-subrc.
     MESSAGE i999(zmcss) WITH '등록자를 입력해주세요'.
   ENDIF.
 
+  " 신규 입고 문서를 입력했을 때 송장검증일 체크
   IF zsssmm03013-grnum IS NOT INITIAL AND zsssmm03013-ivdat IS NOT INITIAL.
     SELECT SINGLE grdat
       FROM ztssgrh
       INTO lv_grdat
       WHERE grnum = zsssmm03013-grnum.
-
     IF zsssmm03013-ivdat < lv_grdat.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
+    ELSEIF zsssmm03013-ivdat > sy-datum.
       cv_subrc = 4.
       MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
     ENDIF.
   ENDIF.
 
-  IF zsssmm03013-grnum2 NE ''.
+
+  " 신규 입고 문서를 입력하지 않았을 때
+  IF zsssmm03013-grnum IS INITIAL.
     SELECT SINGLE grdat
       FROM ztssgrh
       INTO lv_grdat2
@@ -1720,12 +1778,14 @@ FORM check_iv_update_field CHANGING cv_subrc TYPE sy-subrc.
     IF zsssmm03013-ivdat < lv_grdat2.
       cv_subrc = 4.
       MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
+    ELSEIF zsssmm03013-ivdat > sy-datum.
+      cv_subrc = 4.
+      MESSAGE i999(zmcss) WITH '송장검증일을 검증해주세요'.
     ENDIF.
   ENDIF.
 
   IF zsssmm03001-rgtor IS NOT INITIAL.
     READ TABLE gt_logi WITH KEY zsssmm03001-rgtor INTO gs_logi.
-
     IF sy-subrc <> 0.
       cv_subrc = 4.
       MESSAGE i999(zmcss) WITH '올바른 담당사원을 입력해주세요'.
@@ -2387,8 +2447,7 @@ FORM alv_cl_double_click  USING pv_column_id
 
 
   CALL SCREEN 500.
-  CLEAR : zsssmm03006,
-             gt_grh.
+  CLEAR : zsssmm03006.
 
 
 ENDFORM.
@@ -2546,17 +2605,22 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '2'.
         WHEN 'RGTOR'.
           ls_fcat-col_pos = '3'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
         WHEN 'RGNME'.
           ls_fcat-col_pos = '4'.
           ls_fcat-coltext = '이름'.
 
+        WHEN 'IVNUM'.
+          ls_fcat-col_pos = '5.'.
+          ls_fcat-coltext = '송장문서번호'.
 
         WHEN 'GRNME'.
           ls_fcat-no_out = 'X'.
         WHEN 'APNME'.
           ls_fcat-no_out = 'X'.
-        WHEN 'IVNUM'.
-          ls_fcat-no_out = 'X'.
+
         WHEN 'LIGHT'.
           ls_fcat-no_out = 'X'.
         WHEN 'APTOR'.
@@ -2580,10 +2644,13 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
 
       CASE ls_fcat-fieldname.
         WHEN 'LIGHT'.
-          ls_fcat-coltext = 'IV여부'.
+          ls_fcat-coltext = '송장검증여부'.
           ls_fcat-col_pos = '1'.
         WHEN 'GRTOR'.
           ls_fcat-col_pos = '3'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
         WHEN 'GRNME'.
@@ -2617,7 +2684,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
 
       ENDCASE.
 
-    ELSEIF zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
+    ELSEIF my_tab-activetab = 'TAB2' AND zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
       CASE ls_fcat-fieldname.
         WHEN 'LIGHT'.
           ls_fcat-coltext = '송장검증여부'.
@@ -2626,6 +2693,9 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '2'.
         WHEN 'GRTOR'.
           ls_fcat-col_pos = '3'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
         WHEN 'GRNME'.
           ls_fcat-col_pos = '4'.
           ls_fcat-coltext = '이름'.
@@ -2676,6 +2746,9 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
         WHEN 'APTOR'.
           ls_fcat-coltext = '지급 등록자'.
           ls_fcat-col_pos = '2'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
         WHEN 'APNME'.
           ls_fcat-col_pos = '3'.
         WHEN 'APNUM'.
@@ -2800,6 +2873,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM req_event_for_alv .
 
+  SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_0100.
   SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_0100.
   SET HANDLER lcl_handler=>on_user_command         FOR go_alv_0100.
 
@@ -2891,7 +2965,7 @@ FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
 
   CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
     EXPORTING
-      i_structure_name = 'ZSSSMM03005'
+      i_structure_name = 'zsssmm03018'
     CHANGING
       ct_fieldcat      = pt_fcat.
 
@@ -2899,8 +2973,12 @@ FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
     CASE ls_fcat-fieldname.
       WHEN 'DEL'.
         ls_fcat-coltext = '삭제여부'.
+        ls_fcat-no_out = 'X'.
       WHEN 'GRNUM'.
         ls_fcat-no_out = 'X'.
+      WHEN 'GRPRC'.
+        ls_fcat-coltext = '금액'.
+
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -2936,6 +3014,10 @@ FORM set_fcat_0400  CHANGING pt_fcat TYPE lvc_t_fcat.
         ls_fcat-no_out = 'X'.
       WHEN 'FYEAR'.
         ls_fcat-no_out = 'X'.
+      WHEN 'RGTOR'.
+        ls_fcat-outputlen = '8'.
+        ls_fcat-fix_column = 'X'.
+        ls_fcat-hotspot = 'X'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -3042,6 +3124,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM req_event_for_alv_0400 .
   SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_4.
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_4.
+  SET HANDLER lcl_handler=>on_user_command         FOR go_alv_4.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -3405,6 +3489,218 @@ FORM set_ivnum_check .
       OTHERS          = 3.
   IF sy-subrc = 0.
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_DETAIL_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_emp_detail_data USING VALUE(pv_pernr) TYPE zesspernr.
+
+  CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+    EXPORTING
+      iv_pernr     = pv_pernr
+      iv_ismodal   = 'X'
+      iv_dtllv     = 'A'
+    EXCEPTIONS
+      query_failed = 1
+      unknown_flag = 2
+      OTHERS       = 3.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_IVPRC_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_ivprc_data USING VALUE(pv_grnum) TYPE zessgrnum
+                        CHANGING cv_toprc TYPE zesstoprc
+                                 cv_curky TYPE zesscurky.
+  DATA : BEGIN OF ls_menu,
+           pomnr TYPE zesspomnr, "자재코드
+           venid TYPE zessvenid,
+           vnprc TYPE zessvnprc,
+         END OF ls_menu.
+
+  DATA : lt_gri LIKE TABLE OF gs_gri,
+         ls_gri LIKE LINE OF lt_gri.
+
+  DATA : lv_toprc LIKE cv_toprc.
+
+
+  SELECT grnum grseq ponum itnum stoid amount meins del
+      FROM ztssgri
+      INTO CORRESPONDING FIELDS OF TABLE lt_gri
+      WHERE grnum = pv_grnum
+        AND del EQ ''.
+
+  IF  sy-subrc <> 0 .
+    MESSAGE i999(zmcss) WITH 'GR 데이터가 존재하지 않음'.
+  ENDIF.
+
+
+  LOOP AT lt_gri INTO ls_gri.
+
+    PERFORM get_pomnr_data USING ls_gri-ponum
+                                 ls_gri-itnum
+                        CHANGING ls_menu-pomnr.
+
+    PERFORM get_venid_data USING ls_gri-ponum
+                        CHANGING ls_menu-venid.
+
+    PERFORM get_vnprs_data USING ls_menu-pomnr
+                                 ls_menu-venid
+                        CHANGING ls_menu-vnprc
+                                 gv_subrc.
+
+    PERFORM check_venid_data USING ls_menu-venid
+                             CHANGING gv_subrc.
+
+    cv_toprc = cv_toprc + ls_gri-amount * ls_menu-vnprc.
+    cv_curky = 'KRW'.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_IV_ITEM_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_MIVI  text
+*      -->P_PV_GRNUM  text
+*----------------------------------------------------------------------*
+FORM set_iv_item_data  TABLES   ct_mivi STRUCTURE gs_mivi
+                       USING VALUE(pv_grnum) TYPE zessgrnum.
+  DATA : BEGIN OF ls_menu,
+           pomnr TYPE zesspomnr, "자재코드
+           venid TYPE zessvenid,
+           vnprc TYPE zessvnprc,
+         END OF ls_menu.
+
+  DATA : lt_gri LIKE TABLE OF gs_gri,
+         ls_gri LIKE LINE OF lt_gri.
+
+  SELECT grnum grseq ponum itnum stoid amount meins del
+      FROM ztssgri
+      INTO CORRESPONDING FIELDS OF TABLE lt_gri
+      WHERE grnum = pv_grnum
+        AND del EQ ''.
+
+  IF  sy-subrc <> 0 .
+    MESSAGE i999(zmcss) WITH 'GR 데이터가 존재하지 않음'.
+  ENDIF.
+
+
+  LOOP AT lt_gri INTO ls_gri.
+
+    PERFORM get_pomnr_data USING ls_gri-ponum
+                                 ls_gri-itnum
+                        CHANGING ls_menu-pomnr.
+
+    PERFORM get_venid_data USING ls_gri-ponum
+                        CHANGING ls_menu-venid.
+
+    PERFORM get_vnprs_data USING ls_menu-pomnr
+                                 ls_menu-venid
+                        CHANGING ls_menu-vnprc
+                                 gv_subrc.
+
+    PERFORM check_venid_data USING ls_menu-venid
+                             CHANGING gv_subrc.
+*
+*    cv_toprc = ls_gri-amount * ls_menu-vnprc.
+*    cv_curky = 'KRW'.
+
+    ls_gri-grprc = ls_gri-amount * ls_menu-vnprc.
+    ls_gri-curky = 'KRW'.
+    MODIFY lt_gri FROM ls_gri.
+  ENDLOOP.
+
+  LOOP AT lt_gri INTO ls_gri.
+
+    gs_mivi-ivseq = sy-tabix.
+    gs_mivi-grnum = pv_grnum.
+    gs_mivi-grseq = sy-tabix.
+    gs_mivi-ivprc = ls_gri-grprc.
+    gs_mivi-curky = 'KRW'.
+
+    APPEND gs_mivi TO ct_mivi.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_data .
+
+  PERFORM group_rgtor_name.
+
+  IF my_tab-activetab = 'TAB1'.
+
+    "CONDITION 유효성 검사
+    PERFORM get_pernr_logi.
+    PERFORM check_tab1_field CHANGING gv_subrc.
+    IF gv_subrc <> 0.
+      CLEAR gv_subrc.
+      RETURN.
+    ENDIF.
+
+    "ALV 데이터 생성
+    PERFORM check_alv_condition.
+    PERFORM get_iv_data CHANGING gv_subrc.
+    IF gv_subrc = 4.
+      CLEAR gv_subrc.
+      RETURN.
+    ENDIF.
+
+  ELSEIF my_tab-activetab = 'TAB2'.
+
+    "CONDITION 유효성 검사
+    PERFORM get_pernr_logi.
+    PERFORM check_tab2_field CHANGING gv_subrc.
+    IF gv_subrc <> 0.
+      CLEAR gv_subrc.
+      RETURN.
+    ENDIF.
+
+    "ALV 데이터 생성
+    PERFORM check_alv_condition.
+    PERFORM get_gr_data CHANGING gv_subrc.
+    IF gv_subrc = 4.
+      CLEAR zsssmm03003.
+      CLEAR gv_subrc.
+      RETURN.
+    ENDIF.
+
+  ELSEIF my_tab-activetab = 'TAB3'.
+
+    "CONDITION 유효성 검사
+    PERFORM get_pernr_finan.
+    PERFORM check_tab3_field CHANGING gv_subrc.
+    IF gv_subrc <> 0.
+      CLEAR gv_subrc.
+      RETURN.
+    ENDIF.
+
+    "ALV 데이터 생성
+    PERFORM check_alv_condition.
+    PERFORM get_ap_data.
+
+  ENDIF.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

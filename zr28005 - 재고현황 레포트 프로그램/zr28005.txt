@@ -1,0 +1,122 @@
+*&---------------------------------------------------------------------*
+*& Report ZR28005
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zr28005.
+
+DATA gv_matnr TYPE zessmatnr.
+DATA gv_tab TYPE c LENGTH 5.
+DATA gv_expda LIKE sy-datum.
+
+TYPES : BEGIN OF ts_winfo.
+TYPES : matnr TYPE zessmatnr,
+        matnm TYPE zessmatnm,
+        expda TYPE zessexpda,
+        avail TYPE i,
+        win   TYPE i,
+        wout  TYPE i,
+        wdel  TYPE i,
+        wexp  TYPE i.
+TYPES : END OF ts_winfo.
+DATA lt_winfo TYPE TABLE OF ts_winfo WITH HEADER LINE.
+
+SELECT-OPTIONS gr_matnr FOR gv_matnr.
+PARAMETERS pa_stoid TYPE zessstoid.
+
+START-OF-SELECTION.
+
+  SELECT a~matnr a~expda b~matnm
+    FROM ztssmat AS a
+    INNER JOIN ztssmat_t AS b
+    ON a~matnr = b~matnr
+    INTO CORRESPONDING FIELDS OF TABLE lt_winfo
+    WHERE a~matnr IN gr_matnr
+    AND b~langu = sy-langu
+    AND a~del NE 'X'.
+
+  LOOP AT lt_winfo.
+    CLEAR gv_expda.
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = sy-datum
+        iv_stoid         = pa_stoid
+        iv_matnr         = lt_winfo-matnr
+      IMPORTING
+        ev_astck         = lt_winfo-avail
+        ev_istck         = lt_winfo-win
+        ev_ostck         = lt_winfo-wout
+        ev_dstck         = lt_winfo-wdel
+        ev_fstck         = lt_winfo-wexp
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH 'FATAL ERROR!'.
+      RETURN.
+    ENDIF.
+
+    MODIFY lt_winfo TRANSPORTING avail win wout wdel wexp.
+  ENDLOOP.
+
+
+  WRITE : sy-datum , '기준 ', pa_stoid, '창고 가용 재고 현황', /.
+
+  LOOP AT lt_winfo.
+    WRITE : '============================================================',/.
+    WRITE : lt_winfo-matnr , lt_winfo-matnm, /.
+    WRITE : gv_tab , '가용 재고   :' , lt_winfo-avail.
+    NEW-LINE.
+    WRITE : gv_tab , '반입 재고   :' , lt_winfo-win.
+    NEW-LINE.
+    WRITE : gv_tab , '반출 재고   :' , lt_winfo-wout.
+    NEW-LINE.
+    WRITE : gv_tab , '삭제 재고   :' , lt_winfo-wdel.
+    NEW-LINE.
+    WRITE : gv_tab , '상한 재고   :', lt_winfo-wexp ,/.
+  ENDLOOP.
+
+
+
+
+  "---------------------------------------------------------------------------------------------------------
+
+FORM get_calc_date  USING    VALUE(p_datum)
+                             VALUE(p_signum)
+                             VALUE(p_years)
+                             VALUE(p_months)
+                             VALUE(p_days)
+                    CHANGING p_begda TYPE p0001-begda.
+
+  DATA: lv_date   TYPE  p0001-begda,
+        lv_days   TYPE  t5a4a-dlydy,
+        lv_months TYPE  t5a4a-dlymo,
+        lv_signum TYPE  t5a4a-split,
+        lv_years  TYPE  t5a4a-dlyyr.
+  IF p_signum IS INITIAL.
+    lv_signum = '+'.
+  ELSE.
+    lv_signum = p_signum.
+  ENDIF.
+  lv_years = p_years.
+  lv_months = p_months.
+  lv_days = p_days.
+
+  lv_date = p_datum.
+  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+    EXPORTING
+      date      = lv_date
+      days      = lv_days
+      months    = lv_months
+      signum    = lv_signum
+      years     = lv_years
+    IMPORTING
+      calc_date = p_begda.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

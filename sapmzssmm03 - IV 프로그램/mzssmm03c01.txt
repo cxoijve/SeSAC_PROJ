@@ -3,12 +3,41 @@
 *&---------------------------------------------------------------------*
 CLASS lcl_handler IMPLEMENTATION.
   METHOD on_hotspot_click.
-    DATA :row_id TYPE i.
+    DATA :row_id  TYPE i,
+          gs_list LIKE LINE OF gt_data.
 
     row_id = es_row_no-row_id.
 
-    PERFORM alv_cl_double_click USING e_column_id
-                                      row_id.
+    IF sy-dynnr =  '0400'.
+      CASE e_column_id.
+        WHEN 'GRNUM'.
+          PERFORM alv_cl_double_click USING e_column_id
+                                                 row_id.
+        WHEN 'RGTOR'.
+          READ TABLE gt_grh INTO gs_grh INDEX row_id.
+          PERFORM get_emp_detail_data USING gs_grh-rgtor.
+
+      ENDCASE.
+
+    ELSEIF sy-dynnr = '0600'.
+      PERFORM alv_cl_double_click USING e_column_id
+                                          row_id.
+    ELSEIF sy-dynnr = '0100'.
+
+      CASE e_column_id.
+        WHEN 'RGTOR'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          PERFORM get_emp_detail_data USING gs_list-rgtor.
+        WHEN 'GRTOR'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          PERFORM get_emp_detail_data USING gs_list-grtor.
+        WHEN 'APTOR'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          PERFORM get_emp_detail_data USING gs_list-aptor.
+      ENDCASE.
+
+    ENDIF.
+
 
 
   ENDMETHOD.
@@ -20,55 +49,59 @@ CLASS lcl_handler IMPLEMENTATION.
     ls_button-butn_type = '3'. "Separator
     APPEND ls_button TO e_object->mt_toolbar.
 
+    IF sy-dynnr = '0100'.
+      IF my_tab-activetab = 'TAB1'.
 
-    IF my_tab-activetab = 'TAB1'.
+        CLEAR ls_button.
+        ls_button-function = 'CUST_UPDATE'.
+*      ls_button-icon = icon_change.
+        ls_button-butn_type = '0'.
+        ls_button-text = '송장문서수정'.
+        APPEND ls_button TO e_object->mt_toolbar.
 
+
+        CLEAR ls_button.
+        ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+        ls_button-butn_type = '0'.
+        ls_button-text = '세부사항'.
+        APPEND ls_button TO e_object->mt_toolbar.
+
+
+      ELSEIF my_tab-activetab = 'TAB2'.
+
+        CLEAR ls_button.
+        ls_button-function = 'CUST_INSERT'.
+*      ls_button-icon = icon_create.
+        ls_button-butn_type = '0'.
+        ls_button-text = '송장검증'.
+        APPEND ls_button TO e_object->mt_toolbar.
+
+        CLEAR ls_button.
+        ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+        ls_button-butn_type = '0'.
+        ls_button-text = '세부사항'.
+        APPEND ls_button TO e_object->mt_toolbar.
+
+      ELSEIF my_tab-activetab = 'TAB3'.
+
+        CLEAR ls_button.
+        ls_button-function = 'CUST_DETAIL'.
+*      ls_button-icon = icon_information.
+        ls_button-butn_type = '0'.
+        ls_button-text = '세부사항'.
+        APPEND ls_button TO e_object->mt_toolbar.
+
+      ENDIF.
+    ELSEIF sy-dynnr = '0400'.
       CLEAR ls_button.
-      ls_button-function = 'CUST_UPDATE'.
+      ls_button-function = 'CUST_ADDGR'.
 *      ls_button-icon = icon_change.
       ls_button-butn_type = '0'.
-      ls_button-text = '송장문서수정'.
+      ls_button-text = '입고문서 추가'.
       APPEND ls_button TO e_object->mt_toolbar.
-
-
-      CLEAR ls_button.
-      ls_button-function = 'CUST_DETAIL'.
-*      ls_button-icon = icon_information.
-      ls_button-butn_type = '0'.
-      ls_button-text = '세부사항'.
-      APPEND ls_button TO e_object->mt_toolbar.
-
-
-    ELSEIF my_tab-activetab = 'TAB2'.
-
-      CLEAR ls_button.
-      ls_button-function = 'CUST_INSERT'.
-*      ls_button-icon = icon_create.
-      ls_button-butn_type = '0'.
-      ls_button-text = '송장검증'.
-      APPEND ls_button TO e_object->mt_toolbar.
-
-      CLEAR ls_button.
-      ls_button-function = 'CUST_DETAIL'.
-*      ls_button-icon = icon_information.
-      ls_button-butn_type = '0'.
-      ls_button-text = '세부사항'.
-      APPEND ls_button TO e_object->mt_toolbar.
-
-    ELSEIF my_tab-activetab = 'TAB3'.
-
-      CLEAR ls_button.
-      ls_button-function = 'CUST_DETAIL'.
-*      ls_button-icon = icon_information.
-      ls_button-butn_type = '0'.
-      ls_button-text = '세부사항'.
-      APPEND ls_button TO e_object->mt_toolbar.
-
     ENDIF.
-
-
-
-
 
   ENDMETHOD.
 
@@ -204,6 +237,43 @@ CLASS lcl_handler IMPLEMENTATION.
         ELSE.
           CLEAR gv_subrc.
         ENDIF.
+
+      WHEN 'CUST_ADDGR'.
+        PERFORM get_detail_info_alv_4 CHANGING gv_subrc.
+        IF gv_subrc IS INITIAL.
+          CLEAR gv_subrc.
+          zsssmm03013-grnum = gs_grh-grnum.
+          zsssmm03013-ivdat = sy-datum.
+
+
+          CALL FUNCTION 'Z_FMSS_GET_PERNR'
+            EXPORTING
+              iv_id     = sy-uname
+              iv_module = 'WM'
+            IMPORTING
+              ev_pernr  = zsssmm03013-rgtor.
+
+          IF zsssmm03013-rgtor IS NOT INITIAL.
+            PERFORM set_rgtor_name USING zsssmm03013-rgtor
+                                CHANGING zsssmm03013-rgnme.
+          ELSE.
+            CLEAR zsssmm03013-rgnme.
+          ENDIF.
+        ELSE.
+          CLEAR gv_subrc.
+        ENDIF.
+
+        CLEAR zsssmm03013-toprc2.
+        PERFORM get_ivprc_data USING zsssmm03013-grnum
+                            CHANGING zsssmm03013-toprc2
+                                     zsssmm03013-curky.
+
+
+
+        CALL METHOD cl_gui_cfw=>set_new_ok_code
+          EXPORTING
+            new_code = 'ENTER'.
+
     ENDCASE.
   ENDMETHOD.
 

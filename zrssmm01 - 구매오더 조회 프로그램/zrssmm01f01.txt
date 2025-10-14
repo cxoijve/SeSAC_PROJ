@@ -1,0 +1,87 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM01F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  GET_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_data .
+
+  IF pa_rb1 EQ 'X'.
+
+    SELECT h~ponum h~podat h~venid h~dudat h~stext h~curky h~rgdat h~rgtor
+      i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
+      INTO CORRESPONDING FIELDS OF TABLE gt_total
+      FROM ztsspoh AS h
+      INNER JOIN ztsspoi AS i
+      ON h~ponum = i~ponum
+      WHERE h~podat IN so_poda
+      AND h~dudat IN so_duda
+      AND i~pomnr IN so_mat.
+
+      " dfgdsgd pa_vnme
+
+  ELSE.
+
+      SELECT h~ponum h~podat h~venid h~dudat h~stext h~curky h~rgdat h~rgtor
+      i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
+      INTO CORRESPONDING FIELDS OF TABLE gt_total
+      FROM ztsspoh AS h
+      INNER JOIN ztsspoi AS i
+      ON h~ponum = i~ponum
+      WHERE h~podat IN so_poda
+      AND h~dudat IN so_duda
+      AND i~pomnr IN so_mat.
+
+  "SDFsf pa_vid
+
+    IF pa_chk1 EQ 'X'.
+
+    ENDIF.
+
+  ENDIF.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SCREEN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_screen .
+  LOOP AT SCREEN.
+
+    CASE 'X'.
+      WHEN pa_rb1.
+
+        CASE screen-group1.
+          WHEN 'MD1'.
+            screen-active = '0'. "厚劝己拳 贸府
+            MODIFY SCREEN.
+        ENDCASE.
+
+      WHEN pa_rb2.
+
+        CASE screen-group1.
+          WHEN 'MD2'.
+            screen-active = '0'. "厚劝己拳 贸府
+            MODIFY SCREEN.
+        ENDCASE.
+
+    ENDCASE.
+
+  ENDLOOP.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

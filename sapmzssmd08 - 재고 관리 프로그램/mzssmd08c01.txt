@@ -91,7 +91,10 @@ CLASS lcl_handler IMPLEMENTATION.
             RETURN.
           ENDIF.
         ELSEIF lv_ginum IS INITIAL AND lv_grnum IS NOT INITIAL.
-          MESSAGE i999(zmcss) WITH 'HOTSPOT RDOC :' lv_grnum.
+*          MESSAGE i999(zmcss) WITH 'HOTSPOT RDOC :' lv_grnum.
+          CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
+            EXPORTING
+              iv_grnum = lv_grnum.
           RETURN.
         ELSE.
           MESSAGE i999(zmcss) WITH '연관된 문서가 없습니다.'.

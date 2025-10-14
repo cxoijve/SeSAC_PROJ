@@ -53,12 +53,15 @@ MODULE user_command_0100 INPUT.
         CLEAR : gt_item,
                 zsssmm0103.
       ENDIF.
-    WHEN 'G_BTN'.
-      DATA : lv_grnum TYPE zessgrnum.
-      lv_grnum = 'G2025000046'.
-
-      SET PARAMETER ID 'ZSSGR' FIELD lv_grnum.
-      CALL TRANSACTION 'ZSSMM02'.
+*    WHEN 'G_BTN'.
+*      DATA : lv_grnum TYPE zessgrnum.
+*      lv_grnum = 'G2025000046'.
+*
+*      SET PARAMETER ID 'ZSSGR' FIELD lv_grnum.
+*
+*      BREAK-POINT.
+*
+*      CALL TRANSACTION 'ZSSMM02'.
 
   ENDCASE.
 
@@ -98,7 +101,7 @@ MODULE user_command_0200 INPUT.
               zsssmm0104-pname.
       zsssmm0104-itnum = gv_item_num.
       IF zsssmm0103-venid IS NOT INITIAL.
-        CALL SCREEN 210 STARTING AT 5 5 ENDING AT 120 30.
+        CALL SCREEN 210 STARTING AT 5 10 ENDING AT 80 25.
       ELSE.
         MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
       ENDIF.
@@ -111,7 +114,7 @@ MODULE user_command_0200 INPUT.
     WHEN 'I_EDIT'.
       PERFORM check_pop_edit_item USING go_alv2 CHANGING gv_subrc.
       IF gv_subrc = 0.
-        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 120 30.
+        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 80 25.
       ENDIF.
       CLEAR : zsssmm0104-pomnr,
               zsssmm0104-amount,
@@ -274,7 +277,7 @@ MODULE user_command_0300 INPUT.
       DESCRIBE TABLE gt_item LINES lv_cnt.
       zsssmm0104-itnum = lv_cnt + 1.
       IF zsssmm0103-venid IS NOT INITIAL.
-        CALL SCREEN 210 STARTING AT 5 5 ENDING AT 120 30.
+        CALL SCREEN 210 STARTING AT 5 5 ENDING AT 80 25.
       ELSE.
         MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
       ENDIF.
@@ -286,7 +289,7 @@ MODULE user_command_0300 INPUT.
     WHEN 'I_EDIT'.
       PERFORM check_pop_edit_item USING go_alv3 CHANGING gv_subrc.
       IF gv_subrc = 0.
-        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 120 30.
+        CALL SCREEN 220 STARTING AT 5 5 ENDING AT 80 25.
       ENDIF.
       CLEAR : zsssmm0104-pomnr,
               zsssmm0104-amount,

@@ -8,11 +8,11 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0210M0210     16121192 37  0  0 27122  0G E                              20250915140907																																
+SAPMZSSMM01                             0210M0210     16 71192 37  0  0 19 83  0G E                              20251014094558																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-SUB			121	00	00	00	30	00	  1	  2		  0	  0	  0		 16	B				  1	  1	101									
+SUB			 71	00	00	00	30	00	  1	  2		  0	  0	  0		 16	B				  1	  1	101									
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

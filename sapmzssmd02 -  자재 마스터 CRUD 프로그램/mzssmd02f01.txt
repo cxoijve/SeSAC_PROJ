@@ -224,7 +224,7 @@ FORM get_info_0100  TABLES   pt_info_0100         STRUCTURE gs_info_0100
     AND matnr IN pt_r_matnr.
 
   IF sy-subrc <> 0.
-    MESSAGE s999(zmcss) WITH '<get_info_0100>' '검색 조건에 해당하는 자재가 없습니다.'.
+    MESSAGE s999(zmcss) WITH '검색 조건에 해당하는 자재가 없습니다.'.
     RETURN.
   ENDIF.
 
@@ -375,7 +375,7 @@ FORM get_matnm  TABLES   pt_ztssmat_t STRUCTURE gt_ztssmat_t
     AND langu = pv_langu.
 
   IF sy-subrc <> 0.
-    MESSAGE s999(zmcss) WITH '<get_matnm>' '조건을 만족하는 자재 이름이 없습니다.'.
+    "MESSAGE s999(zmcss) WITH '<get_matnm>' '조건을 만족하는 자재 이름이 없습니다.'.
     CLEAR pv_matnm.
     RETURN.
   ENDIF.
@@ -419,7 +419,7 @@ FORM set_default_0200  CHANGING ps_cond_0200 LIKE gs_cond_0200.
 
   CLEAR ps_cond_0200.
   ps_cond_0200-meins = 'EA'.
-  ps_cond_0200-tflag = 'X'.
+  ps_cond_0200-tflag = ''.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -551,7 +551,7 @@ FORM insert_material  USING    VALUE(ps_cond_0200) LIKE gs_cond_0200
 
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE i999(zmcss) WITH '<insert_material>' '신규 자재 생성에 실패했습니다.'.
+    MESSAGE i999(zmcss) WITH  '신규 자재 생성에 실패했습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -560,7 +560,7 @@ FORM insert_material  USING    VALUE(ps_cond_0200) LIKE gs_cond_0200
 
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE i999(zmcss) WITH '<insert_material>' '신규 자재의 국문명 생성에 실패했습니다.'.
+    MESSAGE i999(zmcss) WITH  '신규 자재의 국문명 생성에 실패했습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -569,13 +569,13 @@ FORM insert_material  USING    VALUE(ps_cond_0200) LIKE gs_cond_0200
 
   IF sy-subrc <> 0.
     ROLLBACK WORK.
-    MESSAGE i999(zmcss) WITH '<insert_material>' '신규 자재의 영문명 생성에 실패했습니다.'.
+    MESSAGE i999(zmcss) WITH  '신규 자재의 영문명 생성에 실패했습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
 
   COMMIT WORK.
-  MESSAGE i999(zmcss) WITH '<insert_material>' '신규 자재' ls_ztssmat-matnr ' 가 성공적으로 등록되었습니다.'.
+  MESSAGE i999(zmcss) WITH  '신규 자재' ls_ztssmat-matnr ' 가 성공적으로 등록되었습니다.'.
   pv_subrc = 0.
 
 ENDFORM.
@@ -696,7 +696,7 @@ FORM update_del  USING    VALUE(ps_cond_0300) TYPE zsssmd0203
 
   CASE pv_msgflag.
     WHEN 'I'.
-      MESSAGE i999(zmcss) WITH '<update_del>' ps_cond_0300-matnr '자재가 삭제되었습니다.'.
+      MESSAGE i999(zmcss) WITH  ps_cond_0300-matnr '자재가 삭제되었습니다.'.
     WHEN 'S'.
   ENDCASE.
 
@@ -842,7 +842,7 @@ FORM check_updatability  USING    VALUE(ps_row_0100) TYPE zsssmd0203
     AND del NE 'X'.
 
   IF sy-subrc <> 0.
-    MESSAGE a999(zmcss) WITH '<check_updatability>' ps_row_0100-matnr '을 찾을 수 없습니다.'.
+    MESSAGE a999(zmcss) WITH '자재' ps_row_0100-matnr '을 찾을 수 없습니다.'.
   ENDIF.
 
   " 조건 1 : 재고 수량이 0인가?
@@ -1051,7 +1051,7 @@ FORM check_identity  USING    VALUE(ps_row_0100) TYPE zsssmd0203
     AND ps_row_0100-kname = ps_cond_0300-kname
     AND ps_row_0100-ename = ps_cond_0300-ename.
 
-    MESSAGE i999(zmcss) WITH '<check_identity>' '기존 데이터와 차이가 없습니다.'.
+    MESSAGE i999(zmcss) WITH '기존 데이터와 차이가 없습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -1125,6 +1125,50 @@ FORM set_fcat_0100  TABLES   pt_fcat STRUCTURE lvc_s_fcat.
     ENDCASE.
 
   ENDLOOP.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm  USING VALUE(pv_title) TYPE string
+                             VALUE(pv_tquestion) TYPE string
+                             VALUE(pv_tbtn01) TYPE string
+                             VALUE(pv_tbtn02) TYPE string
+                       CHANGING pv_subrc LIKE sy-subrc.
+
+  CLEAR pv_subrc.
+  DATA lv_answer.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = pv_title
+      text_question         = pv_tquestion
+      text_button_1         = pv_tbtn01
+      text_button_2         = pv_tbtn02
+      display_cancel_button = ''
+    IMPORTING
+      answer                = lv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+  IF sy-subrc <> 0.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  CASE lv_answer.
+    WHEN '1' .
+      pv_subrc = 0.
+    WHEN '2' .
+      pv_subrc = 4.
+    WHEN OTHERS.
+      pv_subrc = 4.
+  ENDCASE.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

@@ -612,6 +612,11 @@ FORM check_cond_0100  USING    VALUE(ps_cond_0100) TYPE zsssmd0801
 
   CLEAR pv_subrc.
 
+  IF ps_cond_0100-stoid IS INITIAL OR ps_cond_0100-plant IS INITIAL.
+    MESSAGE i999(zmcss) WITH '조회 필수값 (플랜트 및 창고 코드)를 입력하여 주십시오.'.
+    pv_subrc = 4.
+    RETURN.
+  ENDIF.
 *  " BEGDA > ENDDA
 *  IF ps_cond_0100-begda > ps_cond_0100-endda.
 *    MESSAGE i999(zmcss) WITH '시작일은 종료일보다 작거나 같아야 합니다'.
@@ -700,7 +705,10 @@ FORM search_0100 .
   PERFORM check_cond_0100 USING zsssmd0801
                           CHANGING gv_subrc.
 
-  IF gv_subrc <> 0. RETURN. ENDIF.
+  IF gv_subrc <> 0.
+    CLEAR : zsssmd0801 ,gt_info_0100.
+    RETURN.
+  ENDIF.
 
   " QUERY 0100
   PERFORM get_info_0100 TABLES gt_info_0100
@@ -1138,7 +1146,7 @@ FORM get_info_0300  TABLES   pt_info_0300 STRUCTURE gs_info_0300
     AND sdlstrtdt IN lr_datum
     AND status IN lr_status.
 
-  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '조회 조건을 만족하는 데이터가 없습니다.'. pv_subrc = 4. ENDIF.
+  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '조회 조건을 만족하는 데이터가 없습니다.'. pv_subrc = 0. ENDIF.
 
   PERFORM modify_info_0300 TABLES pt_info_0300
                            CHANGING lv_subrc.
@@ -1300,6 +1308,11 @@ FORM c300_0100 .
   CALL SCREEN 300.
 
   CLEAR : zsssmd0810 , gt_info_0300.
+
+  IF zsssmd0801-plant IS NOT INITIAL AND zsssmd0801-stoid IS NOT INITIAL.
+    PERFORM search_0100.
+  ENDIF.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  MODIFY_SCREEN_0310

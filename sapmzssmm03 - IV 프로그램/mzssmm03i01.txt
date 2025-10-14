@@ -13,10 +13,37 @@ MODULE user_command_0100 INPUT.
       LEAVE TO SCREEN 0.
     WHEN 'TAB1' OR 'TAB2' OR 'TAB3'.
       my_tab-activetab = ok_code.
-      CLEAR : zsssmm03001,
-              zsssmm03003,
-              zsssmm03004,
-              gt_data.
+      CLEAR gt_data.
+
+      IF my_tab-activetab = 'TAB1'.
+
+        zsssmm03001-check = 'X'.
+        zsssmm03001-cheke = 'X'.
+        zsssmm03001-endda = sy-datum.
+        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                              CHANGING gv_begda.
+
+        zsssmm03001-begda = gv_begda.
+      ELSEIF my_tab-activetab = 'TAB2'.
+        zsssmm03003-check = 'X'.
+        zsssmm03003-cheke = 'X'.
+        zsssmm03003-endda = sy-datum.
+        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                              CHANGING gv_begda.
+
+        zsssmm03003-begda = gv_begda.
+
+      ELSEIF my_tab-activetab = 'TAB3'.
+
+        zsssmm03004-endda = sy-datum.
+        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                              CHANGING gv_begda.
+
+        zsssmm03004-begda = gv_begda.
+      ENDIF.
+
+
+      PERFORM get_data.
 
     WHEN 'SEARCH'.
       PERFORM group_rgtor_name.
@@ -146,7 +173,6 @@ MODULE user_command_0300 INPUT.
               gs_mivh.
       LEAVE TO SCREEN 0.
     WHEN 'INSERT'.
-
       IF zsssmm03007-rgtor EQ '' OR zsssmm03007-ivdat EQ ''.
         MESSAGE i999(zmcss) WITH '값을 입력해주세요'.
         RETURN.
@@ -161,7 +187,7 @@ MODULE user_command_0300 INPUT.
 
       MOVE-CORRESPONDING zsssmm03007 TO gs_mivh.
       PERFORM set_fi_insert_data.
-      PERFORM set_iv_insert_data.
+      PERFORM set_iv_insert_data USING zsssmm03006-grnum.
 
       CALL SCREEN 310 STARTING AT 85 3 ENDING AT 130 6.
       IF gv_subrc_de = 4.
@@ -199,6 +225,8 @@ MODULE user_command_0300 INPUT.
       ENDIF.
 
 
+
+
       PERFORM get_gr_item     TABLES gt_gri
                               USING zsssmm03016-grnum.
 
@@ -212,16 +240,12 @@ MODULE user_command_0300 INPUT.
       ENDIF.
 
     WHEN 'ENTER'.
-
       IF zsssmm03007-rgtor IS NOT INITIAL.
         PERFORM set_rgtor_name USING zsssmm03007-rgtor
                             CHANGING zsssmm03007-rgnme.
       ELSE.
         CLEAR zsssmm03007-rgnme.
       ENDIF.
-
-
-
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -278,29 +302,6 @@ MODULE user_command_0400 INPUT.
     WHEN 'BACK'.
       CLEAR zsssmm03013.
       LEAVE TO SCREEN 0.
-
-    WHEN 'ADDGR'.
-      PERFORM get_detail_info_alv_4 CHANGING gv_subrc.
-      IF gv_subrc IS INITIAL.
-        CLEAR gv_subrc.
-        zsssmm03013-grnum = gs_grh-grnum.
-
-        CALL FUNCTION 'Z_FMSS_GET_PERNR'
-          EXPORTING
-            iv_id     = sy-uname
-            iv_module = 'WM'
-          IMPORTING
-            ev_pernr  = zsssmm03013-rgtor.
-
-        IF zsssmm03013-rgtor IS NOT INITIAL.
-          PERFORM set_rgtor_name USING zsssmm03013-rgtor
-                              CHANGING zsssmm03013-rgnme.
-        ELSE.
-          CLEAR zsssmm03013-rgnme.
-        ENDIF.
-      ELSE.
-        CLEAR gv_subrc.
-      ENDIF.
     WHEN 'UPDATE'.
       IF zsssmm03013-ivnum IS INITIAL.
         MESSAGE i999(zmcss) WITH '송장번호를 추가해주세요'.

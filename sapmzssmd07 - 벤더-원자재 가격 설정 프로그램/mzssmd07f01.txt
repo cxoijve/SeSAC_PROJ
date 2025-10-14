@@ -224,7 +224,7 @@ FORM set_fcat  CHANGING pt_fcat TYPE lvc_t_fcat.
   LOOP AT pt_fcat INTO ls_fcat.
     CASE ls_fcat-fieldname.
       WHEN 'LIGHT'.
-        ls_fcat-coltext = '계약여부'.
+        ls_fcat-coltext = '수정가능여부'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
