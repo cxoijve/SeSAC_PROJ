@@ -23,7 +23,7 @@ FORM create_alv_0100 .
   CALL METHOD go_split->set_column_width
     EXPORTING
       id    = 1
-      width = 47.
+      width = 45.
 
   " 3. 좌/우 컨테이너 가져오기
   CALL METHOD go_split->get_container
@@ -256,7 +256,7 @@ FORM get_bi_list .
 
   CLEAR gt_bi.
   SELECT DISTINCT
-     a~gidat a~ginum d~cstid d~cname a~stext a~fyear a~jenum c~curky a~rgdat
+      a~gidat a~ginum d~cstid d~cname a~stext a~fyear a~jenum c~curky a~rgdat
     INTO CORRESPONDING FIELDS OF TABLE gt_bi
     FROM ztssgih AS a
      INNER JOIN ztssgii AS b ON a~ginum = b~ginum
@@ -281,17 +281,40 @@ FORM get_bi_list .
      WHERE ginum EQ gs_bi-ginum.
 
     IF sy-subrc EQ 0.
-      gs_bi-light = '3'.
+      gs_bi-light = '3'.    " 청구 완료
     ELSE.
-      gs_bi-light = '1'.
+      gs_bi-light = '1'.    " 청구 미완료
     ENDIF.
     MODIFY gt_bi FROM gs_bi.
+
+*    CLEAR ls_color.
+*    ls_color-fname = 'GINUM'.
+*    ls_color-color-int = '0'.
+*    ls_color-color-inv = '0'.
+*    ls_color-color-col = '3'.
+
+    DATA: lv_gidat TYPE i,
+          lv_today TYPE i,
+          lv_diff TYPE i.
+
+    lv_gidat = gs_bi-gidat.
+    lv_today = sy-datum.
+
+    lv_diff = lv_today - lv_gidat.
 
     CLEAR ls_color.
     ls_color-fname = 'GINUM'.
     ls_color-color-int = '0'.
-    ls_color-color-inv = '0'.
-    ls_color-color-col = '3'.
+*    ls_color-color-inv = '0'.
+    IF lv_diff > 5.
+      ls_color-color-inv = '1'.  " 글자 색 변경
+      ls_color-color-col = '6'.  " 빨간글자
+    ELSE.
+      ls_color-color-inv = '0'.
+      ls_color-color-col = '3'.  " 배경 노란색
+    ENDIF.
+
+    CLEAR gs_bi-it_col.
     APPEND ls_color TO gs_bi-it_col.
     MODIFY gt_bi FROM gs_bi.
     CLEAR ls_color.
@@ -318,12 +341,14 @@ FORM get_doc_list .
                      CHANGING lr_bidat.
 
   CLEAR gt_doc.
-  SELECT a~bidat a~binum e~cstid e~cname a~stext a~fyear a~jenum
-         a~toprc a~curky c~ginum a~arfyr a~arnum a~rgdat
+  SELECT DISTINCT
+      a~bidat a~binum e~cstid e~cname a~stext a~fyear a~jenum
+      a~toprc a~curky c~ginum a~arfyr a~arnum a~rgdat
     INTO CORRESPONDING FIELDS OF TABLE gt_doc
     FROM ztsssivh AS a
       INNER JOIN ztsssivi AS b ON a~binum EQ b~binum
       INNER JOIN ztssgii AS c ON b~ginum EQ c~ginum
+                              AND c~del <> 'X'
       INNER JOIN ztsssoh AS d ON c~sonum EQ d~sonum
       INNER JOIN ztsscust AS e ON d~cstid EQ e~cstid
    WHERE a~bidat IN lr_bidat.
@@ -727,7 +752,8 @@ FORM get_rgtor_iv .
   " 등록자 가져오기
   SELECT SINGLE rgtor
     FROM ztsssivh
-    INTO gs_iv_head-rgtor.
+    INTO gs_iv_head-rgtor
+   WHERE binum EQ gs_iv_head-binum.
 
   " 사원명, 직급 가져오기
   SELECT SINGLE lname fname persg
@@ -1021,7 +1047,7 @@ FORM insert_doc CHANGING cv_subrc TYPE sy-subrc.
       INSERT ztsssivi FROM ls_item.
     ENDLOOP.
     COMMIT WORK.
-    MESSAGE i999(zmcss) WITH '청구문서' gs_head_ist-binum '생성 성공' DISPLAY LIKE 'S'.
+    MESSAGE i999(zmcss) WITH '청구문서' gs_head_ist-binum '생성 완료' DISPLAY LIKE 'S'.
     cv_subrc = 0.   " 성공
   ELSE.
     ROLLBACK WORK.

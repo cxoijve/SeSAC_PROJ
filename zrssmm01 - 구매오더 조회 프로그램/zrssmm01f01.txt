@@ -13,7 +13,7 @@ FORM get_data .
 
   IF pa_rb1 EQ 'X'.
 
-    SELECT h~ponum h~podat h~venid h~dudat h~stext h~curky h~rgdat h~rgtor
+    SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
       i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
       INTO CORRESPONDING FIELDS OF TABLE gt_total
       FROM ztsspoh AS h
@@ -27,7 +27,7 @@ FORM get_data .
 
   ELSE.
 
-      SELECT h~ponum h~podat h~venid h~dudat h~stext h~curky h~rgdat h~rgtor
+      SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
       i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
       INTO CORRESPONDING FIELDS OF TABLE gt_total
       FROM ztsspoh AS h

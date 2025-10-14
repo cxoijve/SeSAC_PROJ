@@ -8,7 +8,7 @@ SAPMZSSSD03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD03                             0100 0100     38219192 37  0  0 47255  0G E                              20251013131609																																
+SAPMZSSSD03                             0100 0100     38228192 37  0  0 47255  0G E                              20251014211057																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -34,8 +34,8 @@ ZSSSSD0301-CSTID	0	CHAR	 20	30	00	04	30	00	  8	  7		  0	  0	  0		 14					  0	  0
 GS_COND-CSTID	C	CHAR	  8	80	00	84	00	08	  8	 22		  0	  0	  0		  0					 16	  0								________	X	
 GS_COND-CNAME	C	CHAR	 25	80	02	80	31	00	  8	 33		  0	  0	  0		  0					 40	  0								_________________________		
 BILL		CHAR	 13	00	00	00	30	00	 11	 93		  0	  0	  0		 10	P				  0	  0	105							대금 청구	                                                                                                                                                                        BILL	
-DETAIL		CHAR	  8	00	00	00	30	00	 11	211		  0	  0	  0		  0	P				  0	  0	106							상세조회	                                                                                                                                                                        DETAIL	
-CON1			218	00	00	00	30	00	 12	  3		  0	  0	  0		 27	U				  1	  1	107									
+DETAIL		CHAR	  8	00	00	00	30	00	 11	220		  0	  0	  0		  0	P				  0	  0	106							상세조회	                                                                                                                                                                        DETAIL	
+CON1			227	00	00	00	30	00	 12	  3		  0	  0	  0		 27	U				  1	  1	107									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

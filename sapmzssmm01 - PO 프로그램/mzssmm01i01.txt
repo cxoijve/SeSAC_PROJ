@@ -28,7 +28,10 @@ MODULE user_command_0100 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'ENTER'.
+      perform get_ven_name using zsssmm0101-venid CHANGING zsssmm0101-vname.
     WHEN 'SEARCH' OR 'RE'.
+      If zsssmm0101-venid is INITIAL. clear zsssmm0101-vname. endif.
       PERFORM search_datas.
     WHEN 'CREATE'.
       PERFORM init_create CHANGING zsssmm0103.

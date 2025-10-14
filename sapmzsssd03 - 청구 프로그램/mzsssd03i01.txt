@@ -41,6 +41,8 @@ MODULE user_command_0100 INPUT.
       " 청구하기
       PERFORM select_row_bi CHANGING gv_subrc.
       IF gv_subrc EQ 0.
+        " 청구문서번
+
         MOVE-CORRESPONDING gs_bi TO gs_gi_head.
 *        zssssd0304-curky = 'KRW'.
         PERFORM get_rgtor_gi.

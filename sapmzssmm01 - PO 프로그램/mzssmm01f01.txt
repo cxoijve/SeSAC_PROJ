@@ -1590,8 +1590,30 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM search_datas .
+
   PERFORM search_po_all_infos.
   PERFORM modify_po_data.
+
+  DATA: lr_status TYPE RANGE OF i.
+
+  " 선택된 상태 수집
+  IF gv_chk1 = 'X'.  " 입고완료
+    APPEND VALUE #( sign = 'I' option = 'EQ' low = 1 ) TO lr_status.
+  ENDIF.
+
+  IF gv_chk2 = 'X'.  " 입고중
+    APPEND VALUE #( sign = 'I' option = 'EQ' low = 2 ) TO lr_status.
+  ENDIF.
+
+  IF gv_chk3 = 'X'.  " 미입고
+    APPEND VALUE #( sign = 'I' option = 'EQ' low = 3 ) TO lr_status.
+  ENDIF.
+
+  " 필터링
+  IF lr_status IS NOT INITIAL.
+    DELETE gt_data WHERE pstat NOT IN lr_status.
+  ENDIF.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  ENTER_DATAS
@@ -1773,7 +1795,7 @@ ENDFORM.
 *      <--P_LS_DATA_PSTAT_T  text
 *----------------------------------------------------------------------*
 FORM set_curr_status  USING    p_num TYPE ztsspoi-ponum
-                      CHANGING  cs_data like gs_data
+                      CHANGING  cs_data LIKE gs_data
                                 c_flag TYPE c
                                 c_stat TYPE zessetext.
 
@@ -1825,7 +1847,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM cal_grsum  USING pt_po_sum LIKE gt_itamt
                       pt_gr_sum LIKE gt_itamt
-                CHANGING  cs_data like gs_data
+                CHANGING  cs_data LIKE gs_data
                           c_flag TYPE c
                           c_stat TYPE zessetext.
 
@@ -1865,7 +1887,7 @@ FORM cal_grsum  USING pt_po_sum LIKE gt_itamt
   ELSE.
     cs_data-light = '@5C@'.
 *    cs_data-light = '1'.
-*    c_flag = 3.
+    c_flag = 3.
     c_stat = '미입고'.  " 모두 미입고 또는 입고중
   ENDIF.
 

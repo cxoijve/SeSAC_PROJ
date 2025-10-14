@@ -21,5 +21,9 @@ AT SELECTION-SCREEN OUTPUT.
 START-OF-SELECTION.
   PERFORM get_data.
 
+*GUI Texts
+*----------------------------------------------------------
+* T100 --> 구매오더 조건 상세조회
+
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

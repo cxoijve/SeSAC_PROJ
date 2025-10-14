@@ -8,7 +8,7 @@ SAPMZSSSD03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD03                             0300 0300     25134192 37  0  0 50176  0G E                              20251014100353																																
+SAPMZSSSD03                             0300 0300     23134192 37  0  0 50178  0G E                              20251014213205																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -27,7 +27,7 @@ ZSSSSD0306-CSTID	2	CHAR	 20	30	00	04	30	00	  5	  6		  0	  0	  0		  0					  0	  0
 GS_IV_HEAD-CSTID	C	CHAR	  8	80	00	84	30	08	  5	 27		  0	  0	  0		  0					  8	  0								________		
 GS_IV_HEAD-CNAME	C	CHAR	 18	80	02	80	31	00	  5	 38		  0	  0	  0		  0					 40	  0								__________________		
 ZSSSSD0306-STEXT	2	CHAR	 20	30	02	00	30	00	  5	 72		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
-GS_IV_HEAD-STEXT	C	CHAR	 40	80	02	80	00	00	  5	 93		  0	  0	  0		  0					 60	  0								________________________________________		
+GS_IV_HEAD-STEXT	C	CHAR	 40	80	02	80	30	00	  5	 93		  0	  0	  0		  0					 60	  0								________________________________________		
 ZSSSSD0306-FYEAR	2	CHAR	 20	30	00	04	30	00	  8	  6		  0	  0	  0		  0					  0	  0								회계연도	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-FYEAR	N	NUMC	  4	80	00	84	30	08	  8	 27		  0	  0	  0		  0					  4	  0								____		
 ZSSSSD0306-ARFYR	2	CHAR	 20	30	00	04	30	00	  8	 72		  0	  0	  0		  0					  0	  0								수금 회계연도	                                                                                                                                                                                                                                                        X	
@@ -39,8 +39,8 @@ GS_IV_HEAD-ARNUM	C	CHAR	 11	80	00	84	30	08	  9	 93		  0	  0	  0		  0					 11	  0
 ZSSSSD0306-TOPRC	2	CHAR	 20	30	00	00	30	00	 11	 72		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-TOPRC	P	CURR	 20	80	00	80	30	00	 11	 93		  0	  0	  0		  0					 15	  2		GS_IV_HEAD-CURKY						____________________		
 GS_IV_HEAD-CURKY	C	CUKY	  5	80	00	84	31	08	 11	116		  0	  0	  0		  0					  5	  0								_____		
-IV_ITEM		CHAR	133	00	00	00	30	00	 15	  3		  0	  0	  0		 11	R				  0	  0	102							청구 아이템		
-CON3			127	00	00	00	30	00	 16	  6		  0	  0	  0		  9	U				  1	  1	103									
+IV_ITEM		CHAR	133	00	00	00	30	00	 15	  3		  0	  0	  0		  9	R				  0	  0	102							청구 아이템		
+CON3			127	00	00	00	30	00	 16	  6		  0	  0	  0		  7	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

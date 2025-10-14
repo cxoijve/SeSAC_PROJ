@@ -2,40 +2,88 @@
 *& Include ZRSSMM01TOP                                       Report ZRSSMM01
 *&
 *&---------------------------------------------------------------------*
-REPORT ZRSSMM01 MESSAGE-ID zmcss.
+REPORT zrssmm01 MESSAGE-ID zmcss.
+
+
+*======================================
+* Common Variable
+*======================================
+
+DATA : ok_code  TYPE sy-ucomm,
+       gv_subrc TYPE sy-subrc,
+       gv_dynnr TYPE sy-dynnr.
+
+
+*======================================
+* Datas.
+*======================================
+* 구매오더 헤더
+DATA : gt_data TYPE zsssmm0102_t,
+       gs_data LIKE LINE OF gt_data.
+
+
+* 구매오더 아이템
+DATA : gt_item TYPE zsssmm0104_t,
+       gs_item LIKE LINE OF gt_item.
+
+* 전체 데이터 한 번에 받기 (조인)
+DATA : BEGIN OF gs_total,
+         ponum  TYPE ztsspoh-ponum,
+         podat  TYPE ztsspoh-podat,
+         venid  TYPE ztsspoh-venid,
+         dudat  TYPE ztsspoh-dudat,
+         stext  TYPE ztsspoh-stext,
+         curky  TYPE ztsspoh-curky,
+         rgdat  TYPE ztsspoh-rgdat,
+         rgtor  TYPE ztsspoh-rgtor,
+         itnum  TYPE ztsspoi-itnum,
+         pomnr  TYPE ztsspoi-pomnr,
+         amount TYPE ztsspoi-amount,
+         meins  TYPE ztsspoi-meins,
+         plant  TYPE ztsspoi-plant,
+         poprc  TYPE ztsspoi-poprc,
+         del    TYPE ztsspoi-del,
+       END OF gs_total,
+       gt_total LIKE TABLE OF gs_total.
+
+
+*======================================
+* Dock, Split, Con, Doc, Alv.
+*======================================
+
+" ALV
+DATA : go_dock     TYPE REF TO cl_gui_docking_container,
+       go_split    TYPE REF TO cl_gui_splitter_container,
+       go_split2   TYPE REF TO cl_gui_splitter_container,
+       go_alv      TYPE REF TO cl_gui_alv_grid,
+       go_con1     TYPE REF TO cl_gui_container,
+       go_con2     TYPE REF TO cl_gui_container,
+       go_con3     TYPE REF TO cl_gui_container,
+       go_con4     TYPE REF TO cl_gui_container,
+       go_document TYPE REF TO cl_dd_document.
+
+
+*======================================
+* Tables.
+*======================================
+
 
 TABLES : zsssmm0102, ztssmat.
-
-DATA : gt_data type zsssmm0102_t,
-       gs_data like line of gt_data.
-
 " 구매오더 아이템
 TABLES : zsssmm0104.
 DATA : gs_cond_item TYPE zsssmm0104.
 
-" 구매오더 아이템 결과
-DATA : gt_item TYPE zsssmm0104_t,
-       gs_item LIKE LINE OF gt_item.
 
+*======================================
+* Utilities.
+*======================================
 
-DATA : BEGIN OF gs_total,
-    PONUM type ztsspoh-ponum,
-    PODAT type ztsspoh-podat,
-    VENID type ztsspoh-venid,
-    DUDAT type ztsspoh-dudat,
-    STEXT type ztsspoh-stext,
-    CURKY type ztsspoh-curky,
-    RGDAT type ztsspoh-rgdat,
-    RGTOR type ztsspoh-rgtor,
-    ITNUM type ztsspoi-itnum,
-    POMNR type ztsspoi-pomnr,
-    AMOUNT  type ztsspoi-amount,
-    MEINS type ztsspoi-meins,
-    PLANT type ztsspoi-plant,
-    POPRC type ztsspoi-poprc,
-    DEL   type ztsspoi-del,
-    end of gs_total,
-    gt_total like table of gs_total.
+* Layout
+DATA : gs_layo type lvc_s_layo.
+
+* Field Catalog
+DATA : gt_fcat type lvc_t_fcat,
+       gs_fcat like line of gt_fcat.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750
