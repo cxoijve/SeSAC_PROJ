@@ -8,11 +8,11 @@ SAPMZSSMD06
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD06                             0100 0100      4 75192 37  0  0 27126  0G E                              20251009091300																																
+SAPMZSSMD06                             0100 0100     23 82192 37  0  0 27127  0G E                              20251014230144																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_1		CHAR	 82	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							CONDITION		
+B_BOX_1		CHAR	 82	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							구매카탈로그		
 ZSSSMD06002-PRDNR	2	CHAR	 20	30	00	04	30	00	  2	  4		  0	  0	  0		  0					  0	  0								완제품 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD06002-PRDNR	C	CHAR	  8	A0	00	84	00	08	  2	 25		  0	  0	  0		  0					 16	  0			ZSHSSMD06					________	X                                      00	
 ZSSSMD06002-CSTID	2	CHAR	 20	30	00	04	30	00	  3	  4		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	

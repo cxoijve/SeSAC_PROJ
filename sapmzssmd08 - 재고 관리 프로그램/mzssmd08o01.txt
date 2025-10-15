@@ -91,7 +91,7 @@ MODULE display_alv OUTPUT.
                              USING   'zsssmd0803'
                                      gs_layo_0100
                                      go_alv_0100
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
     WHEN '0210'.
       IF go_con_0210 IS NOT INITIAL.
@@ -101,7 +101,7 @@ MODULE display_alv OUTPUT.
                              USING   'zsssmd0806'
                                      gs_layo_0210
                                      go_alv_0210
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
     WHEN '0220'.
       IF go_con_0220 IS NOT INITIAL.
@@ -111,7 +111,7 @@ MODULE display_alv OUTPUT.
                              USING   'zsssmd0806'
                                      gs_layo_0220
                                      go_alv_0220
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
     WHEN '0300'.
       IF go_con_0300 IS NOT INITIAL.
@@ -121,7 +121,7 @@ MODULE display_alv OUTPUT.
                              USING   ''
                                      gs_layo_0300
                                      go_alv_0300
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
     WHEN '0310'.
       IF go_con_0310 IS NOT INITIAL.

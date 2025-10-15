@@ -8,18 +8,18 @@ SAPMZSSMD07
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD07                             0100 0100      4 84192 37  0  0 27125  0G E                              20251010162138																																
+SAPMZSSMD07                             0100 0100      4 92192 37  0  0 27126  0G E                              20251014225948																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_1		CHAR	 92	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	101							CONDITION		
+B_BOX_1		CHAR	 92	00	00	00	30	00	  1	  2		  0	  0	  0		  4	R				  0	  0	102							판매카탈로그		
 ZSSSMD07001-MATNR	2	CHAR	 20	30	00	00	30	00	  2	  4		  0	  0	  0		  0					  0	  0								자재 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD07001-MATNR	C	CHAR	  8	A0	00	80	00	08	  2	 25		  0	  0	  0		  0					 16	  0			ZSHSSMD09					________	                                       00	
 ZSSSMD07001-MATNM	C	CHAR	 40	A0	02	80	31	00	  2	 34		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
 ZSSSMD07001-VENID	2	CHAR	 20	30	00	00	30	00	  3	  4		  0	  0	  0		  0					  0	  0								벤더코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD07001-VENID	C	CHAR	  8	A0	00	80	00	08	  3	 25		  0	  0	  0		  0					 16	  0			ZSHSSMD10					________	                                       00	
 ZSSSMD07001-VNAME	C	CHAR	 40	A0	02	80	31	00	  3	 34		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
-CON			 91	00	00	00	30	00	  5	  2		  0	  0	  0		 23	U				  1	  1	102									
+CON			 91	00	00	00	30	00	  5	  2		  0	  0	  0		 23	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

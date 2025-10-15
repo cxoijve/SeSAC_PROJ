@@ -8,15 +8,15 @@ SAPMZSSSD03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD03                             0100 0100     38228192 37  0  0 47255  0G E                              20251014211057																																
+SAPMZSSSD03                             0100 0100     38228192 37  0  0 47255  0G E                              20251015222251																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 COND		CHAR	117	00	00	00	30	00	  2	  3		  0	  0	  0		  8	R				  0	  0	101							조회 조건		
 GV_RB_BI	C	CHAR	  1	80	00	80	00	00	  3	  7		  0	  0	  0		  0	A				  0	  0	102			RB1	GR1				                                                                                                                                                                        RADIO	
-RB_BI	0	CHAR	 14	00	00	00	30	00	  3	  9		  0	  0	  0		  0					  0	  0								출고 문서 조회		
+GV_RB_BI	0	CHAR	 14	00	00	00	30	00	  3	  9		  0	  0	  0		  0	A				  0	  0	102			RB1	GR1			출고 문서 조회		
 GV_RB_DOC	C	CHAR	  1	80	00	80	00	00	  3	 28		  0	  0	  0		  0	A				  0	  0	102			RB1	GR2				                                                                                                                                                                        RADIO	
-RB_DOC	0	CHAR	 14	00	00	00	30	00	  3	 30		  0	  0	  0		  0					  0	  0								청구 문서 조회		
+GV_RB_DOC	0	CHAR	 14	00	00	00	30	00	  3	 30		  0	  0	  0		  0	A				  0	  0	102			RB1	GR2			청구 문서 조회		
 GS_COND-GIDAT_B	0	CHAR	 20	00	00	00	30	00	  5	  7		  0	  0	  0		 14					  0	  0					GR1			출고일	                                                                                                                                                                                                                                                        X	
 GS_COND-GIDAT_B	D	DATS	 10	80	00	80	00	00	  5	 22		  0	  0	  0		  0					 16	  0					GR1			__________	X	
 TO1	0	CHAR	  1	00	00	00	30	00	  5	 36		  0	  0	  0		  0					  0	  0					GR1			~		
@@ -27,19 +27,28 @@ TO2	0	CHAR	  1	00	00	00	30	00	  6	 36		  0	  0	  0		  0					  0	  0					GR2			~
 GS_COND-BIDAT_E	D	DATS	 10	80	00	80	00	00	  6	 41		  0	  0	  0		  0					 16	  0					GR2			__________	X	
 ZSSSSD0301-ARCHK	0	CHAR	 20	00	00	00	30	00	  6	 70		  0	  0	  0		 14					  0	  0					GR2			수금 여부		
 GS_COND-ARCHK_Y	C	CHAR	  1	80	00	80	00	00	  6	 85		  0	  0	  0		  0	C				  2	  0	103				GR2					
-ARCHK_Y	0	CHAR	  9	00	00	00	30	00	  6	 87		  0	  0	  0		  0					  0	  0					GR2			수금 완료		
+GS_COND-ARCHK_Y	0	CHAR	  9	00	00	00	30	00	  6	 87		  0	  0	  0		  0	C				  0	  0	103				GR2			수금 완료		
 GS_COND-ARCHK_N	C	CHAR	  1	80	00	80	00	00	  6	 99		  0	  0	  0		  0	C				  2	  0	104				GR2					
-ARCHK_N	0	CHAR	 11	00	00	00	30	00	  6	101		  0	  0	  0		  0					  0	  0					GR2			수금 미완료		
+GS_COND-ARCHK_N	0	CHAR	 11	00	00	00	30	00	  6	101		  0	  0	  0		  0	C				  0	  0	104				GR2			수금 미완료		
 ZSSSSD0301-CSTID	0	CHAR	 20	30	00	04	30	00	  8	  7		  0	  0	  0		 14					  0	  0								고객코드	                                                                                                                                                                                                                                                        X	
 GS_COND-CSTID	C	CHAR	  8	80	00	84	00	08	  8	 22		  0	  0	  0		  0					 16	  0								________	X	
 GS_COND-CNAME	C	CHAR	 25	80	02	80	31	00	  8	 33		  0	  0	  0		  0					 40	  0								_________________________		
-BILL		CHAR	 13	00	00	00	30	00	 11	 93		  0	  0	  0		 10	P				  0	  0	105							대금 청구	                                                                                                                                                                        BILL	
-DETAIL		CHAR	  8	00	00	00	30	00	 11	220		  0	  0	  0		  0	P				  0	  0	106							상세조회	                                                                                                                                                                        DETAIL	
+IC_BI_G	C	CHAR	 33	80	00	80	32	00	 11	 24		  0	  0	  0		  2					  0	  0								@00@_____________________________		
+TX_BI_G	0	CHAR	  9	00	00	00	30	00	 11	 27		  0	  0	  0		  0					  0	  0								청구 완료		
+IC_BI_R	C	CHAR	 33	80	00	80	32	00	 11	 40		  0	  0	  0		  2					  0	  0								@00@_____________________________		
+TX_BI_R	0	CHAR	 11	00	00	00	30	00	 11	 43		  0	  0	  0		  0					  0	  0								청구 미완료		
+BILL		CHAR	 13	00	00	00	30	00	 11	 92		  0	  0	  0		 10	P				  0	  0	105							대금 청구	                                                                                                                                                                        BILL	
+IC_DOC_G	C	CHAR	 33	80	00	80	32	00	 11	127		  0	  0	  0		  2					  0	  0								@00@_____________________________		
+TX_DOC_G	0	CHAR	  9	00	00	00	30	00	 11	130		  0	  0	  0		  0					  0	  0								수금 완료		
+IC_DOC_R	C	CHAR	 36	80	00	80	32	00	 11	143		  0	  0	  0		  2					  0	  0								@00@________________________________		
+TX_DOC_R	0	CHAR	 11	00	00	00	30	00	 11	146		  0	  0	  0		  0					  0	  0								수금 미완료		
+DETAIL		CHAR	 10	00	00	00	30	00	 11	215		  0	  0	  0		  0	P				  0	  0	106							상세 조회	                                                                                                                                                                        DETAIL	
 CON1			227	00	00	00	30	00	 12	  3		  0	  0	  0		 27	U				  1	  1	107									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0100.																																
+  MODULE set_icon_0100.																																
   MODULE set_screen_0100.																																
   MODULE set_alv_0100.																																
 																																

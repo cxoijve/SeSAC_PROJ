@@ -68,9 +68,9 @@ ENDFORM.
 FORM display_alv_0100 .
   DATA: ls_layo TYPE lvc_s_layo.
 
-  PERFORM set_all_fcat.
   PERFORM set_alv_layo CHANGING ls_layo.
 
+  PERFORM set_fcat_0100 CHANGING gt_fcat_0100.
 
   CALL METHOD go_alv->set_table_for_first_display
     EXPORTING
@@ -78,7 +78,7 @@ FORM display_alv_0100 .
       is_layout                     = ls_layo
     CHANGING
       it_outtab                     = gt_data
-      it_fieldcatalog               = gt_fcat
+      it_fieldcatalog               = gt_fcat_0100
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -120,9 +120,9 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_all_fcat .
-  CLEAR gt_fcat.
 
-*  PERFORM set_fcat USING 'EID' '' '' 'X'.
+*
+*  PERFORM set_fcat USING 'DEL' '' '사' ''.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT
@@ -134,16 +134,30 @@ ENDFORM.
 *      -->P_0132   text
 *      -->P_0133   text
 *----------------------------------------------------------------------*
-FORM set_fcat USING VALUE(p_fieldname) TYPE lvc_fname
-                    VALUE(p_col_pos) TYPE lvc_colpos
-                    VALUE(p_coltext) TYPE lvc_txtcol
-                    VALUE(p_no_out) TYPE lvc_noout.
-  CLEAR gs_fcat.
-  gs_fcat-fieldname = p_fieldname .
-  gs_fcat-col_pos = p_col_pos.
-  gs_fcat-coltext = p_coltext.
-  gs_fcat-no_out    = p_no_out.
-  APPEND gs_fcat TO gt_fcat.
+FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMD06001'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'LIGHT'.
+        ls_fcat-coltext = '사용여부'.
+      WHEN 'DEL'.
+        ls_fcat-coltext = '삭제여부'.
+
+
+
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_ALL_TABLE_DATA
@@ -196,14 +210,14 @@ FORM get_prdnr_price_data .
                         CHANGING gv_subrc.
     IF gv_subrc <> 0.
       CLEAR gv_subrc.
-      gs_data-light = '1'.
+      gs_data-light = '3'.
     ELSE.
       CLEAR gv_subrc.
-      gs_data-light = '3'.
+      gs_data-light = '1'.
     ENDIF.
 
     IF gs_data-del NE ''.
-      gs_data-light = 2.
+      gs_data-light = 0.
     ENDIF.
 
 
@@ -334,17 +348,19 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM display_alv_0101 .
-  DATA: ls_layo TYPE lvc_s_layo.
 
-  PERFORM set_alv_layo CHANGING ls_layo.
+
+  PERFORM set_alv_layo_0101 CHANGING gs_layo_0101.
+
+  PERFORM set_fcat_0101 CHANGING gt_fcat_0101.
 
   CALL METHOD go_alv_2->set_table_for_first_display
     EXPORTING
       i_structure_name              = 'ZSSSMD06003'
-      is_layout                     = ls_layo
+      is_layout                     = gs_layo_0101
     CHANGING
       it_outtab                     = gt_modal
-*     it_fieldcatalog               = gt_fcat
+      it_fieldcatalog               = gt_fcat_0101
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -397,6 +413,22 @@ FORM set_prdnr_data .
       ls_info-prdnr = gs_prdnr-prdnr.
       APPEND ls_info TO gt_modal.
     ENDIF.
+
+    LOOP AT gt_modal INTO gs_modal.
+
+      SELECT SINGLE matnm
+        FROM ztssmat_t
+        INTO gs_modal-matnm
+        WHERE matnr = gs_modal-prdnr
+          AND langu = 3.
+
+      SELECT SINGLE cname
+        FROM ztsscust
+        INTO gs_modal-cname
+        WHERE cstid = gs_modal-cstid.
+
+      MODIFY gt_modal FROM gs_modal.
+    ENDLOOP.
 
   ENDLOOP.
 ENDFORM.
@@ -517,7 +549,7 @@ FORM display_alv_0200 .
       is_layout                     = ls_layo
     CHANGING
       it_outtab                     = gt_customer
-      it_fieldcatalog               = gt_fcat
+      it_fieldcatalog               = gt_fcat_0200
 *     it_sort                       =
 *     it_filter                     =
     EXCEPTIONS
@@ -575,7 +607,7 @@ FORM insert_customer_data .
   IF sy-subrc <> 0.
     MESSAGE i999(zmcss) WITH 'insert 실패'.
   ELSE.
-    MESSAGE i999(zmcss) WITH 'insert 성공'.
+    MESSAGE i999(zmcss) WITH '고객 카탈로그 생성 성공'.
     LEAVE TO SCREEN 0.
   ENDIF.
 
@@ -796,6 +828,72 @@ FORM check_so_somnr_data USING VALUE(pv_cstid) TYPE zesscstid
     cv_subrc = 0.
   ELSE.
     cv_subrc = 4.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0101  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0101  CHANGING pt_fcat TYPE lvc_t_fcat.
+
+  DATA ls_fcat TYPE lvc_s_fcat.
+
+  CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_structure_name = 'ZSSSMD06003'
+    CHANGING
+      ct_fieldcat      = pt_fcat.
+
+  LOOP AT pt_fcat INTO ls_fcat.
+    CASE ls_fcat-fieldname.
+      WHEN 'MATNM'.
+
+    ENDCASE.
+    MODIFY pt_fcat FROM ls_fcat.
+    CLEAR ls_fcat.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_LAYO_0101
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GS_LAYO_0101  text
+*----------------------------------------------------------------------*
+FORM set_alv_layo_0101  CHANGING ps_layo TYPE lvc_s_layo.
+  CLEAR ps_layo.
+  ps_layo-sel_mode = 'A'.
+  ps_layo-cwidth_opt = 'X'.
+*  ps_layo-zebra = 'X'.
+  ps_layo-no_rowins = 'X'. "Standard Edit X
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CNAME_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD06005_CSTID  text
+*      <--P_ZSSSMD06005_CNAME  text
+*----------------------------------------------------------------------*
+FORM get_cname_data  USING VALUE(pv_cstid) TYPE zesscstid
+                     CHANGING cv_cname TYPE zesscname.
+
+
+
+  SELECT SINGLE cname
+    FROM ztsscust
+    INTO cv_cname
+    WHERE cstid = pv_cstid.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_cname_data ERROR'.
   ENDIF.
 
 

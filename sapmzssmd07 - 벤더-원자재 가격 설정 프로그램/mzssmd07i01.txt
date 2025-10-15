@@ -19,7 +19,14 @@ MODULE user_command_0100 INPUT.
     WHEN 'BUY'.
       PERFORM set_vntext_0110.
       CALL SCREEN 110 STARTING AT 85 3 ENDING AT 150 25.
-      CLEAR : gt_vntext.
+      CLEAR : gt_vntext,
+               gt_prcat,
+            zsssmd07001,
+               gt_matnr,
+               gt_venid.
+
+      PERFORM get_prcat_data TABLES gt_prcat.
+
 
     WHEN 'RELEASE'.
       PERFORM get_detail_info_0100 CHANGING gv_subrc.
@@ -71,6 +78,22 @@ MODULE user_command_0100 INPUT.
       ENDIF.
 
     WHEN 'ENTER'.
+
+      IF zsssmd07001-matnr IS NOT INITIAL.
+        PERFORM get_matnm_data USING zsssmd07001-matnr
+                            CHANGING zsssmd07001-matnm.
+      ELSE.
+        CLEAR zsssmd07001-matnm.
+      ENDIF.
+
+      IF zsssmd07001-venid IS NOT INITIAL.
+        PERFORM get_vname_data USING zsssmd07001-venid
+                            CHANGING zsssmd07001-vname.
+      ELSE.
+        CLEAR zsssmd07001-venid.
+      ENDIF.
+
+
   ENDCASE.
 
 ENDMODULE.
@@ -135,6 +158,13 @@ MODULE user_command_0200 INPUT.
         PERFORM set_alv_condition.
         PERFORM get_prcat_data TABLES gt_prcat.
         LEAVE TO SCREEN 0.
+      ENDIF.
+    WHEN 'ENTER'.
+      IF zsssmd07004-venid IS NOT INITIAL.
+        PERFORM get_vname_data USING zsssmd07004-venid
+                            CHANGING zsssmd07004-vname.
+      ELSE.
+        CLEAR zsssmd07004-venid.
       ENDIF.
 
   ENDCASE.

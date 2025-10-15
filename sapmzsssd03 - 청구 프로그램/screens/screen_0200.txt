@@ -8,7 +8,7 @@ SAPMZSSSD03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD03                             0200 0200     32134192 37  0  0 37194  0G E                              20251014111346																																
+SAPMZSSSD03                             0200 0200     32134192 37  0  0 37197  0G E                              20251015205329																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -17,8 +17,8 @@ ZSSSSD0304-GINUM	0	CHAR	 20	30	00	04	30	00	  4	  6		  0	  0	  0		  0					  0	  0
 GS_GI_HEAD-GINUM	C	CHAR	 11	80	00	84	30	08	  4	 27		  0	  0	  0		  0					 22	  0								___________	X	
 ZSSSSD0304-RGTOR	2	CHAR	 20	30	00	04	30	00	  4	 74		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 GS_GI_HEAD-RGTOR	C	CHAR	  8	80	00	84	30	08	  4	 95		  0	  0	  0		  0					 16	  0								________	X	
-GS_GI_HEAD-ENAME	C	CHAR	  5	80	02	80	31	00	  4	106		  0	  0	  0		  0					 40	  0								_____		
-GS_GI_HEAD-PERSG_T	C	CHAR	 10	80	00	80	31	00	  4	112		  0	  0	  0		  0					 20	  0								__________		
+B_RGTOR1		CHAR	  7	00	00	00	30	00	  4	104		  0	  0	  0		  2	P				  0	  0	102							@16@ ..	                                                                                                                                                                        B_RGTOR	
+GS_GI_HEAD-ENAME	C	CHAR	 20	80	02	80	31	00	  4	109		  0	  0	  0		  0					 40	  0								____________________		
 ZSSSSD0304-GIDAT	2	CHAR	 20	30	00	00	30	00	  5	  6		  0	  0	  0		  0					  0	  0								출고일	                                                                                                                                                                                                                                                        X	
 GS_GI_HEAD-GIDAT	D	DATS	 10	80	00	80	30	00	  5	 27		  0	  0	  0		  0					 16	  0								__________	X	
 ZSSSSD0304-RGDAT	2	CHAR	 20	30	00	00	30	00	  5	 74		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
@@ -32,17 +32,18 @@ ZSSSSD0304-FYEAR	2	CHAR	 20	30	00	04	30	00	  8	  6		  0	  0	  0		  0					  0	  0
 GS_GI_HEAD-FYEAR	N	NUMC	  4	80	00	84	30	08	  8	 27		  0	  0	  0		  0					  8	  0								____	X	
 ZSSSSD0304-JENUM	2	CHAR	 20	30	00	04	30	00	  9	  6		  0	  0	  0		  0					  0	  0								전표번호	                                                                                                                                                                                                                                                        X	
 GS_GI_HEAD-JENUM	C	CHAR	 11	80	00	84	30	08	  9	 27		  0	  0	  0		  0					 22	  0								___________	X	
+B_JENUM		CHAR	  7	00	00	00	30	00	  9	 39		  0	  0	  0		  2	P				  0	  0	103							@16@ ..	                                                                                                                                                                        b_jenum	
 ZSSSSD0304-TOPRC	2	CHAR	 20	30	00	00	30	00	  9	 74		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
 GS_GI_HEAD-TOPRC	P	CURR	 15	80	00	80	30	00	  9	 95		  0	  0	  0		  0					 15	  2		GS_GI_HEAD-CURKY						_______________		
 GS_GI_HEAD-CURKY	C	CUKY	  5	80	00	84	31	08	  9	113		  0	  0	  0		  0					 10	  0								_____	X	
-CON2			127	00	00	00	30	00	 11	  6		  0	  0	  0		  5	U				  1	  1	102									
-B_BI		CHAR	133	00	00	00	30	00	 18	  3		  0	  0	  0		 15	R				  0	  0	103							청구 문서 작성		
+CON2			127	00	00	00	30	00	 11	  6		  0	  0	  0		  5	U				  1	  1	104									
+B_BI		CHAR	133	00	00	00	30	00	 18	  3		  0	  0	  0		 15	R				  0	  0	105							청구 문서 작성		
 ZSSSSD0306-BIDAT	2	CHAR	 20	30	00	00	30	00	 20	  6		  0	  0	  0		  0					  0	  0								청구일	                                                                                                                                                                                                                                                        X	
 GS_HEAD_IST-BIDAT	D	DATS	 10	80	00	80	00	00	 20	 27		  0	  0	  0		  0					 16	  0								__________	X	
 ZSSSSD0306-RGTOR	2	CHAR	 20	30	00	04	30	00	 20	 74		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 GS_HEAD_IST-RGTOR	C	CHAR	  8	80	00	84	30	08	 20	 95		  0	  0	  0		  0					 16	  0								________	X	
-GS_HEAD_IST-ENAME	C	CHAR	  5	80	02	80	31	00	 20	106		  0	  0	  0		  0					 40	  0								_____		
-GS_HEAD_IST-PERSG_T	C	CHAR	 10	80	00	80	31	00	 20	112		  0	  0	  0		  0					 20	  0								__________		
+B_RGTOR2		CHAR	  7	00	00	00	30	00	 20	104		  0	  0	  0		  2	P				  0	  0	106							@16@ ..	                                                                                                                                                                        B_RGTOR	
+GS_HEAD_IST-ENAME	C	CHAR	 20	80	02	80	31	00	 20	109		  0	  0	  0		  0					 40	  0								____________________		
 ZSSSSD0306-RGDAT	2	CHAR	 20	30	00	00	30	00	 21	 74		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
 GS_HEAD_IST-RGDAT	D	DATS	 10	80	00	80	00	00	 21	 95		  0	  0	  0		  0					 16	  0								__________	X	
 ZSSSSD0306-CSTID	2	CHAR	 20	30	00	04	30	00	 22	  6		  0	  0	  0		  0					  0	  0								고객 코드	                                                                                                                                                                                                                                                        X	
@@ -51,9 +52,9 @@ GS_HEAD_IST-CNAME	C	CHAR	 18	80	02	80	31	00	 22	 38		  0	  0	  0		  0					 80	  
 ZSSSSD0306-STEXT	2	CHAR	 20	30	02	00	30	00	 22	 74		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
 GS_HEAD_IST-STEXT	C	CHAR	 38	80	02	80	00	00	 22	 95		  0	  0	  0		  0					120	  0								______________________________________		
 ZSSSSD0306-TOPRC	2	CHAR	 20	30	00	00	30	00	 24	 74		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
-GS_HEAD_IST-TOPRC	P	CURR	 20	80	00	80	30	00	 24	 95		  0	  0	  0		  0					 15	  2		GS_HEAD_IST-CURKY						____________________		
-GS_HEAD_IST-CURKY	C	CUKY	  5	80	00	84	31	08	 24	118		  0	  0	  0		  0					 10	  0								_____	X	
-CON4			127	00	00	00	30	00	 26	  6		  0	  0	  0		  6	U				  1	  1	104									
+GS_HEAD_IST-TOPRC	P	CURR	 15	80	00	80	30	00	 24	 95		  0	  0	  0		  0					 15	  2		GS_HEAD_IST-CURKY						_______________		
+GS_HEAD_IST-CURKY	C	CUKY	  5	80	00	84	31	08	 24	113		  0	  0	  0		  0					 10	  0								_____	X	
+CON4			127	00	00	00	30	00	 26	  6		  0	  0	  0		  6	U				  1	  1	107									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

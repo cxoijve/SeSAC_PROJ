@@ -8,11 +8,11 @@ SAPMZSSMD06
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD06                             0101M0101     27 31192 37  0  0 27121  0G E                              20250916153637																																
+SAPMZSSMD06                             0101M0101      0  0192 37  0  0 27122  0G E                              20251015103048																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-CON_M			 31	00	00	00	30	00	  1	  2		  0	  0	  0		 27	U				  1	  1	101									
+CON_M			 69	00	00	00	30	00	  1	  2		  0	  0	  0		 27	U				  1	  1	101									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

@@ -298,7 +298,7 @@ FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
                      CHANGING  ps_cond_0100-mtype.
 
   IF ps_cond_0100-matnm IS INITIAL OR ps_cond_0100-mtype IS INITIAL.
-    MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 에 대한 정보가 없습니다'.
+    MESSAGE s999(zmcss) WITH '자재 ' ps_cond_0100-matnr ' 에 대한 정보가 없습니다'.
     RETURN.
   ENDIF.
 
@@ -311,7 +311,7 @@ FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
         WHERE prdnr = ps_cond_0100-matnr.
 
       IF sy-subrc <> 0.
-        MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
+        MESSAGE s999(zmcss) WITH '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
         RETURN.
       ENDIF.
 
@@ -328,7 +328,7 @@ FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
         WHERE rawnr = ps_cond_0100-matnr.
 
       IF sy-subrc <> 0.
-        MESSAGE s999(zmcss) WITH '<get_info_0100>' '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
+        MESSAGE s999(zmcss) WITH '자재 ' ps_cond_0100-matnr ' 의 레시피 정보가 없습니다'.
         RETURN.
       ENDIF.
 
@@ -380,7 +380,7 @@ FORM get_matnm  TABLES   pt_ztssmat_t STRUCTURE gt_ztssmat_t
     AND langu = pv_langu.
 
   IF sy-subrc <> 0.
-    MESSAGE s999(zmcss) WITH '<get_matnm>' '조건을 만족하는 자재 이름이 없습니다.'.
+    MESSAGE s999(zmcss) WITH '조건을 만족하는 자재 이름이 없습니다.'.
     CLEAR pv_matnm.
     RETURN.
   ENDIF.
@@ -416,7 +416,7 @@ FORM get_mtype  TABLES   pt_ztssmat STRUCTURE gt_ztssmat
     WHERE matnr = pv_matnr.
 
   IF sy-subrc <> 0.
-    MESSAGE s999(zmcss) WITH '<get_mtype>' '조건을 만족하는 자재 유형이 없습니다.'.
+    MESSAGE s999(zmcss) WITH '조건을 만족하는 자재 유형이 없습니다.'.
     CLEAR pv_mtype.
     RETURN.
   ENDIF.
@@ -548,7 +548,7 @@ FORM select_row_0200l  TABLES   pt_info_0200l STRUCTURE gs_info_0200l
 
   CASE lv_index.
     WHEN 0.
-      MESSAGE i999(zmcss) WITH '<select_row_0200l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      MESSAGE i999(zmcss) WITH '추가할 하나 이상의 자재를 선택해 주세요'.
       pv_subrc = 4.
       RETURN.
   ENDCASE.
@@ -624,7 +624,7 @@ FORM select_row_0200r  TABLES   pt_info_0200r STRUCTURE gs_info_0200r
 
   CASE lv_index.
     WHEN 0.
-      MESSAGE i999(zmcss) WITH '<select_row_0200r>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      MESSAGE i999(zmcss) WITH  '추가할 하나 이상의 자재를 선택해 주세요'.
       pv_subrc = 4.
       RETURN.
   ENDCASE.
@@ -701,13 +701,13 @@ FORM insert_req  TABLES   pt_info_0200r STRUCTURE gs_info_0200r
 
     IF sy-subrc <> 0.
       ROLLBACK WORK.
-      MESSAGE i999(zmcss) WITH '<insert_req>' '레시피 추가가 실패하였습니다.'.
+      MESSAGE i999(zmcss) WITH  '레시피 추가가 실패하였습니다.'.
       pv_subrc = 4.
       RETURN.
     ENDIF.
   ENDLOOP.
 
-  MESSAGE i999(zmcss) WITH '<insert_req> 완제품' pv_matnr '의 레시피가 추가되었습니다'.
+  MESSAGE i999(zmcss) WITH '완제품' pv_matnr '의 레시피가 추가되었습니다'.
   pv_subrc = 0.
   COMMIT WORK.
 ENDFORM.
@@ -740,7 +740,7 @@ FORM select_row_0100l  TABLES   pt_info_0100l STRUCTURE gs_info_0100l
   CASE lv_index.
     WHEN 1.
     WHEN OTHERS.
-      MESSAGE i999(zmcss) WITH '<select_row_0100l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      MESSAGE i999(zmcss) WITH '추가할 하나 이상의 자재를 선택해 주세요'.
       pv_subrc = 4.
       RETURN.
   ENDCASE.
@@ -788,7 +788,7 @@ FORM get_info_0300  TABLES   pt_info_0300l STRUCTURE gs_info_0300l
     WHERE prdnr = ps_cond_0300-matnr.
 
   IF sy-subrc <> 0.
-    MESSAGE i999(zmcss) WITH '<get_info_0300>' ps_cond_0300-matnr '는 레시피가 없는 자재입니다. 신규 생성해주십시오.'.
+    MESSAGE i999(zmcss) WITH ps_cond_0300-matnr '는 레시피가 없는 자재입니다. 신규 생성해주십시오.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -870,12 +870,12 @@ FORM select_row_0300l  TABLES   pt_info_0300l STRUCTURE gs_info_0300l
 
   CASE lv_index.
     WHEN 0.
-      MESSAGE i999(zmcss) WITH '<select_row_0300l>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      MESSAGE i999(zmcss) WITH '추가할 하나 이상의 자재를 선택해 주세요'.
       pv_subrc = 4.
       RETURN.
     WHEN OTHERS.
       IF lv_0300r_lines + lv_index > pv_info_0300r. " 총 갯수가 안맞으면 안됨.
-        MESSAGE i999(zmcss) WITH '<select_row_0300l>' '이 완제품은 총' pv_info_0300r '개의 원자재로 구성된 완제품 입니다.'.
+        MESSAGE i999(zmcss) WITH '이 완제품은 총' pv_info_0300r '개의 원자재로 구성된 완제품 입니다.'.
         pv_subrc = 4.
         RETURN.
       ENDIF.
@@ -947,7 +947,7 @@ FORM select_row_0300r  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
 
   CASE lv_index.
     WHEN 0.
-      MESSAGE i999(zmcss) WITH '<select_row_0300r>' '추가할 하나 이상의 자재를 선택해 주세요'.
+      MESSAGE i999(zmcss) WITH  '추가할 하나 이상의 자재를 선택해 주세요'.
       pv_subrc = 4.
       RETURN.
   ENDCASE.
@@ -1003,7 +1003,7 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
 
   DESCRIBE TABLE pt_info_0300r LINES lt_lines.
   IF lt_lines NE pv_info_0300r.
-    MESSAGE i999(zmcss) WITH '<update_req>' '아이템의 갯수가 맞지 않습니다. 이 완제품은' pv_info_0300r '개의 아이템을 갖습니다.'.
+    MESSAGE i999(zmcss) WITH '아이템의 갯수가 맞지 않습니다. 이 완제품은' pv_info_0300r '개의 아이템을 갖습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -1022,7 +1022,7 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
   ENDLOOP.
 
   IF lv_updatability NE '1'.
-    MESSAGE i999(zmcss) WITH '<update_req>' '변경 사항이 없습니다.'.
+    MESSAGE i999(zmcss) WITH '변경 사항이 없습니다.'.
     pv_subrc = 4.
     RETURN.
   ENDIF.
@@ -1061,8 +1061,6 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
     CONCATENATE 'C' lv_tabix_s INTO lv_tmpraw.
 
     MOVE-CORRESPONDING pt_info_0300r TO ls_ztssreq.
-
-
     READ TABLE lt_ztssreq INDEX lv_tabix.
 
     IF sy-subrc <> 0.
@@ -1097,7 +1095,7 @@ FORM update_req  TABLES   pt_info_0300r STRUCTURE gs_info_0300r
   ENDIF.
 
   COMMIT WORK.
-  MESSAGE i999(zmcss) WITH '<update_req> 완제품' ps_cond_0300-matnm '의 레시피를 변경했습니다'.
+  MESSAGE i999(zmcss) WITH '완제품' ps_cond_0300-matnm '의 레시피를 변경했습니다'.
   pv_subrc = 0.
   RETURN.
 

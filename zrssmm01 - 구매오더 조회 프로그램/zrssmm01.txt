@@ -7,10 +7,13 @@
 *&---------------------------------------------------------------------*
 
 INCLUDE zrssmm01top                             .    " global Data
+INCLUDE zrssmm01c01                             .  " Class
 INCLUDE zrssmm01s01                             .  " Selection-screen
 INCLUDE zrssmm01o01                             .  " PBO-Modules
 INCLUDE zrssmm01i01                             .  " PAI-Modules
+INCLUDE zrssmm01f00                             .  " Common-Routines
 INCLUDE zrssmm01f01                             .  " FORM-Routines
+INCLUDE zrssmm01f02                             .  " Class-Routines
 
 
 INITIALIZATION.
@@ -20,6 +23,8 @@ AT SELECTION-SCREEN OUTPUT.
 
 START-OF-SELECTION.
   PERFORM get_data.
+  perform modify_data TABLES gt_data.
+  call SCREEN '0100'.
 
 *GUI Texts
 *----------------------------------------------------------

@@ -60,11 +60,15 @@ ENDMODULE.
 MODULE create_alv OUTPUT.
 
   CASE sy-dynnr.
-    WHEN '0200'.
+    WHEN '0200' OR '0100'.
       IF go_con_0200 IS INITIAL.
         PERFORM create_alv  USING     'CON_0200'
                             CHANGING  go_con_0200
                                       go_alv_0200.
+        CREATE OBJECT go_handler_0200.
+        PERFORM set_alv_handler USING go_alv_0200
+                                      go_handler_0200
+                                      '0200'.
       ENDIF.
     WHEN '0300'.
       IF go_con_0300 IS INITIAL.
@@ -123,7 +127,7 @@ ENDMODULE.
 MODULE display_alv OUTPUT.
 
   CASE sy-dynnr.
-    WHEN '0200'.
+    WHEN '0200' OR '0100'.
       IF go_con_0200 IS NOT INITIAL.
         PERFORM display_alv  TABLES  gt_info_0200
                                      gt_fcat_0200
@@ -131,7 +135,7 @@ MODULE display_alv OUTPUT.
                              USING   'zssssd0205'
                                      gs_layo_0200
                                      go_alv_0200
-                                     'NOT_EXCLUDE'.
+                                     'EXCLUDE'.
       ENDIF.
     WHEN '0300'.
       IF go_con_0300 IS NOT INITIAL.
@@ -184,9 +188,9 @@ MODULE status_0500 OUTPUT.
   SET PF-STATUS 'S500'.
   CASE gv_eflag_0500.
     WHEN 'X'.
-      SET TITLEBAR 'T500' WITH gs_info_0500h-ginum '수정'.
+      SET TITLEBAR 'T500' WITH '수정'.
     WHEN ''.
-      SET TITLEBAR 'T500' WITH gs_info_0500h-ginum '상세 조회'.
+      SET TITLEBAR 'T500' WITH '상세 조회'.
   ENDCASE.
 
 ENDMODULE.

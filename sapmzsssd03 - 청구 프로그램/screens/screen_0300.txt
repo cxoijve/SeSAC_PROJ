@@ -8,7 +8,7 @@ SAPMZSSSD03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD03                             0300 0300     23134192 37  0  0 50178  0G E                              20251014213205																																
+SAPMZSSSD03                             0300 0300     23134192 37  0  0 50180  0G E                              20251015214312																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -17,8 +17,8 @@ ZSSSSD0306-BINUM	2	CHAR	 20	30	00	04	30	00	  3	  6		  0	  0	  0		  0					  0	  0
 GS_IV_HEAD-BINUM	C	CHAR	 11	80	00	84	30	08	  3	 27		  0	  0	  0		  0					 11	  0								___________		
 ZSSSSD0306-RGTOR	2	CHAR	 20	30	00	04	30	00	  3	 72		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-RGTOR	C	CHAR	  8	80	00	84	30	08	  3	 93		  0	  0	  0		  0					  8	  0								________		
-GS_IV_HEAD-ENAME	C	CHAR	  5	80	02	80	31	00	  3	104		  0	  0	  0		  0					 20	  0								_____		
-GS_IV_HEAD-PERSG_T	C	CHAR	 10	80	00	80	31	00	  3	110		  0	  0	  0		  0					 10	  0								__________		
+b_rgtor		CHAR	  7	00	00	00	30	00	  3	102		  0	  0	  0		  2	P				  0	  0	102							@16@ ..	                                                                                                                                                                        b_rgtor	
+GS_IV_HEAD-ENAME	C	CHAR	 20	80	02	80	31	00	  3	107		  0	  0	  0		  0					 20	  0								____________________		
 ZSSSSD0306-BIDAT	2	CHAR	 20	30	00	00	30	00	  4	  6		  0	  0	  0		  0					  0	  0								청구일	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-BIDAT	D	DATS	 10	80	00	80	30	00	  4	 27		  0	  0	  0		  0					  8	  0								__________		
 ZSSSSD0306-RGDAT	2	CHAR	 20	30	00	00	30	00	  4	 72		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
@@ -34,17 +34,20 @@ ZSSSSD0306-ARFYR	2	CHAR	 20	30	00	04	30	00	  8	 72		  0	  0	  0		  0					  0	  0
 GS_IV_HEAD-ARFYR	N	NUMC	  4	80	00	84	30	08	  8	 93		  0	  0	  0		  0					  4	  0								____		
 ZSSSSD0306-JENUM	2	CHAR	 20	30	00	04	30	00	  9	  6		  0	  0	  0		  0					  0	  0								전표번호	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-JENUM	C	CHAR	 11	80	00	84	30	08	  9	 27		  0	  0	  0		  0					 11	  0								___________		
+B_JENUM		CHAR	  7	00	00	00	30	00	  9	 39		  0	  0	  0		  2	P				  0	  0	103							@16@ ..	                                                                                                                                                                        B_JENUM	
 ZSSSSD0306-ARNUM	2	CHAR	 20	30	00	04	30	00	  9	 72		  0	  0	  0		  0					  0	  0								수금 전표번호	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-ARNUM	C	CHAR	 11	80	00	84	30	08	  9	 93		  0	  0	  0		  0					 11	  0								___________		
+B_ARNUM		CHAR	  7	00	00	00	30	00	  9	105		  0	  0	  0		  2	P				  0	  0	104							@16@ ..	                                                                                                                                                                        B_ARNUM	
 ZSSSSD0306-TOPRC	2	CHAR	 20	30	00	00	30	00	 11	 72		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
 GS_IV_HEAD-TOPRC	P	CURR	 20	80	00	80	30	00	 11	 93		  0	  0	  0		  0					 15	  2		GS_IV_HEAD-CURKY						____________________		
 GS_IV_HEAD-CURKY	C	CUKY	  5	80	00	84	31	08	 11	116		  0	  0	  0		  0					  5	  0								_____		
-IV_ITEM		CHAR	133	00	00	00	30	00	 15	  3		  0	  0	  0		  9	R				  0	  0	102							청구 아이템		
-CON3			127	00	00	00	30	00	 16	  6		  0	  0	  0		  7	U				  1	  1	103									
+IV_ITEM		CHAR	133	00	00	00	30	00	 15	  3		  0	  0	  0		  9	R				  0	  0	105							청구 아이템		
+CON3			127	00	00	00	30	00	 16	  6		  0	  0	  0		  7	U				  1	  1	106									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0300.																																
+  MODULE set_screen_0300.																																
   MODULE set_alv_0300.																																
 																																
 PROCESS AFTER INPUT.																																

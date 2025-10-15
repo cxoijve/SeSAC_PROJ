@@ -781,6 +781,7 @@ FORM create_alv_0300 .
 *            WITH SY-MSGV1 SY-MSGV2 SY-MSGV3 SY-MSGV4.
   ENDIF.
 
+  PERFORM req_event_for_alv_0300.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2550,10 +2551,11 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      <--P_GS_LAYO  text
 *----------------------------------------------------------------------*
-FORM set_layout_0100  CHANGING ps_layo TYPE lvc_s_layo.
+FORM set_layout_0100 CHANGING ps_layo TYPE lvc_s_layo.
 
   IF my_tab-activetab = 'TAB1'.
     CLEAR ps_layo.
+*    ps_layo_title = .
     ps_layo-sel_mode = 'A'.
     ps_layo-cwidth_opt = 'A'.
     ps_layo-zebra = 'X'.
@@ -2604,17 +2606,21 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
         WHEN 'RGDAT'.
           ls_fcat-col_pos = '2'.
         WHEN 'RGTOR'.
-          ls_fcat-col_pos = '3'.
+          ls_fcat-col_pos = '4'.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
         WHEN 'RGNME'.
-          ls_fcat-col_pos = '4'.
+          ls_fcat-col_pos = '5'.
           ls_fcat-coltext = '이름'.
 
         WHEN 'IVNUM'.
-          ls_fcat-col_pos = '5.'.
+          ls_fcat-col_pos = '3.'.
           ls_fcat-coltext = '송장문서번호'.
+          ls_fcat-emphasize = 'C300'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
 
         WHEN 'GRNME'.
           ls_fcat-no_out = 'X'.
@@ -2644,18 +2650,25 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
 
       CASE ls_fcat-fieldname.
         WHEN 'LIGHT'.
-          ls_fcat-coltext = '송장검증여부'.
+          ls_fcat-coltext = '검증여부'.
           ls_fcat-col_pos = '1'.
-        WHEN 'GRTOR'.
+        WHEN 'GRDAT'.
+          ls_fcat-col_pos = '2'.
+        WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
+          ls_fcat-emphasize = 'C300'.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
-        WHEN 'GRDAT'.
-          ls_fcat-col_pos = '2'.
-        WHEN 'GRNME'.
+        WHEN 'GRTOR'.
           ls_fcat-col_pos = '4'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
+        WHEN 'GRNME'.
+          ls_fcat-col_pos = '5'.
           ls_fcat-coltext = '이름'.
+
 
         WHEN 'LIGHT2'.
           ls_fcat-no_out = 'X'.
@@ -2663,8 +2676,8 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-no_out = 'X'.
         WHEN 'APNME'.
           ls_fcat-no_out = 'X'.
-        WHEN 'GRNUM'.
-          ls_fcat-no_out = 'X'.
+*        WHEN 'GRNUM'.
+*          ls_fcat-no_out = 'X'.
         WHEN 'APTOR'.
           ls_fcat-no_out = 'X'.
         WHEN 'APDAT'.
@@ -2687,22 +2700,26 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
     ELSEIF my_tab-activetab = 'TAB2' AND zsssmm03003-check EQ '' AND zsssmm03003-cheke NE ''.
       CASE ls_fcat-fieldname.
         WHEN 'LIGHT'.
-          ls_fcat-coltext = '송장검증여부'.
+          ls_fcat-coltext = '검증여부'.
           ls_fcat-col_pos = '1'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
-        WHEN 'GRTOR'.
+        WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
+          ls_fcat-emphasize = 'C300'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
+        WHEN 'GRTOR'.
+          ls_fcat-col_pos = '4'.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
         WHEN 'GRNME'.
-          ls_fcat-col_pos = '4'.
+          ls_fcat-col_pos = '5'.
           ls_fcat-coltext = '이름'.
 
         WHEN 'LIGHT2'.
-          ls_fcat-no_out = 'X'.
-        WHEN 'GRNUM'.
           ls_fcat-no_out = 'X'.
         WHEN 'RGNME'.
           ls_fcat-no_out = 'X'.
@@ -2743,16 +2760,21 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
         WHEN 'APDAT'.
           ls_fcat-coltext = '지급 등록일'.
           ls_fcat-col_pos = '1'.
-        WHEN 'APTOR'.
-          ls_fcat-coltext = '지급 등록자'.
+        WHEN 'APNUM'.
           ls_fcat-col_pos = '2'.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
-        WHEN 'APNME'.
+          ls_fcat-emphasize = 'C300'.
+        WHEN 'APTOR'.
+          ls_fcat-coltext = '지급 등록자'.
           ls_fcat-col_pos = '3'.
-        WHEN 'APNUM'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
+        WHEN 'APNME'.
           ls_fcat-col_pos = '4'.
+
         WHEN 'APFYR'.
           ls_fcat-col_pos = '5'.
         WHEN 'JENUM'.
@@ -2798,6 +2820,7 @@ ENDFORM.
 FORM display_alv_0100 TABLES pt_data STRUCTURE zsssmm03002
                       USING VALUE(ps_layo) TYPE lvc_s_layo
                                   pt_fcat TYPE lvc_t_fcat
+                                  pt_sort TYPE lvc_t_sort
                               po_alv TYPE REF TO cl_gui_alv_grid.
 
 
@@ -2821,7 +2844,7 @@ FORM display_alv_0100 TABLES pt_data STRUCTURE zsssmm03002
     CHANGING
       it_outtab                     = pt_data[]
       it_fieldcatalog               = pt_fcat
-*     it_sort                       =
+      it_sort                       = pt_sort
 *     it_filter                     =
     EXCEPTIONS
       invalid_parameter_combination = 1
@@ -2945,6 +2968,12 @@ FORM set_fcat_0600  CHANGING pt_fcat TYPE lvc_t_fcat.
         ls_fcat-outputlen = '8'.
         ls_fcat-fix_column = 'X'.
         ls_fcat-hotspot = 'X'.
+      WHEN 'IVSEQ'.
+        ls_fcat-outputlen = 3.
+        ls_fcat-lzero = 'X'.
+      WHEN 'GRSEQ'.
+        ls_fcat-outputlen = 3.
+        ls_fcat-lzero = 'X'.
 
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
@@ -2978,7 +3007,12 @@ FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
         ls_fcat-no_out = 'X'.
       WHEN 'GRPRC'.
         ls_fcat-coltext = '금액'.
-
+      WHEN 'GRSEQ'.
+        ls_fcat-outputlen = 3.
+        ls_fcat-lzero = 'X'.
+      WHEN 'ITNUM'.
+        ls_fcat-outputlen = 3.
+        ls_fcat-lzero = 'X'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -3166,6 +3200,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM req_event_for_alv_0600 .
   SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_6.
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_6.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -3666,6 +3701,8 @@ FORM get_data .
       RETURN.
     ENDIF.
 
+    SORT gt_data BY rgdat ASCENDING.
+
   ELSEIF my_tab-activetab = 'TAB2'.
 
     "CONDITION 유효성 검사
@@ -3685,6 +3722,8 @@ FORM get_data .
       RETURN.
     ENDIF.
 
+    SORT gt_data BY grdat ASCENDING.
+
   ELSEIF my_tab-activetab = 'TAB3'.
 
     "CONDITION 유효성 검사
@@ -3699,7 +3738,99 @@ FORM get_data .
     PERFORM check_alv_condition.
     PERFORM get_ap_data.
 
+    SORT gt_data BY apdat ASCENDING.
   ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_SEARCH_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_search_data .
+
+  IF my_tab-activetab = 'TAB1'.
+
+    zsssmm03001-check = 'X'.
+    zsssmm03001-cheke = 'X'.
+    zsssmm03001-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
+
+    zsssmm03001-begda = gv_begda.
+  ELSEIF my_tab-activetab = 'TAB2'.
+    zsssmm03003-check = 'X'.
+    zsssmm03003-cheke = 'X'.
+    zsssmm03003-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
+
+    zsssmm03003-begda = gv_begda.
+
+  ELSEIF my_tab-activetab = 'TAB3'.
+
+    zsssmm03004-endda = sy-datum.
+    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+                          CHANGING gv_begda.
+
+    zsssmm03004-begda = gv_begda.
+  ENDIF.
+
+
+  PERFORM get_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_SORT_0100  text
+*----------------------------------------------------------------------*
+FORM set_sort_0100  CHANGING  ct_sort_0100 TYPE lvc_t_sort.
+  DATA: ls_sort TYPE lvc_s_sort.
+
+
+  CLEAR ct_sort_0100.
+  IF my_tab-activetab = 'TAB1'.
+
+    CLEAR ls_sort.
+    ls_sort-fieldname = 'RGDAT'.
+    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-subtot   = ' '.     " 소계 표시 안 함
+    APPEND ls_sort TO ct_sort_0100.
+
+  ELSEIF my_tab-activetab = 'TAB2'.
+
+    CLEAR ls_sort.
+    ls_sort-fieldname = 'GRDAT'.
+    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-subtot   = ' '.     " 소계 표시 안 함
+    APPEND ls_sort TO ct_sort_0100.
+
+  ELSEIF my_tab-activetab = 'TAB3'.
+
+    CLEAR ls_sort.
+    ls_sort-fieldname = 'APDAT'.
+    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-subtot   = ' '.     " 소계 표시 안 함
+    APPEND ls_sort TO ct_sort_0100.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0300 .
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_3.
 
 ENDFORM.
 

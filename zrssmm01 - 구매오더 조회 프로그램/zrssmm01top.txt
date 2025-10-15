@@ -18,13 +18,23 @@ DATA : ok_code  TYPE sy-ucomm,
 * Datas.
 *======================================
 * 구매오더 헤더
-DATA : gt_data TYPE zsssmm0102_t,
-       gs_data LIKE LINE OF gt_data.
+DATA: BEGIN OF gs_data,
+        light    TYPE char8,
+        color(4),
+        it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0102.
+DATA : END OF gs_data,
+gt_data LIKE TABLE OF gs_data.
 
 
-* 구매오더 아이템
-DATA : gt_item TYPE zsssmm0104_t,
-       gs_item LIKE LINE OF gt_item.
+
+DATA: BEGIN OF gs_item,
+        light    TYPE char8,
+        color(4),
+        it_col   TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0104.
+DATA : END OF gs_item,
+gt_item LIKE TABLE OF gs_item.
 
 * 전체 데이터 한 번에 받기 (조인)
 DATA : BEGIN OF gs_total,
@@ -56,6 +66,9 @@ DATA : go_dock     TYPE REF TO cl_gui_docking_container,
        go_split    TYPE REF TO cl_gui_splitter_container,
        go_split2   TYPE REF TO cl_gui_splitter_container,
        go_alv      TYPE REF TO cl_gui_alv_grid,
+       go_alv2     TYPE REF TO cl_gui_alv_grid,
+       go_alv3     TYPE REF TO cl_gui_alv_grid,
+       go_alv4     TYPE REF TO cl_gui_alv_grid,
        go_con1     TYPE REF TO cl_gui_container,
        go_con2     TYPE REF TO cl_gui_container,
        go_con3     TYPE REF TO cl_gui_container,
@@ -79,11 +92,50 @@ DATA : gs_cond_item TYPE zsssmm0104.
 *======================================
 
 * Layout
-DATA : gs_layo type lvc_s_layo.
+DATA : gs_layo TYPE lvc_s_layo.
 
 * Field Catalog
-DATA : gt_fcat type lvc_t_fcat,
-       gs_fcat like line of gt_fcat.
+DATA : gt_fcat TYPE lvc_t_fcat,
+       gs_fcat LIKE LINE OF gt_fcat.
+
+* Sort
+DATA : gt_sort TYPE lvc_t_sort,
+       gs_sort TYPE lvc_s_sort.
+
+DATA : gs_layo2 TYPE lvc_s_layo,
+       gt_fcat2 TYPE lvc_t_fcat,
+       gs_fcat2 LIKE LINE OF gt_fcat,
+       gt_sort2 TYPE lvc_t_sort,
+       gs_sort2 TYPE lvc_s_sort.
+
+
+DATA : BEGIN OF gs_itamt,
+         ponum  TYPE ztssgri-ponum,
+         itnum  TYPE ztssgri-itnum,
+         amount TYPE ztssgri-amount,
+       END OF gs_itamt,
+       gt_itamt LIKE TABLE OF gs_itamt.
+
+DATA : BEGIN OF ls_vnprc,
+         vnprc TYPE ztssprcat-vnprc,
+         curky TYPE ztssprcat-curky,
+       END OF ls_vnprc,
+       lt_vnprc LIKE TABLE OF ls_vnprc.
+
+*======================================
+* Class.
+*======================================
+
+CLASS lcl_event_handler DEFINITION FINAL.
+  PUBLIC SECTION.
+    CLASS-DATA: gv_prev_index TYPE i.
+    CLASS-METHODS :
+*      handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
+*      handle_data_changed FOR EVENT data_changed OF cl_gui_alv_grid IMPORTING er_data_changed sender,
+*      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
+*      handle_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_row e_column sender,
+      handle_hotspot FOR EVENT hotspot_click OF cl_gui_alv_grid IMPORTING e_row_id e_column_id sender.
+ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

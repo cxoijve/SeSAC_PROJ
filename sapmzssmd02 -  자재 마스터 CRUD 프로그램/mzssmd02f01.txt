@@ -176,14 +176,11 @@ FORM set_layo  USING    pv_dynnr LIKE sy-dynnr
                CHANGING ps_layo LIKE gs_layo_0100.
 
   CASE pv_dynnr.
-    WHEN '0100'.
+    WHEN '0100' OR '0200'.
       ps_layo-cwidth_opt = 'X'.
       ps_layo-ctab_fname = 'IT_COL'.
       ps_layo-sel_mode = 'A'. "A, B C D
-    WHEN '0200'.
-      ps_layo-cwidth_opt = 'X'.
-      ps_layo-ctab_fname = 'IT_COL'.
-      ps_layo-sel_mode = 'A'. "A, B C D
+      ps_layo-zebra = 'X'.
     WHEN OTHERS.
   ENDCASE.
 
@@ -333,7 +330,7 @@ FORM modify_info_0100  TABLES  pt_info_0100 STRUCTURE gs_info_0100.
 
     PERFORM get_matnm  TABLES   gt_ztssmat_t
                        USING    pt_info_0100-matnr
-                                sy-langu
+                                '3'
                        CHANGING pt_info_0100-matnm.
 
     PERFORM get_mtype_t TABLES   gt_dd07v
@@ -1076,7 +1073,7 @@ FORM get_info_0400  USING    VALUE(pv_matnr) TYPE zessmatnr
     FROM ztssmat AS a
     INNER JOIN ztssmat_t AS b
     ON a~matnr = b~matnr
-    AND b~langu = sy-langu
+    AND b~langu = '3'
     INTO CORRESPONDING FIELDS OF ps_info_0400
     WHERE a~matnr = pv_matnr.
 

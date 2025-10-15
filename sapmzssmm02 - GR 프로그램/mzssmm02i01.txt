@@ -157,8 +157,12 @@ MODULE user_command_0300 INPUT.
     WHEN 'DAB1' OR 'DAB2' OR 'DAB3'.
       t_info-activetab = ok_code.
     WHEN 'T_JE'.
-      perform get_jenum_detail.
+      PERFORM get_jenum_detail.
+    WHEN 'V_BTN'.
+      PERFORM get_ven_info USING zsssmm0211-venid CHANGING zsssmm0218.
 
+    WHEN 'E_BTN'.
+      PERFORM get_emp_info USING zsssmm0211-rgtor CHANGING zsssmm0220.
 
     WHEN OTHERS.
   ENDCASE.
@@ -185,7 +189,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE user_command_0120 INPUT.
   CASE ok_code.
-    WHEN 'CANCLE'.
+    WHEN 'CANCEL'.
       LEAVE TO SCREEN 0.
   ENDCASE.
 ENDMODULE.
@@ -249,8 +253,17 @@ ENDMODULE.
 MODULE user_command_0310 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
-        CLEAR gt_gritem.
+      CLEAR gt_gritem.
       LEAVE TO SCREEN 0.
+    WHEN 'V_BTN'.
+      PERFORM get_ven_info USING zsssmm0211-venid CHANGING zsssmm0218.
+
+    WHEN 'E_BTN'.
+      PERFORM get_emp_info USING zsssmm0211-rgtor CHANGING zsssmm0220.
+
+    WHEN 'J_BTN'.
+
+      PERFORM get_journal_info USING zsssmm0211-jenum.
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.

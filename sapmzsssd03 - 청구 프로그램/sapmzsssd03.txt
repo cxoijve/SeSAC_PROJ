@@ -9,9 +9,15 @@
 
 INCLUDE mzsssd03top                             .  " global Data
 
+INCLUDE mzsssd03c01                             .  " Class
 INCLUDE mzsssd03o01                             .  " PBO-Modules
 INCLUDE mzsssd03i01                             .  " PAI-Modules
 INCLUDE mzsssd03f01                             .  " FORM-Routines
+
+LOAD-OF-PROGRAM.
+  IF sy-calld IS NOT INITIAL.
+    PERFORM calld_process.
+  ENDIF.
 
 *GUI Texts
 *----------------------------------------------------------

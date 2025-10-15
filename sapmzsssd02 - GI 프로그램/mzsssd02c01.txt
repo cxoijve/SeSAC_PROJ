@@ -7,7 +7,9 @@ CLASS lcl_handler IMPLEMENTATION.
     "MESSAGE i016(pn) WITH 'HOTSPOT_CLICK:' me->hname e_column_id-fieldname es_row_no-row_id.
     DATA : ls_info TYPE zssssd0206.
     DATA : lv_matnr TYPE zessmatnr,
-           lv_sonum TYPE zesssonum.
+           lv_sonum TYPE zesssonum,
+           lv_jenum TYPE zessjenum.
+    DATA : ls_info_0200 LIKE gs_info_0200.
 
     CASE me->hname.
       WHEN '0300'.
@@ -18,15 +20,20 @@ CLASS lcl_handler IMPLEMENTATION.
         READ TABLE gt_info_0500 INTO ls_info INDEX es_row_no-row_id.
         lv_matnr = ls_info-somnr.
         lv_sonum = ls_info-sonum.
+      WHEN '0200'.
+        READ TABLE gt_info_0200 INTO ls_info_0200 INDEX es_row_no-row_id.
+        lv_matnr = ls_info_0200-somnr.
+        lv_sonum = ls_info_0200-sonum.
+        lv_jenum = ls_info_0200-jenum.
     ENDCASE.
 
-    IF lv_matnr IS INITIAL OR lv_sonum IS INITIAL.
-      MESSAGE i999(zmcss) WITH '선택한 Hotspot의 상세정보를 확인할 수 없습니다.'.
-      RETURN.
-    ENDIF.
 
     CASE e_column_id-fieldname.
       WHEN 'SOMNR'.
+        IF lv_matnr IS INITIAL.
+          MESSAGE i999(zmcss) WITH '선택한 Hotspot의 상세정보를 확인할 수 없습니다.'.
+          RETURN.
+        ENDIF.
         CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
           EXPORTING
             iv_matnr     = lv_matnr
@@ -40,6 +47,11 @@ CLASS lcl_handler IMPLEMENTATION.
         ENDIF.
 
       WHEN 'SONUM'.
+        IF lv_sonum IS INITIAL.
+          MESSAGE i999(zmcss) WITH '선택한 Hotspot의 상세정보를 확인할 수 없습니다.'.
+          RETURN.
+        ENDIF.
+
         "MESSAGE i999(zmcss) WITH lv_sonum.
         CALL FUNCTION 'Z_FMSS_CALL_SO_DETAIL'
           EXPORTING
@@ -53,36 +65,32 @@ CLASS lcl_handler IMPLEMENTATION.
           RETURN.
         ENDIF.
 
+      WHEN 'JENUM'.
+        IF  lv_jenum IS INITIAL.
+          MESSAGE i999(zmcss) WITH '선택한 Hotspot의 상세정보를 확인할 수 없습니다.'.
+          RETURN.
+        ENDIF.
+        CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
+          EXPORTING
+            i_jenum = lv_jenum.
     ENDCASE.
 
   ENDMETHOD.
 
   METHOD on_toolbar.
-*    DATA ls_button TYPE stb_button.
-*    CASE sy-dynnr.
-*      WHEN '0300'.
-*        ls_button-butn_type = '3'. "Separator
-*        APPEND ls_button TO e_object->mt_toolbar.
-*
-*        CLEAR ls_button.
-*        ls_button-function = 'ENDEDIT'.
-*        ls_button-icon = icon_change.
-*        ls_button-butn_type = '0'.
-*        ls_button-text = '입력 완료'.
-*        APPEND ls_button TO e_object->mt_toolbar.
-*      WHEN '0500'.
-*        IF gv_eflag_0500 EQ 'X'.
-*          ls_button-butn_type = '3'. "Separator
-*          APPEND ls_button TO e_object->mt_toolbar.
-*
-*          CLEAR ls_button.
-*          ls_button-function = 'ENDEDIT'.
-*          ls_button-icon = icon_change.
-*          ls_button-butn_type = '0'.
-*          ls_button-text = '입력 완료'.
-*          APPEND ls_button TO e_object->mt_toolbar.
-*        ENDIF.
-*    ENDCASE.
+    DATA ls_button TYPE stb_button.
+    CASE me->hname.
+      WHEN '0200'.
+        ls_button-butn_type = '3'. "Separator
+        APPEND ls_button TO e_object->mt_toolbar.
+
+        CLEAR ls_button.
+        ls_button-function = 'SELECT_ROW'.
+        ls_button-icon = icon_detail.
+        ls_button-butn_type = '0'.
+        ls_button-text = '상세 조회'.
+        APPEND ls_button TO e_object->mt_toolbar.
+    ENDCASE.
 
   ENDMETHOD.
 
@@ -91,11 +99,10 @@ CLASS lcl_handler IMPLEMENTATION.
           ls_row_no LIKE LINE OF lt_row_no.
 
     CASE e_ucomm.
-      WHEN 'ENDEDIT'.
-        MESSAGE s000(ymc00) WITH '변경 사항이 반영되었습니다'.
+      WHEN 'SELECT_ROW'.
         CALL METHOD cl_gui_cfw=>set_new_ok_code
           EXPORTING
-            new_code = 'ENTER'.
+            new_code = 'C500'.
     ENDCASE.
   ENDMETHOD.
 

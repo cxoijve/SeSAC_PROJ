@@ -3,16 +3,22 @@
 *&---------------------------------------------------------------------*
 CLASS lcl_handler IMPLEMENTATION.
   METHOD on_hotspot_click.
-    DATA :row_id  TYPE i,
-          gs_list LIKE LINE OF gt_data.
+    DATA :row_id   TYPE i,
+          gs_list  LIKE LINE OF gt_data,
+          gs_list2 LIKE LINE OF gt_mivi_2.
 
     row_id = es_row_no-row_id.
 
     IF sy-dynnr =  '0400'.
       CASE e_column_id.
         WHEN 'GRNUM'.
-          PERFORM alv_cl_double_click USING e_column_id
-                                                 row_id.
+*          PERFORM alv_cl_double_click USING e_column_id
+*                                                 row_id.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
+            EXPORTING
+              iv_grnum = gs_list-grnum.
+
         WHEN 'RGTOR'.
           READ TABLE gt_grh INTO gs_grh INDEX row_id.
           PERFORM get_emp_detail_data USING gs_grh-rgtor.
@@ -20,8 +26,13 @@ CLASS lcl_handler IMPLEMENTATION.
       ENDCASE.
 
     ELSEIF sy-dynnr = '0600'.
-      PERFORM alv_cl_double_click USING e_column_id
-                                          row_id.
+*      PERFORM alv_cl_double_click USING e_column_id
+*                                          row_id.
+      READ TABLE gt_mivi_2 INTO gs_list2 INDEX row_id.
+      CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
+        EXPORTING
+          iv_grnum = gs_list-grnum.
+
     ELSEIF sy-dynnr = '0100'.
 
       CASE e_column_id.
@@ -34,11 +45,21 @@ CLASS lcl_handler IMPLEMENTATION.
         WHEN 'APTOR'.
           READ TABLE gt_data INTO gs_list INDEX row_id.
           PERFORM get_emp_detail_data USING gs_list-aptor.
+        WHEN 'IVNUM'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+
+          CALL FUNCTION 'Z_FMSS_GET_IV_DETAIL'
+            EXPORTING
+              iv_ivnum = gs_list-ivnum.
+
+        WHEN 'GRNUM'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
+            EXPORTING
+              iv_grnum = gs_list-grnum.
+
       ENDCASE.
-
     ENDIF.
-
-
 
   ENDMETHOD.
   METHOD on_toolbar.
@@ -60,12 +81,12 @@ CLASS lcl_handler IMPLEMENTATION.
         APPEND ls_button TO e_object->mt_toolbar.
 
 
-        CLEAR ls_button.
-        ls_button-function = 'CUST_DETAIL'.
-*      ls_button-icon = icon_information.
-        ls_button-butn_type = '0'.
-        ls_button-text = '세부사항'.
-        APPEND ls_button TO e_object->mt_toolbar.
+*        CLEAR ls_button.
+*        ls_button-function = 'CUST_DETAIL'.
+**      ls_button-icon = icon_information.
+*        ls_button-butn_type = '0'.
+*        ls_button-text = '세부사항'.
+*        APPEND ls_button TO e_object->mt_toolbar.
 
 
       ELSEIF my_tab-activetab = 'TAB2'.
@@ -77,12 +98,12 @@ CLASS lcl_handler IMPLEMENTATION.
         ls_button-text = '송장검증'.
         APPEND ls_button TO e_object->mt_toolbar.
 
-        CLEAR ls_button.
-        ls_button-function = 'CUST_DETAIL'.
-*      ls_button-icon = icon_information.
-        ls_button-butn_type = '0'.
-        ls_button-text = '세부사항'.
-        APPEND ls_button TO e_object->mt_toolbar.
+*        CLEAR ls_button.
+*        ls_button-function = 'CUST_DETAIL'.
+**      ls_button-icon = icon_information.
+*        ls_button-butn_type = '0'.
+*        ls_button-text = '세부사항'.
+*        APPEND ls_button TO e_object->mt_toolbar.
 
       ELSEIF my_tab-activetab = 'TAB3'.
 
@@ -101,6 +122,9 @@ CLASS lcl_handler IMPLEMENTATION.
       ls_button-butn_type = '0'.
       ls_button-text = '입고문서 추가'.
       APPEND ls_button TO e_object->mt_toolbar.
+
+    ELSEIF sy-dynnr = '0300'.
+
     ENDIF.
 
   ENDMETHOD.
@@ -259,20 +283,32 @@ CLASS lcl_handler IMPLEMENTATION.
           ELSE.
             CLEAR zsssmm03013-rgnme.
           ENDIF.
+
+          CLEAR zsssmm03013-toprc2.
+          PERFORM get_ivprc_data USING zsssmm03013-grnum
+                              CHANGING zsssmm03013-toprc2
+                                       zsssmm03013-curky.
+
+
+
+          CALL METHOD cl_gui_cfw=>set_new_ok_code
+            EXPORTING
+              new_code = 'ENTER'.
+
         ELSE.
           CLEAR gv_subrc.
         ENDIF.
 
-        CLEAR zsssmm03013-toprc2.
-        PERFORM get_ivprc_data USING zsssmm03013-grnum
-                            CHANGING zsssmm03013-toprc2
-                                     zsssmm03013-curky.
-
-
-
-        CALL METHOD cl_gui_cfw=>set_new_ok_code
-          EXPORTING
-            new_code = 'ENTER'.
+*        clear ZSSSMM03013-TOPRC2.
+*        perform GET_IVPRC_DATA using ZSSSMM03013-GRNUM
+*                            changing ZSSSMM03013-TOPRC2
+*                                     ZSSSMM03013-CURKY.
+*
+*
+*
+*        call method CL_GUI_CFW=>SET_NEW_OK_CODE
+*          exporting
+*            NEW_CODE = 'enter'.
 
     ENDCASE.
   ENDMETHOD.

@@ -39,8 +39,8 @@ DATA : gv_flag(1),
 
 DATA : gv_delay_rate TYPE p DECIMALS 2.
 
-DATA : gv_call_num type zessgrnum,
-       gv_call_auto type c.
+DATA : gv_call_num  TYPE zessgrnum,
+       gv_call_auto TYPE c.
 
 *-----------------------------------------------
 * ALV
@@ -171,9 +171,10 @@ DATA : go_con_exp_tree TYPE REF TO cl_gui_custom_container,
 " ==== 입고 대기 구매오더 리스트
 
 DATA: BEGIN OF gs_podata,
-        light  TYPE char8,
+        light    TYPE char8,
+        color(4),
 *        icon   LIKE icon-name,
-        it_col TYPE lvc_t_scol.
+        it_col   TYPE lvc_t_scol.
     INCLUDE TYPE zsssmm0212.
 DATA : END OF gs_podata,
 gt_podata LIKE TABLE OF gs_podata.
@@ -428,7 +429,7 @@ TYPES : BEGIN OF ty_field_conf,
           style      TYPE lvc_style,
           col_pos    TYPE i,
           lzero      TYPE c,
-          do_sum     type lvc_dosum,
+          do_sum     TYPE lvc_dosum,
         END OF ty_field_conf. " 프로그램 타입
 
 

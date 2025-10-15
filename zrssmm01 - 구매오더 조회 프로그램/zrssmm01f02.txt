@@ -1,0 +1,141 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM01F02
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_HOTSPOT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_ROW_ID_INDEX  text
+*      -->P_E_COLUMN_ID_FIELDNAME  text
+*      -->P_SENDER  text
+*----------------------------------------------------------------------*
+FORM handle_hotspot  USING pv_index TYPE lvc_index
+                           pv_field TYPE lvc_fname
+                           p_sender TYPE REF TO cl_gui_alv_grid.
+
+  CASE p_sender.
+    WHEN go_alv2.
+      PERFORM handle_pohead USING pv_index.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_POHEAD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_INDEX  text
+*----------------------------------------------------------------------*
+FORM handle_pohead  USING pv_index TYPE lvc_index.
+
+  DATA : ls_pohead LIKE LINE OF gt_data.
+
+  READ TABLE gt_data INTO ls_pohead  INDEX pv_index.
+
+  PERFORM get_po_items USING pv_index.
+
+
+
+  go_alv2->refresh_table_display(   ).
+  go_alv3->refresh_table_display(   ).
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PO_ITEMS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PV_INDEX  text
+*----------------------------------------------------------------------*
+FORM get_po_items  USING pv_index TYPE lvc_index.
+
+  DATA : ls_data LIKE LINE OF gt_data.
+  DATA : lv_pomnr TYPE ztsspoi-pomnr.
+  DATA : lv_venid TYPE ztsspoh-venid.
+  DATA : lv_stonm TYPE ztssstrg-stonm.
+  DATA : lv_plant TYPE ztssplant-plant.
+  DATA ls_scol TYPE lvc_s_scol.
+
+
+  READ TABLE gt_data INTO ls_data INDEX pv_index.
+
+  IF sy-subrc <> 0.
+    RETURN.
+  ENDIF.
+
+  IF lcl_event_handler=>gv_prev_index IS NOT INITIAL.
+    DATA : ls_prev like ls_data.
+    READ TABLE gt_data INTO ls_prev INDEX lcl_event_handler=>gv_prev_index.
+    IF sy-subrc = 0.
+      CLEAR ls_prev-color.  " 색상 초기화
+      MODIFY gt_data FROM ls_prev INDEX lcl_event_handler=>gv_prev_index.
+    ENDIF.
+  ENDIF.
+
+  ls_data-color = 'C511'.
+  MODIFY gt_data FROM ls_data INDEX pv_index.
+  lcl_event_handler=>gv_prev_index = pv_index.
+
+  SELECT ponum itnum pomnr amount meins plant poprc curky del
+    INTO CORRESPONDING FIELDS OF TABLE gt_item
+    FROM ztsspoi
+    WHERE ponum = ls_data-ponum.
+
+  LOOP AT gt_item INTO gs_item.
+
+    SELECT SINGLE pomnr
+      INTO lv_pomnr
+      FROM ztsspoi
+      WHERE ponum = gs_item-ponum
+      AND itnum = gs_item-itnum.
+
+    gs_item-pomnr = lv_pomnr.
+
+
+    SELECT SINGLE venid
+      INTO lv_venid
+      FROM ztsspoh
+      WHERE ponum = gs_item-ponum.
+
+*    gs_item-venid = lv_venid.
+
+*    PERFORM get_ven_name USING lv_venid CHANGING gs_item-vname.
+    PERFORM get_mat_name USING lv_pomnr CHANGING gs_item-pname.
+    PERFORM get_plant_name USING gs_item-plant CHANGING gs_item-ppnme.
+
+
+    SELECT SINGLE vnprc curky
+      INTO ls_vnprc
+      FROM ztssprcat
+      WHERE venid = lv_venid
+      AND rawnr = lv_pomnr.
+
+    gs_item-toprc = ls_vnprc-vnprc * gs_item-amount.
+    gs_item-curky = ls_vnprc-curky.
+
+    CLEAR ls_scol.
+    ls_scol-fname = 'TOPRC'.
+    ls_scol-color-col = 3.
+    ls_scol-color-int = 1.
+    ls_scol-color-inv = 0.
+    APPEND ls_scol TO gs_item-it_col.
+
+    IF gs_item-del = 'X'.
+      gs_item-color = 'C601'.
+      gs_item-toprc = 0.
+    ENDIF.
+
+    MODIFY gt_item FROM gs_item.
+    CLEAR gs_item.
+  ENDLOOP.
+
+
+
+
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

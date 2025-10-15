@@ -8,12 +8,12 @@ SAPMZSSSD02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD02                             0102I0102      6 96192 37  0  0 27127  0G E                              20251013125921																																
+SAPMZSSSD02                             0102I0102      5 96192 37  0  0 27128  0G E                              20251015092705																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B102_02		CHAR	 58	00	00	00	30	00	  1	  2		  0	  0	  0		  6	R				  0	  0	101							출고일 및 등록자로 검색		
-B102_01		CHAR	 36	00	00	00	34	00	  1	 62		  0	  0	  0		  6	R				  0	  0	102							출고 문서 번호로 검색		
+B102_02		CHAR	 58	00	00	00	30	00	  1	  2		  0	  0	  0		  5	R				  0	  0	101							출고일 및 등록자로 검색		
+B102_01		CHAR	 36	00	00	00	34	00	  1	 62		  0	  0	  0		  5	R				  0	  0	102							출고 문서 번호로 검색		
 ZSSSSD0202-BEGDA	2	CHAR	 20	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	  0								출고일	                                                                                                                                                                                                                                                        X	
 ZSSSSD0202-BEGDA	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 T102_02	0	CHAR	  1	00	00	00	30	00	  2	 36		  0	  0	  0		  0					  0	  0								~		
@@ -23,19 +23,19 @@ ZSSSSD0202-GINUM	C	CHAR	 11	A0	00	84	04	08	  2	 85		  0	  0	  0		  0					 22	  0
 ZSSSSD0202-RGTOR	0	CHAR	 16	30	00	04	30	00	  3	  3		  0	  0	  0		  0					  0	  0								출고 문서 등록자	                                                                                                                                                                                                                                                        X	
 ZSSSSD0202-RGTOR	C	CHAR	  8	A0	00	84	00	08	  3	 24		  0	  0	  0		  0					 16	  0			ZSHSSSD0202					________	X                                      00	
 ZSSSSD0202-RNAME	C	CHAR	 23	B0	02	80	31	00	  3	 35		  0	  0	  0		  0					 80	  0								_______________________	                                       00	
-ZSSSSD0202-GIUNDONE	C	CHAR	  1	A0	00	80	00	00	  5	  3		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
-ZSSSSD0202-GIUNDONE	0	CHAR	 11	30	00	00	30	00	  5	  5		  0	  0	  0		  0	A				  0	  0	103							출고 미완료		
-ZSSSSD0202-GIDONE	C	CHAR	  1	A0	00	80	00	00	  5	 18		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
-ZSSSSD0202-GIDONE	0	CHAR	  9	30	00	00	30	00	  5	 20		  0	  0	  0		  0	A				  0	  0	103							출고 완료		
-ZSSSSD0202-BIDONE	C	CHAR	  1	A0	00	80	00	00	  5	 31		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
-ZSSSSD0202-BIDONE	0	CHAR	  9	30	00	00	30	00	  5	 33		  0	  0	  0		  0	A				  0	  0	103							청구 완료		
-ZSSSSD0202-APDONE	C	CHAR	  1	A0	00	80	00	00	  5	 44		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
-ZSSSSD0202-APDONE	0	CHAR	  9	30	00	00	30	00	  5	 46		  0	  0	  0		  0	A				  0	  0	103							수금 완료		
+ZSSSSD0202-GIUNDONE	C	CHAR	  1	A0	00	80	00	00	  4	  3		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
+ZSSSSD0202-GIUNDONE	0	CHAR	 11	30	00	00	30	00	  4	  5		  0	  0	  0		  0	A				  0	  0	103							출고 미완료		
+ZSSSSD0202-GIDONE	C	CHAR	  1	A0	00	80	00	00	  4	 18		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
+ZSSSSD0202-GIDONE	0	CHAR	  9	30	00	00	30	00	  4	 20		  0	  0	  0		  0	A				  0	  0	103							출고 완료		
+ZSSSSD0202-BIDONE	C	CHAR	  1	A0	00	80	00	00	  4	 31		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
+ZSSSSD0202-BIDONE	0	CHAR	  9	30	00	00	30	00	  4	 33		  0	  0	  0		  0	A				  0	  0	103							청구 완료		
+ZSSSSD0202-APDONE	C	CHAR	  1	A0	00	80	00	00	  4	 44		  0	  0	  0		  0	A				  2	  0	103							_	                                       00	
+ZSSSSD0202-APDONE	0	CHAR	  9	30	00	00	30	00	  4	 46		  0	  0	  0		  0	A				  0	  0	103							수금 완료		
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
 * MODULE STATUS_0102.																																
-MODULE set_default_0102.																																
+  MODULE set_default_0102.																																
 																																
 PROCESS AFTER INPUT.																																
 * MODULE USER_COMMAND_0102.																																

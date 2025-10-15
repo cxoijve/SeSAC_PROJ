@@ -99,12 +99,16 @@ DATA : gt_sort_0200 TYPE lvc_t_sort,
 
 " Info 0200
 DATA : BEGIN OF gs_info_0200.
+    DATA cellscol TYPE lvc_t_scol.
     INCLUDE TYPE zssssd0205.
 DATA : END OF gs_info_0200.
 DATA gt_info_0200 LIKE TABLE OF gs_info_0200.
 
 " Row 0200
 DATA : gv_ginum_0200 TYPE zessginum.
+
+" Handler 0200
+DATA : go_handler_0200 TYPE REF TO lcl_handler.
 " 300 ========================================
 " ALV Objects 0300
 DATA   go_con_0300 TYPE REF TO cl_gui_custom_container.

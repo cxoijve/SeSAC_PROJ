@@ -15,35 +15,7 @@ MODULE user_command_0100 INPUT.
       my_tab-activetab = ok_code.
       CLEAR gt_data.
 
-      IF my_tab-activetab = 'TAB1'.
-
-        zsssmm03001-check = 'X'.
-        zsssmm03001-cheke = 'X'.
-        zsssmm03001-endda = sy-datum.
-        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                              CHANGING gv_begda.
-
-        zsssmm03001-begda = gv_begda.
-      ELSEIF my_tab-activetab = 'TAB2'.
-        zsssmm03003-check = 'X'.
-        zsssmm03003-cheke = 'X'.
-        zsssmm03003-endda = sy-datum.
-        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                              CHANGING gv_begda.
-
-        zsssmm03003-begda = gv_begda.
-
-      ELSEIF my_tab-activetab = 'TAB3'.
-
-        zsssmm03004-endda = sy-datum.
-        PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                              CHANGING gv_begda.
-
-        zsssmm03004-begda = gv_begda.
-      ENDIF.
-
-
-      PERFORM get_data.
+      PERFORM get_search_data.
 
     WHEN 'SEARCH'.
       PERFORM group_rgtor_name.
@@ -66,6 +38,8 @@ MODULE user_command_0100 INPUT.
           RETURN.
         ENDIF.
 
+        SORT gt_data BY rgdat ASCENDING.
+
       ELSEIF my_tab-activetab = 'TAB2'.
 
         "CONDITION 유효성 검사
@@ -85,6 +59,8 @@ MODULE user_command_0100 INPUT.
           RETURN.
         ENDIF.
 
+        SORT gt_data BY grdat ASCENDING.
+
       ELSEIF my_tab-activetab = 'TAB3'.
 
         "CONDITION 유효성 검사
@@ -98,6 +74,8 @@ MODULE user_command_0100 INPUT.
         "ALV 데이터 생성
         PERFORM check_alv_condition.
         PERFORM get_ap_data.
+
+        SORT gt_data BY apdat ASCENDING.
 
       ENDIF.
     WHEN 'NEWIV'.
@@ -118,6 +96,9 @@ MODULE user_command_0100 INPUT.
         CLEAR : zsssmm03014,
                   gt_mivi_2,
                   gt_data.
+
+        PERFORM get_search_data.
+
       ENDIF.
     WHEN 'CHANGEIV'.
       CALL SCREEN 400.
@@ -133,6 +114,9 @@ MODULE user_command_0100 INPUT.
         CLEAR : zsssmm03014,
                   gt_mivi_2,
                   gt_data.
+
+        PERFORM get_search_data.
+
       ENDIF.
 
     WHEN 'ENTER'.
@@ -246,6 +230,12 @@ MODULE user_command_0300 INPUT.
       ELSE.
         CLEAR zsssmm03007-rgnme.
       ENDIF.
+    WHEN 'EMP1'.
+
+      PERFORM get_emp_detail_data USING zsssmm03006-rgtor.
+    WHEN 'EMP2'.
+
+      PERFORM get_emp_detail_data USING   zsssmm03007-rgtor.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -364,6 +354,9 @@ MODULE user_command_0400 INPUT.
       ELSE.
         CLEAR zsssmm03013-rgnme.
       ENDIF.
+
+    WHEN 'EMP1'.
+      PERFORM get_emp_detail_data USING zsssmm03013-rgtor.
 
 
   ENDCASE.

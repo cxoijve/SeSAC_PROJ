@@ -12,8 +12,34 @@ DATA : gv_warid TYPE zesswarid.
 DATA : gv_amount_string TYPE string.
 DATA : gv_log TYPE string.
 
+DATA : gv_avail TYPE INT4.
 START-OF-SELECTION.
   LOOP AT pa_ware INTO gs_ware.
+    CLEAR gv_avail.
+    IF gs_ware-wtype = 'O'.
+      CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
+        EXPORTING
+          iv_begda               = '11110101'
+          iv_endda               = '99991231'
+          iv_stoid               = gs_ware-stoid
+          iv_matnr               = gs_ware-matnr
+       IMPORTING
+         EV_ASTCK               = gv_avail
+       EXCEPTIONS
+         MATERIAL_UNFOUND       = 1
+         MINUS_AVAIL            = 2
+         QUERY_FAILED           = 3
+         OTHERS                 = 4
+                .
+      IF sy-subrc <> 0.
+        MESSAGE a999(zmcss) WITH 'AVAIL STOCKS GET ERROR'.
+      ENDIF.
+
+      IF gs_ware-amount > gv_avail.
+        MESSAGE a999(zmcss) WITH 'NOT ENOUGHT AMOUNT!'.
+      ENDIF.
+    ENDIF.
+
     CALL FUNCTION 'Z_FMSS_INSERT_NEXT_WARE'
       EXPORTING
         is_ztssware     = gs_ware
@@ -34,7 +60,7 @@ START-OF-SELECTION.
     gv_amount_string = gs_ware-amount.
 
     CONCATENATE
-      'OK -: '
+      'OK - '
       gv_warid
       '-'
       gs_ware-matnr

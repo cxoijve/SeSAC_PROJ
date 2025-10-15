@@ -47,6 +47,8 @@ LOAD-OF-PROGRAM.
     CLEAR gv_subrc.
   ENDIF.
 
+  SORT gt_data BY grdat ASCENDING LIGHT ASCENDING.
+
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 송장검증 프로그램

@@ -16,7 +16,7 @@ MODULE user_command_0100 INPUT.
     WHEN 'SELL'.
       PERFORM get_all_table_data.
       PERFORM get_all_prdnr_data.
-      CALL SCREEN 101 STARTING AT 85 3 ENDING AT 120 26.
+      CALL SCREEN 101 STARTING AT 85 3 ENDING AT 150 26.
 
 
     WHEN 'CHANGE'.
@@ -150,6 +150,13 @@ MODULE user_command_0200 INPUT.
 
 
     WHEN 'ENTER'.
+
+      IF zsssmd06005-cstid IS NOT INITIAL.
+        PERFORM get_cname_data USING zsssmd06005-cstid
+                            CHANGING zsssmd06005-cname.
+      ELSE.
+        CLEAR zsssmd06005-cname.
+      ENDIF.
 
 
 *      PERFORM INSERT_

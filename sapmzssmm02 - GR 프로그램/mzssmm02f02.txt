@@ -1557,12 +1557,17 @@ ENDFORM.
 FORM update_gr_items USING VALUE(pv_grnum) TYPE ztssgrh-grnum
                      CHANGING cv_subrc TYPE sy-subrc.
 
-  DATA : lv_canc_qty TYPE ztssgri-amount.
+  DATA : lv_canc_qty TYPE ztssgri-amount,
+         lv_tabix    TYPE sy-tabix.
+
+
 
   LOOP AT gt_edit_item INTO gs_edit_item.
-
+    lv_tabix = sy-tabix.
     IF gs_edit_item-del = 'X'.
-      lv_canc_qty = gs_edit_item-amount * -1.
+      gs_edit_item-amount  = 0 .
+*      lv_canc_qty = gs_edit_item-amount * -1.
+      MODIFY gt_edit_item FROM gs_edit_item INDEX lv_tabix.
       UPDATE ztssgri
       SET stoid  = gs_edit_item-stoid
           amount = 0
@@ -1614,6 +1619,9 @@ FORM process_warehouse_movements CHANGING cv_subrc TYPE sy-subrc.
 
     lv_diff = gs_temp-amount - gs_edit_item-amount.
     CHECK lv_diff <> 0.
+*    IF lv_diff = 0.
+*      return.
+*    ENDIF.
 
     " 창고 입출고 레코드
     PERFORM get_number_range USING 'ZNRSSMD06' '01' 'W' CHANGING gv_wh_num.
@@ -1650,7 +1658,9 @@ FORM create_warehouse_record  USING VALUE(ps_item) LIKE gs_edit_item
   ls_ware-warid  = pv_warid.
   ls_ware-stoid  = ps_item-stoid.
   ls_ware-matnr  = ps_item-pomnr.
-  ls_ware-amount = ps_item-amount.
+*  ls_ware-amount = ps_item-amount.
+  ls_ware-amount = abs( pv_diff ).
+*  ls_ware-amount = ps_item-amount.
 
   " if - elseif - else 문과 비슷함 (삼항연산자)
   ls_ware-wtype  = COND #( WHEN pv_diff > 0 THEN 'O'  " 출고
@@ -2132,8 +2142,8 @@ FORM set_fcat07 .
   (  fieldname = 'AMOUNT' coltext = '입고수량' col_pos = 6 )
   (  fieldname = 'MEINS' col_pos = 7 )
   (  fieldname = 'STONM'  col_pos = 8 )
-  (  fieldname = 'DEL'   coltext = '삭제여부' col_pos = 9 )
-
+  (  fieldname = 'LTEXT'   coltext = '삭제여부' col_pos = 9 )
+  (  fieldname = 'DEL'   coltext = '삭제여부' col_pos = 9 no_out = 'X' )
   (  fieldname = 'VENID' no_out = 'X'  )
   ( fieldname = 'POMNR' no_out = 'X'  )
   (  fieldname = 'GRQTY'  no_out  = 'X'  )
@@ -2888,6 +2898,60 @@ FORM get_jenum_detail .
 
   DATA : lv_jenum TYPE zsssmm0211-jenum.
   lv_jenum = zsssmm0211-jenum.
+
+  SET PARAMETER ID 'ZMMJENUM' FIELD lv_jenum.
+  CALL TRANSACTION 'ZSSFI01'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VEN_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0211_VENID  text
+*      <--P_ZSSSMM0218  text
+*----------------------------------------------------------------------*
+FORM get_ven_info  USING    p_venid TYPE ztssvend-venid
+                   CHANGING c_info TYPE zsssmm0218.
+
+
+  PERFORM get_vendor_details USING p_venid CHANGING zsssmm0218.
+
+
+  CALL SCREEN 0120 STARTING AT 10 10.
+  CLEAR zsssmm0218.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0211_RGTOR  text
+*      <--P_ZSSSMM0220  text
+*----------------------------------------------------------------------*
+FORM get_emp_info  USING p_pernr TYPE ztssemp-pernr
+                   CHANGING c_info TYPE zsssmm0220.
+
+
+  PERFORM get_emp_details USING p_pernr CHANGING c_info.
+
+  CALL SCREEN 0140 STARTING AT 10 10.
+  CLEAR zsssmm0220.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_JOURNAL_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMM0211_JENUM  text
+*----------------------------------------------------------------------*
+FORM get_journal_info  USING  p_jenum TYPE zsssmm0211-jenum.
+
+  DATA : lv_jenum TYPE zsssmm0211-jenum.
+
+  lv_jenum = p_jenum.
 
   SET PARAMETER ID 'ZMMJENUM' FIELD lv_jenum.
   CALL TRANSACTION 'ZSSFI01'.

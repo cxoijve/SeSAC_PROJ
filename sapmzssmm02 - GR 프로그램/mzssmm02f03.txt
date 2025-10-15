@@ -218,6 +218,8 @@ FORM check_pop_item_data  USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
   APPEND LINES OF lt_item TO gt_item.
   PERFORM renumber_gr_number.
 
+  PERFORM update_selected_color USING go_alv_po_waiting lt_row_no.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -244,7 +246,7 @@ FORM get_selected_rows  USING    co_alv    TYPE REF TO cl_gui_alv_grid
   IF lv_cnt = 0.
     cv_subrc = 4.
 *    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
-    MESSAGE w110(zmcss). "  '1개의 행을 선택해주세요!'.
+    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
     RETURN.
   ENDIF.
 
@@ -269,11 +271,10 @@ FORM check_dup_po  USING    it_row_no TYPE lvc_t_roid
 
   LOOP AT it_row_no INTO ls_row_no.
     READ TABLE gt_podata INDEX ls_row_no-row_id ASSIGNING <fs_podata>.
-    CHECK sy-subrc = 0. " 펑션에서 가끔 덤프가 나는 경우가 있음
+    CHECK sy-subrc = 0.
 
     " Check if PO already exists in item table
-    READ TABLE gt_item INTO ls_item
-      WITH KEY ponum = <fs_podata>-ponum.
+    READ TABLE gt_item INTO ls_item WITH KEY ponum = <fs_podata>-ponum.
 
     IF sy-subrc = 0.
       cv_subrc = 4.
@@ -756,7 +757,9 @@ FORM handle_delete_item.
 
   DATA: lt_row_no TYPE lvc_t_roid,
         ls_row_no TYPE lvc_s_roid,
-        lv_index  TYPE sy-tabix.
+        lv_index  TYPE sy-tabix,
+        lt_ponum  TYPE TABLE OF ztsspoh-ponum,
+        ls_item   LIKE LINE OF gt_item.
 
   CLEAR gv_msg.
 
@@ -768,15 +771,31 @@ FORM handle_delete_item.
     MESSAGE i999(zmcss) WITH '삭제할 행을 선택하세요'.
     RETURN.
   ENDIF.
+  LOOP AT lt_row_no INTO ls_row_no.
 
+    READ TABLE gt_item INTO ls_item INDEX ls_row_no-row_id.
+    IF sy-subrc = 0.
+      APPEND ls_item-ponum TO lt_ponum.
+    ENDIF.
+  ENDLOOP.
 *  SORT lt_row_no BY row_id DESCENDING.
+*    DATA : ls_row_no TYPE lvc_s_roid.
 
   LOOP AT lt_row_no INTO ls_row_no.
     lv_index = ls_row_no-row_id.
     DELETE gt_item INDEX lv_index.
   ENDLOOP.
+  SORT lt_ponum.
+  DELETE ADJACENT DUPLICATES FROM lt_ponum.
 
+  LOOP AT lt_ponum INTO DATA(lv_ponum).
+    PERFORM delete_color_if_no_items USING lv_ponum.
+  ENDLOOP.
   PERFORM renumber_gr_number.
+  SORT lt_row_no BY row_id DESCENDING.
+
+*  PERFORM delete_each_color_bydata.
+*  PERFORM delete_color_bydata.
   PERFORM refresh_alv_0102.
 
 ENDFORM.
@@ -793,6 +812,8 @@ FORM handle_delete_all_item .
   CLEAR gt_item.
   gv_seqnum = 0.
   CLEAR gv_msg.
+
+  PERFORM delete_color_bydata.
   PERFORM refresh_alv_0102.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -829,7 +850,9 @@ FORM handle_go_gr .
   PERFORM get_emp_name USING gv_rgtor CHANGING zsssmm0214-ename.
   CALL SCREEN '0110' STARTING AT 10 5 ENDING AT 80 30.
   PERFORM get_po_datas USING zsssmm0210.
-*  PERFORM clear_editor.
+  PERFORM delete_color_bydata.
+  PERFORM refresh_alv_0102.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  HANDLE_DOUBLE_CLICK
@@ -897,7 +920,7 @@ FORM handle_editpage  USING ps_row     TYPE lvc_s_row.
         <fs_eitem>-color = 'C601'.
       ENDIF.
     ENDLOOP.
-
+    gt_temp = gt_edit_item.
     CALL SCREEN 0200.
 
     CLEAR: zsssmm0211,
@@ -1415,8 +1438,9 @@ FORM handle_detail_info .
   lv_index = ls_row_no-row_id.
   READ TABLE gt_grdata INTO ls_data INDEX ls_row_no-row_id.
   MOVE-CORRESPONDING ls_data TO zsssmm0211.
-  PERFORM get_gr_item_list USING lv_index. " class에서 씀
-
+  IF gt_gritem IS INITIAL.
+    PERFORM get_gr_item_list USING lv_index. " class에서 씀
+  ENDIF.
 
   PERFORM get_vendor_details USING ls_data-venid CHANGING zsssmm0218.
   PERFORM get_vendor_price USING ls_data-venid CHANGING gt_vnprc.
@@ -1424,9 +1448,9 @@ FORM handle_detail_info .
 
 
   CALL SCREEN '0300'.
-
-*  CLEAR gt_gritem.
 *  PERFORM display_alv_grid_0300.
+
+  CLEAR gt_gritem.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1787,11 +1811,26 @@ FORM handle_delete_confirm .
 
   LOOP AT lt_row_no INTO ls_row_no.
     lv_index = ls_row_no-row_id.
+    READ TABLE gt_confirm INTO DATA(ls_confirm) INDEX lv_index.
+    IF sy-subrc = 0.
+      LOOP AT gt_item ASSIGNING FIELD-SYMBOL(<fs_item>)
+                   WHERE ponum = ls_confirm-ponum
+                   AND itnum = ls_confirm-itnum.
+        <fs_item>-orqty = 0.
+      ENDLOOP.
+    ENDIF.
+
     DELETE gt_confirm INDEX lv_index.
   ENDLOOP.
 
+
+
   PERFORM renumber_confirm_number.
+
+
+
   PERFORM refresh_alv_0102.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  RENUMBER_CONFIRM_NUMBER
@@ -2142,7 +2181,7 @@ FORM handle_grlist_hotspot  USING pv_index TYPE lvc_index.
   CALL SCREEN '0310'.
 
   PERFORM display_alv_grid_0310.
-*  CLEAR gt_gritem.
+  CLEAR gt_gritem.
 
 
 ENDFORM.
@@ -2255,6 +2294,80 @@ FORM get_call_grdata .
   CALL SCREEN '0310'.
   LEAVE TO SCREEN 0.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  UPDATE_SELECTED_COLOR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_PO_WAITING  text
+*      -->P_LT_ROW_NO  text
+*----------------------------------------------------------------------*
+FORM update_selected_color  USING    co_alv TYPE REF TO cl_gui_alv_grid
+                                     lt_row_no TYPE lvc_t_roid.
+
+  DATA : ls_row_no TYPE lvc_s_roid.
+
+  FIELD-SYMBOLS : <fs_data> LIKE LINE OF gt_podata.
+
+
+  LOOP AT lt_row_no INTO ls_row_no.
+    READ TABLE gt_podata ASSIGNING <fs_data> INDEX ls_row_no-row_id.
+    IF sy-subrc = 0.
+      <fs_data>-color = 'C710'.
+    ENDIF.
+
+  ENDLOOP.
+
+  co_alv->refresh_table_display( ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELETE_COLOR_BYDATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM  delete_color_bydata .
+  FIELD-SYMBOLS : <fs_data> LIKE LINE OF gt_podata.
+  LOOP AT gt_podata ASSIGNING <fs_data>.
+
+    CLEAR <fs_data>-color.
+  ENDLOOP.
+  PERFORM refresh_table_display CHANGING go_alv_po_waiting.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELETE_EACH_COLOR_BYDATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM delete_each_color_bydata .
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DELETE_COLOR_IF_NO_ITEMS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_PONUM  text
+*----------------------------------------------------------------------*
+FORM delete_color_if_no_items  USING pv_ponum TYPE ztsspoh-ponum.
+  FIELD-SYMBOLS: <fs_podata> LIKE LINE OF gt_podata.
+
+  " 해당 PO의 아이템이 남아있는지 확인
+  READ TABLE gt_item WITH KEY ponum = pv_ponum TRANSPORTING NO FIELDS.
+
+  IF sy-subrc <> 0.  " 아이템 없음
+    READ TABLE gt_podata ASSIGNING <fs_podata> WITH KEY ponum = pv_ponum.
+    IF sy-subrc = 0.
+      CLEAR <fs_podata>-color.
+      PERFORM refresh_table_display CHANGING go_alv_po_waiting.
+    ENDIF.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

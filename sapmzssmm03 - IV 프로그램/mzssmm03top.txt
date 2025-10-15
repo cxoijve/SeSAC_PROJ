@@ -122,6 +122,10 @@ DATA : gt_fcat_0100 TYPE lvc_t_fcat,
        gt_fcat_0500 TYPE lvc_t_fcat,
        gs_fcat_0500 LIKE LINE OF gt_fcat_0500.
 
+
+DATA : gt_sort_0100 TYPE lvc_t_sort,
+       gs_sort_0100 LIKE LINE OF gt_sort_0100.
+
 DATA : go_con_0100 TYPE  REF TO cl_gui_custom_container,
        go_alv_0100 TYPE REF TO cl_gui_alv_grid,
        go_con_3    TYPE  REF TO cl_gui_custom_container,

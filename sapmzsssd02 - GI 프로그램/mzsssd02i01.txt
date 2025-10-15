@@ -39,16 +39,21 @@ MODULE user_command_0100 INPUT.
       PERFORM get_mat_name USING zssssd0204-matnr
                            CHANGING zssssd0204-matnm.
 
-
     WHEN 'M300'.
-
       CALL SCREEN 300.
-
       CLEAR : zssssd0207 , gt_info_0300[], gv_ginum_0300.
       " 300 -> 500 Set Screen 으로 인한 Clear
       CLEAR : gs_info_0500h, gt_info_0500[], gs_info_o_0500h, gt_info_o_0500[], gv_stseq_0500.
-
     WHEN 'SEARCH'.
+      CLEAR : gt_fcat_0200[], gt_sort_0200[].
+      " Screen 200번의 데이터 클리어
+      CLEAR : gt_info_0200[].
+      " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
+      PERFORM set_fcat_0200 TABLES gt_fcat_0200
+                            USING  zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204.
 
       PERFORM check_cond_0100 USING   zssssd0201
                                       zssssd0202
@@ -78,16 +83,10 @@ MODULE user_command_0100 INPUT.
                                    zssssd0204
                             CHANGING gv_subrc.
 
+
       IF gv_subrc <> 0.
         RETURN.
       ENDIF.
-
-      " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
-      PERFORM set_fcat_0200 TABLES gt_fcat_0200
-                            USING  zssssd0201
-                                   zssssd0202
-                                   zssssd0203
-                                   zssssd0204.
 
       PERFORM set_sort_0200 TABLES gt_sort_0200
                             USING  zssssd0201
@@ -95,21 +94,33 @@ MODULE user_command_0100 INPUT.
                                    zssssd0203
                                    zssssd0204.
 
-      " 검색조건 테스트 스크린
-      " CALL SCREEN 105.
-      CALL SCREEN 200.
-
-      " 검색 조건 클리어
-      CLEAR : zssssd0201, zssssd0202, zssssd0203, zssssd0204.
-      " Screen 200번의 ALV Field Catalog 클리어
-      CLEAR : gt_fcat_0200[], gt_sort_0200[].
-      " Screen 200번의 데이터 클리어
-      CLEAR : gt_info_0200[].
+*      " 검색조건 테스트 스크린
+*      " CALL SCREEN 105.
+*      CALL SCREEN 200.
+*
+*      " 검색 조건 클리어
+*      CLEAR : zssssd0201, zssssd0202, zssssd0203, zssssd0204.
+*      " Screen 200번의 ALV Field Catalog 클리어
+*      CLEAR : gt_fcat_0200[], gt_sort_0200[].
+*      " Screen 200번의 데이터 클리어
+*      CLEAR : gt_info_0200[].
 
     WHEN 'T101' OR 'T102' OR 'T103' OR 'T104'.
       " 검색 조건 클리어
       CLEAR : zssssd0201, zssssd0202, zssssd0203, zssssd0204.
       ts_0100-activetab = ok_code.
+
+      CLEAR : gt_fcat_0200[], gt_sort_0200[].
+      " Screen 200번의 데이터 클리어
+      CLEAR : gt_info_0200[].
+      " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
+      PERFORM set_fcat_0200 TABLES gt_fcat_0200
+                            USING  zssssd0201
+                                   zssssd0202
+                                   zssssd0203
+                                   zssssd0204.
+    WHEN 'C500'.
+      PERFORM m500_0200.
 
   ENDCASE.
 ENDMODULE.
@@ -136,69 +147,7 @@ MODULE user_command_0200 INPUT.
     WHEN 'ENTER'.
 
     WHEN 'M500'.
-
-      " 라인 하나 골랐는지 체크
-      PERFORM select_row_0200 TABLES   gt_info_0200
-                              CHANGING gv_ginum_0200
-                                       gv_subrc.
-
-      IF gv_subrc <> 0.
-        RETURN.
-      ENDIF.
-
-      " CASE - 미출고 문서
-      IF gv_ginum_0200 IS INITIAL.
-        MESSAGE i999(zmcss) WITH '미출고 문서입니다.'.
-        RETURN.
-      ENDIF.
-
-      " CASE - 출고 문서
-      " 라인 하나에 대한 세부 정보 쿼리
-      PERFORM get_info_0500 TABLES gt_info_0500
-                            USING gv_ginum_0200
-                            CHANGING gs_info_0500h
-                                     gv_subrc.
-      IF gv_subrc <> 0.
-        RETURN.
-      ENDIF.
-
-      PERFORM set_default_0500 TABLES   gt_info_0500
-                                        gt_info_o_0500
-                               USING    gs_info_0500h
-                               CHANGING gs_info_o_0500h
-                                        gv_stseq_0500.
-      CLEAR gv_eflag_0500.
-
-      CALL SCREEN 500.
-
-      " gt_info_500 과 관련 데이터 클리어
-      CLEAR : gv_ginum_0200,
-              gs_info_0500h, gt_info_0500[], gs_info_o_0500h, gt_info_o_0500[], gv_stseq_0500.
-
-      " 재쿼리
-      PERFORM get_info_0200 TABLES gt_info_0200
-                            USING  zssssd0201
-                                   zssssd0202
-                                   zssssd0203
-                                   zssssd0204
-                            CHANGING gv_subrc.
-
-      IF gv_subrc <> 0.
-        MESSAGE a999(zmcss) WITH '변경후 재쿼리 중 치명적 에러 발생!'.
-      ENDIF.
-
-      " 검색 조건을 바탕으로 Screen 200번의 ALV Field Catalog 설정
-      PERFORM set_fcat_0200 TABLES gt_fcat_0200
-                            USING  zssssd0201
-                                   zssssd0202
-                                   zssssd0203
-                                   zssssd0204.
-
-      PERFORM set_sort_0200 TABLES gt_sort_0200
-                            USING  zssssd0201
-                                   zssssd0202
-                                   zssssd0203
-                                   zssssd0204.
+      PERFORM m500_0200.
 
   ENDCASE.
 ENDMODULE.
@@ -210,7 +159,7 @@ ENDMODULE.
 MODULE user_command_0500 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
-      IF SY-CALLD = 'X'.
+      IF sy-calld = 'X'.
         LEAVE PROGRAM.
       ENDIF.
 
@@ -323,7 +272,7 @@ MODULE user_command_0500 INPUT.
       "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-jenum'/' gs_info_0500h-fyear.
       PERFORM call_je USING gs_info_0500h-jenum.
     WHEN 'BIDTL'.
-      MESSAGE i999(zmcss) WITH 'BI : ' gs_info_0500h-binum.
+      PERFORM call_bi USING gs_info_0500h-binum.
     WHEN 'BJDTL'.
       "MESSAGE i999(zmcss) WITH 'JE : ' gs_info_0500h-bjnum '/' gs_info_0500h-bifyr.
       PERFORM call_je USING gs_info_0500h-bjnum.
@@ -378,8 +327,19 @@ MODULE user_command_0300 INPUT.
                                      USING  zssssd0207
                                      CHANGING gv_subrc.
 
+
       CASE gv_subrc.
         WHEN '0'. " 라인 아이템이 있는 상태
+          PERFORM popup_to_confirm USING  '신규 출고'
+                                          '출고하시겠습니까?'
+                                          '확인'
+                                          '취소'
+                                  CHANGING gv_subrc.
+          IF gv_subrc <> 0.
+            MESSAGE s999(zmcss) WITH '사용자가 액션을 취소했습니다'.
+            RETURN.
+          ENDIF.
+
           PERFORM insert_gi_with_items TABLES gt_info_0300
                                        CHANGING zssssd0207
                                                 gv_subrc.
@@ -387,6 +347,16 @@ MODULE user_command_0300 INPUT.
         WHEN '4'. " INVALID
           RETURN.
         WHEN '5'. " 라인 아이템이 없는 상태*
+
+          PERFORM popup_to_confirm USING  '신규 출고'
+                                          '아이템이 없는 출고 문서입니다. 출고하시겠습니까?'
+                                          '확인'
+                                          '취소'
+                                  CHANGING gv_subrc.
+          IF gv_subrc <> 0.
+            MESSAGE s999(zmcss) WITH '사용자가 액션을 취소했습니다'.
+            RETURN.
+          ENDIF.
           PERFORM insert_gi_without_items USING zssssd0207
                                           CHANGING gv_subrc.
 

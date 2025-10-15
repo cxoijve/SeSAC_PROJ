@@ -1,0 +1,19 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM01C01
+*&---------------------------------------------------------------------*
+
+
+CLASS lcl_event_handler IMPLEMENTATION.
+
+*
+*
+  METHOD handle_hotspot.
+
+    PERFORM handle_hotspot USING e_row_id-index e_column_id-fieldname sender.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

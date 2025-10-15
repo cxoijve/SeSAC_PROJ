@@ -1584,7 +1584,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM search_0100 .
-
+  CLEAR gt_item.
   IF zsssmm0210-grnum IS NOT INITIAL.
     CLEAR gt_grdata.
     DATA : lv_grnum  TYPE ztssgrh-grnum,

@@ -8,11 +8,11 @@ SAPMZSSMD07
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD07                             0200 0200     27 75192 37  0  0 27122  0G E                              20251009152216																																
+SAPMZSSMD07                             0200 0200      7 75192 37  0  0 27123  0G E                              20251014230016																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_1		CHAR	 75	00	00	00	30	00	  1	  2		  0	  0	  0		  7	R				  0	  0	101							CONDITION		
+B_BOX_1		CHAR	 75	00	00	00	30	00	  1	  2		  0	  0	  0		  7	R				  0	  0	102							판매카탈로그 생성		
 ZSSSMD07004-RAWNR	2	CHAR	 20	30	00	00	30	00	  2	  4		  0	  0	  0		  0					  0	  0								원자재 코드	                                                                                                                                                                                                                                                        X	
 ZSSSMD07004-RAWNR	C	CHAR	  8	A0	00	80	30	00	  2	 25		  0	  0	  0		  0					 16	  0								________	                                       00	
 ZSSSMD07004-MATNM	C	CHAR	 40	A0	02	80	31	00	  2	 34		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
@@ -22,7 +22,7 @@ ZSSSMD07004-VNAME	C	CHAR	 40	A0	02	80	31	00	  5	 34		  0	  0	  0		  0					 80	  
 ZSSSMD07004-VNPRC	2	CHAR	 20	30	00	00	30	00	  6	  4		  0	  0	  0		  0					  0	  0								벤더 구매 가격	                                                                                                                                                                                                                                                        X	
 ZSSSMD07004-VNPRC	P	CURR	 20	A0	00	A0	00	00	  6	 25		  0	  0	  0		  0					 15	  2		ZSSSMD07004-CURKY						____________________	                                       00	
 ZSSSMD07004-CURKY	C	CUKY	  5	A0	00	80	31	00	  6	 46		  0	  0	  0		  0					 10	  0								_____	                                       00	
-CON_0200			 75	00	00	00	30	00	  8	  2		  0	  0	  0		 20	U				  1	  1	102									
+CON_0200			 75	00	00	00	30	00	  8	  2		  0	  0	  0		 20	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

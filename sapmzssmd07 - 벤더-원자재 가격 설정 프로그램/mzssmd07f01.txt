@@ -224,7 +224,9 @@ FORM set_fcat  CHANGING pt_fcat TYPE lvc_t_fcat.
   LOOP AT pt_fcat INTO ls_fcat.
     CASE ls_fcat-fieldname.
       WHEN 'LIGHT'.
-        ls_fcat-coltext = '수정가능여부'.
+        ls_fcat-coltext = '사용여부'.
+      WHEN 'DEL'.
+        ls_fcat-no_out = 'X'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -265,14 +267,14 @@ FORM get_prcat_data  TABLES ct_prcat STRUCTURE zsssmd07002.
                        CHANGING gv_subrc.
     IF gv_subrc <> 0.
       CLEAR gv_subrc.
-      gs_prcat-light = '1'.
+      gs_prcat-light = '3'.
     ELSE.
       CLEAR gv_subrc.
-      gs_prcat-light = '3'.
+      gs_prcat-light = '1'.
     ENDIF.
 
     IF gs_prcat-del NE ''.
-      gs_prcat-light = 2.
+      gs_prcat-light = 0.
     ENDIF.
 
     MODIFY gt_prcat FROM gs_prcat.
@@ -988,6 +990,49 @@ FORM update_prcat_data  CHANGING cv_subrc TYPE sy-subrc.
     ENDIF.
 
   ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MATNM_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD07001_MATNR  text
+*      <--P_ZSSSMD07001_MATNM  text
+*----------------------------------------------------------------------*
+FORM get_matnm_data  USING    VALUE(pv_matnr) TYPE zessmatnr
+                     CHANGING cv_matnm TYPE zessmatnm.
+
+  SELECT SINGLE matnm
+    FROM ztssmat_t
+    INTO cv_matnm
+    WHERE matnr = pv_matnr
+      AND langu = '3'.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_matnm_data ERROR'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VNAME_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ZSSSMD07001_VENID  text
+*      <--P_ZSSSMD07001_VNAME  text
+*----------------------------------------------------------------------*
+FORM get_vname_data  USING  VALUE(pv_venid) TYPE zessvenid
+                     CHANGING cv_vname TYPE zessvname.
+
+  SELECT SINGLE vname
+    FROM ztssvend
+    INTO cv_vname
+    WHERE venid = pv_venid.
+
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'get_vname_data ERROR'.
+  ENDIF.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

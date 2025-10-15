@@ -12,9 +12,9 @@ CLASS lcl_handler IMPLEMENTATION.
 
     CLEAR ls_button.
     ls_button-function = 'CUST_CHG'.
-    ls_button-icon = icon_change.
+*    ls_button-icon = icon_change.
     ls_button-butn_type = '0'.
-    ls_button-text = '편집 모드'. "ALV Customer Button
+    ls_button-text = '가격변경'. "ALV Customer Button
     APPEND ls_button TO e_object->mt_toolbar.
 
     CLEAR ls_button.
@@ -44,7 +44,7 @@ CLASS lcl_handler IMPLEMENTATION.
 
         CLEAR lt_cell.
         LOOP AT gt_prcat INTO gs_prcat.
-          IF gs_prcat-light = 3.
+          IF gs_prcat-light = 1.
             CLEAR ls_cell.
             ls_cell-row_id = sy-tabix.
             ls_cell-col_id = 'VNPRC'.

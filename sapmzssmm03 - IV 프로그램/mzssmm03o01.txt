@@ -154,6 +154,8 @@ MODULE user_command_0600 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'EMP1'.
+      PERFORM get_emp_detail_data USING zsssmm03014-rgtor.
   ENDCASE.
 
 ENDMODULE.
@@ -259,9 +261,12 @@ MODULE set_alv_0100 OUTPUT.
   CLEAR gt_fcat_0100.
   PERFORM set_fcat_0100 CHANGING gt_fcat_0100.
 
+  PERFORM set_sort_0100 CHANGING gt_sort_0100.
+
   PERFORM display_alv_0100 TABLES gt_data
                            USING  gs_layo_0100
                                   gt_fcat_0100
+                                  gt_sort_0100
                                   go_alv_0100.
 
 ENDMODULE.

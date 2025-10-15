@@ -1,0 +1,88 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD03C01
+*&---------------------------------------------------------------------*
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+    METHODS: on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING e_row_id e_column_id sender.
+ENDCLASS.
+
+*DATA go_handler TYPE REF TO lcl_handler.
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+    DATA: lv_ginum TYPE ztssgih-ginum.
+
+    CASE sender.
+
+      WHEN go_alv_bi.
+        READ TABLE gt_bi INTO gs_bi INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_ginum = gs_bi-ginum.
+
+      WHEN go_alv_doc.
+        READ TABLE gt_doc INTO gs_doc INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_ginum = gs_doc-ginum.
+
+      WHEN go_alv2.
+        READ TABLE gt_gi_item INTO gs_gi_item INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+
+      WHEN go_alv3.
+        READ TABLE gt_iv_item INTO gs_iv_item INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_ginum = gs_iv_item-ginum.
+
+      WHEN go_alv4.
+        READ TABLE gt_item_ist INTO gs_item_ist INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_ginum = gs_item_ist-ginum.
+
+      WHEN OTHERS.
+        RETURN.
+    ENDCASE.
+
+    CASE e_column_id-fieldname.
+      WHEN 'GINUM'.     " 출고문서번호
+        SET PARAMETER ID 'ZSSGI' FIELD lv_ginum.
+        CALL TRANSACTION 'ZSSSD02'.
+*          WHEN 'CSTID'.     " 고객코드
+*          WHEN 'CNAME'.     " 고객명
+
+      WHEN 'SOMNR'.
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = gs_gi_item-somnr
+            iv_ismodal   = 'X'
+          EXCEPTIONS
+            query_failed = 1
+            unknown_flag = 2
+            OTHERS       = 3.
+
+      WHEN 'MATNM'.
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = gs_gi_item-somnr
+            iv_ismodal   = 'X'
+          EXCEPTIONS
+            query_failed = 1
+            unknown_flag = 2
+            OTHERS       = 3.
+
+    ENDCASE.
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

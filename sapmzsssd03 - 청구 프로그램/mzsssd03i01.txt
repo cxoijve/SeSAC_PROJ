@@ -80,7 +80,9 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE user_command_0200 INPUT.
-  DATA: lv_ok TYPE char1.
+  DATA: lv_ok    TYPE char1,
+        lv_rgtor TYPE ztsssivh-rgtor,
+        i_jenum  TYPE ztssjeh-jenum.
 
   CASE ok_code.
     WHEN 'BACK'.
@@ -91,6 +93,17 @@ MODULE user_command_0200 INPUT.
         EXIT.
       ENDIF.
       PERFORM call_save_popup.
+    WHEN 'B_RGTOR'.
+      CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+        EXPORTING
+          iv_pernr   = gs_gi_head-rgtor
+          iv_ismodal = 'X'    " 모달 형태
+          iv_dtllv   = 'A'.   " 축약 정보
+    WHEN 'B_JENUM'.
+      i_jenum = gs_gi_head-jenum.
+      SET PARAMETER ID 'JEN' FIELD i_jenum.
+      CALL TRANSACTION 'ZSSFI01'.
+
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.
@@ -103,6 +116,22 @@ MODULE user_command_0300 INPUT.
   CASE ok_code.
     WHEN 'BACK'.
       LEAVE TO SCREEN 0.
+    WHEN 'B_RGTOR'.
+      CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+        EXPORTING
+          iv_pernr   = gs_iv_head-rgtor
+          iv_ismodal = 'X'    " 모달 형태
+          iv_dtllv   = 'A'.   " 축약 정보
+    WHEN 'B_JENUM'.
+      i_jenum = gs_iv_head-jenum.
+      SET PARAMETER ID 'JEN' FIELD i_jenum.
+      CALL TRANSACTION 'ZSSFI01'.
+    WHEN 'B_ARNUM'.
+      IF gs_iv_head-arnum IS NOT INITIAL.
+        i_jenum = gs_iv_head-arnum.
+        SET PARAMETER ID 'JEN' FIELD i_jenum.
+        CALL TRANSACTION 'ZSSFI01'.
+      ENDIF.
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.

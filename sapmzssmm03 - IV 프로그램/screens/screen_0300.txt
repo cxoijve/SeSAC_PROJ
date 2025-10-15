@@ -8,15 +8,15 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0300 0300     24 85192 37  0  0 29188  0G E                              20251014104107																																
+SAPMZSSMM03                             0300 0300     25 85192 37  0  0 29189  0G E                              20251015180032																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_3		CHAR	 85	00	00	00	30	00	  1	  2		  0	  0	  0		  3	R				  0	  0	103							입고문서		
+B_BOX_3		CHAR	 85	00	00	00	30	00	  1	  2		  0	  0	  0		  3	R				  0	  0	106							입고문서		
 ZSSSMM03016-GRNUM	2	CHAR	 20	30	00	00	30	00	  2	  4		  0	  0	  0		  0			ZSSGR		  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
 ZSSSMM03016-GRNUM	C	CHAR	 11	A0	00	84	00	08	  2	 25		  0	  0	  0		  0			ZSSGR		 22	  0				ME1				___________	X                                      00	
-B_BUTTON_1		CHAR	 13	00	00	00	30	00	  2	 42		  0	  0	  0		  0	P				  0	  0	104			ME1				입고문서 추가	                                                                                                                                                                        GRADD	
-B_BOX_1		CHAR	 85	00	00	00	30	00	  4	  2		  0	  0	  0		 16	R				  0	  0	105							입고문서정보		
+B_BUTTON_1		CHAR	 13	00	00	00	30	00	  2	 42		  0	  0	  0		  0	P				  0	  0	107			ME1				입고문서 추가	                                                                                                                                                                        GRADD	
+B_BOX_1		CHAR	 85	00	00	00	30	00	  4	  2		  0	  0	  0		 16	R				  0	  0	108							입고문서정보		
 ZSSSMM03006-GRNUM	2	CHAR	 20	30	00	00	30	00	  5	  4		  0	  0	  0		  0			ZSSGR		  0	  0								입고 문서 번호	                                                                                                                                                                                                                                                        X	
 ZSSSMM03006-GRNUM	C	CHAR	 11	A0	00	80	30	00	  5	 25		  0	  0	  0		  0			ZSSGR		 22	  0								___________	                                       00	
 ZSSSMM03006-GRDAT	2	CHAR	 20	30	00	00	30	00	  6	  4		  0	  0	  0		  0					  0	  0								입고일	                                                                                                                                                                                                                                                        X	
@@ -31,12 +31,14 @@ ZSSSMM03006-RGDAT	2	CHAR	 20	30	00	00	30	00	 10	  4		  0	  0	  0		  0					  0	  
 ZSSSMM03006-RGDAT	D	DATE	 10	A0	00	80	30	08	 10	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSMM03006-RGTOR	2	CHAR	 20	30	00	00	30	00	 11	  4		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 ZSSSMM03006-RGTOR	C	CHAR	  8	A0	00	80	30	00	 11	 25		  0	  0	  0		  0					 16	  0								________	                                       00	
-ZSSSMM03006-RGNME	C	CHAR	 20	A0	02	80	31	00	 11	 34		  0	  0	  0		  0					 40	  0								____________________	                                       00	
-CON_3			 81	00	00	00	30	00	 12	  4		  0	  0	  0		  7	U				  1	  1	106									
-B_BOX_2		CHAR	 85	00	00	00	30	00	 20	  2		  0	  0	  0		  6	R				  0	  0	101							수정사항		
+B_BUTTON_2		CHAR	  7	00	00	00	30	00	 11	 35		  0	  0	  0		  2	P				  0	  0	101			AE1				@16@	                                                                                                                                                                        EMP1	
+ZSSSMM03006-RGNME	C	CHAR	 20	A0	02	80	31	00	 11	 39		  0	  0	  0		  0					 40	  0								____________________	                                       00	
+CON_3			 81	00	00	00	30	00	 12	  4		  0	  0	  0		  7	U				  1	  1	102									
+B_BOX_2		CHAR	 85	00	00	00	30	00	 20	  2		  0	  0	  0		  6	R				  0	  0	103							수정사항		
 ZSSSMM03007-RGTOR	2	CHAR	 20	30	00	04	30	00	 21	  4		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM03007-RGTOR	C	CHAR	  8	A0	00	84	31	08	 21	 25		  0	  0	  0		  0					 16	  0				AE1				________	X                                      00	
-ZSSSMM03007-RGNME	C	CHAR	 20	A0	02	80	31	00	 21	 34		  0	  0	  0		  0					 40	  0								____________________	                                       00	
+ZSSSMM03007-RGTOR	C	CHAR	  8	A0	00	84	30	08	 21	 25		  0	  0	  0		  0					 16	  0				AE1				________	X                                      00	
+B_BUTTON_3		CHAR	  9	00	00	00	30	00	 21	 35		  0	  0	  0		  2	P				  0	  0	104			AE1				@16@	                                                                                                                                                                        EMP2	
+ZSSSMM03007-RGNME	C	CHAR	 20	A0	02	80	31	00	 21	 39		  0	  0	  0		  0					 40	  0								____________________	                                       00	
 ZSSSMM03007-TOPRC	0	CHAR	  7	30	00	00	30	00	 22	  4		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
 ZSSSMM03007-TOPRC	P	CURR	 20	A0	00	80	30	00	 22	 25		  0	  0	  0		  0					 15	  2		ZSSSMM03007-CURKY						____________________	                                       00	
 ZSSSMM03007-CURKY	C	CUKY	  5	A0	00	80	31	00	 22	 46		  0	  0	  0		  0			FWS		 10	  0								_____	                                       00	

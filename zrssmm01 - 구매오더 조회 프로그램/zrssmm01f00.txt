@@ -1,0 +1,70 @@
+*&---------------------------------------------------------------------*
+*&  Include           ZRSSMM01F00
+*&---------------------------------------------------------------------*
+FORM get_ven_name  USING VALUE(p_venid) TYPE zsssmm0210-venid
+                      CHANGING p_vname TYPE zsssmm0210-vname.
+
+  CALL FUNCTION 'Z_FMSS_GET_VEN_NAME'
+    EXPORTING
+      iv_venid = p_venid
+    IMPORTING
+      ev_vname = p_vname.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_EMP_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PT_DATA_RGTOR  text
+*      <--P_PT_DATA_ENAME  text
+*----------------------------------------------------------------------*
+FORM get_emp_name  USING    VALUE(p_empid) TYPE zsssmm0211-rgtor
+                   CHANGING p_ename TYPE zsssmm0211-ename.
+
+  CALL FUNCTION 'Z_FMSS_GET_EMP_NAME'
+    EXPORTING
+      iv_empid = p_empid
+    IMPORTING
+      ev_ename = p_ename.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_MAT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_POMNR  text
+*      <--P_GS_ITEM_PPNME  text
+*----------------------------------------------------------------------*
+FORM get_mat_name  USING    VALUE(p_matid) TYPE ztssmat-matnr
+                   CHANGING p_matnm TYPE ztssmat_t-matnm.
+
+  CALL FUNCTION 'Z_FMSS_GET_MAT_NAME'
+    EXPORTING
+      iv_matid = p_matid
+    IMPORTING
+      ev_mname = p_matnm.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PLANT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_PLANT  text
+*      <--P_GS_ITEM_PPNME  text
+*----------------------------------------------------------------------*
+FORM get_plant_name  USING   VALUE(p_id) TYPE ztssplant-plant
+                     CHANGING p_name TYPE ztssplant-pname.
+
+  SELECT SINGLE pname
+    INTO p_name
+    FROM ztssplant
+    WHERE plant = p_id.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

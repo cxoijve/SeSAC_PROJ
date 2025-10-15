@@ -11,39 +11,41 @@
 *----------------------------------------------------------------------*
 FORM get_data .
 
-  IF pa_rb1 EQ 'X'.
+*  IF pa_rb1 EQ 'X'.
 
-    SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
-      i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
-      INTO CORRESPONDING FIELDS OF TABLE gt_total
-      FROM ztsspoh AS h
-      INNER JOIN ztsspoi AS i
-      ON h~ponum = i~ponum
-      WHERE h~podat IN so_poda
-      AND h~dudat IN so_duda
-      AND i~pomnr IN so_mat.
+  SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
+    i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
+    INTO CORRESPONDING FIELDS OF TABLE gt_total
+    FROM ztsspoh AS h
+    INNER JOIN ztsspoi AS i
+    ON h~ponum = i~ponum
+    WHERE h~podat IN so_poda
+    AND h~dudat IN so_duda
+    AND i~pomnr IN so_mat.
 
-      " dfgdsgd pa_vnme
+  " dfgdsgd pa_vnme
+  MOVE-CORRESPONDING gt_total TO gt_data.
 
-  ELSE.
+*  ELSE.
 
-      SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
-      i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
-      INTO CORRESPONDING FIELDS OF TABLE gt_total
-      FROM ztsspoh AS h
-      INNER JOIN ztsspoi AS i
-      ON h~ponum = i~ponum
-      WHERE h~podat IN so_poda
-      AND h~dudat IN so_duda
-      AND i~pomnr IN so_mat.
+*    SELECT h~ponum h~podat h~venid h~dudat h~stext  h~rgdat h~rgtor
+*    i~itnum i~pomnr i~amount i~meins i~plant i~poprc i~curky i~del
+*    INTO CORRESPONDING FIELDS OF TABLE gt_total
+*    FROM ztsspoh AS h
+*    INNER JOIN ztsspoi AS i
+*    ON h~ponum = i~ponum
+*    WHERE h~podat IN so_poda
+*    AND h~dudat IN so_duda
+*    AND i~pomnr IN so_mat.
 
   "SDFsf pa_vid
+*    MOVE-CORRESPONDING gt_total to gt_item.
 
-    IF pa_chk1 EQ 'X'.
-
-    ENDIF.
+  IF pa_chk1 EQ 'X'.
 
   ENDIF.
+
+*  ENDIF.
 
 
 
@@ -80,6 +82,759 @@ FORM set_screen .
     ENDCASE.
 
   ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0100 .
+  IF go_dock IS INITIAL.
+    "ALV Object
+    PERFORM init_alv.
+    PERFORM req_event_for_alv.
+    PERFORM display_alv02.
+    PERFORM display_alv03.
+  ELSE.
+    "ALV Refresh
+    go_alv2->refresh_table_display(   ).
+    go_alv3->refresh_table_display(   ).
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv .
+  PERFORM set_docking.
+
+  PERFORM set_document.
+
+  PERFORM set_split.
+
+  PERFORM set_alv.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DOCKING
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_docking .
+  CREATE OBJECT go_dock
+    EXPORTING
+*     parent                      =
+      repid                       = sy-repid
+      dynnr                       = sy-dynnr
+      side                        = cl_gui_docking_container=>dock_at_top
+      extension                   = 1000
+*     style                       =
+*     lifetime                    = lifetime_default
+*     caption                     =
+*     metric                      = 0
+*     ratio                       =
+*     no_autodef_progid_dynnr     =
+*     name                        =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DOCUMENT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_document.
+
+  DATA: lv_total_count TYPE i,
+        lv_complete    TYPE i,
+        lv_in_progress TYPE i,
+        lv_not_started TYPE i,
+        lv_text        TYPE sdydo_text_element.
+
+  CREATE OBJECT go_document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+  " 제목
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text         = '구매오더 상세 조회'(t01)
+      sap_fontsize = cl_dd_area=>large
+      sap_emphasis = cl_dd_area=>strong.
+
+  CALL METHOD go_document->new_line.
+  CALL METHOD go_document->new_line.
+
+  " # 통계 정보 계산
+  DESCRIBE TABLE gt_data LINES lv_total_count.
+
+  LOOP AT gt_data INTO DATA(ls_data).
+    CASE ls_data-pstat.
+      WHEN 1. lv_complete = lv_complete + 1.      " 입고완료
+      WHEN 2. lv_in_progress = lv_in_progress + 1. " 입고중
+      WHEN 3. lv_not_started = lv_not_started + 1. " 미입고
+    ENDCASE.
+  ENDLOOP.
+
+  " 총 개수
+  lv_text = |총 구매오더: { lv_total_count }건|.
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text         = lv_text
+      sap_fontsize = cl_dd_area=>medium
+      sap_emphasis = cl_dd_area=>strong.
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 20.
+
+  CALL METHOD go_document->new_line.
+  CALL METHOD go_document->new_line.
+
+  " 입고완료 (초록색)
+  CALL METHOD go_document->add_icon
+    EXPORTING
+      sap_icon = 'ICON_LED_GREEN'. " 초록 신호등
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 5.
+
+  lv_text = |입고완료: { lv_complete }건|.
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text      = lv_text
+      sap_color = cl_dd_area=>list_positive.  " 초록색
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 20.
+
+  " 입고중 (노란색)
+  CALL METHOD go_document->add_icon
+    EXPORTING
+      sap_icon = 'ICON_LED_YELLOW'.  " 노란 신호등
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 5.
+
+  lv_text = |입고중: { lv_in_progress }건|.
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text      = lv_text
+      sap_color = cl_dd_area=>list_total.  " 노란색
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 20.
+
+  " 미입고 (빨간색)
+  CALL METHOD go_document->add_icon
+    EXPORTING
+      sap_icon = 'ICON_LED_RED'.  " 빨간 신호등
+
+  CALL METHOD go_document->add_gap
+    EXPORTING
+      width = 5.
+
+  lv_text = |미입고: { lv_not_started }건|.
+  CALL METHOD go_document->add_text
+    EXPORTING
+      text      = lv_text
+      sap_color = cl_dd_area=>list_negative.  " 빨간색
+
+*   입고완료 (초록색)
+*  lv_text = |입고완료: { lv_complete }건|.
+*  CALL METHOD go_document->add_text
+*    EXPORTING
+*      text      = lv_text
+*      sap_color = cl_dd_area=>list_positive.  " 초록색
+*
+*  CALL METHOD go_document->add_gap
+*    EXPORTING
+*      width = 20.
+*
+*   입고중 (노란색)
+*  lv_text = |입고중: { lv_in_progress }건|.
+*  CALL METHOD go_document->add_text
+*    EXPORTING
+*      text      = lv_text
+*      sap_color = cl_dd_area=>list_total.  " 노란색
+*
+*  CALL METHOD go_document->add_gap
+*    EXPORTING
+*      width = 20.
+*
+*   미입고 (빨간색)
+*  lv_text = |미입고: { lv_not_started }건|.
+*  CALL METHOD go_document->add_text
+*    EXPORTING
+*      text      = lv_text
+*      sap_color = cl_dd_area=>list_negative.  " 빨간색
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SPLIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_split .
+  CREATE OBJECT go_split
+    EXPORTING
+      parent  = go_dock
+      rows    = 2
+*     WIDTH   = 2000
+      columns = 1.
+
+  CALL METHOD go_split->set_row_height
+    EXPORTING
+      id     = 1
+      height = 20.
+
+
+  CALL METHOD go_split->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_con1.
+
+  CALL METHOD go_document->display_document
+    EXPORTING
+      parent = go_con1.
+
+
+  CALL METHOD go_split->get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_con2.
+
+  CREATE OBJECT go_split2
+    EXPORTING
+      parent  = go_con2
+      rows    = 1
+*     WIDTH   = 2000
+      columns = 2.
+
+  CALL METHOD go_split2->set_row_height
+    EXPORTING
+      id     = 1
+      height = 1000.
+
+  CALL METHOD go_split2->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_con3.
+
+  CALL METHOD go_split2->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_con4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv .
+  CREATE OBJECT go_alv2
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con3
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+
+  CREATE OBJECT go_alv3
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = go_con4
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV02
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv02 .
+
+  PERFORM set_layout CHANGING gs_layo.
+  PERFORM set_fcat TABLES gt_fcat.
+  PERFORM set_sort TABLES gt_sort.
+
+  CALL METHOD go_alv2->set_table_for_first_display
+    EXPORTING
+*     i_buffer_active               =
+*     i_bypassing_buffer            =
+*     i_consistency_check           =
+      i_structure_name              = 'ZSSSMM0102'
+*     is_variant                    =
+*     i_save                        =
+*     i_default                     = 'X'
+      is_layout                     = gs_layo
+*     is_print                      =
+*     it_special_groups             =
+*     it_toolbar_excluding          =
+*     it_hyperlink                  =
+*     it_alv_graphics               =
+*     it_except_qinfo               =
+*     ir_salv_adapter               =
+    CHANGING
+      it_outtab                     = gt_data
+      it_fieldcatalog               = gt_fcat
+      it_sort                       = gt_sort
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_ALV03
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM display_alv03 .
+  PERFORM set_layout CHANGING gs_layo2.
+  PERFORM set_fcat2 TABLES gt_fcat2.
+  CALL METHOD go_alv3->set_table_for_first_display
+    EXPORTING
+*     i_buffer_active               =
+*     i_bypassing_buffer            =
+*     i_consistency_check           =
+      i_structure_name              = 'ZSSSMM0104'
+*     is_variant                    =
+*     i_save                        =
+*     i_default                     = 'X'
+      is_layout                     = gs_layo2
+*     is_print                      =
+*     it_special_groups             =
+*     it_toolbar_excluding          =
+*     it_hyperlink                  =
+*     it_alv_graphics               =
+*     it_except_qinfo               =
+*     ir_salv_adapter               =
+    CHANGING
+      it_outtab                     = gt_item
+      it_fieldcatalog               = gt_fcat2
+*     it_sort                       =
+*     it_filter                     =
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+  IF sy-subrc <> 0.
+    MESSAGE a007(zmc00) WITH 'ALV Error'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  MODIFY_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM modify_data TABLES pt_data STRUCTURE gs_data.
+
+
+  LOOP AT pt_data.
+    PERFORM set_curr_status USING pt_data-ponum CHANGING  pt_data pt_data-pstat pt_data-pstat_t.
+    PERFORM get_ven_name USING pt_data-venid CHANGING pt_data-vname.
+    PERFORM get_emp_name USING pt_data-rgtor CHANGING pt_data-ename.
+
+
+    MODIFY pt_data.
+    CLEAR pt_data.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_CURR_STATUS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_DATA_PONUM  text
+*      <--P_LS_DATA  text
+*      <--P_LS_DATA_PSTAT  text
+*      <--P_LS_DATA_PSTAT_T  text
+*----------------------------------------------------------------------*
+FORM set_curr_status  USING    p_num TYPE ztsspoi-ponum
+                      CHANGING  cs_data LIKE gs_data
+                                c_flag TYPE c
+                                c_stat TYPE zessetext.
+
+  DATA : lt_po_sum LIKE TABLE OF gs_itamt,
+         lt_gr_sum LIKE TABLE OF gs_itamt.
+
+  PERFORM get_po_sum USING p_num CHANGING lt_po_sum.
+  PERFORM get_gr_sum USING p_num CHANGING lt_gr_sum.
+
+  PERFORM cal_grsum USING lt_po_sum lt_gr_sum CHANGING cs_data c_flag c_stat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PO_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_NUM  text
+*      <--P_LT_PO_SUM  text
+*----------------------------------------------------------------------*
+FORM get_po_sum  USING    p_num TYPE ztsspoh-ponum
+                 CHANGING ct_po_sum LIKE gt_itamt.
+
+
+  DATA: lt_po_raw TYPE STANDARD TABLE OF ztsspoi,
+        ls_po_raw LIKE LINE OF lt_po_raw,
+        ls_po_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_po_raw
+    FROM ztsspoi
+    WHERE ponum = p_num.
+
+  IF sy-subrc <> 0. RETURN. ENDIF.
+
+  LOOP AT lt_po_raw INTO ls_po_raw.
+    ls_po_sum-ponum  = ls_po_raw-ponum.
+    ls_po_sum-itnum  = ls_po_raw-itnum.
+    ls_po_sum-amount = ls_po_raw-amount.
+    COLLECT ls_po_sum INTO ct_po_sum.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_SUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_NUM  text
+*      <--P_LT_GR_SUM  text
+*----------------------------------------------------------------------*
+FORM get_gr_sum USING p_num TYPE ztsspoi-ponum
+                CHANGING ct_gr_sum LIKE gt_itamt.
+
+  DATA: lt_gr_raw TYPE TABLE OF ztssgri,
+        ls_gr_raw LIKE LINE OF lt_gr_raw,
+        ls_gr_sum LIKE gs_itamt.
+
+  SELECT ponum itnum amount
+    INTO CORRESPONDING FIELDS OF TABLE lt_gr_raw
+    FROM ztssgri
+    WHERE ponum = p_num.
+
+*  IF sy-subrc <> 0. MESSAGE s999(zmcss) WITH '입고내역이 존재하지 않습니다!'. RETURN. ENDIF.
+
+  LOOP AT lt_gr_raw INTO ls_gr_raw.
+    ls_gr_sum-ponum  = ls_gr_raw-ponum.
+    ls_gr_sum-itnum  = ls_gr_raw-itnum.
+    ls_gr_sum-amount = ls_gr_raw-amount.
+    COLLECT ls_gr_sum INTO ct_gr_sum.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_GRSUM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PO_SUM  text
+*      -->P_LT_GR_SUM  text
+*      <--P_CS_DATA  text
+*      <--P_C_FLAG  text
+*      <--P_C_STAT  text
+*----------------------------------------------------------------------*
+FORM cal_grsum  USING pt_po_sum LIKE gt_itamt
+                      pt_gr_sum LIKE gt_itamt
+                CHANGING  cs_data LIKE gs_data
+                          c_flag TYPE c
+                          c_stat TYPE zessetext.
+
+  DATA : ls_gr_sum LIKE LINE OF pt_gr_sum,
+         ls_po_sum LIKE gs_itamt,
+         lv_comp   TYPE abap_bool,
+         lv_incomp TYPE abap_bool.
+
+  LOOP AT pt_po_sum INTO ls_po_sum.
+
+    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+                                                 itnum = ls_po_sum-itnum.
+
+    IF sy-subrc <> 0.
+      " 미입고
+      lv_incomp = abap_true.
+    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+      " 입고중
+      lv_comp = abap_true.
+    ELSE.
+      " 입고완료
+      lv_comp = abap_true.
+    ENDIF.
+  ENDLOOP.
+
+  " 최종 상태 결정
+  IF lv_comp = abap_true AND lv_incomp = abap_true.
+*    cs_data-light = '2'.
+    cs_data-light = '@5D@'.
+    c_flag = 2.
+    c_stat = '입고중'.  " 섞여있음
+  ELSEIF lv_comp = abap_true.
+    cs_data-light = '@5B@'.
+*    cs_data-light = '3'.
+    c_flag = 1.
+    c_stat = '입고완료'.  " 모두 완료
+  ELSE.
+    cs_data-light = '@5C@'.
+*    cs_data-light = '1'.
+    c_flag = 3.
+    c_stat = '미입고'.  " 모두 미입고 또는 입고중
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYOUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GS_LAYO  text
+*----------------------------------------------------------------------*
+FORM set_layout  CHANGING cs_layo TYPE lvc_s_layo.
+
+  cs_layo-cwidth_opt = 'A'.
+  cs_layo-zebra = 'X'.
+  cs_layo-ctab_fname = 'IT_COL'.
+  cs_layo-info_fname = 'COLOR'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT  text
+*----------------------------------------------------------------------*
+FORM set_fcat  TABLES ct_fcat TYPE lvc_t_fcat.
+
+  DATA: lv_pos TYPE i VALUE 1.
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'light'.
+  ct_fcat-coltext = '입고상태'.
+  ct_fcat-col_pos = lv_pos.
+  ct_fcat-just = 'C'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'PODAT'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'DUDAT'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'VENID'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'VNAME'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'ENAME'.
+  ct_fcat-coltext = '담당자 이름'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'STEXT'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'PONUM'.
+  ct_fcat-col_pos = lv_pos = lv_pos + 1.
+  ct_fcat-hotspot = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'CURKY'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'RGDAT'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'RGTOR'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'PSTAT_T'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'PSTAT'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'IT_COL'.      " 색상 정보를 담은 internal table 필드명
+  ct_fcat-ref_table = 'LVC_T_SCOL'.  " 색상 테이블 구조 참조
+  ct_fcat-tech = 'X'.                " 화면에 표시 안 함
+  APPEND ct_fcat TO ct_fcat[].
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_SORT  text
+*----------------------------------------------------------------------*
+FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort.
+
+  SORT gt_data BY podat DESCENDING.
+
+
+  DATA: ls_sort TYPE lvc_s_sort.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'PODAT'.      "정렬할 필드명
+  ls_sort-spos      = 1.             "정렬 순서 (1,2,3...)
+  ls_sort-down      = 'X'.           "오름차순 (X) / 내림차순 (공백)
+  ls_sort-subtot    = 'X'.           "소계 표시 (옵션)
+  APPEND ls_sort TO pt_sort.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'VENID'.      "정렬할 필드명
+  ls_sort-spos      = 2.             "정렬 순서 (1,2,3...)
+  ls_sort-up        = 'X'.           "오름차순 (X) / 내림차순 (공백)
+  ls_sort-subtot    = 'X'.           "소계 표시 (옵션)
+  APPEND ls_sort TO pt_sort.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv .
+  SET HANDLER :  lcl_event_handler=>handle_hotspot FOR go_alv2.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_FCAT2  text
+*----------------------------------------------------------------------*
+FORM set_fcat2  TABLES ct_fcat TYPE lvc_t_fcat.
+
+  DATA: lv_pos TYPE i VALUE 1.
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'TOPRC'.
+  ct_fcat-coltext = '거래 가격'.
+*  ct_fcat-col_pos = lv_pos.
+  ct_fcat-do_sum = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+   CLEAR ct_fcat.
+  ct_fcat-fieldname = 'DEL'.
+  ct_fcat-coltext = '삭제 여부'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'PLANT'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
+
+  CLEAR ct_fcat.
+  ct_fcat-fieldname = 'POPRC'.
+  ct_fcat-no_out = 'X'.
+  APPEND ct_fcat TO ct_fcat[].
 
 ENDFORM.
 
