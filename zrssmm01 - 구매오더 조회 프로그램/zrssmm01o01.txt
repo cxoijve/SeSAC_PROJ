@@ -18,6 +18,31 @@ ENDMODULE.
 MODULE set_alv_0100 OUTPUT.
   perform set_alv_0100.
 ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0200  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0200 OUTPUT.
+
+  IF go_con5 is INITIAL.
+    perform init_alv_0200.
+    perform req_evnet_for_alv_0200.
+  ELSE.
+    perform refresh_alvs.
+*    go_alv5->refresh_table_display( ).
+  ENDIF.
+
+ENDMODULE.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

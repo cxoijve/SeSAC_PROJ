@@ -1,0 +1,68 @@
+*&---------------------------------------------------------------------*
+*&  Include           MZSSSD01C01
+*&---------------------------------------------------------------------*
+CLASS lcl_handler DEFINITION.
+  PUBLIC SECTION.
+    METHODS: on_hotspot_click FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING e_row_id e_column_id sender.
+ENDCLASS.
+
+CLASS lcl_handler IMPLEMENTATION.
+  METHOD on_hotspot_click.
+    DATA: lv_cstid TYPE ztsscust-cstid,
+          lv_cname TYPE ztsscust-cname,
+          lv_rgtor TYPE ztsssoh-rgtor.
+
+    CASE sender.
+
+      WHEN go_alv1.
+        READ TABLE gt_head INTO gs_head INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_cstid = gs_head-cstid.
+        lv_cname = gs_head-cname.
+        lv_rgtor = gs_head-rgtor.
+
+      WHEN go_alv2.
+        READ TABLE gt_item INTO gs_item INDEX e_row_id.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+
+      WHEN OTHERS.
+
+    ENDCASE.
+
+    CASE e_column_id-fieldname.
+      WHEN 'CSTID'.
+        CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+          EXPORTING
+            iv_cstid = lv_cstid.
+      WHEN 'CNAME'.
+        CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+          EXPORTING
+            iv_cstid = lv_cstid.
+      WHEN 'RGTOR'.
+        CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+          EXPORTING
+            iv_pernr   = lv_rgtor
+            iv_ismodal = 'X'
+            iv_dtllv   = 'A'.
+      WHEN 'SOMNR'.
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = gs_item-somnr
+            iv_ismodal   = 'X'.
+      WHEN 'MATNM'.
+        CALL FUNCTION 'Z_FMSS_CALL_MATERIAL_DETAIL'
+          EXPORTING
+            iv_matnr     = gs_item-somnr
+            iv_ismodal   = 'X'.
+
+    ENDCASE.
+  ENDMETHOD.
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

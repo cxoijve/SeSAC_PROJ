@@ -12,7 +12,7 @@ DATA : ok_code  TYPE sy-ucomm,
 " 도메인 변수
 DATA : gt_domain TYPE dd07v_t,
        gs_domain LIKE LINE OF gt_domain.
-
+DATA :  gv_sum   LIKE zsssmm0104-toprc.
 DATA : gv_chk1(1),
        gv_chk2(1),
        gv_chk3(1).
@@ -39,11 +39,15 @@ DATA : gs_cond TYPE zsssmm0101.
 
 
 DATA : BEGIN OF gs_data,
-         light type char8.
+         light TYPE char8.
     INCLUDE TYPE zsssmm0102.
 DATA : END OF gs_data,
 gt_data LIKE TABLE OF gs_data.
 
+
+* ALV Exclude
+DATA : gs_exclude TYPE ui_func,
+       gt_exclude TYPE ui_functions.
 
 *DATA : gt_data TYPE zsssmm0102_t,
 *       gs_data LIKE LINE OF gt_data.
@@ -121,6 +125,10 @@ DATA : gv_temp_num TYPE i.
 DATA : gv_ven_screen TYPE string.
 
 
+
+DATA : gt_sort9 TYPE lvc_t_sort,
+       gs_sort9 TYPE lvc_s_sort.
+
 *-------------------------------------------------------*
 * 300번 스크린 관련 변수들 & 구매오더 수정
 *-------------------------------------------------------*
@@ -148,6 +156,7 @@ DATA : gs_layo32 TYPE lvc_s_layo,
        gs_sort32 TYPE lvc_s_sort.
 
 DATA : gt_proto_item LIKE gt_item.
+
 
 
 *-------------------------------------------------------*
@@ -184,6 +193,18 @@ DATA : gs_layo5 TYPE lvc_s_layo,
        gs_sort5 TYPE lvc_s_sort.
 
 
+
+
+*-------------------------------------
+* 500번 스크린 관련 변수들
+*-------------------------------------
+
+DATA : go_con7 TYPE REF TO cl_gui_custom_container,
+       go_alv7 TYPE REF TO cl_gui_alv_grid.
+DATA : gs_layo7 TYPE lvc_s_layo,
+       gt_fcat7 TYPE lvc_t_fcat,
+       gs_fcat7 TYPE lvc_s_fcat.
+
 " field - catalog types
 
 TYPES : BEGIN OF ty_field_conf,
@@ -212,13 +233,37 @@ TYPES : BEGIN OF ty_field_conf,
 
 TYPES : ty_t_field_conf TYPE TABLE OF ty_field_conf.
 
+" 구매오더 아이템 결과
+DATA : gt_item2 TYPE zsssmm0104_t,
+       gs_item2 LIKE LINE OF gt_item2.
+
+
+" Text 메모 변수
+DATA : go_mod  TYPE REF TO cl_gui_custom_container,
+       go_edit TYPE REF TO cl_gui_textedit.
+
+TYPES: BEGIN OF t_text,
+         text TYPE ztssgrh-stext,
+       END OF t_text,
+       tt_text TYPE TABLE OF t_text.
+
+DATA: gt_edit TYPE TABLE OF t_text,
+      gs_edit LIKE LINE OF gt_edit.
+DATA: gv_text TYPE string.
+
+
 *-------------------------------------------------------*
 * class
 *-------------------------------------------------------*
 
 CLASS lcl_event_handler DEFINITION.
   PUBLIC SECTION.
-    CLASS-METHODS on_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_column es_row_no.
+    CLASS-METHODS :
+      handle_toolbar FOR EVENT toolbar OF cl_gui_alv_grid IMPORTING e_object sender,
+      handle_user_command FOR EVENT user_command OF cl_gui_alv_grid IMPORTING e_ucomm,
+      on_double_click FOR EVENT double_click OF cl_gui_alv_grid IMPORTING e_column es_row_no,
+      on_button_click FOR EVENT button_click OF cl_gui_alv_grid
+        IMPORTING es_col_id  es_row_no.
 
 ENDCLASS.
 

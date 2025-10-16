@@ -96,6 +96,39 @@ CONTROLS my_tab_2 TYPE TABSTRIP.
 DATA : gt_data TYPE TABLE OF zsssmm03002,
        gs_data LIKE LINE OF gt_data.
 
+*DATA : BEGIN OF gs_data,
+*         color(4),
+*         it_col   TYPE lvc_t_scol,
+*         style    TYPE lvc_t_styl.
+*    INCLUDE TYPE zsssmm03002.
+*DATA : END OF gs_data,
+*gt_data LIKE TABLE OF gs_data.
+
+*TYPES: BEGIN OF ty_out,
+*         include TYPE zsssmm03002,        "<< 원본 필드들 그대로 포함
+*         ctab    TYPE lvc_t_scol,           "<< 셀 색상 테이블(핵심)
+*       END OF ty_out.
+*DATA: gt_out TYPE TABLE OF ty_out,
+*      gs_out LIKE LINE OF gt_out.
+
+*TYPES: BEGIN OF ty_out,
+*         include TYPE zsssmm03002,   "<< 원본 필드들 그대로 포함
+*         style   TYPE lvc_t_styl,     "<< 셀 색상 테이블(기존 ctab를 style로 이름만 변경)
+*         it_col  TYPE lvc_t_scol,         "<< 내부용 보조 필드(필요시 길이 조정)
+*       END OF ty_out.
+*DATA: gt_out TYPE TABLE OF ty_out,
+*      gs_out LIKE LINE OF gt_out.
+
+DATA: BEGIN OF gs_out,
+        color(4),
+        it_col   TYPE lvc_t_scol,
+        style    TYPE lvc_t_styl.
+    INCLUDE STRUCTURE zsssmm03002.
+DATA : END OF gs_out,
+gt_out LIKE TABLE OF gs_out.
+
+
+
 DATA : gs_layo_0100 TYPE lvc_s_layo,
        gs_layo      TYPE lvc_s_layo.
 

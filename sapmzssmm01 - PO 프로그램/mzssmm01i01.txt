@@ -27,11 +27,14 @@ MODULE user_command_0100 INPUT.
 
   CASE ok_code.
     WHEN 'BACK'.
+      CLEAR : zsssmm0103-venid,
+              zsssmm0103-vname,
+              zsssmm0103-toprc.
       LEAVE TO SCREEN 0.
     WHEN 'ENTER'.
-      perform get_ven_name using zsssmm0101-venid CHANGING zsssmm0101-vname.
+      PERFORM get_ven_name USING zsssmm0101-venid CHANGING zsssmm0101-vname.
     WHEN 'SEARCH' OR 'RE'.
-      If zsssmm0101-venid is INITIAL. clear zsssmm0101-vname. endif.
+      IF zsssmm0101-venid IS INITIAL. CLEAR zsssmm0101-vname. ENDIF.
       PERFORM search_datas.
     WHEN 'CREATE'.
       PERFORM init_create CHANGING zsssmm0103.
@@ -41,6 +44,9 @@ MODULE user_command_0100 INPUT.
                zsssmm0103-toprc,
                gv_ven_screen,
                gt_item.
+    WHEN 'CREATE2'.
+      PERFORM init_create CHANGING zsssmm0103.
+      CALL SCREEN '0500'.
     WHEN 'EDIT'.
       PERFORM check_pop_init_data CHANGING gv_subrc.
       IF gv_subrc = 0.
@@ -56,6 +62,8 @@ MODULE user_command_0100 INPUT.
         CLEAR : gt_item,
                 zsssmm0103.
       ENDIF.
+    WHEN 'UPLOAD'.
+      CALL TRANSACTION 'ZRBSSMM0101'.
 *    WHEN 'G_BTN'.
 *      DATA : lv_grnum TYPE zessgrnum.
 *      lv_grnum = 'G2025000046'.
@@ -104,7 +112,8 @@ MODULE user_command_0200 INPUT.
               zsssmm0104-pname.
       zsssmm0104-itnum = gv_item_num.
       IF zsssmm0103-venid IS NOT INITIAL.
-        CALL SCREEN 210 STARTING AT 5 10 ENDING AT 80 25.
+*        CALL SCREEN 210 STARTING AT 5 10 ENDING AT 80 25.
+        CALL SCREEN 210 STARTING AT 10 10.
       ELSE.
         MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
       ENDIF.
@@ -161,12 +170,19 @@ MODULE user_command_0201 INPUT.
       CLEAR zsssmm0104-pname.
       PERFORM set_item_mat_record.
     WHEN 'SAVE'.
-      PERFORM set_item_mat_record.
-      PERFORM save_po_item CHANGING zsssmm0103 zsssmm0104.
+*      PERFORM set_item_mat_record.
+*      PERFORM save_po_item CHANGING zsssmm0103 zsssmm0104.
+      PERFORM save_po_item2 CHANGING zsssmm0103 zsssmm0104.
+      PERFORM refresh_table_display CHANGING go_alv7.
+
     WHEN 'EDIT'.
-      PERFORM edit_po_item CHANGING zsssmm0103 zsssmm0104.
+*      PERFORM edit_po_item CHANGING zsssmm0103 zsssmm0104.
+      PERFORM edit_po_item2 CHANGING zsssmm0103 zsssmm0104.
+      PERFORM refresh_table_display CHANGING go_alv7.
     WHEN 'DELETE'.
-      PERFORM delete_po_item CHANGING zsssmm0103.
+      PERFORM check_pop_del_item USING go_alv7 CHANGING gv_subrc.
+*      PERFORM delete_po_item CHANGING zsssmm0103.
+      PERFORM refresh_table_display CHANGING go_alv7.
 
 
   ENDCASE.
@@ -373,6 +389,80 @@ MODULE exit_0400 INPUT.
       PERFORM free_alv CHANGING go_con5 go_alv5.
       LEAVE TO SCREEN 0.
     WHEN OTHERS.
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0500  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0500 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      PERFORM search_datas.
+      CLEAR : zsssmm0103-vname,
+              zsssmm0103-ename.
+      LEAVE TO SCREEN 0.
+
+    WHEN 'ENTER'.
+      PERFORM enter_datas.
+
+    WHEN 'ORDER'.
+*      PERFORM insert_purchase_order CHANGING gv_subrc.
+*      PERFORM insert_purchase_order2 CHANGING gv_subrc.
+      PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING zsssmm0103-ename.
+      CALL SCREEN '0501'  STARTING AT 10 5 ENDING AT 80 30.
+      IF gv_subrc = 0.
+        CLEAR : zsssmm0103,
+                gt_item,
+                gv_ven_screen.
+        PERFORM set_po_create_display.
+      ENDIF.
+      PERFORM set_item_num_to_one.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0501  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0501 INPUT.
+  CASE ok_code.
+    WHEN 'I_CANCEL'.
+      LEAVE TO SCREEN 0.
+    WHEN 'I_SAVE'.
+      " 아이템 확인 -> 1:CN이지만 1:N처럼 확인(아이템이 없으면 입고를 못함)
+      IF gt_item2 IS INITIAL.
+        MESSAGE i999(zmcss) WITH '아이템 1개 이상 시 입고 가능합니다!'.
+        PERFORM clear_text USING go_edit.
+        RETURN.
+      ENDIF.
+
+      " 비고란 세팅
+      PERFORM set_text_edit TABLES gt_edit USING go_edit.
+
+      " 글자 읽어서 data에 전달
+      LOOP AT gt_edit INTO gs_edit.
+        CONCATENATE gv_text gs_edit-text INTO gv_text SEPARATED BY space.
+      ENDLOOP.
+*      " 팝업 확인 후 insert작업
+      PERFORM confirm_contents.
+      PERFORM clear_editor.
+*      " 전역 clear 및 스크린나가기
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0501  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0501 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
   ENDCASE.
 
 

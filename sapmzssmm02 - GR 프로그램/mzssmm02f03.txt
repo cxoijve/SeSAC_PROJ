@@ -16,7 +16,7 @@ FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
 
   CASE p_sender.
     WHEN go_alv_po_waiting.
-      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_add_row CHANGING pcl_toolbar.
     WHEN go_alv_po_items.
       PERFORM add_toolbar_button USING 'I_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
       PERFORM add_toolbar_button USING 'I_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
@@ -246,7 +246,7 @@ FORM get_selected_rows  USING    co_alv    TYPE REF TO cl_gui_alv_grid
   IF lv_cnt = 0.
     cv_subrc = 4.
 *    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
-    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
+    MESSAGE i110(zmcss). "  '1개의 행을 선택해주세요!'.
     RETURN.
   ENDIF.
 
@@ -912,12 +912,14 @@ FORM handle_editpage  USING ps_row     TYPE lvc_s_row.
     IF gt_gritem IS INITIAL.
       PERFORM get_gr_item_list USING ps_row-index.
     ENDIF.
+
     MOVE-CORRESPONDING ls_grdata TO zsssmm0211.
     MOVE-CORRESPONDING ls_grdata TO gs_cond2.
     MOVE-CORRESPONDING gt_gritem TO gt_edit_item.
     LOOP AT gt_edit_item ASSIGNING FIELD-SYMBOL(<fs_eitem>).
       IF <fs_eitem>-del = 'X'.
         <fs_eitem>-color = 'C601'.
+        <fs_eitem>-ltext = '@0W@'.
       ENDIF.
     ENDLOOP.
     gt_temp = gt_edit_item.
@@ -1002,6 +1004,11 @@ FORM get_gr_item_list USING pv_index TYPE lvc_index.
       FROM ztssstrg
       WHERE stoid = gs_gritem-stoid.
     gs_gritem-stonm = lv_stonm.
+
+    IF gs_gritem-del = 'X'.
+      gs_gritem-color = 'C201'.
+    ENDIF.
+
 
     MODIFY gt_gritem FROM gs_gritem.
     CLEAR gs_gritem.
@@ -1211,11 +1218,12 @@ FORM handle_edit_delete_all .
     USING    '모든 데이터를 삭제하시겠습니까?'
     CHANGING lv_answer.
 
-  LOOP AT gt_edit_item ASSIGNING <fs_item>.
-    <fs_item>-del   = 'X'.
-    <fs_item>-color = 'C601'.
-  ENDLOOP.
-
+  IF lv_answer = 1.
+    LOOP AT gt_edit_item ASSIGNING <fs_item>.
+      <fs_item>-del   = 'X'.
+      <fs_item>-color = 'C601'.
+    ENDLOOP.
+  ENDIF.
 
   PERFORM refresh_stable_display CHANGING go_alv_editgr.
 
@@ -1424,13 +1432,8 @@ FORM handle_detail_info .
 
   CLEAR gv_subrc.
 
-  PERFORM get_selected_rows USING go_alv_gr_list CHANGING lt_row_no gv_subrc.
+  PERFORM get_selected_rows_one USING go_alv_gr_list CHANGING lt_row_no gv_subrc.
   IF gv_subrc <> 0. RETURN. ENDIF.
-
-*  IF lt_selected_rows IS INITIAL.
-*    MESSAGE i999(zmcss) WITH 'Please select a row'.
-*    RETURN.
-*  ENDIF.
 
   " 선택된 행 데이터 읽기
   READ TABLE lt_row_no INTO ls_row_no INDEX 1.
@@ -1438,9 +1441,10 @@ FORM handle_detail_info .
   lv_index = ls_row_no-row_id.
   READ TABLE gt_grdata INTO ls_data INDEX ls_row_no-row_id.
   MOVE-CORRESPONDING ls_data TO zsssmm0211.
-  IF gt_gritem IS INITIAL.
-    PERFORM get_gr_item_list USING lv_index. " class에서 씀
-  ENDIF.
+*  IF gt_gritem IS INITIAL.
+  PERFORM get_gr_item_detail USING lv_index.
+  PERFORM get_gr_item_list USING lv_index. " class에서 씀
+*  ENDIF.
 
   PERFORM get_vendor_details USING ls_data-venid CHANGING zsssmm0218.
   PERFORM get_vendor_price USING ls_data-venid CHANGING gt_vnprc.
@@ -1450,7 +1454,7 @@ FORM handle_detail_info .
   CALL SCREEN '0300'.
 *  PERFORM display_alv_grid_0300.
 
-  CLEAR gt_gritem.
+*  CLEAR gt_gritem.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1642,6 +1646,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM handle_explist_hotspot  USING pv_index TYPE lvc_index.
 
+  CLEAR gt_expitem.
   DATA: lv_venid TYPE ztssvend-venid.
   DATA : lt_item LIKE gt_expitem,
          ls_item LIKE LINE OF lt_item.
@@ -1771,14 +1776,21 @@ ENDFORM.
 FORM handle_dudat_click  USING ps_row     TYPE lvc_s_row.
 
   DATA : ls_podata LIKE LINE OF gt_podata.
-  DATA : lv_temp_date TYPE int4.
+  DATA : lv_temp_date TYPE int4,
+         lv_abs       TYPE int4.
 
   READ TABLE gt_podata INTO ls_podata INDEX ps_row-index.
 
   lv_temp_date = ls_podata-dudat - sy-datum.
-  IF lv_temp_date < 10.
+  lv_abs = abs( lv_temp_date ).
+  IF lv_temp_date < 3 AND lv_temp_date > 0.
 
     MESSAGE s999(zmcss) WITH '납기일이 얼마남지 않았습니다!' lv_temp_date '일'.
+  ELSEIF lv_temp_date = 0.
+    MESSAGE s999(zmcss) WITH sy-datum ': 납기일 만료일입니다!'.
+  ELSEIF lv_temp_date < 0.
+    MESSAGE s999(zmcss) WITH '납기일이 지났습니다!' lv_abs '일'.
+
   ELSE.
     MESSAGE s999(zmcss) WITH '납기일 남은 일수 : ' lv_temp_date '일'.
 
@@ -1866,19 +1878,41 @@ ENDFORM.
 FORM handle_node_double_click  USING    p_node.
 
   DATA : lv_venid TYPE ztssvend-venid,
-         lv_vname TYPE ztssvend-vname.
+         lv_vname TYPE ztssvend-vname,
+         lv_year  TYPE numc4.
 
   CASE p_node.
     WHEN '1000'.
+    WHEN '2000'.
     WHEN OTHERS.
+*      CLEAR gt_vdudat.
+*      lv_venid = p_node.
+*      READ TABLE gt_vendor INTO DATA(ls_vendor) WITH KEY venid = lv_venid.
+*      IF sy-subrc = 0.
+*        lv_vname = ls_vendor-vname.
+*        PERFORM get_exp_detail_data USING lv_venid.
+*        PERFORM refresh_alv_0400.
+*      ENDIF.
+
       CLEAR gt_vdudat.
-      lv_venid = p_node.
-      READ TABLE gt_vendor INTO DATA(ls_vendor) WITH KEY venid = lv_venid.
-      IF sy-subrc = 0.
-        lv_vname = ls_vendor-vname.
-        PERFORM get_exp_detail_data USING lv_venid.
-        PERFORM refresh_alv_0400.
+
+      " node_key에서 연도와 업체코드 분리
+      IF p_node(4) = '2024'.
+        lv_year = '2024'.
+        lv_venid = p_node+4.  " 2024V001 → V001
+      ELSEIF p_node(4) = '2025'.
+        lv_year = '2025'.
+        lv_venid = p_node+4.  " 2025V001 → V001
+      ELSE.
+        " 이상한 노드면 그냥 리턴
+        RETURN.
       ENDIF.
+
+      PERFORM get_vendor_name USING lv_venid CHANGING lv_vname.
+*      IF sy-subrc = 0.
+      PERFORM get_exp_detail_data USING lv_venid lv_year.
+      PERFORM refresh_alv_0400.
+*      ENDIF.
 
 
   ENDCASE.
@@ -1892,7 +1926,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      -->P_LV_VENID  text
 *----------------------------------------------------------------------*
-FORM get_exp_detail_data  USING    pv_venid TYPE ztssvend-venid.
+FORM get_exp_detail_data  USING    pv_venid TYPE ztssvend-venid
+                                   pv_year TYPE numc4.
 
 
 
@@ -1902,10 +1937,11 @@ FORM get_exp_detail_data  USING    pv_venid TYPE ztssvend-venid.
 
   CLEAR gt_podata.
 
-  PERFORM get_posum_by_venid USING pv_venid CHANGING lt_po_sum.
-  PERFORM get_grsum_by_venid USING pv_venid CHANGING lt_gr_sum.
+  PERFORM get_posum_by_venid USING pv_venid pv_year CHANGING lt_po_sum.
+  PERFORM get_grsum_by_venid USING pv_venid pv_year CHANGING lt_gr_sum.
 
   PERFORM create_expdudat USING lt_po_sum lt_gr_sum pv_venid CHANGING gt_vdudat.
+  PERFORM calculate_delay_rate USING lt_po_sum.
   PERFORM modify_expdudat TABLES gt_vdudat.
 *  PERFORM get_posum_by_venid USING pv_venid CHANGING gt_vdudat.
 *  PERFORM get_grsum_by_venid USING pv_venid CHANGING gt_vdudat.
@@ -1922,8 +1958,13 @@ ENDFORM.
 *      <--P_GT_VDUDAT  text
 *----------------------------------------------------------------------*
 FORM get_posum_by_venid  USING    pv_venid TYPE ztssvend-venid
+                                  pv_year TYPE numc4
                          CHANGING ct_data LIKE gt_itamt.
 
+  DATA: lv_date_from TYPE ztsspoh-dudat,
+        lv_date_to   TYPE ztsspoh-dudat.
+  lv_date_from = |{ pv_year }0101|.
+  lv_date_to   = |{ pv_year }1231|.
 
   SELECT i~ponum i~itnum
          SUM( i~amount ) AS amount
@@ -1931,6 +1972,7 @@ FORM get_posum_by_venid  USING    pv_venid TYPE ztssvend-venid
     FROM ztsspoi AS i
     INNER JOIN ztsspoh AS h ON i~ponum = h~ponum
     WHERE h~venid = pv_venid
+    AND h~dudat BETWEEN lv_date_from AND lv_date_to
     GROUP BY i~ponum i~itnum.
 
 
@@ -1944,18 +1986,26 @@ ENDFORM.
 *      <--P_GT_VDUDAT  text
 *----------------------------------------------------------------------*
 FORM get_grsum_by_venid  USING    pv_venid TYPE ztssvend-venid
+                                  pv_year TYPE numc4
                          CHANGING ct_data LIKE gt_itamt.
 
 
-  DATA: lt_gr_raw TYPE TABLE OF ztssgri,
-        ls_gr_raw LIKE LINE OF lt_gr_raw,
-        ls_gr_sum LIKE gs_itamt.
+  DATA: lt_gr_raw    TYPE TABLE OF ztssgri,
+        ls_gr_raw    LIKE LINE OF lt_gr_raw,
+        ls_gr_sum    LIKE gs_itamt,
+        lv_date_from TYPE ztsspoh-dudat,
+        lv_date_to   TYPE ztsspoh-dudat.
+
+  " 연도 범위 설정
+  lv_date_from = |{ pv_year }0101|.
+  lv_date_to   = |{ pv_year }1231|.
 
   SELECT i~ponum i~itnum i~amount
     INTO CORRESPONDING FIELDS OF TABLE lt_gr_raw
     FROM ztssgri AS i
     INNER JOIN ztsspoh AS h ON i~ponum = h~ponum
     WHERE h~venid = pv_venid
+    AND h~dudat BETWEEN lv_date_from AND lv_date_to
     GROUP BY i~ponum i~itnum i~amount.
 
   LOOP AT lt_gr_raw INTO ls_gr_raw.
@@ -1980,142 +2030,241 @@ FORM create_expdudat  USING    pt_po_sum LIKE gt_itamt
                                pv_venid TYPE ztssvend-venid
                       CHANGING ct_data LIKE gt_vdudat.
 
+
   DATA: ls_po_sum LIKE gs_itamt,
         ls_gr_sum LIKE gs_itamt,
         ls_data   LIKE LINE OF ct_data,
         ls_po     LIKE LINE OF gt_vdudat.
 
-  DATA : BEGIN OF ls_grdata,
-           grnum  TYPE ztssgrh-grnum,
-           grdat  TYPE ztssgrh-grdat,
-           ponum  TYPE ztssgri-ponum,
-           itnum  TYPE ztssgri-itnum,
-           stoid  TYPE ztssgri-stoid,
-           amount TYPE ztssgri-amount,
-           meins  TYPE ztssgri-meins,
-         END OF ls_grdata.
+  DATA: BEGIN OF ls_grdata,
+          grnum  TYPE ztssgrh-grnum,
+          grdat  TYPE ztssgrh-grdat,
+          ponum  TYPE ztssgri-ponum,
+          itnum  TYPE ztssgri-itnum,
+          stoid  TYPE ztssgri-stoid,
+          amount TYPE ztssgri-amount,
+          meins  TYPE ztssgri-meins,
+        END OF ls_grdata.
 
-  DATA: lv_total_cnt  TYPE i,           "전체 PO 건수
-        lv_delay_cnt  TYPE i,           "지연 건수
-        lv_delay_rate TYPE p DECIMALS 2. "지연율
+  DATA: lv_total_cnt  TYPE i,
+        lv_delay_cnt  TYPE i,
+        lv_delay_rate TYPE p DECIMALS 2.
 
   LOOP AT pt_po_sum INTO ls_po_sum.
-    CLEAR ls_po.
+    CLEAR: ls_po, ls_grdata.
 
-    SELECT SINGLE h~ponum h~venid h~dudat i~itnum i~pomnr i~amount i~meins i~plant i~pomnr
+    " PO 데이터 조회
+    SELECT SINGLE h~ponum h~venid h~dudat i~itnum i~pomnr
+                  i~amount i~meins i~plant
       INTO CORRESPONDING FIELDS OF ls_po
       FROM ztsspoh AS h
-      INNER JOIN ztsspoi AS i
-      ON h~ponum = i~ponum
+      INNER JOIN ztsspoi AS i ON h~ponum = i~ponum
       WHERE h~ponum = ls_po_sum-ponum
-      AND h~venid = pv_venid
-      AND i~itnum = ls_po_sum-itnum.
+        AND h~venid = pv_venid
+        AND i~itnum = ls_po_sum-itnum.
 
+    " 납기일이 지나지 않았으면 스킵
+    IF ls_po-dudat >= sy-datum.
+      CONTINUE.
+    ENDIF.
 
-    SELECT SINGLE h~grdat h~grnum i~grnum i~ponum i~itnum i~stoid i~amount i~meins
+    " GR 데이터 조회
+    SELECT SINGLE h~grdat h~grnum i~grnum i~ponum i~itnum
+                  i~stoid i~amount i~meins
       INTO CORRESPONDING FIELDS OF ls_grdata
       FROM ztssgrh AS h
-      INNER JOIN ztssgri AS i
-      ON h~grnum = i~grnum
+      INNER JOIN ztssgri AS i ON h~grnum = i~grnum
       WHERE i~ponum = ls_po_sum-ponum
-      AND i~itnum = ls_po_sum-itnum.
+        AND i~itnum = ls_po_sum-itnum.
 
-    ls_po-stoid = 'SL01'.
-    " GR에 진짜 없을때 - 하나도 입고 X
-    IF sy-subrc <> 0.
-
-      IF ls_po-dudat < sy-datum.
-        ls_po-reqty = ls_po-amount.
-        ls_po-ludat = sy-datum - ls_po-dudat.
-
-
-
-
-        APPEND ls_po TO ct_data.
-
-      ENDIF.
-    ENDIF.
-    " 부분입고는 되었지만 개수가 다를때
-
-
-*
-
-*    ls_po-stoid = ls_grdata-stoid.
-*    ls_po-reqty = ls_po-amount = ls_grdata-amount.
-*
-*
-*    IF ls_grdata-grdat > ls_po-dudat.
-*      IF ls_grdata-grdat IS NOT INITIAL.
-*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
-*      ELSE.
-*        ls_po-ludat = sy-datum - ls_po-dudat.
-*      ENDIF.
-*      APPEND ls_po TO ct_data.
-*    ENDIF.
-*
-    " 부분입고는 되었지만 개수가 다를 때. 부분입고는 되었지만 날짜가 늘어났을 때
+    " GR 데이터가 있으면 GR sum도 가져오기
     READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
                                                  itnum = ls_po_sum-itnum.
 
-    IF ls_gr_sum-amount <> ls_po-amount.
-*      IF ls_po-dudat < sy-datum.
-*        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
-*        ls_po-ludat = sy-datum - ls_po-dudat.
-*        APPEND ls_po TO ct_data.
-      IF ls_po-dudat < ls_grdata-grdat.
-        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+    " 케이스 1: 입고가 전혀 안 된 경우
+    IF sy-subrc <> 0.
+      ls_po-stoid = 'SL01'.
+      ls_po-reqty = ls_po-amount.
+      ls_po-ludat = sy-datum - ls_po-dudat.
+      APPEND ls_po TO ct_data.
+
+      " 케이스 2: 부분 입고된 경우 (입고량 < 주문량)
+    ELSEIF ls_gr_sum-amount < ls_po-amount.
+      ls_po-stoid = ls_grdata-stoid.
+      ls_po-grdat = ls_grdata-grdat.
+      ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+
+      " 입고일이 납기일보다 늦은 경우
+      IF ls_grdata-grdat > ls_po-dudat.
         ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+      ELSE.
+        " 아직 입고 안 된 나머지에 대한 지연
+        ls_po-ludat = sy-datum - ls_po-dudat.
       ENDIF.
+
+      APPEND ls_po TO ct_data.
+
+      " 케이스 3: 완전 입고되었지만 납기일보다 늦게 입고된 경우
+    ELSEIF ls_grdata-grdat > ls_po-dudat.
+      ls_po-stoid = ls_grdata-stoid.
+      ls_po-grdat = ls_grdata-grdat.
+      ls_po-reqty = 0.  " 전체 수량
+      ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+      APPEND ls_po TO ct_data.
     ENDIF.
-
-*  "==================== 납기지연율 계산 ====================
-    lv_total_cnt = lines( pt_po_sum ).        "전체 PO 건수
-    lv_delay_cnt = lines( ct_data ).          "지연된 건수
-
-    IF lv_total_cnt > 0.
-      lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
-      ls_po-duded = lv_delay_rate.
-      gv_delay_rate = lv_delay_rate.
-    ENDIF.
-    "========================================================
-*    IF sy-subrc <> 0.
-*      IF ls_grdata-grdat IS NOT INITIAL.
-*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
-*      ELSE.
-*        ls_po-ludat = sy-datum - ls_po-dudat.
-*      ENDIF.
-*      APPEND ls_po TO ct_data.
-*    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
-*      IF ls_grdata-grdat IS NOT INITIAL.
-*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
-*      ELSE.
-*        ls_po-ludat = sy-datum - ls_po-dudat.
-*      ENDIF.
-*      APPEND ls_po TO ct_data.
-*    ELSE.
-*      ls_po-grdat = ls_grdata-grdat.
-*
-*    ENDIF.
-*    ls_po-grdat = ls_grdata-grdat.
-*
-*    IF ls_grdata-grdat IS NOT INITIAL.
-*      ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
-*    ELSE.
-*      ls_po-ludat = sy-datum - ls_po-dudat.
-*    ENDIF.
-*
-*    WRITE '/'.
-*
-*    IF sy-subrc <> 0.
-*      READ TABLE ct_data TRANSPORTING NO FIELDS  WITH KEY ponum = ls_po_sum-ponum.
-*      IF sy-subrc <> 0.
-*        APPEND ls_po TO ct_data.
-*      ENDIF.
-**     IF ls_po_sum-dudat < ls_gr_sum-
-*    ENDIF.
-
 
   ENDLOOP.
+
+  " 지연율 계산 (LOOP 밖에서 한 번만)
+*  lv_total_cnt = lines( pt_po_sum ).
+*  lv_delay_cnt = lines( ct_data ).
+*
+*  IF lv_total_cnt > 0.
+*    lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
+*    gv_delay_rate = lv_delay_rate.
+*
+*    " 모든 라인에 지연율 추가
+*    LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<fs_data>).
+*      <fs_data>-duded = lv_delay_rate.
+*    ENDLOOP.
+*  ENDIF.
+
+
+
+*  DATA: ls_po_sum LIKE gs_itamt,
+*        ls_gr_sum LIKE gs_itamt,
+*        ls_data   LIKE LINE OF ct_data,
+*        ls_po     LIKE LINE OF gt_vdudat.
+*
+*  DATA : BEGIN OF ls_grdata,
+*           grnum  TYPE ztssgrh-grnum,
+*           grdat  TYPE ztssgrh-grdat,
+*           ponum  TYPE ztssgri-ponum,
+*           itnum  TYPE ztssgri-itnum,
+*           stoid  TYPE ztssgri-stoid,
+*           amount TYPE ztssgri-amount,
+*           meins  TYPE ztssgri-meins,
+*         END OF ls_grdata.
+*
+*  DATA: lv_total_cnt  TYPE i,           "전체 PO 건수
+*        lv_delay_cnt  TYPE i,           "지연 건수
+*        lv_delay_rate TYPE p DECIMALS 2. "지연율
+*
+*  LOOP AT pt_po_sum INTO ls_po_sum.
+*    CLEAR ls_po.
+*
+*    SELECT SINGLE h~ponum h~venid h~dudat i~itnum i~pomnr i~amount i~meins i~plant i~pomnr
+*      INTO CORRESPONDING FIELDS OF ls_po
+*      FROM ztsspoh AS h
+*      INNER JOIN ztsspoi AS i
+*      ON h~ponum = i~ponum
+*      WHERE h~ponum = ls_po_sum-ponum
+*      AND h~venid = pv_venid
+*      AND i~itnum = ls_po_sum-itnum.
+*
+*
+*    SELECT SINGLE h~grdat h~grnum i~grnum i~ponum i~itnum i~stoid i~amount i~meins
+*      INTO CORRESPONDING FIELDS OF ls_grdata
+*      FROM ztssgrh AS h
+*      INNER JOIN ztssgri AS i
+*      ON h~grnum = i~grnum
+*      WHERE i~ponum = ls_po_sum-ponum
+*      AND i~itnum = ls_po_sum-itnum.
+*
+*    ls_po-stoid = 'SL01'.
+*    " GR에 진짜 없을때 - 하나도 입고 X
+*    IF sy-subrc <> 0.
+*
+*      IF ls_po-dudat < sy-datum.
+*        ls_po-reqty = ls_po-amount.
+*        ls_po-ludat = sy-datum - ls_po-dudat.
+*        APPEND ls_po TO ct_data.
+*      ENDIF.
+*    ENDIF.
+*    " 부분입고는 되었지만 개수가 다를때
+**
+*
+**    ls_po-stoid = ls_grdata-stoid.
+**    ls_po-reqty = ls_po-amount = ls_grdata-amount.
+**
+**
+**    IF ls_grdata-grdat > ls_po-dudat.
+**      IF ls_grdata-grdat IS NOT INITIAL.
+**        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+**      ELSE.
+**        ls_po-ludat = sy-datum - ls_po-dudat.
+**      ENDIF.
+**      APPEND ls_po TO ct_data.
+**    ENDIF.
+**
+*    " 부분입고는 되었지만 개수가 다를 때. 부분입고는 되었지만 날짜가 늘어났을 때
+*    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+*                                                 itnum = ls_po_sum-itnum.
+*
+*    IF sy-subrc = 0 AND ls_gr_sum-amount <> ls_po-amount.
+**      IF ls_po-dudat < sy-datum.
+**        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+**        ls_po-ludat = sy-datum - ls_po-dudat.
+**        APPEND ls_po TO ct_data.
+*      IF ls_po-dudat < ls_grdata-grdat.
+*        ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+*        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+*        APPEND ls_po TO ct_data.
+*      ENDIF.
+*    ENDIF.
+*
+**  "==================== 납기지연율 계산 ====================
+*    lv_total_cnt = lines( pt_po_sum ).        "전체 PO 건수
+*    lv_delay_cnt = lines( ct_data ).          "지연된 건수
+*
+*    IF lv_total_cnt > 0.
+*      lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
+*      ls_po-duded = lv_delay_rate.
+*      gv_delay_rate = lv_delay_rate.
+*
+*      LOOP AT ct_data ASSIGNING FIELD-SYMBOL(<fs_data>).
+*        <fs_data>-duded = lv_delay_rate.
+*      ENDLOOP.
+*    ENDIF.
+*    "========================================================
+**    IF sy-subrc <> 0.
+**      IF ls_grdata-grdat IS NOT INITIAL.
+**        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+**      ELSE.
+**        ls_po-ludat = sy-datum - ls_po-dudat.
+**      ENDIF.
+**      APPEND ls_po TO ct_data.
+**    ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
+**      IF ls_grdata-grdat IS NOT INITIAL.
+**        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+**      ELSE.
+**        ls_po-ludat = sy-datum - ls_po-dudat.
+**      ENDIF.
+**      APPEND ls_po TO ct_data.
+**    ELSE.
+**      ls_po-grdat = ls_grdata-grdat.
+**
+**    ENDIF.
+**    ls_po-grdat = ls_grdata-grdat.
+**
+**    IF ls_grdata-grdat IS NOT INITIAL.
+**      ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+**    ELSE.
+**      ls_po-ludat = sy-datum - ls_po-dudat.
+**    ENDIF.
+**
+**    WRITE '/'.
+**
+**    IF sy-subrc <> 0.
+**      READ TABLE ct_data TRANSPORTING NO FIELDS  WITH KEY ponum = ls_po_sum-ponum.
+**      IF sy-subrc <> 0.
+**        APPEND ls_po TO ct_data.
+**      ENDIF.
+***     IF ls_po_sum-dudat < ls_gr_sum-
+**    ENDIF.
+
+
+*ENDLOOP.
 
 
 
@@ -2141,12 +2290,26 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM modify_expdudat  TABLES   t_data STRUCTURE gs_vdudat.
 
+  DATA : ls_color TYPE lvc_s_scol.
+
   LOOP AT t_data.
-    t_data-duded = gv_delay_rate.
+*    t_data-duded = gv_delay_rate.
     PERFORM get_vendor_name USING t_data-venid CHANGING t_data-vname.
     PERFORM get_mat_name USING t_data-pomnr CHANGING t_data-matnm.
     PERFORM get_storage_name USING t_data-stoid CHANGING t_data-stonm.
     PERFORM get_plant_name USING t_data-plant CHANGING t_data-pname.
+
+    CLEAR ls_color.
+    ls_color-fname = 'DUDED'.
+    ls_color-color-col = 6.
+    ls_color-color-int = 0.
+    ls_color-color-inv = 0.
+    APPEND ls_color TO t_data-it_col.
+    ls_color-fname = 'REQTY'.     " 필드명
+    ls_color-color-col = 5.
+    ls_color-color-int = 0.
+    ls_color-color-inv = 0.
+    APPEND ls_color TO t_data-it_col.
     MODIFY t_data.
     CLEAR t_data.
 
@@ -2161,27 +2324,28 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM handle_grlist_hotspot  USING pv_index TYPE lvc_index.
 
-
+  REFRESH gt_gritem.  " ← 추가
+  CLEAR gt_gritem.    " ← 추가
   DATA : ls_grdata LIKE LINE OF gt_grdata.
 
   READ TABLE gt_grdata INTO ls_grdata  INDEX pv_index.
 
   " 함수 그대로 복사해오기
-  IF gt_gritem IS INITIAL.
-    PERFORM get_gr_item_list USING pv_index .
-  ENDIF.
+*  IF gt_gritem IS INITIAL.
+  PERFORM get_gr_item_list USING pv_index .
+*  ENDIF.
   MOVE-CORRESPONDING ls_grdata TO zsssmm0211.
   MOVE-CORRESPONDING ls_grdata TO gs_cond2.
   MOVE-CORRESPONDING gt_gritem TO gt_edit_item.
-  LOOP AT gt_edit_item ASSIGNING FIELD-SYMBOL(<fs_eitem>).
-    IF <fs_eitem>-del = 'X'.
-      <fs_eitem>-color = 'C601'.
-    ENDIF.
-  ENDLOOP.
+*  LOOP AT gt_edit_item ASSIGNING FIELD-SYMBOL(<fs_eitem>).
+*    IF <fs_eitem>-del = 'X'.
+*      <fs_eitem>-color = 'C201'.
+*    ENDIF.
+*  ENDLOOP.
   CALL SCREEN '0310'.
 
   PERFORM display_alv_grid_0310.
-  CLEAR gt_gritem.
+*  CLEAR gt_gritem.
 
 
 ENDFORM.
@@ -2368,6 +2532,142 @@ FORM delete_color_if_no_items  USING pv_ponum TYPE ztsspoh-ponum.
       PERFORM refresh_table_display CHANGING go_alv_po_waiting.
     ENDIF.
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_SELECTED_ROWS_ONE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV_GR_LIST  text
+*      <--P_LT_ROW_NO  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_selected_rows_one  USING    co_alv    TYPE REF TO cl_gui_alv_grid
+                            CHANGING ct_row_no TYPE lvc_t_roid
+                                 cv_subrc   TYPE sy-subrc.
+
+  DATA: lv_cnt TYPE i.
+
+  CALL METHOD co_alv->get_selected_rows
+    IMPORTING
+      et_row_no = ct_row_no.
+
+  DESCRIBE TABLE ct_row_no LINES lv_cnt.
+
+  IF lv_cnt = 0.
+    cv_subrc = 4.
+*    MESSAGE s110(zmcss). "  '1개의 행을 선택해주세요!'.
+    MESSAGE i110(zmcss). "  '1개의 행을 선택해주세요!'.
+    RETURN.
+  ELSEIF lv_cnt > 1.
+    cv_subrc = 4.
+    MESSAGE i999(zmcss) WITH '1개 행만 선택해주세요!'.
+    RETURN.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_ITEM_DETAIL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_INDEX  text
+*----------------------------------------------------------------------*
+FORM get_gr_item_detail  USING pv_index TYPE lvc_index.
+
+
+  DATA : lv_pomnr TYPE ztsspoi-pomnr.
+  DATA : lv_venid TYPE ztsspoh-venid.
+  DATA : lv_stonm TYPE ztssstrg-stonm.
+
+  DATA ls_scol TYPE lvc_s_scol.
+
+  DATA : BEGIN OF ls_vnprc,
+           vnprc TYPE ztssprcat-vnprc,
+           curky TYPE ztssprcat-curky,
+         END OF ls_vnprc,
+         lt_vnprc LIKE TABLE OF ls_vnprc.
+
+
+  SELECT grnum grseq ponum itnum stoid amount meins del
+    INTO CORRESPONDING FIELDS OF TABLE gt_gritem2
+    FROM ztssgri
+    WHERE grnum = gs_grdata-grnum.
+
+  CLEAR gs_gritem2.
+  LOOP AT gt_gritem2 INTO gs_gritem2.
+
+    SELECT SINGLE pomnr
+      INTO lv_pomnr
+      FROM ztsspoi
+      WHERE ponum = gs_gritem2-ponum
+      AND itnum = gs_gritem2-itnum.
+
+    gs_gritem2-pomnr = lv_pomnr.
+
+    SELECT SINGLE venid
+      INTO lv_venid
+      FROM ztsspoh
+      WHERE ponum = gs_gritem2-ponum.
+
+    gs_gritem2-venid = lv_venid.
+
+    PERFORM get_vendor_name USING lv_venid CHANGING gs_gritem2-vname.
+    PERFORM get_mat_name USING lv_pomnr CHANGING gs_gritem2-matnm.
+
+
+    SELECT SINGLE vnprc curky
+      INTO ls_vnprc
+      FROM ztssprcat
+      WHERE venid = lv_venid
+      AND rawnr = lv_pomnr.
+
+    gs_gritem2-toprc = ls_vnprc-vnprc * gs_gritem2-amount.
+    gs_gritem2-curky = ls_vnprc-curky.
+
+    CLEAR ls_scol.
+    ls_scol-fname = 'TOPRC'.
+    ls_scol-color-col = 3.
+    ls_scol-color-int = 1.
+    ls_scol-color-inv = 0.
+    APPEND ls_scol TO gs_gritem2-it_col.
+
+    SELECT SINGLE stonm
+      INTO lv_stonm
+      FROM ztssstrg
+      WHERE stoid = gs_gritem2-stoid.
+    gs_gritem2-stonm = lv_stonm.
+
+    MODIFY gt_gritem2 FROM gs_gritem2.
+    CLEAR gs_gritem2.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALCULATE_DELAY_RATE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PO_SUM  text
+*----------------------------------------------------------------------*
+FORM calculate_delay_rate USING pt_po_sum LIKE gt_itamt.
+
+  DATA: lv_total_cnt  TYPE i,
+        lv_delay_cnt  TYPE i,
+        lv_delay_rate TYPE p DECIMALS 2.
+
+  lv_total_cnt = lines( pt_po_sum ).      " 전체 PO 건수
+  lv_delay_cnt = lines( gt_vdudat ).      " 지연 PO 건수
+
+  IF lv_total_cnt > 0.
+    lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
+    gv_delay_rate = lv_delay_rate.
+
+    " gt_vdudat의 모든 라인에 지연율 추가
+    LOOP AT gt_vdudat ASSIGNING FIELD-SYMBOL(<fs_data>).
+      <fs_data>-duded = lv_delay_rate.
+    ENDLOOP.
+  ENDIF.
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

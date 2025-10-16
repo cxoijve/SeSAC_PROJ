@@ -4,8 +4,28 @@
 
 
 CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD handle_toolbar .
+
+    PERFORM handle_toolbar USING e_object sender.
+
+  ENDMETHOD.
+
+  METHOD handle_user_command.
+
+    PERFORM handle_user_command USING e_ucomm.
+
+  ENDMETHOD.
+
   METHOD on_double_click.
 
+  ENDMETHOD.
+
+  METHOD on_button_click.
+    CASE es_col_id.
+      WHEN 'BTN_TXT'.
+        MESSAGE i000(ymc00) WITH 'Button Click'.
+    ENDCASE.
   ENDMETHOD.
 
 ENDCLASS.

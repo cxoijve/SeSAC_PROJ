@@ -3952,7 +3952,7 @@ FORM insert_gi_with_items  TABLES   pt_info_0300 STRUCTURE gs_info_0300
     RETURN.
   ENDIF.
 
-  MESSAGE s999(zmcss) WITH '출고 문서' ls_gih-ginum '가 생성되었습니다'.
+  MESSAGE i999(zmcss) WITH '출고 문서' ls_gih-ginum '생성 완료' DISPLAY LIKE 'S'.
   gv_ginum_0300 = ls_gih-ginum.
 
   pv_subrc = 0.
@@ -4083,6 +4083,7 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
   ENDIF.
 
   COMMIT WORK.
+  MESSAGE i999(zmcss) WITH '전표' ps_jeh-jenum '생성 완료' DISPLAY LIKE 'S'.
   pv_subrc = 0.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -4836,7 +4837,7 @@ FORM update_je  TABLES   pt_jei STRUCTURE ztssjei
     ps_jeh-rgdat = sy-datum.
 
     CLEAR lv_jstxt.
-    CONCATENATE ps_gih_0500-ginum '의 출고 전표' INTO lv_jstxt SEPARATED BY space.
+    CONCATENATE ps_gih_0500-ginum '의 자동전표' INTO lv_jstxt SEPARATED BY space.
     ps_jeh-stext = lv_jstxt.
 
     DATA : lv_cstid TYPE zesscstid,

@@ -241,7 +241,7 @@ FORM set_document.
     EXPORTING
       width = 5.
 
-  lv_text = |입고중: { lv_in_progress }건|.
+  lv_text = |부분입고중: { lv_in_progress }건|.
   CALL METHOD go_document->add_text
     EXPORTING
       text      = lv_text
@@ -670,6 +670,7 @@ FORM set_layout  CHANGING cs_layo TYPE lvc_s_layo.
   cs_layo-zebra = 'X'.
   cs_layo-ctab_fname = 'IT_COL'.
   cs_layo-info_fname = 'COLOR'.
+  cs_layo-sel_mode = 'A'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -821,7 +822,7 @@ FORM set_fcat2  TABLES ct_fcat TYPE lvc_t_fcat.
   ct_fcat-do_sum = 'X'.
   APPEND ct_fcat TO ct_fcat[].
 
-   CLEAR ct_fcat.
+  CLEAR ct_fcat.
   ct_fcat-fieldname = 'DEL'.
   ct_fcat-coltext = '삭제 여부'.
   APPEND ct_fcat TO ct_fcat[].
@@ -836,6 +837,519 @@ FORM set_fcat2  TABLES ct_fcat TYPE lvc_t_fcat.
   ct_fcat-no_out = 'X'.
   APPEND ct_fcat TO ct_fcat[].
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE ok_code.
+    WHEN 'BACK'.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0100
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0100 .
+  DATA : lt_info TYPE TABLE OF zsfg2801 WITH HEADER LINE.
+
+  DATA: BEGIN OF gs_mat,
+          matnr TYPE ztssmat-matnr,
+        END OF gs_mat,
+        gt_mat LIKE TABLE OF gs_mat.
+
+  SELECT matnr
+    INTO TABLE gt_mat
+    FROM ztssmat
+    WHERE mtype = 'R'.
+
+
+  LOOP AT gt_mat INTO gs_mat.
+
+    lt_info-matnr = gs_mat.
+    lt_info-stoid = 'SL01'.
+    APPEND lt_info TO gt_matlist.
+
+  ENDLOOP.
+
+
+*  lt_info-matnr = 'R0000001'.
+*  lt_info-stoid = 'SL01'.
+*  APPEND lt_info.
+*
+*  lt_info-matnr = 'F0000001'.
+*  lt_info-stoid = 'SL02'.
+*  APPEND lt_info.
+
+*  CALL FUNCTION 'Z_FMSS_GET_AVAIL_WARES'
+*    EXPORTING
+*      it_matlist   = lt_info[]
+*    EXCEPTIONS
+*      query_failed = 1
+*      OTHERS       = 2.
+*  IF sy-subrc <> 0.
+*    MESSAGE i999(zmcss) WITH 'NO AVAIL WARES!'.
+*  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM
+init_alv_0200 .
+  PERFORM create_alv_custom USING 'CON_MAT'  CHANGING go_con5   go_alv5.
+  PERFORM set_layout3.
+  PERFORM set_fcat3.
+  PERFORM set_sort3.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMD0803' gs_layo3 gt_exclude CHANGING gt_display gt_fcat3 gt_sort3 go_alv5.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_CUSTOM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_1492   text
+*      <--P_GO_CON5  text
+*      <--P_GO_ALV5  text
+*----------------------------------------------------------------------*
+FORM create_alv_custom USING VALUE(p_con) TYPE c
+                 CHANGING  co_con TYPE REF TO cl_gui_custom_container
+                           co_alv TYPE REF TO cl_gui_alv_grid.
+
+  IF co_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT co_con
+    EXPORTING
+*     parent                      =
+      container_name              = p_con
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+
+  CREATE OBJECT co_alv
+    EXPORTING
+*     i_shellstyle      = 0
+*     i_lifetime        =
+      i_parent          = co_con
+*     i_appl_events     = space
+*     i_parentdbg       =
+*     i_applogparent    =
+*     i_graphicsparent  =
+*     i_name            =
+*     i_fcat_complete   = SPACE
+    EXCEPTIONS
+      error_cntl_create = 1
+      error_cntl_init   = 2
+      error_cntl_link   = 3
+      error_dp_create   = 4
+      OTHERS            = 5.
+
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TAB_FDP_WITH_EXCLUDE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_1499   text
+*      -->P_GS_LAYO3  text
+*      -->P_GT_EXCLUDE  text
+*      <--P_GT_CNT  text
+*      <--P_GT_FCAT3  text
+*      <--P_GT_SORT  text
+*      <--P_GO_ALV5  text
+*----------------------------------------------------------------------*
+FORM set_tab_fdp_with_exclude  USING    VALUE(p_structure) TYPE dd02l-tabname
+                                        VALUE(ps_layout) TYPE lvc_s_layo
+                                        VALUE(pt_exclude) TYPE ui_functions
+                               CHANGING ct_outtab TYPE STANDARD TABLE
+                                        ct_fcat TYPE lvc_t_fcat
+                                        ct_sort TYPE lvc_t_sort
+                                        co_alv TYPE REF TO cl_gui_alv_grid.
+
+  co_alv->set_table_for_first_display(
+     EXPORTING
+       i_structure_name = p_structure
+       is_layout = ps_layout
+       it_toolbar_excluding = pt_exclude
+     CHANGING
+       it_outtab = ct_outtab
+       it_fieldcatalog = ct_fcat
+       it_sort = ct_sort
+     EXCEPTIONS
+       invalid_parameter_combination = 1
+       program_error = 23
+       too_many_lines = 3
+       OTHERS = 4
+   ).
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. " 시스템 오류입니다. 담당자 &에게 문의해주세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_0100_T
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_0100_t .
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INFO_MAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_CNT  text
+*      -->P_GT_MATLIST  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM get_info_mat  TABLES   pt_cnt STRUCTURE gs_cnt
+                            pt_matlist STRUCTURE gs_matlist
+                   CHANGING pv_subrc TYPE sy-subrc.
+  CLEAR : pv_subrc, pt_cnt[].
+  DATA : lt_color TYPE lvc_t_scol WITH HEADER LINE.
+  LOOP AT pt_matlist.
+
+    SELECT SINGLE a~matnr b~matnm a~meins
+      FROM ztssware AS a
+      INNER JOIN ztssmat_t AS b
+      ON a~matnr = b~matnr
+*      AND b~langu = '3'
+      INTO CORRESPONDING FIELDS OF pt_cnt
+      WHERE a~stoid = pt_matlist-stoid
+      AND a~matnr = pt_matlist-matnr.
+    IF sy-subrc <> 0.
+      CONTINUE.
+    ENDIF.
+
+    CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
+      EXPORTING
+        iv_begda         = '11110101'
+        iv_endda         = '99991231'
+        iv_stoid         = pt_matlist-stoid
+        iv_matnr         = pt_matlist-matnr
+      IMPORTING
+        ev_astck         = pt_cnt-astck
+        ev_istck         = pt_cnt-istck
+        ev_ostck         = pt_cnt-ostck
+        ev_dstck         = pt_cnt-dstck
+        ev_fstck         = pt_cnt-fstck
+      EXCEPTIONS
+        material_unfound = 1
+        minus_avail      = 2
+        query_failed     = 3
+        OTHERS           = 4.
+    IF sy-subrc <> 0.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+
+    IF pt_cnt-astck IS NOT INITIAL.
+      lt_color-fname = 'ASTCK'.
+      lt_color-color-int = 1.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 5.
+      APPEND lt_color.
+    ENDIF.
+
+    IF pt_cnt-fstck IS NOT INITIAL.
+      lt_color-fname = 'FSTCK'.
+      lt_color-color-int = 0.
+      lt_color-color-inv = 0.
+      lt_color-color-col = 6.
+      APPEND lt_color.
+
+    ENDIF.
+
+    APPEND LINES OF lt_color TO pt_cnt-cellscol.
+    APPEND pt_cnt.
+    CLEAR : lt_color, lt_color[].
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_LAYOUT3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_layout3 .
+  gs_layo3-cwidth_opt = 'X'.
+  gs_layo3-zebra = 'X'.
+  gs_layo3-ctab_fname = 'CELLSCOL'.
+  gs_layo3-stylefname = 'CT'.
+
+  gs_layo3-sel_mode = 'A'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat3 .
+
+  DATA: ls_fcat    TYPE lvc_s_fcat,
+        lv_max_pos TYPE i.
+  CLEAR gt_fcat3.
+
+  " 현재 최대 col_pos 찾기
+  LOOP AT gt_fcat3 INTO ls_fcat.
+    IF ls_fcat-col_pos > lv_max_pos.
+      lv_max_pos = ls_fcat-col_pos.
+    ENDIF.
+  ENDLOOP.
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'VENID'.
+  ls_fcat-coltext = '업체코드'.
+  ls_fcat-scrtext_l = '업체코드'.
+  ls_fcat-scrtext_m = '업체코드'.
+  ls_fcat-scrtext_s = '업체코드'.
+  ls_fcat-col_pos = 1.  " 첫 번째 컬럼
+  ls_fcat-outputlen = 10.
+  ls_fcat-key = 'X'.
+  APPEND ls_fcat TO gt_fcat3.
+
+  LOOP AT gt_fcat3 INTO ls_fcat.
+    IF ls_fcat-fieldname <> 'VENID' AND
+       ls_fcat-fieldname <> 'VNAME'.
+      ls_fcat-col_pos = ls_fcat-col_pos + 2.  " 2칸씩 밀기
+      MODIFY gt_fcat3 FROM ls_fcat.
+    ENDIF.
+  ENDLOOP.
+
+  " vname 추가 (두 번째)
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'VNAME'.
+  ls_fcat-coltext = '업체명'.
+  ls_fcat-scrtext_l = '업체명'.
+  ls_fcat-scrtext_m = '업체명'.
+  ls_fcat-scrtext_s = '업체명'.
+  ls_fcat-col_pos = 2.  " 두 번째 컬럼
+  ls_fcat-outputlen = 40.
+  APPEND ls_fcat TO gt_fcat3.
+  " 가용재고
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'ASTCK'.
+  ls_fcat-coltext = '가용재고'.
+
+  ls_fcat-outputlen = 15.
+  ls_fcat-just = 'R'.         " 오른쪽 정렬
+  ls_fcat-do_sum = 'X'.       " 합계
+  ls_fcat-datatype = 'QUAN'.  " 수량 타입
+  APPEND ls_fcat TO gt_fcat3.
+
+  " 불량재고
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'ISTCK'.
+  ls_fcat-coltext = '불량재고'.
+
+  ls_fcat-outputlen = 15.
+  ls_fcat-just = 'R'.
+  ls_fcat-do_sum = 'X'.
+  ls_fcat-datatype = 'QUAN'.
+  APPEND ls_fcat TO gt_fcat3.
+
+  " 반입재고
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'OSTCK'.
+  ls_fcat-coltext = '반입재고'.
+
+  ls_fcat-outputlen = 15.
+  ls_fcat-just = 'R'.
+  ls_fcat-do_sum = 'X'.
+  ls_fcat-datatype = 'QUAN'.
+  APPEND ls_fcat TO gt_fcat3.
+
+  " 반출재고
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'DSTCK'.
+  ls_fcat-coltext = '반출재고'.
+
+  ls_fcat-outputlen = 15.
+  ls_fcat-just = 'R'.
+  ls_fcat-do_sum = 'X'.
+  ls_fcat-datatype = 'QUAN'.
+  APPEND ls_fcat TO gt_fcat3.
+
+  " 폐기재고
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'FSTCK'.
+  ls_fcat-coltext = '폐기재고'.
+  ls_fcat-outputlen = 15.
+  ls_fcat-just = 'R'.
+  ls_fcat-do_sum = 'X'.
+  ls_fcat-datatype = 'QUAN'.
+  APPEND ls_fcat TO gt_fcat3.
+
+  " 기본단위
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'MEINS'.
+  ls_fcat-coltext = '기본단위'.
+  ls_fcat-outputlen = 5.
+  ls_fcat-just = 'C'.         " 가운데 정렬
+  APPEND ls_fcat TO gt_fcat3.
+
+
+  CLEAR ls_fcat.
+  ls_fcat-fieldname = 'BTN_TXT'.
+  ls_fcat-coltext = TEXT-f09.
+  ls_fcat-just = 'R'.
+  ls_fcat-style = '0'. "Normal
+  ls_fcat-col_pos = '11'.
+  APPEND ls_fcat TO gt_fcat3.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_INTO_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_into_display .
+
+
+  LOOP AT gt_cnt INTO gs_cnt.
+    MOVE-CORRESPONDING gs_cnt TO gs_display.
+    PERFORM get_venid USING gs_cnt-matnr CHANGING gs_display-venid.
+    PERFORM get_ven_name USING gs_display-venid CHANGING gs_display-vname.
+    IF gs_display-astck <= 10.
+      DATA: ls_color TYPE lvc_s_scol.
+      CLEAR ls_color.
+      ls_color-fname = 'ASTCK'.        " 필드명
+      ls_color-color-col = 6.          " 빨간색
+      ls_color-color-int = 0.          " 일반 강도
+      ls_color-color-inv = 0.          " 반전 없음
+      APPEND ls_color TO gs_display-cellscol.
+    ENDIF.
+
+    gs_display-btn_txt = '구매오더하러 가기'.
+*    DATA: ls_style TYPE lvc_s_styl.
+*
+*    ls_style-fieldname = 'BUTTON'.
+*    ls_style-style = cl_gui_alv_grid=>mc_style_button.  " 버튼 스타일
+*    APPEND ls_style TO gs_display-celltab.
+    APPEND gs_display TO gt_display.
+  ENDLOOP.
+*  PERFORM modify_display.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENID
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_CNT_MATNR  text
+*      <--P_GS_DISPLAY_VENID  text
+*----------------------------------------------------------------------*
+FORM get_venid  USING    pv_matid TYPE ztssmat-matnr
+                CHANGING cs_venid TYPE ztssvend-venid.
+
+
+  SELECT SINGLE venid
+    INTO cs_venid
+    FROM ztssprcat
+    WHERE rawnr = pv_matid.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_sort3 .
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVNET_FOR_ALV_0200
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_evnet_for_alv_0200 .
+  IF go_event_handler IS INITIAL.
+    CREATE OBJECT go_event_handler.
+  ENDIF.
+
+
+  SET HANDLER go_event_handler->on_button_click FOR go_alv5.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_ALVS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM refresh_alvs .
+  CALL METHOD go_alv5->get_frontend_fieldcatalog
+    IMPORTING
+      et_fieldcatalog = gt_fcat3.
+
+  CALL METHOD go_alv5->set_frontend_fieldcatalog
+    EXPORTING
+      it_fieldcatalog = gt_fcat3.
+
+*  CALL METHOD go_alv5->get_frontend_layout
+*    IMPORTING
+*      es_layout = ls_layo.
+
+*  ls_layo-cwidth_opt = 'X'.
+*  CALL METHOD go_alv5->set_frontend_layout
+*    EXPORTING
+*      is_layout = ls_layo.
+  DATA: ls_stbl TYPE lvc_s_stbl.
+  ls_stbl-row = 'X'.  "( row scroll Fix )
+  ls_stbl-col = 'X'. "( col scroll Fix )
+  go_alv5->refresh_table_display( EXPORTING i_soft_refresh = 'X'
+                                           is_stable      = ls_stbl  ).
 ENDFORM.
 
 ----------------------------------------------------------------------------------

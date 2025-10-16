@@ -148,5 +148,8 @@ DATA: END OF gs_item_add,
 gt_item_add LIKE TABLE OF gs_item_add.
 DATA gv_itnum2 TYPE char3.
 
+CLASS lcl_handler DEFINITION DEFERRED.
+DATA go_handler TYPE REF TO lcl_handler.
+
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -8,31 +8,30 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0200 0200     27122192 37  0  0 31128  0G E                              20250916001210																																
+SAPMZSSMM01                             0200 0200     35143192 37  0  0 36143  0G E                              20251016101204																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-P_HEADER		CHAR	122	00	00	00	30	00	  1	  2		  0	  0	  0		  6	R				  0	  0	101							구매오더		
+P_HEADER		CHAR	143	00	00	00	30	00	  1	  2		  0	  0	  0		  6	R				  0	  0	101							구매오더		
 ZSSSMM0103-PODAT	2	CHAR	 20	30	00	00	30	00	  2	  4		  0	  0	  0		  0					  0	  0								구매오더일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-PODAT	D	DATE	 10	A0	00	80	00	08	  2	 25		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-ZSSSMM0103-DUDAT	2	CHAR	 20	30	00	00	38	00	  2	 58		  0	  0	  0		  0					  0	  0								납기일	                                                                                                                                                                                                                                                        X	
-ZSSSMM0103-DUDAT	D	DATE	 10	A0	00	80	00	08	  2	 79		  0	  0	  0		  0					 16	  0								__________	X                                      00	
+ZSSSMM0103-DUDAT	2	CHAR	 20	30	00	00	38	00	  2	 68		  0	  0	  0		  0					  0	  0								납기일	                                                                                                                                                                                                                                                        X	
+ZSSSMM0103-DUDAT	D	DATE	 10	A0	00	80	00	08	  2	 89		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 ZSSSMM0103-VENID	2	CHAR	 20	30	00	04	38	00	  3	  4		  0	  0	  0		  0					  0	  0								벤더코드	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-VENID	C	CHAR	  8	A0	00	84	00	08	  3	 25		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSMM0103-VNAME	C	CHAR	 19	B0	02	80	31	00	  3	 34		  0	  0	  0		  0					 80	  0								___________________	                                       00	
-ZSSSMM0103-RGTOR	2	CHAR	 20	30	00	04	30	00	  4	 58		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM0103-RGTOR	C	CHAR	  8	A0	00	84	00	08	  4	 79		  0	  0	  0		  0					 16	  0								________	X                                      00	
-ZSSSMM0103-ENAME	C	CHAR	 21	B0	02	80	31	00	  4	 88		  0	  0	  0		  0					 80	  0								_____________________	                                       00	
-ZSSSMM0103-TOPRC	0	CHAR	  6	30	00	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								총가격	                                                                                                                                                                                                                                                        X	
+ZSSSMM0103-RGTOR	2	CHAR	 20	30	00	04	30	00	  4	 68		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
+ZSSSMM0103-RGTOR	C	CHAR	  8	A0	00	84	00	08	  4	 89		  0	  0	  0		  0					 16	  0								________	X                                      00	
+ZSSSMM0103-ENAME	C	CHAR	 21	B0	02	80	31	00	  4	 98		  0	  0	  0		  0					 80	  0								_____________________	                                       00	
+ZSSSMM0103-TOPRC	0	CHAR	 20	30	00	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								총가격	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-TOPRC	P	CURR	 20	A0	00	80	30	00	  5	 25		  0	  0	  0		  0					 15	  2		ZSSSMM0103-CURKY						____________________	                                       00	
 ZSSSMM0103-CURKY	C	CUKY	  5	A0	00	84	31	08	  5	 46		  0	  0	  0		  0					 10	  0								_____	X                                      00	
-ZSSSMM0103-STEXT	0	CHAR	  8	30	02	00	30	00	  5	 58		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
-ZSSSMM0103-STEXT	C	CHAR	 60	B1	02	80	00	00	  5	 67		  0	  0	  0		 54					120	  0								____________________________________________________________	                                       00	
-P_I_NAME	0	CHAR	  6	00	00	00	30	00	  8	  2		  0	  0	  0		  0					  0	  0								아이템		
-P_ADD		CHAR	 11	00	00	00	30	00	  8	 14		  0	  0	  0		  0	P				  0	  0	102							아이템 추가	                                                                                                                                                                        I_ADD	
-P_EDIT		CHAR	 11	00	00	00	30	00	  8	 26		  0	  0	  0		  0	P				  0	  0	103							아이템 수정	                                                                                                                                                                        I_EDIT	
-P_DEL		CHAR	 11	00	00	00	30	00	  8	 38		  0	  0	  0		  0	P				  0	  0	104							아이템 삭제	                                                                                                                                                                        I_DEL	
-CON2			122	00	00	00	30	00	  9	  2		  0	  0	  0		 19	U				  1	  1	105									
+ZSSSMM0103-STEXT	0	CHAR	 20	30	02	00	30	00	  5	 68		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
+ZSSSMM0103-STEXT	C	CHAR	 60	B1	02	80	00	00	  5	 89		  0	  0	  0		 54					120	  0								____________________________________________________________	                                       00	
+P_ADD		CHAR	 11	00	00	00	30	00	  8	109		  0	  0	  0		  0	P				  0	  0	102							아이템 추가	                                                                                                                                                                        I_ADD	
+P_EDIT		CHAR	 11	00	00	00	30	00	  8	121		  0	  0	  0		  0	P				  0	  0	103							아이템 수정	                                                                                                                                                                        I_EDIT	
+P_DEL		CHAR	 11	00	00	00	30	00	  8	133		  0	  0	  0		  0	P				  0	  0	104							아이템 삭제	                                                                                                                                                                        I_DEL	
+CON2			142	00	00	00	30	00	  9	  2		  0	  0	  0		 27	U				  1	  1	105									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
@@ -42,11 +41,11 @@ PROCESS BEFORE OUTPUT.
 *																																
 PROCESS AFTER INPUT.																																
   MODULE exit_0200 AT EXIT-COMMAND.																																
-  CHAIN.																																
-    FIELD zsssmm0103-podat.																																
-    FIELD zsssmm0103-venid.																																
-    FIELD zsssmm0103-dudat.																																
-    FIELD zsssmm0103-rgtor.																																
-    MODULE check_po_header_create ON CHAIN-INPUT.																																
-  ENDCHAIN.																																
+*  CHAIN.																																
+*    FIELD zsssmm0103-podat.																																
+*    FIELD zsssmm0103-venid.																																
+*    FIELD zsssmm0103-dudat.																																
+*    FIELD zsssmm0103-rgtor.																																
+*    MODULE check_po_header_create ON CHAIN-INPUT.																																
+*  ENDCHAIN.																																
   MODULE user_command_0200.																																

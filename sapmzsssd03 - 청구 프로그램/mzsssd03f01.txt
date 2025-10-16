@@ -122,11 +122,13 @@ FORM set_fcat_bi .
 
   gs_fcat_bi-fieldname = 'CSTID'.
   gs_fcat_bi-coltext = '绊按内靛'.
+  gs_fcat_bi-hotspot = 'X'.
   APPEND gs_fcat_bi TO gt_fcat_bi.
   CLEAR gs_fcat_bi.
 
   gs_fcat_bi-fieldname = 'CNAME'.
   gs_fcat_bi-coltext = '绊按疙'.
+  gs_fcat_bi-hotspot = 'X'.
   APPEND gs_fcat_bi TO gt_fcat_bi.
   CLEAR gs_fcat_bi.
 
@@ -173,11 +175,13 @@ FORM set_fcat_doc .
 
   gs_fcat_doc-fieldname = 'CSTID'.
   gs_fcat_doc-coltext = '绊按内靛'.
+  gs_fcat_doc-hotspot = 'X'.
   APPEND gs_fcat_doc TO gt_fcat_doc.
   CLEAR gs_fcat_doc.
 
   gs_fcat_doc-fieldname = 'CNAME'.
   gs_fcat_doc-coltext = '绊按疙'.
+  gs_fcat_doc-hotspot = 'X'.
   APPEND gs_fcat_doc TO gt_fcat_doc.
   CLEAR gs_fcat_doc.
 

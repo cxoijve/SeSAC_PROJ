@@ -133,14 +133,18 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM set_default .
-
+  zsssmm0103-rgtor = 'E0000015'.
+  zsssmm0103-rgdat = sy-datum.
   " 첫 화면 구성하기
   PERFORM set_first_display CHANGING zsssmm0101.
   PERFORM set_ranges_podat USING zsssmm0101-podat_s zsssmm0101-podat_e CHANGING gr_podat.
+  PERFORM set_exclude_btn.
+
   PERFORM set_200_display CHANGING zsssmm0103.
 
   PERFORM set_layout_screen.
   PERFORM set_field_catalog.
+  PERFORM set_sort TABLES gt_sort9.
 
   PERFORM get_po_data CHANGING zsssmm0101.
   PERFORM modify_po_data.
@@ -165,7 +169,8 @@ FORM set_layout_screen.
 
   PERFORM set_layout : CHANGING gs_layo,
                        CHANGING gs_layo2,
-                       CHANGING gs_layo3.
+                       CHANGING gs_layo3,
+                       CHANGING gs_layo7.
 
   gs_layo32-cwidth_opt = 'X'.
   gs_layo32-zebra = 'X'.
@@ -178,6 +183,9 @@ FORM set_layout_screen.
 
 *  gs_layo2-cwidth_opt = 'A'.
 *  gs_layo2-zebra = 'X'.
+
+  gs_layo7-cwidth_opt = 'A'.
+  gs_layo7-zebra = 'X'.
 
 
 
@@ -272,10 +280,10 @@ FORM get_po_data CHANGING cv_inputs TYPE zsssmm0101.
   INTO CORRESPONDING FIELDS OF TABLE gt_data
   FROM ztsspoh
   WHERE (lv_where).
-  IF sy-subrc <> 0.
-    MESSAGE s999(zmcss) WITH '일치하는 정보가 존재하지 않습니다!'.
-    RETURN.
-  ENDIF.
+*  IF sy-subrc <> 0.
+*    MESSAGE s999(zmcss) WITH '일치하는 정보가 존재하지 않습니다!'.
+*    RETURN.
+*  ENDIF.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -380,7 +388,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_first_display  CHANGING c_inputs TYPE zsssmm0101.
 
-  c_inputs-podat_s = '20240101'.
+  c_inputs-podat_s = '20250101'.
+  c_inputs-podat_e = '20251231'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -951,26 +960,25 @@ ENDFORM.
 *----------------------------------------------------------------------*
 *      <--P_ZSSSMM0103  text
 *----------------------------------------------------------------------*
-FORM delete_po_item  CHANGING p_zsssmm0103.
-
-
-*  DATA : ls_item LIKE LINE OF gt_item,
-*         lv_sum  LIKE zsssmm0104-toprc.
+*FORM delete_po_item  CHANGING p_zsssmm0103.
 *
-*  c_item-toprc = c_item-poprc * c_item-amount.
-*  gv_item_num = gv_item_num + 1.
 *
-*  MOVE-CORRESPONDING c_item TO ls_item.
-*  APPEND ls_item TO gt_item.
+*  DATA : lv_item_rowid TYPE i,
+*         ls_del_item   LIKE LINE OF gt_item,
+*         l_data        TYPE ztsspoi.
 *
-*  LOOP AT gt_item INTO ls_item.
-*    lv_sum = lv_sum + ls_item-toprc.
-*  ENDLOOP.
+*  CLEAR  gs_item.
 *
-*  c_header-toprc = lv_sum.
-
-
-ENDFORM.
+*  PERFORM check_pop USING co_alv CHANGING cv_subrc lv_item_rowid.
+*  IF cv_subrc = 0.
+*    READ TABLE gt_item INDEX lv_item_rowid INTO ls_del_item.
+*    zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
+*    gs_item = ls_del_item.
+*    DELETE gt_item INDEX lv_item_rowid.
+*    PERFORM renumber_item .
+*  ENDIF.
+*
+*ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  GET_PO_ITEM_IN_DETAILS
 *&---------------------------------------------------------------------*
@@ -1265,6 +1273,7 @@ ENDFORM.
 FORM set_field_catalog .
 
   PERFORM set_fcat.
+  PERFORM set_fcat7.
 
 *  perform set_fc
 
@@ -1580,6 +1589,7 @@ ENDFORM.
 FORM set_item_mat_record .
   PERFORM set_items_record.
   PERFORM get_mat_name.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SEARCH_DATAS
@@ -1999,6 +2009,823 @@ FORM build_field_catatlog  USING    pt_field_conf TYPE ty_t_field_conf
       MODIFY ct_fcat FROM ls_fcat2 TRANSPORTING do_sum.
     ENDIF.
   ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_EXCLUDE_BTN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_exclude_btn .
+
+  CLEAR gt_exclude.
+
+  DATA : ls_excl TYPE ui_func,
+         lt_excl TYPE ui_functions.
+
+  ls_excl = cl_gui_alv_grid=>mc_fc_excl_all.
+  APPEND ls_excl TO gt_exclude.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TAB_FDP_WITH_EXCLUDE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0055   text
+*      -->P_GS_LAYO2  text
+*      -->P_GT_EXCLUDE  text
+*      <--P_GT_ITEM  text
+*      <--P_GT_FCAT2  text
+*      <--P_GT_SORT2  text
+*      <--P_GO_ALV2  text
+*----------------------------------------------------------------------*
+FORM set_tab_fdp_with_exclude  USING    VALUE(p_structure) TYPE dd02l-tabname
+                                        VALUE(ps_layout) TYPE lvc_s_layo
+                                        VALUE(pt_exclude) TYPE ui_functions
+                               CHANGING ct_outtab TYPE STANDARD TABLE
+                                        ct_fcat TYPE lvc_t_fcat
+                                        ct_sort TYPE lvc_t_sort
+                                        co_alv TYPE REF TO cl_gui_alv_grid.
+
+  co_alv->set_table_for_first_display(
+     EXPORTING
+       i_structure_name = p_structure
+       is_layout = ps_layout
+       it_toolbar_excluding = pt_exclude
+     CHANGING
+       it_outtab = ct_outtab
+       it_fieldcatalog = ct_fcat
+       it_sort = ct_sort
+     EXCEPTIONS
+       invalid_parameter_combination = 1
+       program_error = 23
+       too_many_lines = 3
+       OTHERS = 4
+   ).
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. " 시스템 오류입니다. 담당자 &에게 문의해주세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_ALV_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_alv_0500 .
+  IF go_con7 IS INITIAL.
+    PERFORM create_alv USING 'CON_C' CHANGING go_con7 go_alv7.
+    PERFORM req_event_0500.
+    PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0104' gs_layo7 gt_exclude CHANGING gt_item2  gt_fcat7 gt_sort go_alv7.
+  ELSE.
+
+    PERFORM refresh_table_display CHANGING go_alv7.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT7
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat7 .
+  DATA :
+    lt_field_conf TYPE TABLE OF ty_field_conf,
+    ls_conf       TYPE ty_field_conf,
+    ls_fcat       TYPE lvc_s_fcat.
+
+
+  PERFORM create_fcat USING 'ZSSSMM0104' 'GT_ITEM' CHANGING gt_fcat7.
+
+
+  lt_field_conf = VALUE #(
+  ( fieldname = 'PONUM' no_out = 'X' )
+  ( fieldname = 'ITNUM' lzero = 'X' outputlen = 3 col_pos = 1  )
+  ( fieldname = 'POMNR' col_pos = 2 )
+  ( fieldname = 'PNAME' col_pos = 3 )
+  ( fieldname = 'AMOUNT' col_pos = 4 )
+  ( fieldname = 'MEINS' col_pos = 5 )
+  ( fieldname = 'TOPRC' col_pos = 6  coltext = '구매가격' )
+  ( fieldname = 'POPRC' no_out = 'X' )
+  ( fieldname = 'CURKY' col_pos = 7 )
+  ( fieldname = 'PLANT' col_pos = 8 no_out = 'X' )
+  ( fieldname = 'PPNME' col_pos = 9 )
+  ( fieldname = 'DEL' no_out = 'X' )
+).
+
+
+  PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat7.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_TOOLBAR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_OBJECT  text
+*      -->P_SENDER  text
+*----------------------------------------------------------------------*
+FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
+                            p_sender TYPE REF TO cl_gui_alv_grid.
+
+  DATA ls_toolbar TYPE stb_button.
+
+  CASE p_sender.
+    WHEN go_alv7.
+      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b02 icon_workflow_activity CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b03 icon_incomplete CHANGING pcl_toolbar.
+    WHEN OTHERS.
+*    WHEN go_alv_po_items.
+*      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
+*    WHEN go_alv_po_confirm.
+*      PERFORM add_toolbar_button USING 'I_GR' TEXT-b04 icon_check CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_CON_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
+*    WHEN go_alv_gr_list.
+*      PERFORM add_toolbar_button USING 'I_DETAIL' TEXT-b06 icon_check CHANGING pcl_toolbar.
+*    WHEN go_alv_editgr.
+**      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b05 icon_workflow_activity CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_EDIT_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
+*      PERFORM add_toolbar_button USING 'I_EDIT_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
+  ENDCASE.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  ADD_TOOLBAR_BUTTON
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_3639   text
+*      -->P_TEXT_B01  text
+*      -->P_ICON_WORKFLOW_ACTIVITY  text
+*      <--P_PCL_TOOLBAR  text
+*----------------------------------------------------------------------*
+FORM add_toolbar_button  USING   pv_func     TYPE ui_func
+                                 pv_text     TYPE text40
+                                 pv_icon     TYPE icon_d
+                        CHANGING pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set.
+
+  DATA: ls_toolbar TYPE stb_button.
+
+  ls_toolbar-function  = pv_func.
+  ls_toolbar-butn_type = 0.
+  ls_toolbar-text      = pv_text.
+  ls_toolbar-icon      = pv_icon.
+  ls_toolbar-quickinfo = pv_text.
+
+  APPEND ls_toolbar TO pcl_toolbar->mt_toolbar.
+
+  PERFORM add_toolbar_sep CHANGING pcl_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  ADD_TOOLBAR_SEP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_PCL_TOOLBAR  text
+*----------------------------------------------------------------------*
+FORM add_toolbar_sep  CHANGING  c_toolbar TYPE REF TO cl_alv_event_toolbar_set.
+
+  DATA: ls_toolbar TYPE stb_button.
+
+  ls_toolbar-butn_type = 3.
+  APPEND ls_toolbar TO c_toolbar->mt_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_USER_COMMAND
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_E_UCOMM  text
+*----------------------------------------------------------------------*
+FORM handle_user_command  USING    pv_ucomm TYPE sy-ucomm.
+
+
+  CASE pv_ucomm.
+    WHEN 'I_ADD'.
+      PERFORM handle_add_item.
+    WHEN 'I_EDIT'.
+      PERFORM handle_edit_item.
+    WHEN 'I_DEL'.
+      PERFORM handle_delete_item.
+  ENDCASE.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REFRESH_TABLE_DISPLAY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GO_ALV7  text
+*----------------------------------------------------------------------*
+FORM refresh_table_display  CHANGING co_alv TYPE REF TO cl_gui_alv_grid.
+
+  co_alv->refresh_table_display(
+is_stable = VALUE #( row = 'X' col = 'X' )
+        i_soft_refresh = ' '  " ← 하드 리프레시!
+    ).
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmcss) WITH sy-uname. " 시스템 오류 : 담당자 &에게 문의하세요!
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_0500
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_0500 .
+  SET HANDLER :     lcl_event_handler=>handle_user_command FOR go_alv7,
+                    lcl_event_handler=>handle_toolbar FOR go_alv7,
+                    lcl_event_handler=>on_button_click for go_alv7.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_ADD_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM handle_add_item .
+  CLEAR : zsssmm0104-pomnr,
+               zsssmm0104-amount,
+               zsssmm0104-poprc,
+               zsssmm0104-toprc,
+               zsssmm0104-pname.
+  zsssmm0104-itnum = gv_item_num.
+  IF zsssmm0103-venid IS NOT INITIAL.
+*        CALL SCREEN 210 STARTING AT 5 10 ENDING AT 80 25.
+    CALL SCREEN 210 STARTING AT 10 10.
+    zsssmm0103-toprc = gv_sum.
+    cl_gui_cfw=>set_new_ok_code(
+      EXPORTING
+        new_code =   'ENTER'
+*      IMPORTING
+*        rc       =     " Return code
+    ).
+  ELSE.
+    MESSAGE i999(zmcss) WITH '벤더코드를 선택해주세요'.
+  ENDIF.
+  CLEAR : zsssmm0104-pomnr,
+          zsssmm0104-amount,
+          zsssmm0104-poprc,
+          zsssmm0104-toprc,
+          zsssmm0104-pname.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_EDIT_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM handle_edit_item .
+*  PERFORM check_pop_edit_item USING go_alv7 CHANGING gv_subrc.
+  PERFORM check_pop_edit_item2 USING go_alv7 CHANGING gv_subrc.
+  IF gv_subrc = 0.
+    CALL SCREEN 220 STARTING AT 5 5 ENDING AT 80 25.
+  ENDIF.
+  CLEAR : zsssmm0104-pomnr,
+          zsssmm0104-amount,
+          zsssmm0104-poprc,
+          zsssmm0104-toprc,
+          zsssmm0104-pname.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_DELETE_ITEM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM handle_delete_item .
+
+*  PERFORM check_pop_del_item USING go_alv7 CHANGING gv_subrc.
+  PERFORM check_pop_del_item2 USING go_alv7 CHANGING gv_subrc.
+  PERFORM refresh_table_display CHANGING go_alv7.
+*  perform
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*&      Form  SAVE_PO_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMM0103  text
+*      <--P_ZSSSMM0104  text
+*----------------------------------------------------------------------*
+FORM save_po_item2  CHANGING c_header TYPE zsssmm0103
+                           c_item TYPE zsssmm0104.
+
+  CLEAR gv_sum.
+  DATA : ls_item2 LIKE LINE OF gt_item,
+         lv_sum   LIKE zsssmm0104-toprc.
+
+  c_item-toprc = c_item-poprc * c_item-amount.
+
+  gv_item_num = gv_item_num + 1.
+
+  MOVE-CORRESPONDING c_item TO ls_item2.
+  APPEND ls_item2 TO gt_item2.
+
+  LOOP AT gt_item2 INTO ls_item2.
+    lv_sum = lv_sum + ls_item2-toprc.
+  ENDLOOP.
+
+  c_header-toprc = lv_sum.
+  gv_sum = lv_sum.
+  zsssmm0103-toprc = gv_sum.
+  zsssmm0104-toprc = gv_sum.
+
+  PERFORM get_plant_name.
+
+  DATA : lv_name TYPE ztssplant-pname.
+  SELECT SINGLE pname
+    INTO lv_name
+    FROM ztssplant
+    WHERE plant = zsssmm0104-plant.
+  LOOP AT gt_item2 ASSIGNING FIELD-SYMBOL(<fs_data>).
+    <fs_data>-ppnme = lv_name.
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  EDIT_PO_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_ZSSSMM0103  text
+*      <--P_ZSSSMM0104  text
+*----------------------------------------------------------------------*
+FORM edit_po_item2  CHANGING c_header TYPE zsssmm0103
+                            c_item TYPE zsssmm0104.
+
+  DATA : ls_item    LIKE LINE OF gt_item,
+         lv_temp_id TYPE n LENGTH 3,
+         lv_sum     LIKE zsssmm0104-toprc.
+
+
+  lv_temp_id = c_item-itnum.
+  c_item-toprc = c_item-poprc * c_item-amount.
+  MOVE-CORRESPONDING c_item TO ls_item.
+
+  LOOP AT gt_item2 INTO ls_item.
+    IF lv_temp_id = ls_item-itnum.
+      MOVE-CORRESPONDING c_item TO ls_item.
+      MODIFY gt_item2 FROM ls_item.
+*      EXIT.
+    ENDIF.
+  ENDLOOP.
+
+  LOOP AT gt_item2 INTO ls_item.
+    lv_sum = lv_sum + ls_item-toprc.
+  ENDLOOP.
+
+  c_header-toprc = lv_sum.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_EDIT_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV7  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_edit_item2  USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
+                          CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lv_item_rowid TYPE i,
+         ls_item       LIKE LINE OF gt_item.
+
+
+  PERFORM check_pop USING co_alv CHANGING cv_subrc lv_item_rowid.
+  IF cv_subrc = 0.
+    READ TABLE gt_item2 INDEX lv_item_rowid INTO ls_item.
+
+    MOVE-CORRESPONDING ls_item TO gs_cond_item.
+    MOVE-CORRESPONDING gs_cond_item TO zsssmm0104.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_POP_DEL_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_ALV7  text
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM check_pop_del_item2   USING VALUE(co_alv) TYPE REF TO cl_gui_alv_grid
+                          CHANGING cv_subrc TYPE sy-subrc.
+
+  DATA : lv_item_rowid TYPE i,
+         ls_del_item   LIKE LINE OF gt_item,
+         l_data        TYPE ztsspoi.
+
+  CLEAR  gs_item.
+
+  PERFORM check_pop USING co_alv CHANGING cv_subrc lv_item_rowid.
+  IF cv_subrc = 0.
+    READ TABLE gt_item2 INDEX lv_item_rowid INTO ls_del_item.
+    zsssmm0103-toprc = zsssmm0103-toprc - ls_del_item-toprc.
+    gs_item = ls_del_item.
+    DELETE gt_item2 INDEX lv_item_rowid.
+*    PERFORM renumber_item .
+    PERFORM renumber_item2 .
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  RENUMBER_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM renumber_item2 .
+
+  DATA : lv_cnt(3) TYPE n.
+
+  lv_cnt = 0.
+
+  LOOP AT gt_item2 ASSIGNING FIELD-SYMBOL(<fs_item>).
+    lv_cnt = lv_cnt + 1.
+    <fs_item>-itnum = lv_cnt.
+  ENDLOOP.
+
+  gv_item_num = lv_cnt + 1.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_TOTAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM cal_total .
+  DATA: ls_item LIKE LINE OF gt_item2,
+        lv_sum  TYPE zsssmm0104-toprc.
+
+  CLEAR lv_sum.
+  LOOP AT gt_item2 INTO ls_item.
+    lv_sum = lv_sum + ls_item-toprc.
+  ENDLOOP.
+
+  zsssmm0103-toprc = lv_sum.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_PURCHASE_ORDER2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GV_SUBRC  text
+*----------------------------------------------------------------------*
+FORM insert_purchase_order2 CHANGING cv_subrc TYPE sy-subrc.
+
+  CLEAR cv_subrc.
+  DATA : lv_cnt TYPE i.
+
+  DESCRIBE TABLE gt_item2 LINES lv_cnt.
+  IF lv_cnt = 0.
+    MESSAGE i999(zmcss) WITH '구매오더 아이템이 있어야 발주 가능합니다!'.
+*    cv_subrc = 4.
+    RETURN.
+  ENDIF.
+
+  PERFORM insert_po_header.
+  PERFORM insert_po_item.
+
+  IF sy-subrc = 0.
+    COMMIT WORK.
+*    cv_subrc = sy-subrc.
+    MESSAGE s999(zmcss) WITH '구매오더가 완료되었습니다!'.
+  ELSE.
+    ROLLBACK WORK.
+*    cv_subrc = sy-subrc.
+    MESSAGE s999(zmcss) WITH '구매오더가 실패하였습니다. 다시 확인해주세요'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TEXT_EDIT_0510
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0286   text
+*      -->P_GO_MOD  text
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM set_text_edit_0510  USING VALUE(p_con_name)
+                              po_con TYPE REF TO cl_gui_custom_container
+                              po_edit TYPE REF TO cl_gui_textedit  .
+  IF po_con IS INITIAL.
+    CREATE OBJECT po_con
+      EXPORTING
+        container_name = p_con_name.
+  ENDIF.
+
+  IF po_edit IS INITIAL.
+    CREATE OBJECT po_edit
+      EXPORTING
+        max_number_chars = 60
+        parent           = po_con.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CLEAR_TEXT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM clear_text  USING po_edit TYPE REF TO cl_gui_textedit.
+
+  DATA: lt_empty TYPE soli_tab.
+
+  IF po_edit IS BOUND.
+    CALL METHOD po_edit->set_text_as_r3table
+      EXPORTING
+        table = lt_empty.
+  ENDIF.
+
+  LEAVE TO SCREEN 0.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_TEXT_EDIT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_EDIT  text
+*      -->P_GO_EDIT  text
+*----------------------------------------------------------------------*
+FORM set_text_edit  TABLES pt_edit TYPE tt_text
+                   USING po_edit TYPE REF TO cl_gui_textedit  .
+
+  CALL METHOD po_edit->get_text_as_r3table
+    IMPORTING
+      table  = pt_edit[]
+    EXCEPTIONS
+      OTHERS = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CONFIRM_CONTENTS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM confirm_contents .
+  DATA lv_answer TYPE c.
+
+  PERFORM popup_to_confirm
+    USING    '발주최종확인'                " 제목
+             '정말 발주하시겠습니까?'       " 질문
+             'Yes'                         " 버튼1 텍스트
+             'ICON_CHECKED'                " 버튼1 아이콘
+             'No'                          " 버튼2 텍스트
+             'ICON_INCOMPLETE'             " 버튼2 아이콘
+             '누르면 발주가 완료됩니다'     " 버튼1 퀵인포
+             '누르면 발주가 취소됩니다'     " 버튼2 퀵인포
+    CHANGING lv_answer.
+
+
+
+  CASE lv_answer.
+    WHEN '1'.
+*      MESSAGE i999(zmcss) with '입고완료!'.
+      PERFORM insert_data.
+    WHEN '2'.
+    WHEN '3'.
+
+
+  ENDCASE.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_data .
+
+  PERFORM insert_po_header2.
+
+  PERFORM insert_po_item2.
+
+  IF sy-subrc = 0.
+    COMMIT WORK.
+*    cv_subrc = sy-subrc.
+    MESSAGE s999(zmcss) WITH '구매오더가 완료되었습니다!'.
+  ELSE.
+    ROLLBACK WORK.
+*    cv_subrc = sy-subrc.
+    MESSAGE s999(zmcss) WITH '구매오더가 실패하였습니다. 다시 확인해주세요'.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_PO_HEADER2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_po_header2 .
+
+  DATA : ls_data LIKE ztsspoh.
+
+  PERFORM set_number_range.
+
+  ls_data-ponum = gv_po_num.
+  ls_data-podat = zsssmm0103-podat.
+  ls_data-dudat = zsssmm0103-dudat.
+  ls_data-rgtor = zsssmm0103-rgtor.
+  ls_data-curky = zsssmm0103-curky.
+  ls_data-rgdat = sy-datum.
+  ls_data-stext = gv_text.
+  ls_data-venid = zsssmm0103-venid.
+
+  INSERT ztsspoh FROM ls_data.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_PO_ITEM2
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_po_item2 .
+  DATA : ls_item_data LIKE ztsspoi,
+         ls_item      LIKE LINE OF gt_item.
+
+  LOOP AT gt_item2 INTO ls_item.
+
+    ls_item_data-ponum = gv_po_num.
+    ls_item_data-itnum = ls_item-itnum.
+    ls_item_data-pomnr = ls_item-pomnr.
+    ls_item_data-amount = ls_item-amount.
+    ls_item_data-meins = ls_item-meins.
+    ls_item_data-plant = ls_item-plant.
+    ls_item_data-poprc = ls_item-toprc.
+    ls_item_data-curky = ls_item-curky.
+    INSERT ztsspoi FROM ls_item_data.
+
+    CLEAR : ls_item_data,
+            ls_item.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_4364   text
+*      -->P_4365   text
+*      -->P_4366   text
+*      -->P_4367   text
+*      -->P_4368   text
+*      -->P_4369   text
+*      -->P_4370   text
+*      -->P_4371   text
+*      <--P_LV_ANSWER  text
+*----------------------------------------------------------------------*
+FORM popup_to_confirm   USING     iv_title
+                                  iv_question
+                                  iv_btn1_text
+                                  iv_btn1_icon
+                                  iv_btn2_text
+                                  iv_btn2_icon
+                                  iv_info1
+                                  iv_info2
+                        CHANGING cv_answer    TYPE c.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = iv_title
+      text_question         = iv_question
+      text_button_1         = iv_btn1_text
+      icon_button_1         = iv_btn1_icon
+      text_button_2         = iv_btn2_text
+      icon_button_2         = iv_btn2_icon
+      default_button        = '1'
+      display_cancel_button = 'X'
+      iv_quickinfo_button_1 = iv_info1
+      iv_quickinfo_button_2 = iv_info2
+    IMPORTING
+      answer                = cv_answer
+    EXCEPTIONS
+      text_not_found        = 1
+      OTHERS                = 2.
+
+  IF sy-subrc <> 0.
+    cv_answer = 'A'.  " Cancel 처리
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CLEAR_EDITOR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM clear_editor .
+
+  CLEAR: gv_text,
+       gt_edit,
+       gt_item2.
+  PERFORM refresh_table_display CHANGING go_alv7.
+  PERFORM clear_text USING go_edit.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_PLANT_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_plant_name .
+
+  DATA : lv_name.
+  SELECT SINGLE pname
+    INTO lv_name
+    FROM ztssplant
+    WHERE plant = zsssmm0104-plant.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_SORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_SORT9  text
+*----------------------------------------------------------------------*
+FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort.
+
+  SORT gt_data BY podat DESCENDING.
+
+
+  DATA: ls_sort TYPE lvc_s_sort.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'PODAT'.      "정렬할 필드명
+  ls_sort-spos      = 1.             "정렬 순서 (1,2,3...)
+  ls_sort-down      = 'X'.           "오름차순 (X) / 내림차순 (공백)
+  ls_sort-subtot    = 'X'.           "소계 표시 (옵션)
+  APPEND ls_sort TO pt_sort.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'VENID'.      "정렬할 필드명
+  ls_sort-spos      = 2.             "정렬 순서 (1,2,3...)
+  ls_sort-up        = 'X'.           "오름차순 (X) / 내림차순 (공백)
+  ls_sort-subtot    = 'X'.           "소계 표시 (옵션)
+  APPEND ls_sort TO pt_sort.
 
 ENDFORM.
 

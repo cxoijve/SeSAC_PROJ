@@ -3,21 +3,25 @@
 *   Please do not change it manually.                          *																																
 ****************************************************************																																
 %_DYNPRO																																
-SAPMZSSMD07																																
-0110																																
+ZRSSMM01																																
+0200																																
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMD07                             0110M0110      0  0192 37  0  0 24 67  0G E                              20251016125911																																
+ZRSSMM01                                0200 0200     64117192 37  0  0200255  0G E                              20251017021004																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-CON_0110			 62	00	00	00	30	00	  1	  2		  0	  0	  0		 23	U				  1	  1	102									
-		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
+SUB			115	00	00	00	30	00	  2	  3		  0	  0	  0		 17	B				  1	  1	101									
+CON_MAT			117	00	00	00	30	00	 20	  2		  0	  0	  0		 45	U				  1	  1	102									
+OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
-  MODULE status_0110.																																
-  MODULE set_alv_0110.																																
+  MODULE status_0200.																																
+  MODULE set_alv_0200.																																
+  CALL SUBSCREEN sub INCLUDING 'SAPLZFGSS28' '0500'.																																
 *																																
 PROCESS AFTER INPUT.																																
-  MODULE user_command_0110.																																
+  MODULE exit_200 AT EXIT-COMMAND.																																
+  MODULE user_command_0200.																																
+  CALL SUBSCREEN sub.																																

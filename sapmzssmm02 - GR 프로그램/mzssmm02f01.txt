@@ -965,7 +965,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM display_alv_grid_0300 .
-  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo12 gt_exclude CHANGING gt_gritem gt_fcat12 gt_sort go_alv_detail.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0216' gs_layo12 gt_exclude CHANGING gt_gritem2 gt_fcat12 gt_sort go_alv_detail.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1365,6 +1365,17 @@ FORM display_tree_0400  CHANGING co_tree TYPE REF TO cl_gui_simple_tree.
 *     table_structure_name_not_found = 4
 *     others               = 5
     .
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = 'ROOT'.
+
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = '1000'.
+
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = '2000'.
   IF sy-subrc <> 0.
 * Implement suitable error handling here
   ENDIF.
@@ -1388,84 +1399,159 @@ ENDFORM.
 FORM get_tree_data .
 
   IF gt_tree IS NOT INITIAL. RETURN. ENDIF.
+  DATA: lt_vendor_2024 LIKE gt_vendor,
+        lt_vendor_2025 LIKE gt_vendor,
+        ls_vendor      LIKE LINE OF lt_vendor_2024,
+        lv_venid       TYPE ztssvend-venid,
+        lv_vname       TYPE ztssvend-vname.
 
-  DATA: lv_node_key TYPE tm_nodekey VALUE 1000.
+  " 2024년, 2025년 PO가 있는 업체 목록 가져오기
+  SELECT DISTINCT venid
+    INTO CORRESPONDING FIELDS OF TABLE lt_vendor_2024
+    FROM ztsspoh
+    WHERE dudat >= '20240101' AND dudat <= '20241231'.
 
-  " 연도 폴더
-  gs_tree-node_key = '1000'.
+  SELECT DISTINCT venid
+    INTO CORRESPONDING FIELDS OF  TABLE lt_vendor_2025
+    FROM ztsspoh
+    WHERE dudat >= '20250101' AND dudat <= '20251231'.
+
+  " Root 노드
+  CLEAR gs_tree.
+  gs_tree-node_key = 'ROOT'.
   gs_tree-relatkey = ''.
   gs_tree-isfolder = 'X'.
-  gs_tree-text = '2024'.
+  gs_tree-text = '납기지연 현황'.
   APPEND gs_tree TO gt_tree.
 
-  LOOP AT gt_vendor INTO DATA(ls_vendor).
-    lv_node_key = lv_node_key + 1.
+*  CLEAR gs_tree.
+*  gs_tree-node_key = 'ALL'.
+*  gs_tree-relatkey = 'ROOT'.
+*  gs_tree-isfolder = 'X'.
+*  gs_tree-text = '전체 보기'.
+*  APPEND gs_tree TO gt_tree.
 
-    CLEAR gs_tree.
-    gs_tree-node_key = ls_vendor-venid.  " 'V1000001'
-    gs_tree-relatkey = '1000'.
-    gs_tree-isfolder = ''.
-    gs_tree-text = ls_vendor-vname.
-    APPEND gs_tree TO gt_tree.
+  " 2024년 폴더
+  CLEAR gs_tree.
+  gs_tree-node_key = '1000'.
+  gs_tree-relatkey = 'ROOT'.
+  gs_tree-isfolder = 'X'.
+  gs_tree-text = '2024년'.
+  APPEND gs_tree TO gt_tree.
+
+  " 2024년 하위 업체들
+  LOOP AT lt_vendor_2024 INTO ls_vendor.
+    PERFORM get_vendor_name USING ls_vendor-venid CHANGING lv_vname.
+    IF sy-subrc = 0.
+      CLEAR gs_tree.
+      gs_tree-node_key = |2024{ ls_vendor-venid }|.  " ← 2024V001
+      gs_tree-relatkey = '1000'.
+      gs_tree-isfolder = ''.
+      gs_tree-text = lv_vname.
+      APPEND gs_tree TO gt_tree.
+    ENDIF.
+    CLEAR ls_vendor.
   ENDLOOP.
 
-ENDFORM.
+  " 2025년 폴더
+  CLEAR gs_tree.
+  gs_tree-node_key = '2000'.
+  gs_tree-relatkey = 'ROOT'.
+  gs_tree-isfolder = 'X'.
+  gs_tree-text = '2025년'.
+  APPEND gs_tree TO gt_tree.
 
-
-*  CLEAR gs_tree.
+  " 2025년 하위 업체들
+  LOOP AT lt_vendor_2025 INTO ls_vendor.
+    PERFORM get_vendor_name USING ls_vendor-venid CHANGING lv_vname.
+    IF sy-subrc = 0.
+      CLEAR gs_tree.
+      gs_tree-node_key = |2025{ ls_vendor-venid }|.  " ← 2025V001
+      gs_tree-relatkey = '2000'.
+      gs_tree-isfolder = ''.
+      gs_tree-text = lv_vname.
+      APPEND gs_tree TO gt_tree.
+    ENDIF.
+    CLEAR ls_vendor.
+  ENDLOOP.
+*  DATA: lv_node_key  TYPE tm_nodekey VALUE 1000,
+*        lv_node_key2 TYPE tm_nodekey VALUE 2000.
+*  " 연도 폴더
 *  gs_tree-node_key = '1000'.
-*  gs_tree-isfolder = 'X'. " Folder Image
-*  gs_tree-expander = ''. " Open
+*  gs_tree-relatkey = ''.
+*  gs_tree-isfolder = 'X'.
 *  gs_tree-text = '2024'.
 *  APPEND gs_tree TO gt_tree.
 *
+*  LOOP AT gt_vendor INTO DATA(ls_vendor).
+*    lv_node_key = lv_node_key + 1.
+*
+*    CLEAR gs_tree.
+*    gs_tree-node_key = ls_vendor-venid.  " 'V1000001'
+*    gs_tree-relatkey = '1000'.
+*    gs_tree-isfolder = ''.
+*    gs_tree-text = ls_vendor-vname.
+*    APPEND gs_tree TO gt_tree.
+*  ENDLOOP.
+*
+*  gs_tree-node_key = '2000'.
+*  gs_tree-relatkey = ''.
+*  gs_tree-isfolder = 'X'.
+*  gs_tree-text = '2025'.
+*  APPEND gs_tree TO gt_tree.
+*  LOOP AT gt_vendor INTO DATA(ls_vendor2).
+*    lv_node_key2 = lv_node_key2 + 1.
+*
+*    CLEAR gs_tree.
+*    gs_tree-node_key = ls_vendor-venid.  " 'V1000001'
+*    gs_tree-relatkey = '2000'.
+*    gs_tree-isfolder = ''.
+*    gs_tree-text = ls_vendor-vname.
+*    APPEND gs_tree TO gt_tree.
+*  ENDLOOP.
+  " 연도 폴더
+  " 2024년 폴더
 *  CLEAR gs_tree.
-*  gs_tree-node_key = '1100'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '현대양념'.
+*  gs_tree-node_key = '1000'.
+*  gs_tree-relatkey = ''.
+*  gs_tree-isfolder = 'X'.
+*  gs_tree-text = '2024년'.
 *  APPEND gs_tree TO gt_tree.
 *
+*  " 2024년 하위 업체들
+*  LOOP AT gt_vendor INTO DATA(ls_vendor).
+*    lv_node_key = lv_node_key + 1.
+*
+*    CLEAR gs_tree.
+*    gs_tree-node_key = ls_vendor-venid.  " 'V1000001'
+*    gs_tree-relatkey = '1000'.
+*    gs_tree-isfolder = ''.
+*    gs_tree-text = ls_vendor-vname.
+*    APPEND gs_tree TO gt_tree.
+*  ENDLOOP.
+*
+*  " 2025년 폴더
 *  CLEAR gs_tree.
-*  gs_tree-node_key = '1200'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '제일제면'.
+*  gs_tree-node_key = '2000'.
+*  gs_tree-relatkey = ''.
+*  gs_tree-isfolder = 'X'.
+*  gs_tree-text = '2025년'.
 *  APPEND gs_tree TO gt_tree.
 *
-*  CLEAR gs_tree.
-*  gs_tree-node_key = '1300'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '김롯데소스'.
-*  APPEND gs_tree TO gt_tree.
+*  " 2025년 하위 업체들
+*  lv_node_key = '2000'.
+*  LOOP AT gt_vendor INTO DATA(ls_vendor2).
+*    lv_node_key = lv_node_key + 1.
 *
-*  CLEAR gs_tree.
-*  gs_tree-node_key = '1400'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '존윅미트'.
-*  APPEND gs_tree TO gt_tree.
-*
-*  CLEAR gs_tree.
-*  gs_tree-node_key = '1500'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '주나수산'.
-*  APPEND gs_tree TO gt_tree.
-*
-*  CLEAR gs_tree.
-*  gs_tree-node_key = '1600'.
-*  gs_tree-relatkey = '1000'.
-*  gs_tree-isfolder = ''. " Folder Image
-*  gs_tree-expander = ''. " Open
-*  gs_tree-text = '한국제면'.
-*  APPEND gs_tree TO gt_tree.
+*    CLEAR gs_tree.
+*    gs_tree-node_key = ls_vendor2-venid.  " 'V1000001'
+*    gs_tree-relatkey = '2000'.
+*    gs_tree-isfolder = ''.
+*    gs_tree-text = ls_vendor2-vname.
+*    APPEND gs_tree TO gt_tree.
+*  ENDLOOP.
+
+ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  FREE_TREE
 *&---------------------------------------------------------------------*
@@ -1691,6 +1777,337 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM refresh_alv_0310 .
   PERFORM refresh_table_display CHANGING go_alv_simple.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALCULATE_DELAY_STATISTICS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
+
+  DATA: ls_data LIKE LINE OF pt_data,
+        ls_stat LIKE gs_vendor_stat,
+        lv_year TYPE numc4,
+        lv_count TYPE i,
+        lv_tabix TYPE sy-tabix.
+
+  DATA: BEGIN OF lt_sum OCCURS 0,
+          venid       TYPE ztssvend-venid,
+          year        TYPE numc4,
+          total_days  TYPE i,
+          delay_count TYPE i,
+        END OF lt_sum.
+
+  DATA: BEGIN OF lt_po_all OCCURS 0,
+          venid TYPE ztssvend-venid,
+          dudat TYPE ztsspoh-dudat,
+        END OF lt_po_all.
+
+  DATA: BEGIN OF lt_po_count OCCURS 0,
+          venid TYPE ztssvend-venid,
+          year  TYPE numc4,
+          total TYPE i,
+        END OF lt_po_count.
+
+  REFRESH: gt_vendor_stat, lt_sum[], lt_po_all[], lt_po_count[].
+
+  " 입력 데이터 체크
+  DESCRIBE TABLE pt_data LINES lv_count.
+  IF lv_count = 0.
+    RETURN.
+  ENDIF.
+
+  " 1단계: 전체 PO 조회
+  SELECT h~venid h~dudat
+    INTO CORRESPONDING FIELDS OF TABLE lt_po_all
+    FROM ztsspoh AS h
+    INNER JOIN ztsspoi AS i ON h~ponum = i~ponum
+    WHERE ( h~dudat BETWEEN '20240101' AND '20241231' )
+       OR ( h~dudat BETWEEN '20250101' AND '20251231' ).
+
+  " 업체별, 년도별 카운트
+  LOOP AT lt_po_all.
+    CHECK lt_po_all-dudat IS NOT INITIAL.
+
+    lv_year = lt_po_all-dudat(4).
+    CHECK lv_year = '2024' OR lv_year = '2025'.
+
+    READ TABLE lt_po_count WITH KEY venid = lt_po_all-venid
+                                    year = lv_year.
+    IF sy-subrc = 0.
+      lv_tabix = sy-tabix.  " ★ tabix 저장
+      lt_po_count-total = lt_po_count-total + 1.
+      MODIFY lt_po_count INDEX lv_tabix.  " ★ 저장된 값 사용
+    ELSE.
+      CLEAR lt_po_count.
+      lt_po_count-venid = lt_po_all-venid.
+      lt_po_count-year = lv_year.
+      lt_po_count-total = 1.
+      APPEND lt_po_count.
+    ENDIF.
+  ENDLOOP.
+
+  " 2단계: 지연 데이터 집계
+  LOOP AT pt_data INTO ls_data.
+
+    CHECK ls_data-dudat IS NOT INITIAL.
+    CHECK ls_data-venid IS NOT INITIAL.
+    CHECK ls_data-ludat > 0.
+
+    lv_year = ls_data-dudat(4).
+    CHECK lv_year = '2024' OR lv_year = '2025'.
+
+    " 업체 통계 찾기/생성
+    READ TABLE gt_vendor_stat INTO ls_stat WITH KEY venid = ls_data-venid.
+
+    IF sy-subrc <> 0.
+      CLEAR ls_stat.
+      ls_stat-venid = ls_data-venid.
+      perform get_vendor_name using ls_stat-venid CHANGING ls_stat-vname.
+*      ls_stat-vname = ls_data-vname.
+    ENDIF.
+
+    " 년도별 지연 건수 집계
+    IF lv_year = '2024'.
+      ls_stat-delay_2024 = ls_stat-delay_2024 + 1.
+
+      READ TABLE lt_sum WITH KEY venid = ls_data-venid year = '2024'.
+      IF sy-subrc = 0.
+        lv_tabix = sy-tabix.  " ★ tabix 저장
+        lt_sum-total_days = lt_sum-total_days + ls_data-ludat.
+        lt_sum-delay_count = lt_sum-delay_count + 1.
+        MODIFY lt_sum INDEX lv_tabix.  " ★ 저장된 값 사용
+      ELSE.
+        CLEAR lt_sum.
+        lt_sum-venid = ls_data-venid.
+        lt_sum-year = '2024'.
+        lt_sum-total_days = ls_data-ludat.
+        lt_sum-delay_count = 1.
+        APPEND lt_sum.
+      ENDIF.
+
+    ELSEIF lv_year = '2025'.
+      ls_stat-delay_2025 = ls_stat-delay_2025 + 1.
+
+      READ TABLE lt_sum WITH KEY venid = ls_data-venid year = '2025'.
+      IF sy-subrc = 0.
+        lv_tabix = sy-tabix.  " ★ tabix 저장
+        lt_sum-total_days = lt_sum-total_days + ls_data-ludat.
+        lt_sum-delay_count = lt_sum-delay_count + 1.
+        MODIFY lt_sum INDEX lv_tabix.  " ★ 저장된 값 사용
+      ELSE.
+        CLEAR lt_sum.
+        lt_sum-venid = ls_data-venid.
+        lt_sum-year = '2025'.
+        lt_sum-total_days = ls_data-ludat.
+        lt_sum-delay_count = 1.
+        APPEND lt_sum.
+      ENDIF.
+    ENDIF.
+
+    " ★ 테이블 업데이트 (안전하게)
+    READ TABLE gt_vendor_stat TRANSPORTING NO FIELDS
+         WITH KEY venid = ls_data-venid.
+    IF sy-subrc = 0.
+      lv_tabix = sy-tabix.  " ★ tabix 저장
+      MODIFY gt_vendor_stat FROM ls_stat INDEX lv_tabix.  " ★ 저장된 값 사용
+    ELSE.
+      APPEND ls_stat TO gt_vendor_stat.
+    ENDIF.
+
+  ENDLOOP.
+
+  " 3단계: 지연율 계산
+  LOOP AT gt_vendor_stat INTO ls_stat.
+
+    lv_tabix = sy-tabix.  " ★ LOOP의 현재 인덱스 저장
+
+    " 2024년 전체 건수
+    READ TABLE lt_po_count WITH KEY venid = ls_stat-venid year = '2024'.
+    IF sy-subrc = 0.
+      ls_stat-total_2024 = lt_po_count-total.
+    ENDIF.
+
+    " 2025년 전체 건수
+    READ TABLE lt_po_count WITH KEY venid = ls_stat-venid year = '2025'.
+    IF sy-subrc = 0.
+      ls_stat-total_2025 = lt_po_count-total.
+    ENDIF.
+
+    " 2024년 지연율 계산
+    IF ls_stat-total_2024 > 0.
+      DATA: lv_rate_temp TYPE p DECIMALS 2.
+      lv_rate_temp = ls_stat-delay_2024 * 100.
+      ls_stat-rate_2024 = lv_rate_temp / ls_stat-total_2024.
+
+      IF ls_stat-delay_2024 > 0.
+        READ TABLE lt_sum WITH KEY venid = ls_stat-venid year = '2024'.
+        IF sy-subrc = 0 AND lt_sum-delay_count > 0.
+          ls_stat-avg_days_2024 = lt_sum-total_days / lt_sum-delay_count.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+    " 2025년 지연율 계산
+    IF ls_stat-total_2025 > 0.
+      lv_rate_temp = ls_stat-delay_2025 * 100.
+      ls_stat-rate_2025 = lv_rate_temp / ls_stat-total_2025.
+
+      IF ls_stat-delay_2025 > 0.
+        READ TABLE lt_sum WITH KEY venid = ls_stat-venid year = '2025'.
+        IF sy-subrc = 0 AND lt_sum-delay_count > 0.
+          ls_stat-avg_days_2025 = lt_sum-total_days / lt_sum-delay_count.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+    " 전체 합산
+    ls_stat-total_all = ls_stat-total_2024 + ls_stat-total_2025.
+    ls_stat-delay_all = ls_stat-delay_2024 + ls_stat-delay_2025.
+
+    IF ls_stat-total_all > 0.
+      lv_rate_temp = ls_stat-delay_all * 100.
+      ls_stat-rate_all = lv_rate_temp / ls_stat-total_all.
+
+      IF ls_stat-delay_all > 0.
+        DATA: lv_total_days_all TYPE i.
+        CLEAR lv_total_days_all.
+
+        READ TABLE lt_sum WITH KEY venid = ls_stat-venid year = '2024'.
+        IF sy-subrc = 0.
+          lv_total_days_all = lv_total_days_all + lt_sum-total_days.
+        ENDIF.
+
+        READ TABLE lt_sum WITH KEY venid = ls_stat-venid year = '2025'.
+        IF sy-subrc = 0.
+          lv_total_days_all = lv_total_days_all + lt_sum-total_days.
+        ENDIF.
+
+        IF ls_stat-delay_all > 0.
+          ls_stat-avg_days_all = lv_total_days_all / ls_stat-delay_all.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+    " ★ LOOP의 인덱스로 MODIFY
+    MODIFY gt_vendor_stat FROM ls_stat INDEX lv_tabix.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_TOP3_DELAYED_VENDORS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_top3_delayed_vendors.
+
+  DATA: lt_sorted LIKE gt_vendor_stat,
+        ls_stat   LIKE gs_vendor_stat.
+
+  " 초기화
+  CLEAR: gv_top1_venid, gv_top1_vname, gv_top1_rate, gv_top1_days,
+         gv_top2_venid, gv_top2_vname, gv_top2_rate, gv_top2_days,
+         gv_top3_venid, gv_top3_vname, gv_top3_rate, gv_top3_days.
+
+  lt_sorted[] = gt_vendor_stat[].
+
+  " ★ 전체(2024+2025) 지연율 기준 내림차순 정렬 ★
+  SORT lt_sorted BY rate_all DESCENDING
+                    avg_days_all DESCENDING.
+
+  " 1위
+  READ TABLE lt_sorted INTO ls_stat INDEX 1.
+  IF sy-subrc = 0.
+    gv_top1_venid = ls_stat-venid.
+    gv_top1_vname = ls_stat-vname.
+    gv_top1_rate = ls_stat-rate_all.
+    gv_top1_days = ls_stat-avg_days_all.
+  ENDIF.
+
+  " 2위
+  READ TABLE lt_sorted INTO ls_stat INDEX 2.
+  IF sy-subrc = 0.
+    gv_top2_venid = ls_stat-venid.
+    gv_top2_vname = ls_stat-vname.
+    gv_top2_rate = ls_stat-rate_all.
+    gv_top2_days = ls_stat-avg_days_all.
+  ENDIF.
+
+  " 3위
+  READ TABLE lt_sorted INTO ls_stat INDEX 3.
+  IF sy-subrc = 0.
+    gv_top3_venid = ls_stat-venid.
+    gv_top3_vname = ls_stat-vname.
+    gv_top3_rate = ls_stat-rate_all.
+    gv_top3_days = ls_stat-avg_days_all.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALCULATE_ALL_VENDOR_TOP3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM calculate_all_vendor_top3 .
+  DATA: lt_po_sum      LIKE TABLE OF gs_itamt,
+        lt_gr_sum      LIKE TABLE OF gs_itamt,
+        lt_temp_vdudat LIKE gt_vdudat,
+        ls_vendor      LIKE LINE OF gt_vendor.
+
+  REFRESH gt_vdudat_all.
+
+  " ★ 모든 업체 루프
+  LOOP AT gt_vendor INTO ls_vendor.
+
+    " ===== 2024년 데이터 =====
+    PERFORM get_posum_by_venid USING ls_vendor-venid
+                                     '2024'
+                               CHANGING lt_po_sum.
+
+    PERFORM get_grsum_by_venid USING ls_vendor-venid
+                                     '2024'
+                               CHANGING lt_gr_sum.
+
+    REFRESH lt_temp_vdudat.
+    PERFORM create_expdudat USING lt_po_sum
+                                  lt_gr_sum
+                                  ls_vendor-venid
+                            CHANGING lt_temp_vdudat.
+
+    APPEND LINES OF lt_temp_vdudat TO gt_vdudat_all.
+
+    " ===== 2025년 데이터 =====
+    PERFORM get_posum_by_venid USING ls_vendor-venid
+                                     '2025'
+                               CHANGING lt_po_sum.
+
+    PERFORM get_grsum_by_venid USING ls_vendor-venid
+                                     '2025'
+                               CHANGING lt_gr_sum.
+
+    REFRESH lt_temp_vdudat.
+    PERFORM create_expdudat USING lt_po_sum
+                                  lt_gr_sum
+                                  ls_vendor-venid
+                            CHANGING lt_temp_vdudat.
+
+    APPEND LINES OF lt_temp_vdudat TO gt_vdudat_all.
+
+  ENDLOOP.
+
+  " 통계 계산
+  IF gt_vdudat_all[] IS NOT INITIAL.
+    PERFORM calculate_delay_statistics USING gt_vdudat_all.
+    PERFORM get_top3_delayed_vendors.
+  ENDIF.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

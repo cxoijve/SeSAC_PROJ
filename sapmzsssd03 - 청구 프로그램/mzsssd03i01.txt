@@ -82,7 +82,8 @@ ENDMODULE.
 MODULE user_command_0200 INPUT.
   DATA: lv_ok    TYPE char1,
         lv_rgtor TYPE ztsssivh-rgtor,
-        i_jenum  TYPE ztssjeh-jenum.
+        i_jenum  TYPE ztssjeh-jenum,
+        lv_cstid TYPE ztsscust-cstid.
 
   CASE ok_code.
     WHEN 'BACK'.
@@ -93,17 +94,30 @@ MODULE user_command_0200 INPUT.
         EXIT.
       ENDIF.
       PERFORM call_save_popup.
-    WHEN 'B_RGTOR'.
+    WHEN 'B_RGTOR1'.
       CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
         EXPORTING
           iv_pernr   = gs_gi_head-rgtor
+          iv_ismodal = 'X'    " 모달 형태
+          iv_dtllv   = 'A'.   " 축약 정보
+    WHEN 'B_RGTOR2'.
+      CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+        EXPORTING
+          iv_pernr   = gs_head_ist-rgtor
           iv_ismodal = 'X'    " 모달 형태
           iv_dtllv   = 'A'.   " 축약 정보
     WHEN 'B_JENUM'.
       i_jenum = gs_gi_head-jenum.
       SET PARAMETER ID 'JEN' FIELD i_jenum.
       CALL TRANSACTION 'ZSSFI01'.
-
+    WHEN 'B_CSTID1'.
+      CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+        EXPORTING
+          iv_cstid = gs_gi_head-cstid.
+    WHEN 'B_CSTID2'.
+      CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+        EXPORTING
+          iv_cstid = gs_head_ist-cstid.
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.
@@ -132,6 +146,10 @@ MODULE user_command_0300 INPUT.
         SET PARAMETER ID 'JEN' FIELD i_jenum.
         CALL TRANSACTION 'ZSSFI01'.
       ENDIF.
+    WHEN 'B_CSTID'.
+      CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+        EXPORTING
+          iv_cstid = gs_iv_head-cstid.
     WHEN OTHERS.
   ENDCASE.
 ENDMODULE.

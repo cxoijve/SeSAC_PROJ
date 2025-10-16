@@ -8,7 +8,7 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0401M0401     10 59192 37  0  0 27124  0G E                              20251002132601																																
+SAPMZSSSD01                             0401M0401     10 59192 37  0  0 27124  0G E                              20251016152831																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																

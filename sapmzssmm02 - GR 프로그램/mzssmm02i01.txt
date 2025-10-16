@@ -16,12 +16,16 @@ MODULE user_command_0100 INPUT.
     WHEN 'TAB1' OR 'TAB2' OR 'TAB3'.
       IF ok_code = 'TAB1'.
         gv_screen = 1.
+
         CLEAR : gt_item, gt_confirm, zsssmm0210-venid, zsssmm0210-vname.
+        PERFORM get_gr_datas USING zsssmm0210.
       ELSEIF ok_code = 'TAB2'.
         gv_screen = 0.
         CLEAR : gt_item, gt_confirm, zsssmm0210-venid, zsssmm0210-vname, gs_cond.
+        PERFORM get_po_datas USING zsssmm0210.
       ELSEIF ok_code = 'TAB3'.
         gv_screen = 2.
+        PERFORM get_exp_datas USING zsssmm0210.
       ENDIF.
 
       t_info-activetab = ok_code.
@@ -36,7 +40,7 @@ MODULE user_command_0100 INPUT.
     WHEN 'SEL_PO'.
       PERFORM search_by_po_nuum.
 
-    WHEN 'EXPLIST'.
+    WHEN 'GO_EXP'.
       CALL SCREEN 0400.
     WHEN OTHERS.
   ENDCASE.
@@ -222,6 +226,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE user_command_0400 INPUT.
   CASE ok_code.
+    WHEN 'ENTER'.
     WHEN 'BACK'.
       PERFORM free_tree.
       LEAVE TO SCREEN 0.

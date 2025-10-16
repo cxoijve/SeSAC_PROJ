@@ -22,7 +22,6 @@ FORM set_default .
 
   " 기본 데이터 가져오기 - search시에도 쓰임
   PERFORM get_datas.
-
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INIT_VARIABLES
@@ -64,7 +63,7 @@ ENDFORM.
 FORM set_default_values .
 
   PERFORM set_date CHANGING zsssmm0210-grdat_s zsssmm0210-grdat_e zsssmm0210-dudat_s zsssmm0210-dudat_e zsssmm0214-grdat.
-  zsssmm0210-dudat_y = '2024'.
+  zsssmm0210-dudat_y = '2025'.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_DATE
@@ -362,9 +361,6 @@ FORM get_datas .
   PERFORM get_exp_datas USING zsssmm0210.
 
   PERFORM get_vend_datas.
-
-
-
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -761,12 +757,12 @@ FORM set_display_dudat_status  USING VALUE(pv_dudat) TYPE ztsspoh-dudat
                                           cs_data LIKE gs_podata.
   " 당일이라면 빨간색, 10일 이내라면 511색
 
-  DATA : lv_dudat     TYPE ztsspoh-dudat,
-         lv_dudat_ten TYPE sy-datum.
+  DATA : lv_dudat   TYPE ztsspoh-dudat,
+         lv_dudat_3 TYPE sy-datum.
   DATA ls_col TYPE lvc_s_scol.
 
   lv_dudat = sy-datum.
-  lv_dudat_ten = sy-datum + 10.
+  lv_dudat_3 = sy-datum + 3.
 
   IF pv_dudat < lv_dudat.
 *    cv_light = '1'.
@@ -776,7 +772,7 @@ FORM set_display_dudat_status  USING VALUE(pv_dudat) TYPE ztsspoh-dudat
     ls_col-color-inv = '0'.
     APPEND ls_col TO cs_data-it_col.
     CLEAR ls_col.
-  ELSEIF pv_dudat < lv_dudat_ten.
+  ELSEIF pv_dudat <= lv_dudat_3.
 *    cv_light = '2'.
     ls_col-fname = 'DUDAT'.
     ls_col-color-col = '5'.
@@ -1044,6 +1040,7 @@ FORM insert_grdatas .
 
   COMMIT WORK.
   MESSAGE s104(zmcss). " '입고가 완료되었습니다!'.
+  MESSAGE i999(zmcss) WITH '전표'  gv_fi_num '생성 완료' DISPLAY LIKE 'S'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2010,6 +2007,8 @@ FORM set_fcat02 .
   fieldname = 'STYLE'
   tech      = 'X'  " 화면에 표시 안 함
 ) TO gt_fcat2.
+
+
   APPEND VALUE #(
   fieldname = 'IT_COL'
   tech      = 'X'
@@ -2142,8 +2141,8 @@ FORM set_fcat07 .
   (  fieldname = 'AMOUNT' coltext = '입고수량' col_pos = 6 )
   (  fieldname = 'MEINS' col_pos = 7 )
   (  fieldname = 'STONM'  col_pos = 8 )
-  (  fieldname = 'LTEXT'   coltext = '삭제여부' col_pos = 9 )
-  (  fieldname = 'DEL'   coltext = '삭제여부' col_pos = 9 no_out = 'X' )
+  (  fieldname = 'LTEXT'   coltext = '삭제 됨' col_pos = 9 icon = 'X' outputlen = '10' )
+  (  fieldname = 'DEL'   coltext = '삭제여부' no_out = 'X' )
   (  fieldname = 'VENID' no_out = 'X'  )
   ( fieldname = 'POMNR' no_out = 'X'  )
   (  fieldname = 'GRQTY'  no_out  = 'X'  )
@@ -2563,14 +2562,22 @@ FORM create_exp_list  USING    pt_po_sum LIKE gt_itamt
       FROM ztsspoh
       WHERE ponum = ls_po_sum-ponum
       AND dudat IN gr_dudat
-      AND dudat <= sy-datum
+      AND dudat < sy-datum
       AND (lv_where).
 
     CHECK sy-subrc = 0.
+    READ TABLE ct_expdata TRANSPORTING NO FIELDS
+      WITH KEY ponum = ls_po-ponum.
+
+    IF sy-subrc = 0.
+      " 이미 존재하면 스킵
+      CONTINUE.
+    ENDIF.
 
     READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
                                                  itnum = ls_po_sum-itnum.
     IF sy-subrc <> 0.
+
       APPEND ls_po TO ct_expdata.
     ELSEIF ls_gr_sum-amount < ls_po_sum-amount.
       APPEND ls_po TO ct_expdata.
@@ -2733,6 +2740,19 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_datas_by_grponum .
 
+  DATA: ls_ponum LIKE LINE OF gr_ponum.
+
+  LOOP AT gr_ponum INTO ls_ponum WHERE sign = 'I' AND option = 'EQ'.
+
+    READ TABLE gt_podata TRANSPORTING NO FIELDS
+         WITH KEY ponum = ls_ponum-low.
+
+    IF sy-subrc <> 0.
+      MESSAGE i999(zmcss) WITH '조건에 해당되는 ponum이 존재하지 않습니다!'.
+      RETURN.
+    ENDIF.
+
+  ENDLOOP.
   SELECT ponum podat venid dudat stext rgtor
     INTO CORRESPONDING FIELDS OF TABLE gt_podata
     FROM ztsspoh
@@ -2772,7 +2792,8 @@ FORM set_fcat12 .
   (  fieldname = 'TOPRC'  col_pos = 7 )
   (  fieldname = 'CURKY'  col_pos = 8 )
   (  fieldname = 'PONUM' col_pos = 9 )
-  (  fieldname = 'DEL' coltext = '삭제여부' col_pos = 10 )
+  (  fieldname = 'LTEXT' icon = 'X' outputlen = '4' no_out = 'X' )
+  (  fieldname = 'DEL' coltext = '삭제여부' no_out = 'X' )
 
   (  fieldname = 'POMNR' no_out = 'X' )
   (  fieldname = 'VENID' no_out = 'X' )
@@ -2811,12 +2832,13 @@ FORM set_fcat13 .
   (  fieldname = 'STONM'  col_pos = 7 )
   (  fieldname = 'PNAME'  col_pos = 8 )
   (  fieldname = 'DUDAT'  coltext = '납기일' col_pos = 9 )
-  (  fieldname = 'LUDAT'  coltext = '납기경과일' col_pos = 10 )
-  (  fieldname = 'DUOKD'  coltext = '납기준수율' col_pos = 11 )
-  (  fieldname = 'DUDED'  coltext = '납기지연율' col_pos = 11 )
+  (  fieldname = 'GRDAT'  coltext = '입고일' col_pos = 10 )
+  (  fieldname = 'LUDAT'  coltext = '납기경과일' col_pos = 11 )
+*  (  fieldname = 'DUOKD'  coltext = '납기준수율' col_pos = 11 )
+  (  fieldname = 'DUDED'  coltext = '납기지연율' col_pos = 12 )
+  (  fieldname = 'PONUM' col_pos = 13 )
 
   (  fieldname = 'POMNR' no_out = 'X' )
-  (  fieldname = 'PONUM' no_out = 'X' )
   (  fieldname = 'ITNUM' no_out = 'X' )
   (  fieldname = 'PLANT' no_out = 'X' )
 *  (  fieldname = 'VENID' no_out = 'X' )
@@ -2838,7 +2860,8 @@ FORM get_vend_datas .
 
   SELECT venid vname
     INTO CORRESPONDING FIELDS OF TABLE gt_vendor
-    FROM ztssvend.
+    FROM ztssvend
+    WHERE endda = '99991231'.
 
 ENDFORM.
 *&---------------------------------------------------------------------*

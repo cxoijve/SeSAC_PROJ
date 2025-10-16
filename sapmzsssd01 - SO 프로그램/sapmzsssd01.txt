@@ -9,6 +9,7 @@
 
 INCLUDE mzsssd01top                             .  " global Data
 
+INCLUDE mzsssd01c01                             .  " Class
 INCLUDE mzsssd01o01                             .  " PBO-Modules
 INCLUDE mzsssd01i01                             .  " PAI-Modules
 INCLUDE mzsssd01f01                             .  " FORM-Routines

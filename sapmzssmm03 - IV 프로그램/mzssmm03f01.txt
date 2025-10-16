@@ -36,7 +36,9 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
-  DATA : ls_data LIKE LINE OF gt_data.
+  DATA : ls_data LIKE LINE OF gt_data,
+         lv_day  TYPE i,
+         ls_col  TYPE lvc_s_scol.
 
   DATA : BEGIN OF ls_name,
            lname TYPE zesslname,
@@ -71,7 +73,7 @@ FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
 
   IF  sy-subrc <> 0.
-    MESSAGE i999(zmcss) WITH '데이터 없음'.
+*    MESSAGE i999(zmcss) WITH '데이터 없음'.
   ENDIF.
 
   IF zsssmm03001-check NE '' AND zsssmm03001-cheke EQ ''.
@@ -88,6 +90,28 @@ FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
   ENDIF.
 
+
+  CLEAR :  gs_out,
+           gt_out.
+
+  LOOP AT gt_data INTO gs_data.
+    MOVE-CORRESPONDING gs_data TO gs_out.
+
+    lv_day = sy-datum - gs_out-rgdat.
+
+    IF gs_out-light2 = 1.
+      IF lv_day >= 5.
+        CLEAR ls_col.
+        ls_col-fname     = 'IVNUM'.
+        ls_col-color-col = cl_gui_resources=>list_col_negative.
+        ls_col-color-int = 0.
+        ls_col-color-inv = 0.
+        APPEND ls_col TO gs_out-it_col.   " << 기존: gs_out-ctab
+      ENDIF.
+    ENDIF.
+    APPEND gs_out TO gt_out.
+    CLEAR gs_out.
+  ENDLOOP.
 
 
 ENDFORM.
@@ -274,8 +298,6 @@ FORM get_ap_data .
            fname TYPE zessfname,
          END OF ls_name.
 
-
-
   CLEAR gt_data.
 
   SELECT ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
@@ -310,6 +332,16 @@ FORM get_ap_data .
     CONCATENATE ls_name-lname ls_name-fname INTO ls_data-apnme.
 
     MODIFY gt_data FROM ls_data.
+  ENDLOOP.
+
+
+  CLEAR :  gs_out,
+           gt_out.
+  LOOP AT gt_data INTO gs_data.
+    MOVE-CORRESPONDING gs_data TO gs_out.
+
+    APPEND gs_out TO gt_out.
+    CLEAR gs_out.
   ENDLOOP.
 
 
@@ -354,7 +386,9 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
   DATA : lt_data TYPE TABLE OF zsssmm03002,
          ls_data LIKE LINE OF lt_data,
          lt_list TYPE TABLE OF zsssmm03002,
-         ls_list LIKE LINE OF lt_list.
+         ls_list LIKE LINE OF lt_list,
+         lv_day  TYPE i,
+         ls_col  TYPE lvc_s_scol.
 
   DATA : BEGIN OF ls_ivnum,
            ivnum TYPE zessivnum,
@@ -458,7 +492,31 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
   ENDIF.
 
 
-  SORT gt_data BY grdat DESCENDING rgdat DESCENDING ivnum.
+  SORT gt_data BY grdat DESCENDING rgdat.
+
+
+
+  CLEAR :  gs_out,
+           gt_out.
+  LOOP AT gt_data INTO gs_data.
+    MOVE-CORRESPONDING gs_data TO gs_out.
+
+    lv_day = sy-datum - gs_out-grdat.
+
+    IF gs_out-light = 1.
+      IF lv_day >= 5.
+        CLEAR ls_col.
+        ls_col-fname     = 'GRNUM'.
+        ls_col-color-col = cl_gui_resources=>list_col_negative.
+        ls_col-color-int = 0.
+        ls_col-color-inv = 0.
+        APPEND ls_col TO gs_out-it_col.   " << 기존: gs_out-ctab
+      ENDIF.
+    ENDIF.
+    APPEND gs_out TO gt_out.
+    CLEAR gs_out.
+  ENDLOOP.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -849,6 +907,13 @@ FORM set_iv_insert_data USING VALUE(pv_grnum) TYPE zessgrnum.
   "새로운 전표 비고에 송장문서번호 기입
   gs_jeh-stext = |{ lv_ivnum } 의 자동전표|.
 
+  IF gs_mivh-stext IS INITIAL.
+    gs_mivh-stext = |{ pv_grnum }의 송장검증|.
+    MESSAGE i999(zmcss) WITH '비고가 공백입니다. 자동으로 채워집니다.'.
+  ENDIF.
+
+  zsssmm03007-stext = gs_mivh-stext.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CHECK_IV_FIELD
@@ -863,9 +928,11 @@ FORM check_iv_field CHANGING cv_subrc TYPE sy-subrc.
   IF zsssmm03007-ivdat IS INITIAL.
     cv_subrc = 4.
     MESSAGE i999(zmcss) WITH '입고일을 입력해주세요'.
+    RETURN.
   ELSEIF zsssmm03007-rgtor IS INITIAL.
     cv_subrc = 4.
     MESSAGE i999(zmcss) WITH '등록자를 입력해주세요'.
+    RETURN.
   ENDIF.
 
 
@@ -1483,7 +1550,7 @@ FORM set_fi_old_data .
     WHERE jenum = lv_jenum.
 
   gs_jeh_2-rev = 'X'.
-  gs_jeh_2-rrson = |{ zsssmm03013-ivnum } 수정으로 인한 역분개|.
+  gs_jeh_2-rrson = |{ zsssmm03013-ivnum }의 수정으로 인한 역분개|.
   gs_jeh_2-rjnum = gs_jeh-jenum.
 
 ENDFORM.
@@ -1539,7 +1606,7 @@ FORM set_fi_new_data .
   gs_jeh_3-jenum = ls_jeset-jenum.
   gs_jeh_3-fyear = ls_jeset-fyear.
 *  gs_jeh_3-stext = zsssmm03013-stext.
-  gs_jeh_3-stext = |{ gs_mivh-ivnum } 수정으로 인한 자동전표|.
+  gs_jeh_3-stext = |{ gs_mivh-ivnum }의 자동전표|.
   gs_jeh_3-curky = 'KRW'.
   gs_jeh_3-rgdat = sy-datum.
   gs_jeh_3-jtype = 'KR'.
@@ -2517,7 +2584,9 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM init_alv_0100 .
-  IF go_con_0100 IS NOT INITIAL. RETURN. ENDIF.
+  IF go_con_0100 IS NOT INITIAL.
+    RETURN.
+  ENDIF.
 
   CREATE OBJECT go_con_0100
     EXPORTING
@@ -2561,6 +2630,7 @@ FORM set_layout_0100 CHANGING ps_layo TYPE lvc_s_layo.
     ps_layo-zebra = 'X'.
     ps_layo-excp_fname = 'LIGHT2'.
     ps_layo-excp_led = 'X'.
+    ps_layo-ctab_fname = 'IT_COL'.
 
   ELSEIF my_tab-activetab = 'TAB2'.
     CLEAR ps_layo.
@@ -2570,6 +2640,7 @@ FORM set_layout_0100 CHANGING ps_layo TYPE lvc_s_layo.
 *  ps_layo-no_rowins = 'X'. "Standard Edit X
     ps_layo-excp_fname = 'LIGHT'.
     ps_layo-excp_led = 'X'.
+    ps_layo-ctab_fname = 'IT_COL'.
 
   ELSEIF my_tab-activetab = 'TAB3'.
     CLEAR ps_layo.
@@ -2592,7 +2663,9 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
 
   CALL FUNCTION 'LVC_FIELDCATALOG_MERGE'
     EXPORTING
+*     i_bypassing_buffer = 'X'
       i_structure_name = 'ZSSSMM03002'
+*     i_internal_tabname = 'GT_OUT'   " ← 구조명이 아니라 내부 테이블 변수명
     CHANGING
       ct_fieldcat      = pt_fcat.
 
@@ -2621,6 +2694,11 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
+        WHEN 'JENUM'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
+
 
         WHEN 'GRNME'.
           ls_fcat-no_out = 'X'.
@@ -2654,6 +2732,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '1'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
+          ls_fcat-coltext = '입고문서 등록일'.
         WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
           ls_fcat-emphasize = 'C300'.
@@ -2704,6 +2783,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '1'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
+          ls_fcat-coltext = '입고문서 등록일'.
         WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
           ls_fcat-emphasize = 'C300'.
@@ -2779,6 +2859,10 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '5'.
         WHEN 'JENUM'.
           ls_fcat-coltext = '송장문서 전표'.
+          ls_fcat-outputlen = '8'.
+          ls_fcat-fix_column = 'X'.
+          ls_fcat-hotspot = 'X'.
+
 
 
         WHEN 'LIGHT2'.
@@ -2817,7 +2901,7 @@ ENDFORM.
 *      -->P_GT_FCAT  text
 *      -->P_GO_ALV  text
 *----------------------------------------------------------------------*
-FORM display_alv_0100 TABLES pt_data STRUCTURE zsssmm03002
+FORM display_alv_0100 "TABLES pt_data STRUCTURE zsssmm03002
                       USING VALUE(ps_layo) TYPE lvc_s_layo
                                   pt_fcat TYPE lvc_t_fcat
                                   pt_sort TYPE lvc_t_sort
@@ -2842,7 +2926,7 @@ FORM display_alv_0100 TABLES pt_data STRUCTURE zsssmm03002
 *     it_except_qinfo               =
 *     ir_salv_adapter               =
     CHANGING
-      it_outtab                     = pt_data[]
+      it_outtab                     = gt_out
       it_fieldcatalog               = pt_fcat
       it_sort                       = pt_sort
 *     it_filter                     =
@@ -3007,6 +3091,7 @@ FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
         ls_fcat-no_out = 'X'.
       WHEN 'GRPRC'.
         ls_fcat-coltext = '금액'.
+        ls_fcat-emphasize = 'C300'.
       WHEN 'GRSEQ'.
         ls_fcat-outputlen = 3.
         ls_fcat-lzero = 'X'.
@@ -3405,7 +3490,7 @@ FORM set_grnum_check .
 
   DATA: BEGIN OF ls_f4,
           grnum TYPE zessgrnum,
-          grrsn TYPE zessfname,
+          grrsn TYPE zessstext,
         END OF ls_f4,
         lt_f4    LIKE TABLE OF ls_f4,
         lv_rgtor TYPE zessrgtor.
@@ -3428,13 +3513,21 @@ FORM set_grnum_check .
       ls_f4-grrsn = ''.
     ELSE.
       CLEAR gv_subrc.
-      ls_f4-grrsn = '기입가능'.
+      SELECT SINGLE stext
+        FROM ztssgrh
+        INTO ls_f4-grrsn
+        WHERE grnum = ls_f4-grnum.
+
+
+*      ls_f4-grrsn = '기입가능'.
     ENDIF.
 
     MODIFY lt_f4 FROM ls_f4.
   ENDLOOP.
 
   DELETE lt_f4 WHERE grrsn EQ ''.
+
+  SORT lt_f4 BY grnum DESCENDING.
 
   CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
     EXPORTING
@@ -3465,7 +3558,7 @@ ENDFORM.
 FORM set_ivnum_check .
   DATA: BEGIN OF ls_f4,
           ivnum TYPE zessivnum,
-          ivrsn TYPE zessfname,
+          ivrsn TYPE zessstext,
         END OF ls_f4,
         lt_f4    LIKE TABLE OF ls_f4,
         lv_rgtor TYPE zessrgtor.
@@ -3496,7 +3589,13 @@ FORM set_ivnum_check .
     READ TABLE lt_f4d WITH KEY ls_f4-ivnum INTO ls_f4d.
 
     IF sy-subrc <> 0.
-      ls_f4-ivrsn = '기입가능'.
+      SELECT SINGLE stext
+        FROM ztssmivh
+        INTO ls_f4-ivrsn
+        WHERE ivnum = ls_f4-ivnum.
+
+
+*      ls_f4-ivrsn = '기입가능'.
     ELSE.
       ls_f4-ivrsn = ''.
     ENDIF.
@@ -3506,6 +3605,8 @@ FORM set_ivnum_check .
   ENDLOOP.
 
   DELETE lt_f4 WHERE ivrsn EQ ''.
+
+  SORT lt_f4 BY ivnum DESCENDING.
 
   CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
     EXPORTING
@@ -3701,7 +3802,7 @@ FORM get_data .
       RETURN.
     ENDIF.
 
-    SORT gt_data BY rgdat ASCENDING.
+    SORT gt_data BY light2 ASCENDING.
 
   ELSEIF my_tab-activetab = 'TAB2'.
 
@@ -3722,7 +3823,7 @@ FORM get_data .
       RETURN.
     ENDIF.
 
-    SORT gt_data BY grdat ASCENDING.
+    SORT gt_data BY grdat DESCENDING light ASCENDING.
 
   ELSEIF my_tab-activetab = 'TAB3'.
 
@@ -3738,7 +3839,7 @@ FORM get_data .
     PERFORM check_alv_condition.
     PERFORM get_ap_data.
 
-    SORT gt_data BY apdat ASCENDING.
+    SORT gt_data BY apdat DESCENDING.
   ENDIF.
 
 ENDFORM.
@@ -3799,7 +3900,8 @@ FORM set_sort_0100  CHANGING  ct_sort_0100 TYPE lvc_t_sort.
 
     CLEAR ls_sort.
     ls_sort-fieldname = 'RGDAT'.
-    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-up       = ''.     " 오름차순
+    ls_sort-down       = 'X'.
     ls_sort-subtot   = ' '.     " 소계 표시 안 함
     APPEND ls_sort TO ct_sort_0100.
 
@@ -3807,7 +3909,8 @@ FORM set_sort_0100  CHANGING  ct_sort_0100 TYPE lvc_t_sort.
 
     CLEAR ls_sort.
     ls_sort-fieldname = 'GRDAT'.
-    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-up       = ''.     " 오름차순
+    ls_sort-down       = 'X'.     " 오름차순
     ls_sort-subtot   = ' '.     " 소계 표시 안 함
     APPEND ls_sort TO ct_sort_0100.
 
@@ -3815,7 +3918,8 @@ FORM set_sort_0100  CHANGING  ct_sort_0100 TYPE lvc_t_sort.
 
     CLEAR ls_sort.
     ls_sort-fieldname = 'APDAT'.
-    ls_sort-up       = 'X'.     " 오름차순
+    ls_sort-up       = ''.     " 오름차순
+    ls_sort-down       = 'X'.     " 오름차순
     ls_sort-subtot   = ' '.     " 소계 표시 안 함
     APPEND ls_sort TO ct_sort_0100.
   ENDIF.
@@ -3831,6 +3935,16 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM req_event_for_alv_0300 .
   SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT_0100F
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GT_FCAT_0100  text
+*----------------------------------------------------------------------*
+FORM set_fcat_0100f  CHANGING p_gt_fcat_0100.
 
 ENDFORM.
 

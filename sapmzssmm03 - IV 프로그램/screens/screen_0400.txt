@@ -8,20 +8,20 @@ SAPMZSSMM03
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM03                             0400 0400     33101192 37  0  0 37126  0G E                              20251015180338																																
+SAPMZSSMM03                             0400 0400     33101192 37  0  0 37127  0G E                              20251016163840																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX_3		CHAR	101	00	00	00	30	00	  1	  2		  0	  0	  0		  3	R				  0	  0	106							IV 입력창		
+B_BOX_3		CHAR	101	00	00	00	30	00	  1	  2		  0	  0	  0		  3	R				  0	  0	104							IV 입력창		
 ZSSSMM03017-IVNUM	2	CHAR	 20	30	00	04	30	00	  2	  5		  0	  0	  0		  0					  0	  0								송장 문서 번호	                                                                                                                                                                                                                                                        X	
 ZSSSMM03017-IVNUM	C	CHAR	 11	A0	00	84	00	08	  2	 26		  0	  0	  0		  0					 22	  0				ME2				___________	X                                      00	
-B_BUTTON		CHAR	 11	00	00	00	30	00	  2	 42		  0	  0	  0		  0	P				  0	  0	107			ME2				IV 문서추가	                                                                                                                                                                        IVADD	
-B_BOX_2		CHAR	101	00	00	00	30	00	  4	  2		  0	  0	  0		  8	R				  0	  0	101							IV 수정정보		
+B_BUTTON		CHAR	 11	00	00	00	30	00	  2	 42		  0	  0	  0		  0	P				  0	  0	105			ME2				IV 문서추가	                                                                                                                                                                        IVADD	
+B_BOX_2		CHAR	101	00	00	00	30	00	  4	  2		  0	  0	  0		  8	R				  0	  0	106							IV 수정정보		
 ZSSSMM03013-IVNUM	2	CHAR	 20	30	00	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								송장 문서 번호	                                                                                                                                                                                                                                                        X	
 ZSSSMM03013-IVNUM	C	CHAR	 11	A0	00	80	30	00	  5	 25		  0	  0	  0		  0					 22	  0								___________	                                       00	
 ZSSSMM03013-RGTOR	0	CHAR	  6	30	00	04	30	00	  5	 66		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
 ZSSSMM03013-RGTOR	C	CHAR	  8	A0	00	84	30	08	  5	 73		  0	  0	  0		  0					 16	  0				AE2				________	X                                      00	
-B_BUTTON_2		CHAR	  7	00	00	00	30	00	  5	 83		  0	  0	  0		  2	P				  0	  0	102			AE2				@16@	                                                                                                                                                                        EMP1	
+B_BUTTON_2		CHAR	  7	00	00	00	30	00	  5	 83		  0	  0	  0		  2	P				  0	  0	107			AE2				@16@	                                                                                                                                                                        EMP1	
 ZSSSMM03013-RGNME	C	CHAR	 15	B0	02	80	31	00	  5	 87		  0	  0	  0		  0					 40	  0				AE2				_______________	                                       00	
 ZSSSMM03013-STEXT	2	CHAR	 20	30	02	00	30	00	  6	  4		  0	  0	  0		  0					  0	  0								비고	                                                                                                                                                                                                                                                        X	
 ZSSSMM03013-STEXT	C	CHAR	 35	B0	02	80	00	00	  6	 25		  0	  0	  0		  0					120	  0				AE2				___________________________________	                                       00	
@@ -37,8 +37,8 @@ ZSSSMM03013-CURKY1	C	CUKY	  5	A0	00	80	31	00	 10	 39		  0	  0	  0		  0					 10	 
 ZSSSMM03013-TOPRC2	0	CHAR	  7	30	00	00	30	00	 10	 61		  0	  0	  0		  0					  0	  0								총 금액	                                                                                                                                                                                                                                                        X	
 ZSSSMM03013-TOPRC2	P	CURR	 20	A0	00	80	30	00	 10	 75		  0	  0	  0		  0					 15	  2		ZSSSMM03013-CURKY						____________________	                                       00	
 ZSSSMM03013-CURKY	C	CUKY	  5	A0	00	80	31	00	 10	 96		  0	  0	  0		  0					 10	  0								_____	                                       00	
-B_BOX_4		CHAR	101	00	00	00	30	00	 12	  2		  0	  0	  0		 22	R				  0	  0	103							대체 입고문서 목록		
-CON_4			 98	00	00	00	30	00	 13	  4		  0	  0	  0		 20	U				  1	  1	104									
+B_BOX_4		CHAR	101	00	00	00	30	00	 12	  2		  0	  0	  0		 20	R				  0	  0	101							대체 입고문서 목록		
+CON_4			 98	00	00	00	30	00	 13	  4		  0	  0	  0		 18	U				  1	  1	102									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

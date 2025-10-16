@@ -59,8 +59,8 @@ MODULE fill_dynnr OUTPUT.
     WHEN 'TAB3'.
       gv_dynnr = '0103'.
     WHEN OTHERS.
-      my_tab-activetab = 'TAB2'.
-      gv_dynnr = '0102'.
+      my_tab-activetab = 'TAB1'.
+      gv_dynnr = '0101'.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -254,6 +254,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0100 OUTPUT.
 
+
   PERFORM init_alv_0100.
 
   PERFORM set_layout_0100 CHANGING gs_layo_0100.
@@ -261,13 +262,20 @@ MODULE set_alv_0100 OUTPUT.
   CLEAR gt_fcat_0100.
   PERFORM set_fcat_0100 CHANGING gt_fcat_0100.
 
+
+  APPEND VALUE #( fieldname = 'STYLE' tech      = 'X' ) TO gt_fcat_0100.
+  APPEND VALUE #( fieldname = 'IT_COL' tech      = 'X' ) TO gt_fcat_0100.
+
   PERFORM set_sort_0100 CHANGING gt_sort_0100.
 
-  PERFORM display_alv_0100 TABLES gt_data
+  PERFORM display_alv_0100  "TABLES gt_out
                            USING  gs_layo_0100
                                   gt_fcat_0100
                                   gt_sort_0100
                                   go_alv_0100.
+
+
+
 
 ENDMODULE.
 *&---------------------------------------------------------------------*

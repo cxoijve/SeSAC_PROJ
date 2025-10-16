@@ -14,10 +14,10 @@ CLASS lcl_handler IMPLEMENTATION.
         WHEN 'GRNUM'.
 *          PERFORM alv_cl_double_click USING e_column_id
 *                                                 row_id.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_grh INTO gs_grh INDEX row_id.
           CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
             EXPORTING
-              iv_grnum = gs_list-grnum.
+              iv_grnum = gs_grh-grnum.
 
         WHEN 'RGTOR'.
           READ TABLE gt_grh INTO gs_grh INDEX row_id.
@@ -57,6 +57,18 @@ CLASS lcl_handler IMPLEMENTATION.
           CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
             EXPORTING
               iv_grnum = gs_list-grnum.
+        WHEN 'JENUM'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
+            EXPORTING
+              i_jenum = gs_list-jenum.
+        WHEN 'APNUM'.
+          READ TABLE gt_data INTO gs_list INDEX row_id.
+          CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
+            EXPORTING
+              i_jenum = gs_list-apnum.
+
+
 
       ENDCASE.
     ENDIF.

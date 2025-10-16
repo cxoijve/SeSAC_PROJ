@@ -68,6 +68,12 @@ MODULE user_command_0200 INPUT.
     WHEN 'BACK'.
       PERFORM refresh_alv CHANGING go_alv1.
       LEAVE TO SCREEN 0100.
+    WHEN 'B_RGTOR'.
+      CALL FUNCTION 'Z_FMSS_CALL_EMP_DETAIL'
+        EXPORTING
+          iv_pernr   = zssssd0103-rgtor
+          iv_ismodal = 'X'    " 모달 형태
+          iv_dtllv   = 'A'.   " 축약 정보
     WHEN 'TAB1'.
       ts_info-activetab = 'TAB1'.
     WHEN 'TAB2'.
@@ -336,13 +342,14 @@ MODULE user_command_0400 INPUT.
         FROM ztsscust
         INTO gs_head_crt-cname
        WHERE cstid = gs_head_crt-cstid.
+      zssssd0103-cstid = gs_head_crt-cstid.
 
 *      " 사원 정보 가져오기
 *      PERFORM get_emp_info CHANGING gs_head_crt.
 *      zssssd0103-ename = gs_head_crt-ename.
 *      zssssd0103-persg_t = gs_head_crt-persg_t.
 
-    when 'INSERT'.
+    WHEN 'INSERT'.
       " DB에 인서트 - 헤더 / 아이템
       gv_valid = abap_false.
       PERFORM check_required.       " 헤더, 아이템 체크

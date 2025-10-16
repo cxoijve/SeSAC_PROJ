@@ -19,7 +19,7 @@ MODULE create_display_alv OUTPUT.
 
 
   PERFORM create_alv USING 'CON1' CHANGING go_con go_alv.
-  PERFORM display_alv USING 'ZSSSMM0102' CHANGING gt_data gs_layo gt_fcat gt_sort go_alv.
+  PERFORM display_alv USING 'ZSSSMM0102' CHANGING gt_data gs_layo gt_fcat gt_sort9 go_alv.
 
 
 ENDMODULE.
@@ -38,8 +38,10 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE create_display_alv_0200 OUTPUT.
+
   PERFORM create_alv USING 'CON2' CHANGING go_con2 go_alv2.
-  PERFORM display_alv USING 'ZSSSMM0104' CHANGING gt_item gs_layo2 gt_fcat2 gt_sort2 go_alv2.
+*  PERFORM display_alv USING 'ZSSSMM0104' CHANGING gt_item gs_layo2 gt_fcat2 gt_sort2 go_alv2.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0104' gs_layo2 gt_exclude CHANGING gt_item gt_fcat2 gt_sort2 go_alv2.
 
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -175,6 +177,42 @@ MODULE create_display_alv_0302 OUTPUT.
 
   PERFORM create_display_0302.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0500 OUTPUT.
+  SET PF-STATUS '0500'.
+  SET TITLEBAR '0500'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_ALV_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_alv_0500 OUTPUT.
+  perform set_alv_0500.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_0501  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE status_0501 OUTPUT.
+  SET PF-STATUS 'S501'.
+  SET TITLEBAR 'T501'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  SET_TEXT_EDIT_0510  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE set_text_edit_0510 OUTPUT.
+   PERFORM set_text_edit_0510 USING 'CON_EDIT'
+                                    go_mod
+                                    go_edit.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

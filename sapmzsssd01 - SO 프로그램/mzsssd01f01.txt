@@ -293,16 +293,24 @@ FORM set_fcat1.
 
   gs_fcat1-fieldname = 'CSTID'.
   gs_fcat1-coltext = '고객코드'.
+  gs_fcat1-hotspot = 'X'.
   APPEND gs_fcat1 TO gt_fcat1.
   CLEAR gs_fcat1.
 
   gs_fcat1-fieldname = 'CNAME'.
   gs_fcat1-coltext = '고객명'.
+  gs_fcat1-hotspot = 'X'.
   APPEND gs_fcat1 TO gt_fcat1.
   CLEAR gs_fcat1.
 
   gs_fcat1-fieldname = 'LIGHT'.
   gs_fcat1-coltext = '출고 현황'.
+  APPEND gs_fcat1 TO gt_fcat1.
+  CLEAR gs_fcat1.
+
+  gs_fcat1-fieldname = 'RGTOR'.
+  gs_fcat1-coltext = '등록자'.
+  gs_fcat1-hotspot = 'X'.
   APPEND gs_fcat1 TO gt_fcat1.
   CLEAR gs_fcat1.
 ENDFORM.
@@ -661,11 +669,13 @@ FORM set_fcat2 .
 
   gs_fcat2-fieldname = 'SOMNR'.
   gs_fcat2-coltext = '완제품코드'.
+  gs_fcat2-hotspot = 'X'.
   APPEND gs_fcat2 TO gt_fcat2.
   CLEAR gs_fcat2.
 
   gs_fcat2-fieldname = 'MATNM'.
   gs_fcat2-coltext = '자재명'.
+  gs_fcat2-hotspot = 'X'.
   APPEND gs_fcat2 TO gt_fcat2.
   CLEAR gs_fcat2.
 
@@ -1003,6 +1013,7 @@ FORM insert_info .
     gv_changed = abap_false.
     MESSAGE i999(zmcss) WITH '판매오더' gs_head_crt-sonum '생성 성공' DISPLAY LIKE 'S'.
     PERFORM refresh_alv CHANGING go_alv1.
+    PERFORM get_header_list.
     LEAVE TO SCREEN 0100.
   ELSE.
     ROLLBACK WORK.

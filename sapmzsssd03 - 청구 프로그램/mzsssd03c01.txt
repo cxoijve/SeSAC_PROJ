@@ -11,7 +11,9 @@ ENDCLASS.
 
 CLASS lcl_handler IMPLEMENTATION.
   METHOD on_hotspot_click.
-    DATA: lv_ginum TYPE ztssgih-ginum.
+    DATA: lv_ginum TYPE ztssgih-ginum,
+          lv_cstid TYPE ztsscust-cstid,
+          lv_cname TYPE ztsscust-cname.
 
     CASE sender.
 
@@ -21,6 +23,8 @@ CLASS lcl_handler IMPLEMENTATION.
           RETURN.
         ENDIF.
         lv_ginum = gs_bi-ginum.
+        lv_cstid = gs_bi-cstid.
+        lv_cname = gs_bi-cname.
 
       WHEN go_alv_doc.
         READ TABLE gt_doc INTO gs_doc INDEX e_row_id.
@@ -28,6 +32,8 @@ CLASS lcl_handler IMPLEMENTATION.
           RETURN.
         ENDIF.
         lv_ginum = gs_doc-ginum.
+        lv_cstid = gs_doc-cstid.
+        lv_cname = gs_doc-cname.
 
       WHEN go_alv2.
         READ TABLE gt_gi_item INTO gs_gi_item INDEX e_row_id.
@@ -79,6 +85,17 @@ CLASS lcl_handler IMPLEMENTATION.
             query_failed = 1
             unknown_flag = 2
             OTHERS       = 3.
+
+      WHEN 'CSTID'.
+        CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+          EXPORTING
+            iv_cstid = lv_cstid.
+
+      WHEN 'CNAME'.
+        CALL FUNCTION 'Z_FMSS_CALL_CUST_DATA'
+          EXPORTING
+            iv_cstid = lv_cstid.
+
 
     ENDCASE.
   ENDMETHOD.
