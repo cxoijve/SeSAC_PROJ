@@ -16,6 +16,7 @@ INCLUDE mzssmd08f02                             .  " Function Module Caller
 INCLUDE mzssmd08c01.
 
 LOAD-OF-PROGRAM.
+  gv_debugdate = sy-datum.
 
   PERFORM get_domain_fixed_values TABLES gt_dd07v
                                   USING  'ZDSSPERSG'.

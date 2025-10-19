@@ -134,6 +134,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default .
   zsssmm0103-rgtor = 'E0000015'.
+  gv_emp_num = 'E0000015'.
   zsssmm0103-rgdat = sy-datum.
   " 첫 화면 구성하기
   PERFORM set_first_display CHANGING zsssmm0101.
@@ -388,8 +389,8 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_first_display  CHANGING c_inputs TYPE zsssmm0101.
 
-  c_inputs-podat_s = '20250101'.
-  c_inputs-podat_e = '20251231'.
+  c_inputs-podat_s = '20250501'.
+  c_inputs-podat_e = sy-datum.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -2141,9 +2142,9 @@ FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
 
   CASE p_sender.
     WHEN go_alv7.
-      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b02 icon_workflow_activity CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b03 icon_incomplete CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_insert_row CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b02 icon_edit_file CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b03  icon_delete_row CHANGING pcl_toolbar.
     WHEN OTHERS.
 *    WHEN go_alv_po_items.
 *      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
@@ -2255,7 +2256,7 @@ ENDFORM.
 FORM req_event_0500 .
   SET HANDLER :     lcl_event_handler=>handle_user_command FOR go_alv7,
                     lcl_event_handler=>handle_toolbar FOR go_alv7,
-                    lcl_event_handler=>on_button_click for go_alv7.
+                    lcl_event_handler=>on_button_click FOR go_alv7.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  HANDLE_ADD_ITEM
@@ -2613,6 +2614,7 @@ ENDFORM.
 FORM confirm_contents .
   DATA lv_answer TYPE c.
 
+  zsssmm0103-rgdat = zsssmm0103-podat.
   PERFORM popup_to_confirm
     USING    '발주최종확인'                " 제목
              '정말 발주하시겠습니까?'       " 질문
@@ -2623,7 +2625,6 @@ FORM confirm_contents .
              '누르면 발주가 완료됩니다'     " 버튼1 퀵인포
              '누르면 발주가 취소됩니다'     " 버튼2 퀵인포
     CHANGING lv_answer.
-
 
 
   CASE lv_answer.
@@ -2674,6 +2675,9 @@ FORM insert_po_header2 .
 
   PERFORM set_number_range.
 
+  gv_text = COND #( WHEN gv_text IS INITIAL
+                THEN |{ zsssmm0103-vname }의 구매오더| ).
+
   ls_data-ponum = gv_po_num.
   ls_data-podat = zsssmm0103-podat.
   ls_data-dudat = zsssmm0103-dudat.
@@ -2682,6 +2686,7 @@ FORM insert_po_header2 .
   ls_data-rgdat = sy-datum.
   ls_data-stext = gv_text.
   ls_data-venid = zsssmm0103-venid.
+  ls_data-rgdat = zsssmm0103-rgdat.
 
   INSERT ztsspoh FROM ls_data.
 
@@ -2826,6 +2831,81 @@ FORM set_sort  TABLES   pt_sort STRUCTURE lvc_s_sort.
   ls_sort-up        = 'X'.           "오름차순 (X) / 내림차순 (공백)
   ls_sort-subtot    = 'X'.           "소계 표시 (옵션)
   APPEND ls_sort TO pt_sort.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CALLED_EXE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM called_exe .
+  CLEAR gv_call_num.
+  GET PARAMETER ID 'ZSSPO' FIELD gv_call_num.
+  IF gv_call_num IS NOT INITIAL.
+    PERFORM get_call_podata.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CALL_PODATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_call_podata .
+
+  MOVE  gv_call_num TO zsssmm0103-venid.
+  PERFORM get_vender_name USING zsssmm0103-venid CHANGING zsssmm0103-vname.
+
+  CALL SCREEN 0500.
+  LEAVE  TO SCREEN 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_DEFAULT_SUB
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_default_sub .
+  DATA : lt_info TYPE TABLE OF zsfg2801 WITH HEADER LINE.
+
+  DATA: BEGIN OF ls_mat,
+          matnr TYPE ztssmat-matnr,
+        END OF ls_mat,
+        lt_mat LIKE TABLE OF ls_mat.
+
+  SELECT matnr
+    INTO TABLE lt_mat
+    FROM ztssmat
+    WHERE mtype = 'R'.
+
+
+  LOOP AT lt_mat INTO ls_mat.
+
+    lt_info-matnr = ls_mat.
+    lt_info-stoid = 'SL01'.
+    APPEND lt_info.
+
+  ENDLOOP.
+
+
+  CALL FUNCTION 'Z_FMSS_GET_AVAIL_WARES'
+    EXPORTING
+      it_matlist   = lt_info[]
+    EXCEPTIONS
+      query_failed = 1
+      OTHERS       = 2.
+  IF sy-subrc <> 0.
+    MESSAGE i999(zmcss) WITH 'NO AVAIL WARES!'.
+  ENDIF.
 
 ENDFORM.
 

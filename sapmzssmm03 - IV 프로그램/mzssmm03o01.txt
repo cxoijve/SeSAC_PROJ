@@ -263,8 +263,8 @@ MODULE set_alv_0100 OUTPUT.
   PERFORM set_fcat_0100 CHANGING gt_fcat_0100.
 
 
-  APPEND VALUE #( fieldname = 'STYLE' tech      = 'X' ) TO gt_fcat_0100.
-  APPEND VALUE #( fieldname = 'IT_COL' tech      = 'X' ) TO gt_fcat_0100.
+*  APPEND VALUE #( fieldname = 'STYLE' tech      = 'X' ) TO gt_fcat_0100.
+*  APPEND VALUE #( fieldname = 'IT_COL' tech      = 'X' ) TO gt_fcat_0100.
 
   PERFORM set_sort_0100 CHANGING gt_sort_0100.
 

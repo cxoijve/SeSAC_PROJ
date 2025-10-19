@@ -3391,7 +3391,7 @@ FORM check_gii_availability  USING    VALUE(ps_info) LIKE zssssd0206
          lv_doamt      TYPE zessamount, "GI Done SO Amount
          lv_edamt      TYPE zessamount, "Edit Line's Amount
          ls_zssssd0206 TYPE zssssd0206,
-         lv_availamt   TYPE zessamount.
+         lv_availamt   TYPE int4.
 
   " 1. 출고량은 0이어선 안된다.
   IF ps_info-amount EQ 0.
@@ -3533,13 +3533,32 @@ FORM get_avail_stock  USING    VALUE(pv_matnr) TYPE zessmatnr
 
   CLEAR pv_subrc.
 
+  DATA : lv_datum LIKE sy-datum.
+  IF gv_eflag_0500 EQ 'X'.
+    IF gs_info_0500h-gidat IS NOT INITIAL.
+      lv_datum = gs_info_0500h-gidat.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '출고일을 지정해주십시오.'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ELSE.
+    IF zssssd0207-gidat IS NOT INITIAL.
+      lv_datum = zssssd0207-gidat.
+    ELSE.
+      MESSAGE i999(zmcss) WITH '출고일을 지정해주십시오.'.
+      pv_subrc = 4.
+      RETURN.
+    ENDIF.
+  ENDIF.
+
   DATA : lv_astck TYPE int4.
 
   " 현재 시점의 가용재고 확인
   CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
     EXPORTING
       iv_begda         = '11110101'
-      iv_endda         = sy-datum
+      iv_endda         = lv_datum
       iv_stoid         = pv_stoid
       iv_matnr         = pv_matnr
     IMPORTING
@@ -3799,6 +3818,10 @@ FORM set_stext  TABLES pt_info_0300 STRUCTURE zssssd0206
          lv_itcnt   TYPE i,
          lv_citcnt  TYPE string.
 
+  DATA : lt_info_0300 TYPE TABLE OF zssssd0206.
+  APPEND LINES OF pt_info_0300 TO lt_info_0300.
+  DELETE ADJACENT DUPLICATES FROM lt_info_0300 COMPARING sonum.
+
   PERFORM get_emp TABLES gt_ztssemp
                   USING  ps_header_0300-rgtor
                   CHANGING ls_ztssemp
@@ -3809,23 +3832,22 @@ FORM set_stext  TABLES pt_info_0300 STRUCTURE zssssd0206
 
   CONCATENATE  ls_ztssemp-lname ls_ztssemp-fname INTO lv_ename.
 
-
-
   IF pt_info_0300[] IS INITIAL.
     CONCATENATE ps_header_0300-gidat '일자 출고 By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
     "ps_header_0300-stext = ps_header_0300-gidat && ' 일자 출고 By ' && lv_ename.
     RETURN.
   ENDIF.
 
-  DESCRIBE TABLE pt_info_0300 LINES lv_itcnt.
+  "S2025000001 외 2건의 출고
+  DESCRIBE TABLE lt_info_0300 LINES lv_itcnt.
   READ TABLE pt_info_0300 INDEX 1.
 
   CASE lv_itcnt.
     WHEN '1'.
-      CONCATENATE ps_header_0300-gidat '일자 출고' pt_info_0300-matnm 'By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
+      CONCATENATE pt_info_0300-sonum '의 출고' INTO ps_header_0300-stext SEPARATED BY space.
     WHEN OTHERS.
       lv_citcnt = lv_itcnt - 1.
-      CONCATENATE ps_header_0300-gidat '일자 출고' pt_info_0300-matnm '외' lv_citcnt '건 By' lv_ename INTO ps_header_0300-stext SEPARATED BY space.
+      CONCATENATE pt_info_0300-sonum '외' lv_citcnt '건의 출고' INTO ps_header_0300-stext SEPARATED BY space.
 *        ps_header_0300-stext =
 *    ps_header_0300-gidat && '일자 출고 :' && pt_info_0300-matnm && '외' && lv_itcnt && '건 By' && lv_ename.
   ENDCASE.
@@ -4007,7 +4029,7 @@ FORM insert_je  TABLES   pt_jei      STRUCTURE ztssjei
 
   ps_jeh-jtype = 'WA'.
   ps_jeh-curky = 'KRW'.
-  ps_jeh-rgdat = sy-datum.
+  ps_jeh-rgdat = ps_gih_0300-gidat.
 
   DATA : lv_cstid TYPE zesscstid,
          lv_ivprc TYPE zessivprc,
@@ -4138,7 +4160,8 @@ FORM insert_gi  TABLES   pt_gii STRUCTURE ztssgii
   ps_gih-jenum = ps_gih_0300-jenum.
   ps_gih-fyear = ps_gih_0300-fyear.
   ps_gih-stext = ps_gih_0300-stext.
-  ps_gih-rgdat = sy-datum.
+  "ps_gih-rgdat = sy-datum.
+  ps_gih-rgdat = ps_gih_0300-gidat.
   ps_gih-rgtor = ps_gih_0300-rgtor.
 
   LOOP AT pt_info_0300.
@@ -4172,7 +4195,7 @@ FORM insert_gi  TABLES   pt_gii STRUCTURE ztssgii
   ENDIF.
 
   DATA lv_jstxt TYPE c LENGTH 40.
-  lv_jstxt = pt_gii-ginum && '의 출고전표'.
+  lv_jstxt = pt_gii-ginum && '의 자동전표'.
 
   UPDATE ztssjeh SET stext = lv_jstxt WHERE jenum = ps_gih-jenum AND fyear = ps_gih-fyear.
   IF sy-subrc <> 0.
@@ -4238,7 +4261,7 @@ FORM insert_ware  TABLES   pt_ware      STRUCTURE ztssware
     pt_ware-wtype = 'O'.
     pt_ware-wdate = ps_gih-gidat.
     pt_ware-ginum = ps_gih-ginum.
-    pt_ware-rgdat = sy-datum.
+    pt_ware-rgdat = ps_gih-gidat.
     pt_ware-rgtor = 'E0000024'.
 
     APPEND pt_ware.
@@ -5505,13 +5528,14 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default_0101 .
   IF zssssd0201 IS INITIAL.
-    zssssd0201-begda = sy-datum.
-    PERFORM get_calc_datum USING  sy-datum
-                                  '+'
-                                  '0'
-                                  '1'
-                                  '0'
-                          CHANGING zssssd0201-endda.
+    zssssd0201-begda = '20250501'.
+    zssssd0201-endda = sy-datum.
+*    PERFORM get_calc_datum USING  sy-datum
+*                                  '+'
+*                                  '0'
+*                                  '1'
+*                                  '0'
+*                          CHANGING zssssd0201-endda.
 
   ENDIF.
 ENDFORM.
@@ -5525,13 +5549,15 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default_0102 .
   IF zssssd0202 IS INITIAL.
+    zssssd0202-begda = '20250501'.
     zssssd0202-endda = sy-datum.
-    PERFORM get_calc_datum USING  sy-datum
-                                  '-'
-                                  '0'
-                                  '1'
-                                  '0'
-                          CHANGING zssssd0202-begda.
+*    zssssd0202-endda = sy-datum.
+*    PERFORM get_calc_datum USING  sy-datum
+*                                  '-'
+*                                  '0'
+*                                  '1'
+*                                  '0'
+*                          CHANGING zssssd0202-begda.
 
   ENDIF.
 ENDFORM.
@@ -5545,13 +5571,15 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default_0103 .
   IF zssssd0203 IS INITIAL.
+    zssssd0203-begda = '20250501'.
     zssssd0203-endda = sy-datum.
-    PERFORM get_calc_datum USING  sy-datum
-                                  '-'
-                                  '0'
-                                  '1'
-                                  '0'
-                          CHANGING zssssd0203-begda.
+*    zssssd0203-endda = sy-datum.
+*    PERFORM get_calc_datum USING  sy-datum
+*                                  '-'
+*                                  '0'
+*                                  '1'
+*                                  '0'
+*                          CHANGING zssssd0203-begda.
 
   ENDIF.
 ENDFORM.
@@ -5565,13 +5593,15 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM set_default_0104 .
   IF zssssd0204 IS INITIAL.
+    zssssd0204-begda = '20250501'.
     zssssd0204-endda = sy-datum.
-    PERFORM get_calc_datum USING  sy-datum
-                                  '-'
-                                  '0'
-                                  '1'
-                                  '0'
-                          CHANGING zssssd0204-begda.
+*    zssssd0204-endda = sy-datum.
+*    PERFORM get_calc_datum USING  sy-datum
+*                                  '-'
+*                                  '0'
+*                                  '1'
+*                                  '0'
+*                          CHANGING zssssd0204-begda.
 
   ENDIF.
 ENDFORM.

@@ -23,7 +23,7 @@ FORM create_alv_0100 .
   CALL METHOD go_split->set_column_width
     EXPORTING
       id    = 1
-      width = 45.
+      width = 43.
 
   " 3. 좌/우 컨테이너 가져오기
   CALL METHOD go_split->get_container
@@ -185,6 +185,11 @@ FORM set_fcat_doc .
   APPEND gs_fcat_doc TO gt_fcat_doc.
   CLEAR gs_fcat_doc.
 
+  gs_fcat_doc-fieldname = 'STEXT'.
+  gs_fcat_doc-no_out = 'X'.
+  APPEND gs_fcat_doc TO gt_fcat_doc.
+  CLEAR gs_fcat_doc.
+
   gs_fcat_doc-fieldname = 'ARFYR'.
   gs_fcat_doc-no_out = 'X'.
   APPEND gs_fcat_doc TO gt_fcat_doc.
@@ -226,7 +231,7 @@ FORM set_sort USING pv_dat
 
   cs_sort-spos = '1'.
   cs_sort-fieldname = pv_dat.
-  cs_sort-up = 'X'.
+  cs_sort-down = 'X'.
   APPEND cs_sort TO ct_sort.
   CLEAR cs_sort.
 ENDFORM.
@@ -316,19 +321,36 @@ FORM get_bi_list .
       IF lv_diff > 5.
         CLEAR ls_color.
         ls_color-fname = 'GINUM'.
-        ls_color-color-int = '0'.
+        ls_color-color-int = '1'.
         ls_color-color-inv = '0'.
-        ls_color-color-col = '6'.   " 빨간색 배경
+        ls_color-color-col = '6'.   " 빨간 배경
         APPEND ls_color TO gs_bi-it_col.
       ENDIF.
     ENDIF.
     MODIFY gt_bi FROM gs_bi.
 
+    " 출고문서번호 Cell color 설정
     CLEAR ls_color.
     ls_color-fname = 'GINUM'.
     ls_color-color-int = '0'.
     ls_color-color-inv = '0'.
-    ls_color-color-col = '3'.   " 노란색 배경
+    ls_color-color-col = '3'.   " 연노랑 배경
+    APPEND ls_color TO gs_bi-it_col.
+
+    " 고객코드 Cell color 설정
+    CLEAR ls_color.
+    ls_color-fname = 'CSTID'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '1'.
+    ls_color-color-col = '5'.   " 초록 글씨
+    APPEND ls_color TO gs_bi-it_col.
+
+    " 고객명 Cell color 설정
+    CLEAR ls_color.
+    ls_color-fname = 'CNAME'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '1'.
+    ls_color-color-col = '5'.   " 초록 글씨
     APPEND ls_color TO gs_bi-it_col.
     MODIFY gt_bi FROM gs_bi.
   ENDLOOP.
@@ -383,9 +405,9 @@ FORM get_doc_list .
 
     CLEAR ls_color.
     ls_color-fname = 'BINUM'.
-    ls_color-color-int = '1'.
+    ls_color-color-int = '0'.
     ls_color-color-inv = '0'.
-    ls_color-color-col = '0'.
+    ls_color-color-col = '1'.     " 연노랑 배경
     APPEND ls_color TO gs_doc-it_col.
     MODIFY gt_doc FROM gs_doc.
 
@@ -393,7 +415,21 @@ FORM get_doc_list .
     ls_color-fname = 'GINUM'.
     ls_color-color-int = '0'.
     ls_color-color-inv = '0'.
-    ls_color-color-col = '3'.
+    ls_color-color-col = '3'.     " 하늘 배경
+    APPEND ls_color TO gs_doc-it_col.
+
+    CLEAR ls_color.
+    ls_color-fname = 'CSTID'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '1'.
+    ls_color-color-col = '5'.     " 초록 글씨
+    APPEND ls_color TO gs_doc-it_col.
+
+    CLEAR ls_color.
+    ls_color-fname = 'CNAME'.
+    ls_color-color-int = '0'.
+    ls_color-color-inv = '1'.
+    ls_color-color-col = '5'.     " 초록 글씨
     APPEND ls_color TO gs_doc-it_col.
     MODIFY gt_doc FROM gs_doc.
   ENDLOOP.
@@ -1043,9 +1079,15 @@ FORM call_save_popup .
       text_not_found        = 1
       OTHERS                = 2.
   IF lv_answer = '1'.       " 예
+    " 비고가 Initial인 경우 값 자동입력
+    IF gs_head_ist-stext IS INITIAL.
+      MESSAGE i999(zmcss) WITH '비고가 비었으므로 내용이 자동으로 채워집니다.'.
+      gs_head_ist-stext = gs_gi_head-ginum && '의 청구'.
+    ENDIF.
     PERFORM insert_doc CHANGING gv_subrc.
     IF gv_subrc EQ 0.
       PERFORM insert_je.
+      CLEAR gt_jei.
     ENDIF.
     CLEAR gv_subrc.
   ELSEIF lv_answer = '2'.   " 아니오
@@ -1080,7 +1122,7 @@ FORM insert_doc CHANGING cv_subrc TYPE sy-subrc.
       ls_item-binum = gs_head_ist-binum.
       INSERT ztsssivi FROM ls_item.
     ENDLOOP.
-    COMMIT WORK.
+*    COMMIT WORK.
     MESSAGE i999(zmcss) WITH '청구문서' gs_head_ist-binum '생성 완료' DISPLAY LIKE 'S'.
     cv_subrc = 0.   " 성공
   ELSE.
@@ -1182,8 +1224,15 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM insert_je .
+  CLEAR gt_jei.
+
   " 전표 번호 Number Range
   PERFORM set_jenum.
+
+  IF gv_number IS INITIAL.
+    MESSAGE e999(zmcss) WITH '전표번호 생성 실패'.
+    RETURN.
+  ENDIF.
 
   " DB Insert - 전표 헤더
   CLEAR gs_jeh.
@@ -1192,7 +1241,7 @@ FORM insert_je .
   gs_jeh-jtype = 'DR'.
   gs_jeh-stext = gs_head_ist-binum && ' 의 자동전표'.
   gs_jeh-curky = 'KRW'.
-  gs_jeh-rgdat = sy-datum.
+  gs_jeh-rgdat = gs_gi_head-gidat.
 
   INSERT ztssjeh FROM gs_jeh.
   IF sy-subrc <> 0.
@@ -1232,7 +1281,7 @@ FORM insert_je .
   " 청구 헤더에 전표번호, 회계연도 Update
   UPDATE ztsssivh
      SET jenum = gv_number
-         fyear = sy-datum(4)
+         fyear = '2025'
      WHERE binum = gs_head_ist-binum.
   IF sy-subrc <> 0.
     ROLLBACK WORK.

@@ -1,5 +1,5 @@
 FUNCTION z_fmss_schedule_mrp.
-*"--------------------------------------------------------------------
+*"----------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
 *"     REFERENCE(IV_STARTDATE) TYPE  BTCSDATE OPTIONAL
@@ -7,6 +7,7 @@ FUNCTION z_fmss_schedule_mrp.
 *"     REFERENCE(IV_STARTIMM) TYPE  BTCH0000-CHAR1 OPTIONAL
 *"     REFERENCE(IS_INWARE) TYPE  ZTSSWARE
 *"     REFERENCE(IT_OUTWARES) TYPE  ZSSSMD0809
+*"     REFERENCE(IV_DATUM) TYPE  DATUM
 *"  EXCEPTIONS
 *"      QUERY_FAILED
 *"      INSERT_FAILED
@@ -14,7 +15,7 @@ FUNCTION z_fmss_schedule_mrp.
 *"      INVALID_OUTWARES
 *"      JOB_PROCESS_ERROR
 *"      NOT_ENOUGH_OUTWARES
-*"--------------------------------------------------------------------
+*"----------------------------------------------------------------------
 
   " INVALID IN / OUTWARE CHECK
   DATA : ls_ware TYPE ztssware.
@@ -39,7 +40,7 @@ FUNCTION z_fmss_schedule_mrp.
     CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
-        iv_endda         = '99991231'
+        iv_endda         = iv_datum
         iv_stoid         = ls_ware-stoid
         iv_matnr         = ls_ware-matnr
       IMPORTING

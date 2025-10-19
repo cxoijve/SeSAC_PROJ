@@ -162,6 +162,10 @@ DATA : go_con_exp_tree TYPE REF TO cl_gui_custom_container,
        go_alv_exp_tree TYPE REF TO cl_gui_alv_grid.
 
 
+DATA : go_con_vinfo TYPE REF TO cl_gui_custom_container,
+       go_alv_vinfo TYPE REF TO cl_gui_alv_grid.
+
+
 
 
 * ============================================
@@ -304,6 +308,20 @@ DATA : END OF gs_vdudat,
 gt_vdudat LIKE TABLE OF gs_vdudat.
 
 
+DATA : gt_vinfo like  gt_vdudat,
+       gs_vinfo like line of gt_vinfo.
+
+
+*========================================
+* 벤더별 평균 입고기간 외 거래지수
+*=======================================
+
+
+DATA : BEGIN OF gs_avgven,
+         it_col TYPE lvc_t_scol.
+    INCLUDE TYPE zsssmm0224.
+DATA : END OF gs_avgven,
+gt_avgven LIKE TABLE OF gs_avgven.
 
 
 * ============================================
@@ -371,6 +389,10 @@ DATA : gs_layo12 TYPE lvc_s_layo,
 DATA : gs_layo13 TYPE lvc_s_layo,
        gt_fcat13 TYPE lvc_t_fcat,
        gs_fcat13 TYPE lvc_s_fcat.
+
+DATA : gs_layo14 type lvc_s_layo,
+       gt_fcat14 type lvc_t_fcat,
+       gs_fcat14 type lvc_s_fcat.
 
 
 DATA : gt_sort TYPE lvc_t_sort,

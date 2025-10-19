@@ -8,14 +8,14 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0202I0202     11 59192 37  0  0 27123  0G E                              20250925153235																																
+SAPMZSSSD01                             0202I0202      9 52192 37  0  0 27126  0G E                              20251019011238																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-ZSSSSD0105-CSTID	2	CHAR	 20	30	00	04	30	00	  2	  6		  0	  0	  0		  0					  0	  0								绊按 内靛	                                                                                                                                                                                                                                                        X	
-ZSSSSD0105-CSTID	C	CHAR	  8	A0	00	84	30	08	  2	 27		  0	  0	  0		  0					 16	  0								________	X                                      00	
-ZSSSSD0105-CNAME	C	CHAR	 23	B0	02	80	31	00	  2	 38		  0	  0	  0		  0					 80	  0								_______________________	                                       00	
-CON3			 55	00	00	00	30	00	  5	  6		  0	  0	  0		  7	U				  1	  1	101									
+ZSSSSD0105-CSTID	0	CHAR	 20	30	00	04	30	00	  1	  5		  0	  0	  0		  0					  0	  0								绊按内靛	                                                                                                                                                                                                                                                        X	
+ZSSSSD0105-CSTID	C	CHAR	  8	A0	00	84	30	08	  1	 26		  0	  0	  0		  0					 16	  0								________	X                                      00	
+ZSSSSD0105-CNAME	C	CHAR	 17	B0	02	80	31	00	  1	 37		  0	  0	  0		  0					 80	  0								_________________	                                       00	
+CON3			 44	00	00	00	30	00	  3	  5		  0	  0	  0		  7	U				  1	  1	101									
 		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

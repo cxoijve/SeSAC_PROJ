@@ -346,13 +346,13 @@ ENDFORM.
 *      -->P_T_DATA_PLANT  text
 *      <--P_T_DATA_PNAME  text
 *----------------------------------------------------------------------*
-FORM get_plant_name  USING   value(p_id) type ztssplant-plant
-                     CHANGING p_name type ztssplant-pname.
+FORM get_plant_name  USING   VALUE(p_id) TYPE ztssplant-plant
+                     CHANGING p_name TYPE ztssplant-pname.
 
-  select single pname
-    into p_name
-    from ztssplant
-    where plant = p_id.
+  SELECT SINGLE pname
+    INTO p_name
+    FROM ztssplant
+    WHERE plant = p_id.
 
 ENDFORM.
 

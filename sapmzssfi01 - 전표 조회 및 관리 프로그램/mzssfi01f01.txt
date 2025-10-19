@@ -611,7 +611,7 @@ FORM SET_INIT .
 
 
 
-  ZSSSFI0101-RGDATB = LV_CALC_DATE.        " 1달 전
+  ZSSSFI0101-RGDATB = '20250101'. "LV_CALC_DATE'.        " 1달 전
   ZSSSFI0101-RGDATE = SY-DATUM.            " 현재일
 
 ENDFORM.
@@ -1994,7 +1994,7 @@ FORM GET_TREE_DATA .
     RETURN.
   ENDIF.
 
-* Tree Node
+  " Tree Node
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = '1000'.
   GS_TREE-ISFOLDER = 'X'. " Folder Image
@@ -2002,37 +2002,37 @@ FORM GET_TREE_DATA .
   GS_TREE-TEXT = '전표유형'.
   APPEND GS_TREE TO GT_TREE.
 
-*
+  " 입고
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'WE'.
   GS_TREE-RELATKEY = '1000'. "Parent
-  GS_TREE-ISFOLDER = 'X'. " Folder Image
+  GS_TREE-ISFOLDER = 'X'.
   GS_TREE-EXPANDER = ''. " Close
   GS_TREE-TEXT = '입고'.
   APPEND GS_TREE TO GT_TREE.
 
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'WE25'.
-  GS_TREE-RELATKEY = 'WE'. "Parent
-  GS_TREE-ISFOLDER = ''. " Folder Image
-  GS_TREE-EXPANDER = ''. " Close
+  GS_TREE-RELATKEY = 'WE'.
+  GS_TREE-ISFOLDER = ''.
+  GS_TREE-EXPANDER = ''.
   GS_TREE-TEXT = '2025'.
   APPEND GS_TREE TO GT_TREE.
 
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'WE24'.
   GS_TREE-RELATKEY = 'WE'. "Parent
-  GS_TREE-ISFOLDER = ''. " Folder Image
-  GS_TREE-EXPANDER = ''. " Close
+  GS_TREE-ISFOLDER = ''.
+  GS_TREE-EXPANDER = ''.
   GS_TREE-TEXT = '2024'.
   APPEND GS_TREE TO GT_TREE.
 
-*
+  " 송장검증
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'KR'.
   GS_TREE-RELATKEY = '1000'. "Parent
-  GS_TREE-ISFOLDER = 'X'. " Folder Image
-  GS_TREE-EXPANDER = ''. " Close
+  GS_TREE-ISFOLDER = 'X'.
+  GS_TREE-EXPANDER = ''.
   GS_TREE-TEXT = '송장검증'.
   APPEND GS_TREE TO GT_TREE.
 
@@ -2053,7 +2053,7 @@ FORM GET_TREE_DATA .
   APPEND GS_TREE TO GT_TREE.
 
 
-*
+  " 지급
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'KZ'.
   GS_TREE-RELATKEY = '1000'. "Parent
@@ -2079,13 +2079,12 @@ FORM GET_TREE_DATA .
   APPEND GS_TREE TO GT_TREE.
 
 
-  "
+  " 출고
   CLEAR GS_TREE.
   GS_TREE-NODE_KEY = 'WA'.
   GS_TREE-RELATKEY = '1000'. "Parent
   GS_TREE-ISFOLDER = 'X'. " Folder Image
   GS_TREE-EXPANDER = ''. " Close
-*  GS_TREE-N_IMAGE = ICON_SPACE." ICON_DISPLAY. " Icon Name ( Table ICONS ), Type Group icon
   GS_TREE-TEXT = '출고'.
   APPEND GS_TREE TO GT_TREE.
 
@@ -2137,7 +2136,6 @@ FORM GET_TREE_DATA .
   GS_TREE-RELATKEY = '1000'. "Parent
   GS_TREE-ISFOLDER = 'X'. " Folder Image
   GS_TREE-EXPANDER = ''. " Close
-*  GS_TREE-N_IMAGE = ICON_SPACE." ICON_DISPLAY. " Icon Name ( Table ICONS ), Type Group icon
   GS_TREE-TEXT = '수금'.
   APPEND GS_TREE TO GT_TREE.
 

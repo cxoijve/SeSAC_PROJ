@@ -727,6 +727,7 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM SET_SCREEN_0200 .
+
   PERFORM MODIFY_RANGE_0200.
 
   PERFORM GET_TOPRC_INFO.   " 전표 아이템 금액 가져오기

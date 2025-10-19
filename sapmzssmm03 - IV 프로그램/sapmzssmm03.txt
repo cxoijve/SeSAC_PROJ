@@ -21,17 +21,17 @@ LOAD-OF-PROGRAM.
 
   PERFORM get_domain_fixed_value  TABLES gt_fval
                                   USING  'ZDSSPERSG'.
+*
+*  PERFORM get_calc_date USING sy-datum '-' '0' '7' '0'
+*                        CHANGING gv_begda.
 
 
-  PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
-                        CHANGING gv_begda.
-
-  zsssmm03001-begda = gv_begda.
+  zsssmm03001-begda = '20250501'.
   zsssmm03001-endda = sy-datum.
   zsssmm03001-check = 'x'.
   zsssmm03001-cheke = 'x'.
 
-  "CONDITION 유효성 검사
+**  CONDITION 유효성 검사
 *  PERFORM get_pernr_logi.
 *  PERFORM check_tab2_field CHANGING gv_subrc.
 *  IF gv_subrc <> 0.
@@ -47,9 +47,6 @@ LOAD-OF-PROGRAM.
 *    CLEAR gv_subrc.
 *
 *  ENDIF.
-*
-*
-*  SORT gt_data BY light ASCENDING.
 
 
   "ALV 데이터 생성
@@ -65,9 +62,9 @@ LOAD-OF-PROGRAM.
 *GUI Texts
 *----------------------------------------------------------
 * T100 --> 송장검증 프로그램
-* T300 --> 송장문서 검증창
+* T300 --> 송장문서 검증
 * T310 --> 생성 확인창
-* T400 --> 송장문서 수정창
+* T400 --> 송장문서 수정
 * T410 --> 생성 확인창
 * T500 --> 입고문서 상세정보
 * T600 --> 송장문서 상세조회

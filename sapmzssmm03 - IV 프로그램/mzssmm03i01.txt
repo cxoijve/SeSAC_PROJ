@@ -253,6 +253,10 @@ MODULE user_command_0310 INPUT.
   CASE sy-ucomm.
     WHEN 'CHECK'.
 
+
+
+*      PERFORM insert_asap.
+
       PERFORM insert_new_fi_item_0301   CHANGING gv_subrc.
 
       PERFORM insert_new_fi_header_0301 CHANGING gv_subrc.
@@ -260,6 +264,7 @@ MODULE user_command_0310 INPUT.
       PERFORM insert_iv_item_0301       CHANGING gv_subrc.
 
       PERFORM insert_iv_header_0301     CHANGING gv_subrc.
+
 
 
       IF gv_subrc IS INITIAL.

@@ -42,7 +42,9 @@ DATA: go_con1  TYPE REF TO cl_gui_custom_container,
       go_alv1  TYPE REF TO cl_gui_alv_grid,
       gs_layo1 TYPE lvc_s_layo,
       gt_fcat1 TYPE lvc_t_fcat,
-      gs_fcat1 LIKE LINE OF gt_fcat1.
+      gs_fcat1 LIKE LINE OF gt_fcat1,
+      gt_sort1 TYPE lvc_t_sort,
+      gs_sort1 LIKE LINE OF gt_sort1.
 
 " Screen 200 - Header
 TABLES zssssd0103.
@@ -59,7 +61,9 @@ DATA: go_con2  TYPE REF TO cl_gui_custom_container,
       go_alv2  TYPE REF TO cl_gui_alv_grid,
       gs_layo2 TYPE lvc_s_layo,
       gt_fcat2 TYPE lvc_t_fcat,
-      gs_fcat2 LIKE LINE OF gt_fcat2.
+      gs_fcat2 LIKE LINE OF gt_fcat2,
+      gt_sort2 TYPE lvc_t_sort,
+      gs_sort2 LIKE LINE OF gt_sort2.
 
 " Screen 201, 202 - Tabstrip
 CONTROLS ts_info TYPE TABSTRIP.
@@ -80,7 +84,9 @@ DATA: go_con3  TYPE REF TO cl_gui_custom_container,
       go_alv3  TYPE REF TO cl_gui_alv_grid,
       gs_layo3 TYPE lvc_s_layo,
       gt_fcat3 TYPE lvc_t_fcat,
-      gs_fcat3 LIKE LINE OF gt_fcat3.
+      gs_fcat3 LIKE LINE OF gt_fcat3,
+      gt_sort3 TYPE lvc_t_sort,
+      gs_sort3 LIKE LINE OF gt_sort3.
 
 " Sceen 300 - Header
 DATA: gs_head_udt TYPE zssssd0103,
@@ -97,7 +103,9 @@ DATA: go_con4  TYPE REF TO cl_gui_custom_container,
       go_alv4  TYPE REF TO cl_gui_alv_grid,
       gs_layo4 TYPE lvc_s_layo,
       gt_fcat4 TYPE lvc_t_fcat,
-      gs_fcat4 LIKE LINE OF gt_fcat4.
+      gs_fcat4 LIKE LINE OF gt_fcat4,
+      gt_sort4 TYPE lvc_t_sort,
+      gs_sort4 LIKE LINE OF gt_sort4.
 
 *TYPES: lv_row_id TYPE i,
 *       lv_fname TYPE char10,
@@ -139,7 +147,9 @@ DATA: go_con5  TYPE REF TO cl_gui_custom_container,
       go_alv5  TYPE REF TO cl_gui_alv_grid,
       gs_layo5 TYPE lvc_s_layo,
       gt_fcat5 TYPE lvc_t_fcat,
-      gs_fcat5 LIKE LINE OF gt_fcat5.
+      gs_fcat5 LIKE LINE OF gt_fcat5,
+      gt_sort5 TYPE lvc_t_sort,
+      gs_sort5 LIKE LINE OF gt_sort5.
 
 " ModalScreen 401
 DATA: BEGIN OF gs_item_add.

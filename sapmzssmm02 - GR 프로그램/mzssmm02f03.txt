@@ -16,20 +16,20 @@ FORM handle_toolbar  USING  pcl_toolbar TYPE REF TO cl_alv_event_toolbar_set
 
   CASE p_sender.
     WHEN go_alv_po_waiting.
-      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_add_row CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_insert_multiple_lines CHANGING pcl_toolbar.
     WHEN go_alv_po_items.
-      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_DEL' TEXT-b02 icon_delete_row CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_ALL_DEL' TEXT-b03 icon_delete_all_attributes CHANGING pcl_toolbar.
     WHEN go_alv_po_confirm.
       PERFORM add_toolbar_button USING 'I_GR' TEXT-b04 icon_check CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_CON_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_CON_DEL' TEXT-b02 icon_delete_row CHANGING pcl_toolbar.
     WHEN go_alv_gr_list.
       PERFORM add_toolbar_button USING 'I_DETAIL' TEXT-b06 icon_check CHANGING pcl_toolbar.
     WHEN go_alv_editgr.
 *      PERFORM add_toolbar_button USING 'I_ADD' TEXT-b01 icon_workflow_activity CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b05 icon_workflow_activity CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_EDIT_DEL' TEXT-b02 icon_incomplete CHANGING pcl_toolbar.
-      PERFORM add_toolbar_button USING 'I_EDIT_ALL_DEL' TEXT-b03 icon_system_modus_delete CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_EDIT' TEXT-b05 icon_edit_file CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_EDIT_DEL' TEXT-b02 icon_delete_row CHANGING pcl_toolbar.
+      PERFORM add_toolbar_button USING 'I_EDIT_ALL_DEL' TEXT-b03 icon_delete_all_attributes CHANGING pcl_toolbar.
   ENDCASE.
 
 
@@ -2653,21 +2653,300 @@ FORM calculate_delay_rate USING pt_po_sum LIKE gt_itamt.
 
   DATA: lv_total_cnt  TYPE i,
         lv_delay_cnt  TYPE i,
-        lv_delay_rate TYPE p DECIMALS 2.
+        lv_delay_rate TYPE p DECIMALS 2,
+        ls_po_sum     LIKE LINE OF gt_itamt,
+        ls_po         TYPE ztsspoh.
 
-  lv_total_cnt = lines( pt_po_sum ).      " 전체 PO 건수
-  lv_delay_cnt = lines( gt_vdudat ).      " 지연 PO 건수
+
+*  lv_total_cnt = lines( pt_po_sum ).      " 전체 PO 건수
+*  lv_delay_cnt = lines( gt_vdudat ).      " 지연 PO 건수
+*
+*  IF lv_total_cnt > 0.
+*    lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
+*    gv_delay_rate = lv_delay_rate.
+*
+*    " gt_vdudat의 모든 라인에 지연율 추가
+*    LOOP AT gt_vdudat ASSIGNING FIELD-SYMBOL(<fs_data>).
+*      <fs_data>-duded = lv_delay_rate.
+*    ENDLOOP.
+*  ENDIF.
+
+  " 1. 납기일이 지난 전체 PO 건수 계산
+  LOOP AT pt_po_sum INTO ls_po_sum.
+    SELECT SINGLE dudat INTO @DATA(lv_dudat)
+      FROM ztsspoh
+      WHERE ponum = @ls_po_sum-ponum.
+
+    IF lv_dudat < sy-datum.
+      lv_total_cnt = lv_total_cnt + 1.
+    ENDIF.
+  ENDLOOP.
+
+  " 2. 지연 건수 구하기!!
+  lv_delay_cnt = lines( gt_vdudat ).
+
+  " 3. 지연율 계산하기
 
   IF lv_total_cnt > 0.
     lv_delay_rate = ( lv_delay_cnt / lv_total_cnt ) * 100.
     gv_delay_rate = lv_delay_rate.
 
-    " gt_vdudat의 모든 라인에 지연율 추가
     LOOP AT gt_vdudat ASSIGNING FIELD-SYMBOL(<fs_data>).
       <fs_data>-duded = lv_delay_rate.
     ENDLOOP.
   ENDIF.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_VENDOR_SUMMARY
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_vendor_summary .
+
+  DATA : BEGIN OF ls_vendors,
+           venid TYPE ztssvend-venid,
+           vname TYPE ztssvend-vname,
+         END OF ls_vendors,
+         lt_vendors LIKE TABLE OF ls_vendors.
+
+  DATA : lt_summary LIKE  gt_avgven,
+         ls_summary LIKE LINE OF lt_summary.
+  DATA : lt_po_sum LIKE TABLE OF gs_itamt,
+         lt_gr_sum LIKE TABLE OF gs_itamt.
+
+  PERFORM get_po_sum  CHANGING lt_po_sum.
+  PERFORM get_gr_sum  CHANGING lt_gr_sum.
+
+  PERFORM create_expdudat_notven USING lt_po_sum lt_gr_sum  CHANGING gt_vinfo.
+
+  SELECT venid vname
+    INTO CORRESPONDING FIELDS OF TABLE lt_vendors
+    FROM ztssvend
+    WHERE endda = '99991231'.
+
+  LOOP AT lt_vendors INTO DATA(ls_vendor).
+    CLEAR ls_summary.
+    PERFORM get_gr_total USING ls_vendor-venid CHANGING ls_summary-gtcnt.
+    PERFORM get_due_cnt USING ls_vendor-venid CHANGING ls_summary-dlcnt.
+    PERFORM cal_delay_status USING ls_vendor-venid CHANGING ls_summary.
+    PERFORM cal_avg_lead_time USING ls_vendor-venid CHANGING ls_summary-adate.
+    ls_summary-venid = ls_vendor-venid.
+    PERFORM get_vendor_name USING ls_vendor-venid CHANGING ls_summary-vname.
+    APPEND ls_summary TO lt_summary.
+  ENDLOOP.
+
+
+  gt_avgven = lt_summary.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_GR_TOTAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_VENID  text
+*      <--P_LS_SUMMARY_  text
+*----------------------------------------------------------------------*
+FORM get_gr_total  USING    pv_venid TYPE ztssvend-venid
+                   CHANGING cv_cnt TYPE i .
+
+  SELECT COUNT( DISTINCT h~grnum )
+    FROM ztssgrh AS h
+    INNER JOIN ztssgri AS i ON h~grnum = i~grnum
+    INNER JOIN ztsspoh AS p ON i~ponum = p~ponum
+    WHERE p~venid = @pv_venid
+    INTO @cv_cnt.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DUE_CNT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_VENDOR_VENID  text
+*      <--P_LS_SUMMARY_DLCNT  text
+*----------------------------------------------------------------------*
+FORM get_due_cnt  USING    pv_venid TYPE ztssvend-venid
+                   CHANGING cv_cnt TYPE i .
+
+  SELECT COUNT( DISTINCT ponum )
+    FROM ztsspoh
+     WHERE venid = @pv_venid
+      AND dudat < @sy-datum
+    INTO @cv_cnt.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_DELAY_STATUS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LS_VENDOR_VENID  text
+*      <--P_LS_SUMMARY  text
+*----------------------------------------------------------------------*
+FORM cal_delay_status  USING    pv_venid TYPE ztssvend-venid
+                      CHANGING cs_sum LIKE gs_avgven .
+
+  DATA : lv_total_delay TYPE i,
+         lv_count       TYPE i.
+
+  LOOP AT gt_vinfo INTO DATA(ls_vinfo) WHERE venid = pv_venid.
+    lv_count = lv_count + 1.
+
+    lv_total_delay = lv_total_delay + ls_vinfo-ludat.
+
+    IF ls_vinfo-ludat > cs_sum-mdate.
+      cs_sum-mdate = ls_vinfo-ludat.
+    ENDIF.
+
+  ENDLOOP.
+  cs_sum-dlcnt = lv_count.
+  IF lv_count > 0.
+    cs_sum-addte = lv_total_delay / lv_count.
+  ENDIF.
+
+  IF cs_sum-dlcnt > 0.
+    cs_sum-drate = ( cs_sum-dlcnt / cs_sum-gtcnt ) * 100.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAL_AVG_LEAD_TIME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LV_VENID  text
+*      <--P_CS_SUM_ADATE  text
+*----------------------------------------------------------------------*
+FORM cal_avg_lead_time  USING    pv_venid TYPE ztssvend-venid
+                      CHANGING cv_avgdate TYPE p .
+
+  DATA:
+    lv_total_days TYPE i,
+    lv_count      TYPE i.
+
+  SELECT h~grdat, p~podat
+     FROM ztssgrh AS h
+     INNER JOIN ztssgri AS i ON h~grnum = i~grnum
+     INNER JOIN ztsspoh AS p ON i~ponum = p~ponum
+     WHERE p~venid = @pv_venid
+     INTO TABLE @DATA(lt_lead_time).
+
+
+  LOOP AT lt_lead_time INTO DATA(ls_lead).
+    lv_total_days = lv_total_days + ( ls_lead-grdat - ls_lead-podat ).
+    lv_count = lv_count + 1.
+  ENDLOOP.
+
+
+  IF lv_count > 0.
+    cv_avgdate  = lv_total_days / lv_count.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_EXPDUDAT_NOTVEN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_PO_SUM  text
+*      -->P_LT_GR_SUM  text
+*      <--P_GT_VDUDAT  text
+*----------------------------------------------------------------------*
+FORM create_expdudat_notven  USING    pt_po_sum LIKE gt_itamt
+                               pt_gr_sum LIKE gt_itamt
+                      CHANGING ct_data LIKE gt_vdudat.
+
+
+  DATA: ls_po_sum LIKE gs_itamt,
+        ls_gr_sum LIKE gs_itamt,
+        ls_data   LIKE LINE OF ct_data,
+        ls_po     LIKE LINE OF gt_vdudat.
+
+  DATA: BEGIN OF ls_grdata,
+          grnum  TYPE ztssgrh-grnum,
+          grdat  TYPE ztssgrh-grdat,
+          ponum  TYPE ztssgri-ponum,
+          itnum  TYPE ztssgri-itnum,
+          stoid  TYPE ztssgri-stoid,
+          amount TYPE ztssgri-amount,
+          meins  TYPE ztssgri-meins,
+        END OF ls_grdata.
+
+  DATA: lv_total_cnt  TYPE i,
+        lv_delay_cnt  TYPE i,
+        lv_delay_rate TYPE p DECIMALS 2.
+
+  LOOP AT pt_po_sum INTO ls_po_sum.
+    CLEAR: ls_po, ls_grdata.
+
+    " PO 데이터 조회
+    SELECT SINGLE h~ponum h~venid h~dudat i~itnum i~pomnr
+                  i~amount i~meins i~plant
+      INTO CORRESPONDING FIELDS OF ls_po
+      FROM ztsspoh AS h
+      INNER JOIN ztsspoi AS i ON h~ponum = i~ponum
+      WHERE h~ponum = ls_po_sum-ponum
+        AND i~itnum = ls_po_sum-itnum.
+
+    " 납기일이 지나지 않았으면 스킵
+    IF ls_po-dudat >= sy-datum.
+      CONTINUE.
+    ENDIF.
+
+    " GR 데이터 조회
+    SELECT SINGLE h~grdat h~grnum i~grnum i~ponum i~itnum
+                  i~stoid i~amount i~meins
+      INTO CORRESPONDING FIELDS OF ls_grdata
+      FROM ztssgrh AS h
+      INNER JOIN ztssgri AS i ON h~grnum = i~grnum
+      WHERE i~ponum = ls_po_sum-ponum
+        AND i~itnum = ls_po_sum-itnum.
+
+    " GR 데이터가 있으면 GR sum도 가져오기
+    READ TABLE pt_gr_sum INTO ls_gr_sum WITH KEY ponum = ls_po_sum-ponum
+                                                 itnum = ls_po_sum-itnum.
+
+    " 케이스 1: 입고가 전혀 안 된 경우
+    IF sy-subrc <> 0.
+      ls_po-stoid = 'SL01'.
+      ls_po-reqty = ls_po-amount.
+      ls_po-ludat = sy-datum - ls_po-dudat.
+      APPEND ls_po TO ct_data.
+
+      " 케이스 2: 부분 입고된 경우 (입고량 < 주문량)
+    ELSEIF ls_gr_sum-amount < ls_po-amount.
+      ls_po-stoid = ls_grdata-stoid.
+      ls_po-grdat = ls_grdata-grdat.
+      ls_po-reqty = ls_po-amount - ls_gr_sum-amount.
+
+      " 입고일이 납기일보다 늦은 경우
+      IF ls_grdata-grdat > ls_po-dudat.
+        ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+      ELSE.
+        " 아직 입고 안 된 나머지에 대한 지연
+        ls_po-ludat = sy-datum - ls_po-dudat.
+      ENDIF.
+
+      APPEND ls_po TO ct_data.
+
+      " 케이스 3: 완전 입고되었지만 납기일보다 늦게 입고된 경우
+    ELSEIF ls_grdata-grdat > ls_po-dudat.
+      ls_po-stoid = ls_grdata-stoid.
+      ls_po-grdat = ls_grdata-grdat.
+      ls_po-reqty = 0.  " 전체 수량
+      ls_po-ludat = ls_grdata-grdat - ls_po-dudat.
+      APPEND ls_po TO ct_data.
+    ENDIF.
+
+  ENDLOOP.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

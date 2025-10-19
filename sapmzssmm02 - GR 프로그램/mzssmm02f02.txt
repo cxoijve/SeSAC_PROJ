@@ -64,6 +64,8 @@ FORM set_default_values .
 
   PERFORM set_date CHANGING zsssmm0210-grdat_s zsssmm0210-grdat_e zsssmm0210-dudat_s zsssmm0210-dudat_e zsssmm0214-grdat.
   zsssmm0210-dudat_y = '2025'.
+  zsssmm0214-rgdat = sy-datum.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_DATE
@@ -81,15 +83,27 @@ FORM set_date  CHANGING cv_grdat_s TYPE sy-datum
                         cv_grdoc TYPE sy-datum.
 
   " 입고일자 : 이번달 첫째일 ~ 이번달 말일
-  cv_grdat_s = sy-datum+0(6) && '01'.
-  PERFORM cal_last_day_month USING sy-datum CHANGING cv_grdat_e.
+*  cv_grdat_s = sy-datum+0(6) && '01'.
+*  PERFORM cal_last_day_month USING sy-datum CHANGING cv_grdat_e.
 
   " 납기일자 설정 : 오늘 기준 7일전 ~ 오늘 기준 30일 후
-  PERFORM cal_date_in_interval USING sy-datum  7 0 0 '-' CHANGING cv_dudat_s.
-  PERFORM cal_date_in_interval USING sy-datum  30 0 0 '+' CHANGING cv_dudat_e.
+  cv_grdat_s = '20250501'.
+  cv_grdat_e = sy-datum.
+  "잠깐 쓰는거!!
+  cv_dudat_s = '20250501'.
+  cv_dudat_e = '20251031'.
+
+
+
+
+*  PERFORM cal_date_in_interval USING sy-datum  7 0 0 '-' CHANGING cv_dudat_s.
+*  PERFORM cal_date_in_interval USING sy-datum  30 0 0 '+' CHANGING cv_dudat_e.
 
   " 입고시점 날짜 설정
   cv_grdoc = sy-datum.
+
+
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -209,7 +223,12 @@ FORM set_layouts .
      iv_ctab_fname = 'IT_COL'
      iv_no_rowins = abap_true ).
 
-
+  gs_layo14 = lcl_layout_builder=>create(
+   iv_title     = '벤더별 납기 현황 보고'
+    iv_info_fname = 'COLOR'
+     iv_zebra = abap_true
+     iv_ctab_fname = 'IT_COL'
+     iv_no_rowins = abap_true ).
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -286,6 +305,7 @@ FORM set_field_catalogs .
   PERFORM set_fcat11.
   PERFORM set_fcat12.
   PERFORM set_fcat13.
+  PERFORM set_fcat14.
 
 
 ENDFORM.
@@ -1057,12 +1077,54 @@ FORM insert_gr_header CHANGING cv_subrc TYPE sy-subrc.
   PERFORM get_number_range USING 'ZNRSSMM02' '01' 'G' CHANGING gv_gr_num.
   PERFORM get_number_range USING 'ZNRSSFI01' '01' 'J' CHANGING gv_fi_num.
 
+  DATA: ls_confirm      LIKE LINE OF gt_confirm,
+        lt_po           TYPE TABLE OF ztssgri-ponum,
+        lv_first_po     TYPE ztssgri-ponum,
+        lv_first_po_out TYPE string,
+        lv_lines        TYPE i,
+        lv_text         TYPE string,
+        lv_cnt_str      TYPE string.
+
+
+  IF gv_text IS INITIAL.
+
+    LOOP AT gt_confirm INTO ls_confirm.
+      APPEND ls_confirm-ponum TO lt_po.
+    ENDLOOP.
+
+    SORT lt_po.
+    DELETE ADJACENT DUPLICATES FROM lt_po.
+
+    DESCRIBE TABLE lt_po LINES lv_lines.
+
+    IF lv_lines > 0.
+      READ TABLE lt_po INTO lv_first_po INDEX 1.
+      " CONVERSION EXIT으로 올바르게 변환
+      CALL FUNCTION 'CONVERSION_EXIT_ALPHA_OUTPUT'
+        EXPORTING
+          input  = lv_first_po
+        IMPORTING
+          output = lv_first_po_out.
+      IF lv_lines EQ 1.
+        gv_text = lv_first_po_out.
+        CONCATENATE gv_text '의 입고' INTO gv_text.
+      ELSE.
+        lv_lines = lv_lines - 1.
+        lv_cnt_str = lv_lines.
+        CONCATENATE lv_first_po_out ' 외 ' lv_cnt_str '건의 입고'
+                    INTO gv_text.
+      ENDIF.
+    ENDIF.
+  ENDIF.
+
   ls_grdata-grnum = gv_gr_num.
   ls_grdata-jenum = gv_fi_num.
   ls_grdata-rstat = 'A'.
   ls_grdata-fyear = sy-datum+0(4).
+
   ls_grdata-grdat = zsssmm0214-grdat.
   ls_grdata-stext = gv_text.
+*  ls_grdata-rgdat = zsssmm0214-rgdat.
   ls_grdata-rgdat = sy-datum.
   ls_grdata-rgtor = gv_rgtor.
 
@@ -1084,10 +1146,12 @@ FORM insert_fi_journal  USING  VALUE(pv_val) TYPE ztsspoi-poprc
   DATA : ls_fidata TYPE ztssjeh.
   ls_fidata-jenum = gv_fi_num.
   ls_fidata-fyear = sy-datum+0(4).
+*  ls_fidata-fyear = '2024'.
   ls_fidata-jtype = 'WE'.
   ls_fidata-stext = |{ gv_gr_num }의 자동전표|.
   ls_fidata-curky = 'KRW'.
   ls_fidata-rgdat = sy-datum.
+*  ls_fidata-rgdat = zsssmm0214-rgdat.
 
   INSERT ztssjeh FROM ls_fidata.
   IF sy-subrc <> 0. cv_subrc = sy-subrc. RETURN. ENDIF.
@@ -1123,8 +1187,10 @@ FORM insert_warehouse_entries CHANGING cv_subrc TYPE sy-subrc.
     ls_ware-amount = <fs_confirm>-orqty.
     ls_ware-wtype  = 'I'.
     ls_ware-wdate  = sy-datum.
+*    ls_ware-wdate  = zsssmm0214-rgdat.
     ls_ware-grnum  = gv_gr_num.
     ls_ware-rgdat  = sy-datum.
+*    ls_ware-rgdat  = zsssmm0214-rgdat.
     ls_ware-rgtor  = 'E0000012'.
     ls_ware-meins  = <fs_confirm>-meins.
 
@@ -1439,7 +1505,7 @@ FORM create_reversal_journal  USING VALUE(ps_grh) TYPE ztssgrh
   ls_jeh-jenum = gv_fi_num.
   ls_jeh-fyear = sy-datum+0(4).
   ls_jeh-jtype = 'WE'.
-  ls_jeh-stext = |{ ps_grh-grnum }의 자동전표의 역분개|.
+  ls_jeh-stext = |{ ps_grh-grnum }의 수정으로 인한 역분개 전표|.
   ls_jeh-curky = 'KRW'.
   ls_jeh-rgdat = sy-datum.
   INSERT ztssjeh FROM ls_jeh.
@@ -2979,6 +3045,35 @@ FORM get_journal_info  USING  p_jenum TYPE zsssmm0211-jenum.
   SET PARAMETER ID 'ZMMJENUM' FIELD lv_jenum.
   CALL TRANSACTION 'ZSSFI01'.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_FCAT14
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_fcat14 .
+  DATA : lt_field_conf TYPE TABLE OF ty_field_conf,
+         ls_conf       TYPE ty_field_conf,
+         ls_fcat       TYPE lvc_s_fcat.
+
+  PERFORM create_fcat USING 'ZSSSMM0224' 'GT_AVGVEN' CHANGING gt_fcat14.
+
+  lt_field_conf = VALUE #(
+ " === gt_fcat13: 벤더별 납기 현황 ===
+  (  fieldname = 'VENID' col_pos = 1 )
+  (  fieldname = 'VNAME' col_pos = 2 )
+  (  fieldname = 'ADATE' coltext = '평균 리드타임' col_pos = 3 )
+  (  fieldname = 'GTCNT' coltext = '입고 전체 건' col_pos = 4 )
+  (  fieldname = 'DLCNT' coltext = '납기 도래 건' col_pos = 5 )
+  (  fieldname = 'DRATE' coltext = '납기 지연율' col_pos = 6 )
+  (  fieldname = 'ADDTE' coltext = '평균 지연일' col_pos = 7 )
+  (  fieldname = 'MDATE' coltext = '최대 지연일' col_pos = 8 )
+   ).
+
+  PERFORM build_field_catatlog USING lt_field_conf CHANGING gt_fcat14.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

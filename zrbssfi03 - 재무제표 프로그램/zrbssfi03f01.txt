@@ -294,11 +294,12 @@ FORM GET_DATA .
 
 
   CLEAR: GV_FIELD1, GV_FIELD2, GV_FIELD3, GV_FIELD4,
-              GV_FIELD5, GV_FIELD6, GV_FIELD7, GV_FIELD8.
+         GV_FIELD5, GV_FIELD6, GV_FIELD7, GV_FIELD8.
 
   LOOP AT LT_TAB.
     CASE LT_TAB-GLACC.
       WHEN '100000'.   "GV_FIELD1
+*        LV_FIELD = LT_TAB-DEBIT * 100.
         LV_FIELD = LT_TAB-DEBIT * 100.
         GV_FIELD1 = GV_FIELD1 + LV_FIELD.
       WHEN '110000'.   "GV_FIELD2
@@ -333,6 +334,8 @@ FORM GET_DATA .
 
   GV_SUM4 = GV_FIELD7 - GV_FIELD6.
 
+
+  .
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  CREATE_ALV_0200

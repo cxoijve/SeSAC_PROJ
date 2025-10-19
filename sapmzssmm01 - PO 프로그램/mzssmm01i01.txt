@@ -45,7 +45,9 @@ MODULE user_command_0100 INPUT.
                gv_ven_screen,
                gt_item.
     WHEN 'CREATE2'.
+      PERFORM set_default_sub.
       PERFORM init_create CHANGING zsssmm0103.
+
       CALL SCREEN '0500'.
     WHEN 'EDIT'.
       PERFORM check_pop_init_data CHANGING gv_subrc.
@@ -174,7 +176,7 @@ MODULE user_command_0201 INPUT.
 *      PERFORM save_po_item CHANGING zsssmm0103 zsssmm0104.
       PERFORM save_po_item2 CHANGING zsssmm0103 zsssmm0104.
       PERFORM refresh_table_display CHANGING go_alv7.
-
+       gv_ven_screen = 'SAVE'.
     WHEN 'EDIT'.
 *      PERFORM edit_po_item CHANGING zsssmm0103 zsssmm0104.
       PERFORM edit_po_item2 CHANGING zsssmm0103 zsssmm0104.
@@ -412,7 +414,9 @@ MODULE user_command_0500 INPUT.
     WHEN 'ORDER'.
 *      PERFORM insert_purchase_order CHANGING gv_subrc.
 *      PERFORM insert_purchase_order2 CHANGING gv_subrc.
+      zsssmm0103-rgtor = 'E0000015'.
       PERFORM get_emp_name USING zsssmm0103-rgtor CHANGING zsssmm0103-ename.
+       zsssmm0103-rgdat = zsssmm0103-podat.
       CALL SCREEN '0501'  STARTING AT 10 5 ENDING AT 80 30.
       IF gv_subrc = 0.
         CLEAR : zsssmm0103,
@@ -449,6 +453,9 @@ MODULE user_command_0501 INPUT.
         CONCATENATE gv_text gs_edit-text INTO gv_text SEPARATED BY space.
       ENDLOOP.
 *      " 팝업 확인 후 insert작업
+      zsssmm0103-rgdat = zsssmm0103-podat.
+      zsssmm0103-rgtor = 'E0000015'.
+*      ZSSSMM0103-RGtor =
       PERFORM confirm_contents.
       PERFORM clear_editor.
 *      " 전역 clear 및 스크린나가기

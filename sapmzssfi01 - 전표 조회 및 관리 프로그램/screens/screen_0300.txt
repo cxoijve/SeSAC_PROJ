@@ -8,11 +8,11 @@ SAPMZSSFI01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSFI01                             0300 0300     27117192 37  0  0 27130  0G E                              20251016111059																																
+SAPMZSSFI01                             0300 0300     27 97192 37  0  0 27130  0G E                              20251018213111																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-B_BOX		CHAR	115	00	00	00	30	00	  2	  4		  0	  0	  0		  8	R				  0	  0	101							전표 헤더		
+B_BOX		CHAR	 95	00	00	00	30	00	  2	  4		  0	  0	  0		  8	R				  0	  0	101							전표 헤더		
 ZSSSFI0102-FYEAR	2	CHAR	 20	30	00	00	30	00	  3	  8		  0	  0	  0		  0					  0	  0								회계연도	                                                                                                                                                                                                                                                        X	
 ZSSSFI0102-FYEAR	N	NUMC	  4	A0	00	80	30	00	  3	 29		  0	  0	  0		  0					  8	  0								____	                                       00	
 ZSSSFI0102-JTYPE	0	CHAR	  8	30	00	01	30	00	  4	 59		  0	  0	  0		  0					  0	  0								전표유형	                                                                                                                                                                                                                                                        X	
@@ -30,13 +30,13 @@ ZSSSFI0102-RGTOR	0	CHAR	  8	30	00	00	30	00	  8	  8		  0	  0	  0		  0					  0	  0
 ZSSSFI0102-RGTOR	C	CHAR	  8	A0	00	84	30	08	  8	 18		  0	  0	  0		  0					 16	  0								________	X                                      00	
 B_RGTOR		CHAR	  7	00	00	00	30	00	  8	 27		  0	  0	  0		  2	P				  0	  0	102							@16@ ..	                                                                                                                                                                        B_RGTOR	
 ZSSSFI0102-RGTOR_T	C	CHAR	 19	B0	02	80	31	00	  8	 32		  0	  0	  0		  0					 80	  0								___________________	                                       00	
-B_BOX2		CHAR	115	00	00	00	30	00	 10	  4		  0	  0	  0		 18	R				  0	  0	103							전표 아이템		
-CON2			112	00	00	00	30	00	 11	  5		  0	  0	  0		 14	U				  1	  1	104									
-ZSSSFI0104-DEBIT	0	CHAR	  5	30	00	00	30	00	 26	 55		  0	  0	  0		  0					  0	  0								Debit	                                                                                                                                                                                                                                                        X	
-ZSSSFI0104-DEBIT	P	CURR	 19	B0	00	80	30	00	 26	 61		  0	  0	  0		  0					 15	  2		ZSSSFI0104-CURKY						__________________V	                                       00	
-ZSSSFI0104-CREDIT	0	CHAR	  6	30	00	00	30	00	 26	 82		  0	  0	  0		  0					  0	  0								Credit	                                                                                                                                                                                                                                                        X	
-ZSSSFI0104-CREDIT	P	CURR	 19	B0	00	80	30	00	 26	 89		  0	  0	  0		  0					 15	  2		ZSSSFI0104-CURKY						__________________V	                                       00	
-ZSSSFI0104-CURKY	C	CUKY	  5	A0	00	80	31	00	 26	110		  0	  0	  0		  0					 10	  0								_____	                                       00	
+B_BOX2		CHAR	 95	00	00	00	30	00	 10	  4		  0	  0	  0		 18	R				  0	  0	103							전표 아이템		
+CON2			 92	00	00	00	30	00	 11	  5		  0	  0	  0		 14	U				  1	  1	104									
+ZSSSFI0104-DEBIT	0	CHAR	  5	30	00	00	30	00	 26	 37		  0	  0	  0		  0					  0	  0								Debit	                                                                                                                                                                                                                                                        X	
+ZSSSFI0104-DEBIT	P	CURR	 19	B0	00	80	30	00	 26	 43		  0	  0	  0		  0					 15	  2		ZSSSFI0104-CURKY						__________________V	                                       00	
+ZSSSFI0104-CREDIT	0	CHAR	  6	30	00	00	30	00	 26	 64		  0	  0	  0		  0					  0	  0								Credit	                                                                                                                                                                                                                                                        X	
+ZSSSFI0104-CREDIT	P	CURR	 19	B0	00	80	30	00	 26	 71		  0	  0	  0		  0					 15	  2		ZSSSFI0104-CURKY						__________________V	                                       00	
+ZSSSFI0104-CURKY	C	CUKY	  5	A0	00	80	31	00	 26	 92		  0	  0	  0		  0					 10	  0								_____	                                       00	
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

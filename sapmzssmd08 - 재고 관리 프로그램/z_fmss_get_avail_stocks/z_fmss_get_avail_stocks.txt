@@ -1,4 +1,4 @@
-FUNCTION Z_FMSS_GET_AVAIL_STOCKS.
+FUNCTION z_fmss_get_avail_stocks.
 *"--------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
@@ -29,6 +29,7 @@ FUNCTION Z_FMSS_GET_AVAIL_STOCKS.
   DATA lv_limday TYPE t5a4a-dlydy.
   DATA lv_date TYPE p0001-begda.
   DATA lv_qflag.
+
 
   " Tables for Calc
   DATA : lt_istck TYPE TABLE OF ztssware WITH HEADER LINE,
@@ -62,17 +63,18 @@ FUNCTION Z_FMSS_GET_AVAIL_STOCKS.
     RAISE material_unfound.
   ENDIF.
 
-  lv_limday = lv_expda.
+  lv_date = iv_endda - lv_expda.
 
-  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
-    EXPORTING
-      date      = sy-datum
-      days      = lv_limday
-      months    = '0'
-      signum    = '-'
-      years     = '0'
-    IMPORTING
-      calc_date = lv_date.
+*  CALL FUNCTION 'RP_CALC_DATE_IN_INTERVAL'
+*    EXPORTING
+*      date      = iv_endda
+*      days      = lv_limday
+*      months    = '0'
+*      signum    = '-'
+*      years     = '0'
+*    IMPORTING
+*      calc_date = lv_date.
+
 
 
 

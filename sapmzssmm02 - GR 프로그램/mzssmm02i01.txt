@@ -41,6 +41,12 @@ MODULE user_command_0100 INPUT.
       PERFORM search_by_po_nuum.
 
     WHEN 'GO_EXP'.
+      IF gv_top3_calculated IS INITIAL.
+        gv_top3_calculated = 'X'.
+        " 모든 업체 TOP 3 계산
+        PERFORM calculate_all_vendor_top3.
+      ENDIF.
+      PERFORM get_vendor_summary.
       CALL SCREEN 0400.
     WHEN OTHERS.
   ENDCASE.

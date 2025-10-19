@@ -16,6 +16,7 @@ DATA: ic_bi_g TYPE icons-text,
       ic_bi_r TYPE icons-text,
       ic_doc_g TYPE icons-text,
       ic_doc_r TYPE icons-text.
+INCLUDE <icon>.
 
 " 라디오버튼
 DATA : gv_rb_bi  TYPE c VALUE 'X',      " 청구 대상

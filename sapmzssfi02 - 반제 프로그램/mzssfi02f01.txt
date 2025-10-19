@@ -44,6 +44,12 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM SET_SORT .
 
+  CLEAR GT_SORT.
+  GS_SORT-SPOS = '1'.
+  GS_SORT-FIELDNAME = 'JENUM'.
+  GS_SORT-DOWN = 'X'.
+  APPEND GS_SORT TO GT_SORT.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT

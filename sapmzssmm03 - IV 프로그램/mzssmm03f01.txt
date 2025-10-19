@@ -23,6 +23,11 @@ FORM set_alv_layo.
 
   ELSEIF sy-dynnr = '0400'.
     gs_layo-sel_mode = 'A'.
+  ELSEIF sy-dynnr = '0600'.
+
+    gs_layo-zebra = 'X'.
+    gs_layo-ctab_fname = 'IT_COL'.
+
   ENDIF.
 
 ENDFORM.
@@ -38,7 +43,8 @@ FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
 
   DATA : ls_data LIKE LINE OF gt_data,
          lv_day  TYPE i,
-         ls_col  TYPE lvc_s_scol.
+         ls_col  TYPE lvc_s_scol,
+         lv_dat  TYPE sy-datum.
 
   DATA : BEGIN OF ls_name,
            lname TYPE zesslname,
@@ -97,9 +103,18 @@ FORM get_iv_data CHANGING cv_subrc TYPE sy-subrc.
   LOOP AT gt_data INTO gs_data.
     MOVE-CORRESPONDING gs_data TO gs_out.
 
-    lv_day = sy-datum - gs_out-rgdat.
+
 
     IF gs_out-light2 = 1.
+
+      SELECT SINGLE rgdat
+        FROM ztssmivh
+        INTO lv_dat
+        WHERE ivnum = gs_out-ivnum.
+
+      lv_day = sy-datum - lv_dat.
+
+
       IF lv_day >= 5.
         CLEAR ls_col.
         ls_col-fname     = 'IVNUM'.
@@ -388,7 +403,11 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
          lt_list TYPE TABLE OF zsssmm03002,
          ls_list LIKE LINE OF lt_list,
          lv_day  TYPE i,
-         ls_col  TYPE lvc_s_scol.
+         ls_col  TYPE lvc_s_scol,
+         lv_dat  TYPE sy-datum.
+
+
+
 
   DATA : BEGIN OF ls_ivnum,
            ivnum TYPE zessivnum,
@@ -501,9 +520,17 @@ FORM get_gr_data CHANGING cv_subrc TYPE sy-subrc.
   LOOP AT gt_data INTO gs_data.
     MOVE-CORRESPONDING gs_data TO gs_out.
 
-    lv_day = sy-datum - gs_out-grdat.
+*    lv_day = sy-datum - gs_out-grdat.
 
     IF gs_out-light = 1.
+
+      SELECT SINGLE rgdat
+        FROM ztssgrh
+        INTO lv_dat
+        WHERE grnum = gs_out-grnum.
+
+      lv_day = sy-datum - lv_dat.
+
       IF lv_day >= 5.
         CLEAR ls_col.
         ls_col-fname     = 'GRNUM'.
@@ -611,7 +638,8 @@ ENDFORM.
 FORM get_gr_item TABLES ct_data STRUCTURE zsssmm03018
                  USING VALUE(pv_grnum) TYPE zessgrnum.
 
-  DATA : ls_data LIKE LINE OF ct_data.
+  DATA : ls_data LIKE LINE OF ct_data,
+         lv_prc  TYPE zesstoprc.
 
   DATA : BEGIN OF ls_menu,
            pomnr TYPE zesspomnr, "자재코드
@@ -652,6 +680,7 @@ FORM get_gr_item TABLES ct_data STRUCTURE zsssmm03018
 
     MODIFY ct_data FROM ls_data.
   ENDLOOP.
+
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1755,7 +1784,7 @@ FORM display_alv_0600 .
       i_structure_name              = 'zsssmm03012'
       is_layout                     = gs_layo
     CHANGING
-      it_outtab                     = gt_mivi_2
+      it_outtab                     = gt_out_0600
       it_fieldcatalog               = gt_fcat_0600
 *     it_sort                       =
 *     it_filter                     =
@@ -1973,6 +2002,8 @@ FORM set_detail_iv_data USING VALUE(pv_ivnum) TYPE zessivnum.
            fname TYPE zessfname,
          END OF ls_name.
 
+  DATA ls_col  TYPE lvc_s_scol.
+
 
   SELECT SINGLE ivnum ivdat jenum fyear apnum apfyr toprc stext curky rgdat rgtor
     FROM ztssmivh
@@ -1990,6 +2021,29 @@ FORM set_detail_iv_data USING VALUE(pv_ivnum) TYPE zessivnum.
     FROM ztssmivi
     INTO CORRESPONDING FIELDS OF TABLE gt_mivi_2
     WHERE ivnum = pv_ivnum.
+
+
+  CLEAR gt_out_0600.
+  LOOP AT gt_mivi_2 INTO gs_mivi_2.
+    MOVE-CORRESPONDING gs_mivi_2 TO gs_out_0600.
+
+    IF gs_out_0600-del EQ ''. "현재입고문서
+      ls_col-fname     = 'GRNUM'.
+      ls_col-color-col = cl_gui_resources=>list_col_positive.
+      ls_col-color-int = 0.
+      ls_col-color-inv = 0.
+      APPEND ls_col TO gs_out_0600-it_col.
+    ELSEIF gs_out_0600-del NE ''.
+      ls_col-fname     = 'GRNUM'.
+      ls_col-color-col = 0.
+      ls_col-color-int = 0.
+      ls_col-color-inv = 0.
+      APPEND ls_col TO gs_out_0600-it_col.
+    ENDIF.
+
+    APPEND gs_out_0600 TO gt_out_0600.
+  ENDLOOP.
+
 
 
 
@@ -2678,6 +2732,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '1'.
         WHEN 'RGDAT'.
           ls_fcat-col_pos = '2'.
+          ls_fcat-coltext = '송장검증일'.
         WHEN 'RGTOR'.
           ls_fcat-col_pos = '4'.
           ls_fcat-outputlen = '8'.
@@ -2698,6 +2753,8 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-outputlen = '8'.
           ls_fcat-fix_column = 'X'.
           ls_fcat-hotspot = 'X'.
+        WHEN 'IVDAT'.
+          ls_fcat-coltext = '등록일'.
 
 
         WHEN 'GRNME'.
@@ -2732,7 +2789,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '1'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
-          ls_fcat-coltext = '입고문서 등록일'.
+          ls_fcat-coltext = '입고일'.
         WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
           ls_fcat-emphasize = 'C300'.
@@ -2783,7 +2840,7 @@ FORM set_fcat_0100  CHANGING pt_fcat TYPE lvc_t_fcat.
           ls_fcat-col_pos = '1'.
         WHEN 'GRDAT'.
           ls_fcat-col_pos = '2'.
-          ls_fcat-coltext = '입고문서 등록일'.
+          ls_fcat-coltext = '입고일'.
         WHEN 'GRNUM'.
           ls_fcat-col_pos = '3'.
           ls_fcat-emphasize = 'C300'.
@@ -3022,8 +3079,9 @@ FORM get_detail_info_0100  CHANGING cv_subrc.
   CLEAR ls_row_no.
   READ TABLE lt_row_no INDEX 1 INTO ls_row_no.
 
-  CLEAR gs_data.
-  READ TABLE gt_data INDEX ls_row_no-row_id INTO gs_data.
+  CLEAR gs_out.
+  READ TABLE gt_out INDEX ls_row_no-row_id INTO gs_out.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT_0600
@@ -3058,6 +3116,8 @@ FORM set_fcat_0600  CHANGING pt_fcat TYPE lvc_t_fcat.
       WHEN 'GRSEQ'.
         ls_fcat-outputlen = 3.
         ls_fcat-lzero = 'X'.
+      WHEN 'IVPRC'.
+        ls_fcat-do_sum = 'X'.
 
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
@@ -3092,12 +3152,15 @@ FORM set_fcat_0300  CHANGING pt_fcat TYPE lvc_t_fcat.
       WHEN 'GRPRC'.
         ls_fcat-coltext = '금액'.
         ls_fcat-emphasize = 'C300'.
+        ls_fcat-do_sum = 'X'.
       WHEN 'GRSEQ'.
         ls_fcat-outputlen = 3.
         ls_fcat-lzero = 'X'.
       WHEN 'ITNUM'.
         ls_fcat-outputlen = 3.
         ls_fcat-lzero = 'X'.
+
+
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.
@@ -3802,7 +3865,7 @@ FORM get_data .
       RETURN.
     ENDIF.
 
-    SORT gt_data BY light2 ASCENDING.
+*    SORT gt_data BY light2 ASCENDING.
 
   ELSEIF my_tab-activetab = 'TAB2'.
 
@@ -3823,7 +3886,7 @@ FORM get_data .
       RETURN.
     ENDIF.
 
-    SORT gt_data BY grdat DESCENDING light ASCENDING.
+*    SORT gt_data BY grdat DESCENDING light ASCENDING.
 
   ELSEIF my_tab-activetab = 'TAB3'.
 
@@ -3839,7 +3902,7 @@ FORM get_data .
     PERFORM check_alv_condition.
     PERFORM get_ap_data.
 
-    SORT gt_data BY apdat DESCENDING.
+*    SORT gt_data BY apdat DESCENDING.
   ENDIF.
 
 ENDFORM.
@@ -3858,26 +3921,31 @@ FORM get_search_data .
     zsssmm03001-check = 'X'.
     zsssmm03001-cheke = 'X'.
     zsssmm03001-endda = sy-datum.
-    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+    PERFORM get_calc_date USING sy-datum '-' '0' '7' '0'
                           CHANGING gv_begda.
 
     zsssmm03001-begda = gv_begda.
+    zsssmm03001-begda = '20250501'.
+
   ELSEIF my_tab-activetab = 'TAB2'.
     zsssmm03003-check = 'X'.
     zsssmm03003-cheke = 'X'.
     zsssmm03003-endda = sy-datum.
-    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+    PERFORM get_calc_date USING sy-datum '-' '0' '7' '0'
                           CHANGING gv_begda.
 
     zsssmm03003-begda = gv_begda.
+    zsssmm03003-begda = '20250501'.
 
   ELSEIF my_tab-activetab = 'TAB3'.
 
     zsssmm03004-endda = sy-datum.
-    PERFORM get_calc_date USING sy-datum '-' '0' '1' '0'
+    PERFORM get_calc_date USING sy-datum '-' '0' '7' '0'
                           CHANGING gv_begda.
 
     zsssmm03004-begda = gv_begda.
+    zsssmm03004-begda = '20250501'.
+
   ENDIF.
 
 
@@ -3934,8 +4002,9 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM req_event_for_alv_0300 .
-  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_3.
+  SET HANDLER lcl_handler=>on_hotspot_click        FOR go_alv_3.
 
+  SET HANDLER lcl_handler=>on_toolbar              FOR go_alv_3.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT_0100F
@@ -3945,6 +4014,21 @@ ENDFORM.
 *      <--P_GT_FCAT_0100  text
 *----------------------------------------------------------------------*
 FORM set_fcat_0100f  CHANGING p_gt_fcat_0100.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INSERT_ASAP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM insert_asap .
+
+  gs_jeh-rgdat = gs_mivh-ivdat.
+
+  gs_mivh-rgdat = gs_mivh-ivdat.
 
 ENDFORM.
 

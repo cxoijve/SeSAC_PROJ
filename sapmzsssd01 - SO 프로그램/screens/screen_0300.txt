@@ -8,7 +8,7 @@ SAPMZSSSD01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSSD01                             0300 0300     23117192 37  0  0 27151  0G E                              20251001140605																																
+SAPMZSSSD01                             0300 0300     23117192 37  0  0 27151  0G E                              20251018204955																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																

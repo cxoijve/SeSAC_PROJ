@@ -8,7 +8,13 @@ CLASS lcl_event_handler IMPLEMENTATION.
   METHOD on_button_click.
     CASE es_col_id.
       WHEN 'BTN_TXT'.
-        MESSAGE i000(ymc00) WITH 'Button Click'.
+        READ TABLE gt_display into gs_display index es_row_no-row_id.
+
+
+        SET PARAMETER ID 'ZSSPO' FIELD gs_display-venid.
+        CALL TRANSACTION 'ZSSMM01'.
+
+*        MESSAGE i000(ym00) WITH 'Button Click'.
     ENDCASE.
   ENDMETHOD.
 *
@@ -18,6 +24,13 @@ CLASS lcl_event_handler IMPLEMENTATION.
 
   ENDMETHOD.
 
+ENDCLASS.
+
+
+CLASS lcl_handler_tree IMPLEMENTATION.
+  METHOD on_node_double_click.
+    perform handle_node_double_click using node_key.
+  ENDMETHOD.
 ENDCLASS.
 
 ----------------------------------------------------------------------------------

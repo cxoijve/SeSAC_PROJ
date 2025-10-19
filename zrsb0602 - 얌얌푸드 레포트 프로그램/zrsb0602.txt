@@ -1,0 +1,329 @@
+*&---------------------------------------------------------------------*
+*& Report ZRSB0602
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsb0602.
+*
+*DATA : BEGIN OF gs_poh,
+*         ponum TYPE ztsspoh-ponum,
+*         podat TYPE ztsspoh-podat,
+*         venid TYPE ztsspoh-venid,
+*         dudat TYPE ztsspoh-dudat,
+*         stext TYPE ztsspoh-stext,
+*         curky TYPE ztsspoh-curky,
+*         rgdat TYPE ztsspoh-rgdat,
+*         rgtor TYPE ztsspoh-rgtor,
+*       END OF gs_poh,
+*       gt_poh LIKE TABLE OF gs_poh.
+*
+*DATA : BEGIN OF gs_poi,
+*         ponum  TYPE ztsspoi-ponum,
+*         itnum  TYPE ztsspoi-itnum,
+*         pomnr  TYPE ztsspoi-pomnr,
+*         amount TYPE ztsspoi-amount,
+*         meins  TYPE ztsspoi-meins,
+*         plant  TYPE ztsspoi-plant,
+*         poprc  TYPE ztsspoi-poprc,
+*         curky  TYPE ztsspoi-curky,
+*       END OF gs_poi,
+*       gt_poi LIKE TABLE OF gs_poi.
+*
+*data : lv_amount type ztsspoi-amount,
+*       lv_tot type ztsspoi-poprc.
+*
+*
+*select a~ponum podat venid dudat rgdat
+*  into CORRESPONDING FIELDS OF table gt_poh
+*  from ztsspoh as a
+*  INNER JOIN ztsspoi as b
+*  on a~ponum = b~ponum
+*  where podat >= '20250501'.
+*
+*lv_amount = 500.
+*
+*loop at gt_poh into gs_poh.
+*
+*  select single
+*
+*ENDLOOP.
+*
+*UPDATE ZTSSPOI
+*  set amount = lv_amount
+*      poprc = lv_amount *
+*  where
+
+
+DATA : BEGIN OF gs_poh,
+         ponum TYPE ztsspoh-ponum,
+         podat TYPE ztsspoh-podat,
+         venid TYPE ztsspoh-venid,
+         dudat TYPE ztsspoh-dudat,
+         stext TYPE ztsspoh-stext,
+         curky TYPE ztsspoh-curky,
+         rgdat TYPE ztsspoh-rgdat,
+         rgtor TYPE ztsspoh-rgtor,
+       END OF gs_poh,
+       gt_poh LIKE TABLE OF gs_poh.
+
+DATA : BEGIN OF gs_poi,
+         ponum  TYPE ztsspoi-ponum,
+         itnum  TYPE ztsspoi-itnum,
+         pomnr  TYPE ztsspoi-pomnr,
+         amount TYPE ztsspoi-amount,
+         meins  TYPE ztsspoi-meins,
+         plant  TYPE ztsspoi-plant,
+         poprc  TYPE ztsspoi-poprc,
+         curky  TYPE ztsspoi-curky,
+       END OF gs_poi,
+       gt_poi LIKE TABLE OF gs_poi.
+
+DATA : lv_amount TYPE ztsspoi-amount,
+       lv_poprc  TYPE ztsspoi-poprc,
+       lv_prcat  TYPE ztssprcat-vnprc.  " 자재가격 (테이블명은 실제에 맞게 수정)
+
+lv_amount = 500.
+
+" 2025년 5월 1일 이후 PO 조회
+SELECT ponum podat venid dudat rgdat
+  INTO CORRESPONDING FIELDS OF TABLE gt_poh
+  FROM ztsspoh
+  WHERE podat >= '20250501'.
+
+" 해당 PO의 아이템 조회
+IF gt_poh IS NOT INITIAL.
+  SELECT ponum itnum pomnr amount meins plant poprc curky
+    INTO CORRESPONDING FIELDS OF TABLE gt_poi
+    FROM ztsspoi
+    FOR ALL ENTRIES IN gt_poh
+    WHERE ponum = gt_poh-ponum.
+ENDIF.
+
+" 각 아이템별로 업데이트
+LOOP AT gt_poi INTO gs_poi.
+
+  " PO 헤더에서 벤더 정보 가져오기
+  READ TABLE gt_poh INTO gs_poh WITH KEY ponum = gs_poi-ponum.
+  IF sy-subrc = 0.
+
+    " 벤더별 자재 가격 조회 (테이블명과 필드명은 실제에 맞게 수정)
+    SELECT SINGLE vnprc
+      INTO lv_prcat
+      FROM ztssprcat  " 또는 벤더-자재 정보 테이블
+      WHERE venid = gs_poh-venid
+        AND rawnr = gs_poi-pomnr.
+
+    IF sy-subrc = 0.
+      lv_poprc = lv_amount * lv_prcat.
+
+      " 개별 업데이트
+      UPDATE ztsspoi
+        SET amount = lv_amount
+            poprc  = lv_poprc
+        WHERE ponum = gs_poi-ponum
+          AND itnum = gs_poi-itnum.
+    ENDIF.
+
+  ENDIF.
+
+ENDLOOP.
+
+
+*DATA :
+*  lt_entire TYPE TABLE OF ztsspoh,
+*  ls_entire TYPE ztsspoh.
+
+
+*UPDATE ztsspoh
+*  SET dudat = '20250501'
+*  WHERE podat >= '20240401'
+*    AND podat <= '20240430'
+*    AND dudat <= podat.
+*
+*UPDATE ztsspoh
+*  SET dudat = '20250503'
+*  WHERE podat >= '20240401'
+*    AND podat <= '20240430'
+*    AND dudat > podat.
+
+*DATA : BEGIN OF ls_poh,
+*         ponum TYPE ztsspoh-ponum,
+*         podat TYPE ztsspoh-podat,
+*         dudat TYPE ztsspoh-dudat,
+*         rgdat TYPE ztsspoh-rgdat,
+*       END OF ls_poh,
+*       lt_poh LIKE TABLE OF ls_poh.
+*
+*
+*DATA : BEGIN OF ls_grh,
+*         grnum TYPE ztssgrh-grnum,
+*         grdat TYPE ztssgrh-grdat,
+*         rgdat TYPE ztssgrh-rgdat,
+*       END OF ls_grh,
+*       lt_grh LIKE TABLE OF ls_grh.
+*
+**SELECT ponum podat dudat rgdat
+**  INTO CORRESPONDING FIELDS OF TABLE lt_poh
+**  FROM ztsspoh
+**  WHERE podat >= '20250801' AND podat <= '20250831'.
+**
+*
+*SELECT grnum grdat rgdat
+*  INTO  CORRESPONDING FIELDS OF TABLE lt_grh
+*  FROM ztssgrh
+*  WHERE grdat >= '20250801' AND grdat <= '20250831'.
+*
+*LOOP AT lt_grh INTO ls_grh.
+*
+*  UPDATE ztssgrh
+*  SET grdat = '20250901'
+*      rgdat = '20250901'
+*  WHERE grnum = ls_grh-grnum.
+*
+*ENDLOOP.
+
+
+" 필터링된 데이터만 UPDATE
+*LOOP AT lt_poh INTO ls_poh.
+**  IF ls_poh-dudat >= ls_poh-podat.
+**    UPDATE ztsspoh
+**      SET dudat = '20250501'
+**          rgdat = '20250503'
+**      WHERE ponum = ls_poh-ponum.
+**  ELSE.
+*  UPDATE ztsspoh
+*    SET dudat = '20250901'
+*        rgdat = '20250901'
+*    WHERE ponum = ls_poh-ponum.
+**  ENDIF.
+*ENDLOOP.
+
+
+
+*DATA : BEGIN OF ls_poh,
+*         ponum TYPE ztsspoh-ponum,
+*         podat TYPE ztsspoh-podat,
+*         dudat TYPE ztsspoh-dudat,
+*         rgdat TYPE ztsspoh-rgdat,
+*       END OF ls_poh,
+*       lt_poh LIKE TABLE OF ls_poh.
+*
+*DATA : lt_entire like lt_poh,
+*       ls_entire like ls_poh.
+*
+*SELECT ponum podat dudat rgdat
+*  INTO CORRESPONDING FIELDS OF TABLE lt_entire
+*  FROM ztsspoh.
+*
+*
+*SELECT ponum podat dudat rgdat
+*  INTO CORRESPONDING FIELDS OF TABLE lt_poh
+*  FROM ztsspoh
+*  WHERE podat >= '20240401' AND podat <= '20240430'.
+*
+*
+*LOOP AT lt_entire INTO ls_entire.
+*  READ TABLE lt_poh INTO ls_poh WITH TABLE KEY ponum = ls_entire-ponum.
+*  IF ls_entire-dudat <= ls_poh-podat.
+*    UPDATE ztsspoh
+*      SET dudat = '20250501'
+*      WHERE ponum = ls_poh-ponum.
+*
+*  ELSE.
+*    UPDATE ztsspoh
+*      SET dudat = '20250503'
+*      WHERE ponum = ls_poh-ponum.
+*  ENDIF.
+*ENDLOOP.
+*
+
+
+
+*LOOP AT lt_poh ASSIGNING FIELD-SYMBOL(<fs_data>).
+*
+*  UPDATE ztsspoh SET
+*        dudat = '20250501'
+*        WHERE
+*endloop.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*DATA : lt_jeh TYPE TABLE OF ztssjeh,
+*       ls_jeh TYPE ztssjeh,
+*       lv_cnt TYPE i.
+*
+*DATA: lt_ware TYPE TABLE OF ztssware,
+*      ls_ware TYPE ztssware.
+*      lv_cnt  TYPE i.
+
+*DATA: BEGIN OF ls_data,
+*        grnum TYPE ztssgrh-grnum,
+*        grdat TYPE ztssgrh-grdat,
+*        rgdat TYPE ztssgrh-rgdat,
+*        jenum TYPE ztssgrh-jenum,
+*        fyear TYPE ztssgrh-fyear,
+*      END OF ls_data,
+*      lt_data LIKE TABLE OF ls_data.
+*
+*
+
+
+
+
+
+
+
+
+*SELECT grnum rgdat jenum fyear
+*  FROM ztssgrh
+*  INTO CORRESPONDING FIELDS OF TABLE lt_data.
+*
+
+
+*IF sy-subrc = 0.
+*
+*  SELECT *
+*    FROM ztssjeh
+*    INTO TABLE lt_jeh.
+*
+*  IF sy-subrc = 0.
+*
+*    LOOP AT lt_jeh INTO ls_jeh.
+*
+*      READ TABLE lt_data INTO ls_data
+*        WITH KEY jenum = ls_jeh-jenum.
+*
+*      IF sy-subrc = 0.
+*        UPDATE ztssjeh
+*           SET rgdat = ls_data-rgdat
+*         WHERE jenum = ls_data-jenum.
+*
+*        IF sy-subrc = 0.
+*          lv_cnt = lv_cnt + 1.
+*        ENDIF.
+*      ENDIF.
+*
+*    ENDLOOP.
+*
+*    COMMIT WORK.
+*    MESSAGE |{ lv_cnt }건 업데이트 완료| TYPE 'S'.
+*
+*  ENDIF.
+
+*ENDIF.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

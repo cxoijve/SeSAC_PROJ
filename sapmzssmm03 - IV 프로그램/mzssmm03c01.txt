@@ -4,8 +4,9 @@
 CLASS lcl_handler IMPLEMENTATION.
   METHOD on_hotspot_click.
     DATA :row_id   TYPE i,
-          gs_list  LIKE LINE OF gt_data,
+          gs_list  LIKE LINE OF gt_out,
           gs_list2 LIKE LINE OF gt_mivi_2.
+
 
     row_id = es_row_no-row_id.
 
@@ -37,33 +38,33 @@ CLASS lcl_handler IMPLEMENTATION.
 
       CASE e_column_id.
         WHEN 'RGTOR'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           PERFORM get_emp_detail_data USING gs_list-rgtor.
         WHEN 'GRTOR'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           PERFORM get_emp_detail_data USING gs_list-grtor.
         WHEN 'APTOR'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           PERFORM get_emp_detail_data USING gs_list-aptor.
         WHEN 'IVNUM'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
 
           CALL FUNCTION 'Z_FMSS_GET_IV_DETAIL'
             EXPORTING
               iv_ivnum = gs_list-ivnum.
 
         WHEN 'GRNUM'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           CALL FUNCTION 'Z_FMSS_CALL_GR_DETAIL'
             EXPORTING
               iv_grnum = gs_list-grnum.
         WHEN 'JENUM'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
             EXPORTING
               i_jenum = gs_list-jenum.
         WHEN 'APNUM'.
-          READ TABLE gt_data INTO gs_list INDEX row_id.
+          READ TABLE gt_out INTO gs_list INDEX row_id.
           CALL FUNCTION 'Z_FMSS_CALL_FI_DETAIL'
             EXPORTING
               i_jenum = gs_list-apnum.
@@ -71,6 +72,9 @@ CLASS lcl_handler IMPLEMENTATION.
 
 
       ENDCASE.
+    ELSEIF sy-dynnr = '0300'.
+
+
     ENDIF.
 
   ENDMETHOD.
@@ -93,14 +97,6 @@ CLASS lcl_handler IMPLEMENTATION.
         APPEND ls_button TO e_object->mt_toolbar.
 
 
-*        CLEAR ls_button.
-*        ls_button-function = 'CUST_DETAIL'.
-**      ls_button-icon = icon_information.
-*        ls_button-butn_type = '0'.
-*        ls_button-text = '세부사항'.
-*        APPEND ls_button TO e_object->mt_toolbar.
-
-
       ELSEIF my_tab-activetab = 'TAB2'.
 
         CLEAR ls_button.
@@ -110,12 +106,6 @@ CLASS lcl_handler IMPLEMENTATION.
         ls_button-text = '송장검증'.
         APPEND ls_button TO e_object->mt_toolbar.
 
-*        CLEAR ls_button.
-*        ls_button-function = 'CUST_DETAIL'.
-**      ls_button-icon = icon_information.
-*        ls_button-butn_type = '0'.
-*        ls_button-text = '세부사항'.
-*        APPEND ls_button TO e_object->mt_toolbar.
 
       ELSEIF my_tab-activetab = 'TAB3'.
 
@@ -159,7 +149,7 @@ CLASS lcl_handler IMPLEMENTATION.
                   gt_mivi,
                   gs_mivi,
                   gs_mivh.
-          IF  gs_data-ivnum NE ''.
+          IF  gs_out-ivnum NE ''.
             MESSAGE i999(zmcss) WITH 'IV 미완료된 데이터를 선택해주세요'.
             RETURN.
           ENDIF.
@@ -167,8 +157,8 @@ CLASS lcl_handler IMPLEMENTATION.
           "300 screen ALV 구성 및 스크린 구성
           "--------------------------------------------------------------------
           PERFORM get_gr_item TABLES gt_gri
-                              USING gs_data-grnum.
-          PERFORM get_gr_header USING gs_data-grnum.
+                              USING gs_out-grnum.
+          PERFORM get_gr_header USING gs_out-grnum.
           "---------------------------------------------------------------------
 
           PERFORM set_insert_data CHANGING gv_subrc.
@@ -206,6 +196,7 @@ CLASS lcl_handler IMPLEMENTATION.
             CALL SCREEN 600.
             CLEAR : zsssmm03014,
                       gt_mivi_2,
+                      gt_out,
                       gt_data.
 
             CALL METHOD cl_gui_cfw=>set_new_ok_code
@@ -221,13 +212,13 @@ CLASS lcl_handler IMPLEMENTATION.
         PERFORM get_detail_info_0100 CHANGING gv_subrc.
         IF  gv_subrc IS INITIAL.
 
-          IF gs_data-apnum NE ''.
+          IF gs_out-apnum NE ''.
             MESSAGE i999(zmcss) WITH '지급완료된 데이터 입니다'.
             RETURN.
           ENDIF.
           "400 screen alv 구성 및 스크린 구성
           "---------------------------------------------------------------------
-          PERFORM get_iv_update_data USING gs_data-ivnum
+          PERFORM get_iv_update_data USING gs_out-ivnum
                                      CHANGING zsssmm03013.
 
           PERFORM get_gr_all_header_data.
@@ -245,7 +236,8 @@ CLASS lcl_handler IMPLEMENTATION.
             CALL SCREEN 600.
             CLEAR : zsssmm03014,
                       gt_mivi_2,
-                      gt_data.
+                      gt_data,
+                      gt_out.
 
             CALL METHOD cl_gui_cfw=>set_new_ok_code
               EXPORTING
@@ -264,7 +256,7 @@ CLASS lcl_handler IMPLEMENTATION.
             MESSAGE i999(zmcss) WITH 'IV 문서가 존재하지 않습니다'.
             RETURN.
           ELSE.
-            PERFORM set_detail_iv_data USING gs_data-ivnum.
+            PERFORM set_detail_iv_data USING gs_out-ivnum.
 
             CALL SCREEN 600.
             CLEAR : zsssmm03014,
@@ -280,6 +272,7 @@ CLASS lcl_handler IMPLEMENTATION.
           CLEAR gv_subrc.
           zsssmm03013-grnum = gs_grh-grnum.
           zsssmm03013-ivdat = sy-datum.
+          zsssmm03013-stext = |{ zsssmm03013-grnum }의 송장검증|.
 
 
           CALL FUNCTION 'Z_FMSS_GET_PERNR'

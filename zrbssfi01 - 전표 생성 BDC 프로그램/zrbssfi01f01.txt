@@ -10,6 +10,12 @@
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM INITIALIZATION .
+  DATA: LS_FUNCTXT TYPE SMP_DYNTXT.
+
+  LS_FUNCTXT-ICON_ID = ICON_EXPORT.
+  LS_FUNCTXT-ICON_TEXT = 'Excel Template'.
+  LS_FUNCTXT-QUICKINFO = '전표 엑셀 다운로드'.
+  SSCRFIELDS-FUNCTXT_01 = LS_FUNCTXT.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -32,6 +38,8 @@ ENDFORM.
 *  <--  p2        text
 *----------------------------------------------------------------------*
 FORM AT_SELECTION_SCREEN .
+
+  PERFORM SCREEN_USER_COMMAND.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -93,19 +101,6 @@ FORM START_OF_SELECTION .
 
       DATA: LV_CURR_VAL TYPE P LENGTH 15 DECIMALS 2.
 
-***      " 여기에 CURR 타입 처리 추가
-***      CASE LS_DFIES-DATATYPE.
-***        WHEN 'CURR' OR 'DEC'.
-***          DATA(LV_RAW_STR) = LS_ALSMEX-VALUE.
-***          REPLACE ALL OCCURRENCES OF ',' IN LV_RAW_STR WITH ''.
-***          CONDENSE LV_RAW_STR.
-***          IF LV_RAW_STR IS NOT INITIAL.
-***            LV_CURR_VAL = LV_RAW_STR.
-***            " 반드시 DECIMALS 만큼 나누기 (예: 100)
-***            LV_CURR_VAL = LV_CURR_VAL / 100.
-***            LS_ALSMEX-VALUE = LV_CURR_VAL.
-***          ENDIF.
-***      ENDCASE.
 
       IF LS_DFIES-CONVEXIT IS NOT INITIAL.
         DATA(FUNCTION_NAME) = 'CONVERSION_EXIT_' && LS_DFIES-CONVEXIT && '_INPUT'.
@@ -402,18 +397,7 @@ FORM SET_BDC .
 
   CLEAR GS_EXCEL.
 
-
-
-
   LOOP AT GT_EXCEL INTO GS_EXCEL.
-
-
-
-*    CLEAR GT_BDC.
-*    AT FIRST.
-
-*      CONTINUE.
-*    ENDAT.
 
 *------------ 정보 입력 후 등록 -------------*
     " 헤더 추가
@@ -441,8 +425,6 @@ FORM SET_BDC .
     " 아이템 추가
 
     IF GS_EXCEL-HFLAG IS INITIAL.
-
-
 
       " 엔터
       PERFORM BDC USING:
@@ -480,7 +462,6 @@ FORM SET_BDC .
 *                  ' ' 'BDC_CURSOR'  'ZSSSFI0102-JTYPE',
                       ' ' 'BDC_OKCODE'  '=BADD'.
 
-
       ENDIF.
 
       " 아이템의 플래그가 x일 때
@@ -504,29 +485,48 @@ FORM SET_BDC .
         CLEAR GT_BDC.
 
         DATA: LV_MESSAGE TYPE CHAR100.
-*        LOOP AT GT_BDCMSG.
-*
-*          CALL FUNCTION 'MESSAGE_TEXT_BUILD'
-*            EXPORTING
-*              MSGID               = GT_BDCMSG-MSGID
-*              MSGNR               = GT_BDCMSG-MSGNR
-*              MSGV1               = GT_BDCMSG-MSGV1
-*              MSGV2               = GT_BDCMSG-MSGV2
-*              MSGV3               = GT_BDCMSG-MSGV3
-*              MSGV4               = GT_BDCMSG-MSGV4
-*            IMPORTING
-*              MESSAGE_TEXT_OUTPUT = LV_MESSAGE.
-*
-**          WRITE: LV_MESSAGE.
-*        ENDLOOP.
 
-
-**  WRITE SY-SUBRC.
       ENDIF.
     ENDIF.
 
   ENDLOOP.
 
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  EXCEL_DOWN_SMPL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM EXCEL_DOWN_SMPL .
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SCREEN_USER_COMMAND
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM SCREEN_USER_COMMAND .
+  CASE SSCRFIELDS-UCOMM.
+    WHEN 'FC01'.
+      PERFORM FI_EXCEL_DOWNLOAD.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  FI_EXCEL_DOWNLOAD
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM FI_EXCEL_DOWNLOAD .
 
 ENDFORM.
 

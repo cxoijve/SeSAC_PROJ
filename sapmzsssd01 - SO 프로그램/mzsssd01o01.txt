@@ -10,10 +10,15 @@ MODULE status_0100 OUTPUT.
   SET PF-STATUS 'S100'.
   SET TITLEBAR 'T100'.
 
-  " 판매오더일 E 설정
-  zssssd0101-sodat_e = sy-datum.
+  " 판매오더일 기본값 설정
+  IF zssssd0101-sodat_b IS INITIAL.
+    zssssd0101-sodat_b = '20250501'.
+  ENDIF.
+  IF zssssd0101-sodat_e IS INITIAL.
+    zssssd0101-sodat_e = sy-datum.
+  ENDIF.
 
-  " 체크박스 기본값
+  " 체크박스 기본값 설정
   IF gv_first IS INITIAL.
     zssssd0101-gichk_y = 'X'.
     zssssd0101-gichk_m = 'X'.
@@ -32,8 +37,9 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE set_alv_0100 OUTPUT.
+  PERFORM get_header_list.     " 실행하자마자 ALV에 데이터 표시
   IF go_con1 IS INITIAL.
-    PERFORM get_header_list.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM get_header_list.     " 실행하자마자 ALV에 데이터 표시
     PERFORM create_alv USING 'CON1'
                        CHANGING go_con1
                                 go_alv1.
@@ -42,16 +48,20 @@ MODULE set_alv_0100 OUTPUT.
     PERFORM set_layo CHANGING gs_layo1.
     gs_layo1-excp_fname = 'LIGHT'.
     gs_layo1-excp_led = 'X'.
+    gs_layo1-ctab_fname = 'IT_COL'.
 
     PERFORM set_fcat1.
 *    PERFORM set_sort.
     PERFORM delete_toolbar.
 
+*    SORT gt_head BY sodat DESCENDING.
+    PERFORM set_sort.
     PERFORM display_alv USING 'ZSSSSD0102'
                         CHANGING go_alv1
                                  gs_layo1
                                  gt_head
-                                 gt_fcat1.
+                                 gt_fcat1
+                                 gt_sort1.
   ELSE.
 *      PERFORM get_header_list.
     PERFORM refresh_alv CHANGING go_alv1.
@@ -103,7 +113,8 @@ MODULE set_alv_0200 OUTPUT.
                         CHANGING go_alv2
                                  gs_layo2
                                  gt_item
-                                 gt_fcat2.
+                                 gt_fcat2
+                                 gt_sort2.
   ELSE.
 *    PERFORM get_item_list CHANGING gt_item.
 *    PERFORM set_toprc.
@@ -149,7 +160,8 @@ MODULE set_alv_0202 OUTPUT.
                         CHANGING go_alv3
                                  gs_layo3
                                  gt_mat
-                                 gt_fcat3.
+                                 gt_fcat3
+                                 gt_sort3.
   ELSE.
 *    PERFORM get_cust_mat.
     PERFORM refresh_alv CHANGING go_alv3.
@@ -171,8 +183,9 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE set_alv_0300 OUTPUT.
+  PERFORM get_item_list CHANGING gt_item_udt.     " 실행하자마자 ALV에 데이터 표시
   IF go_con4 IS INITIAL.
-    PERFORM get_item_list CHANGING gt_item_udt.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM get_item_list CHANGING gt_item_udt.  " select를 여기에 넣으면 수정하고 재수정할 때 alv에 제대로 된 데이터 표시x
 *    PERFORM set_toprc.
     PERFORM create_alv USING 'CON4'
                        CHANGING go_con4
@@ -189,7 +202,8 @@ MODULE set_alv_0300 OUTPUT.
                         CHANGING go_alv4
                                  gs_layo4
                                  gt_item_udt
-                                 gt_fcat4.
+                                 gt_fcat4
+                                 gt_sort4.
   ELSE.
 *    PERFORM get_item_list CHANGING gt_item_chg.
 *    PERFORM set_toprc.
@@ -236,8 +250,9 @@ ENDMODULE.
 *       text
 *----------------------------------------------------------------------*
 MODULE set_alv_0400 OUTPUT.
+*  PERFORM get_item_list CHANGING gt_item_crt.     " 실행하자마자 ALV에 데이터 표시
   IF go_con5 IS INITIAL.
-    PERFORM get_item_list CHANGING gt_item_crt.     " 실행하자마자 ALV에 데이터 표시
+*    PERFORM get_item_list CHANGING gt_item_crt.     " 실행하자마자 ALV에 데이터 표시
 *    PERFORM set_toprc.
     PERFORM create_alv USING 'CON5'
                        CHANGING go_con5
@@ -254,7 +269,8 @@ MODULE set_alv_0400 OUTPUT.
                         CHANGING go_alv5
                                  gs_layo5
                                  gt_item_crt
-                                 gt_fcat5.
+                                 gt_fcat5
+                                 gt_sort5.
   ELSE.
 *    PERFORM get_item_list CHANGING gt_item_chg.
 *    PERFORM set_toprc.

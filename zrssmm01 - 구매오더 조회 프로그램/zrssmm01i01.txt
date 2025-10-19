@@ -13,13 +13,15 @@ MODULE user_command_0100 INPUT.
     WHEN 'CREATE'.
       CALL TRANSACTION 'ZSSMM01'.
     WHEN 'MAT'.
-      perform set_default_0100.
+      PERFORM set_default_0100.
 *      perform set_default_0100_t.
-      perform get_info_mat tables gt_cnt gt_matlist CHANGING gv_subrc.
-      perform get_into_display.
-
+      PERFORM get_info_mat TABLES gt_cnt gt_matlist CHANGING gv_subrc.
+      PERFORM get_into_display.
+      PERFORM get_stock_top3.
 
       CALL SCREEN '0200'.
+    WHEN 'RET'.
+      call SCREEN '0300'.
   ENDCASE.
 ENDMODULE.
 *&---------------------------------------------------------------------*
@@ -51,6 +53,37 @@ MODULE exit_200 INPUT.
     WHEN OTHERS.
   ENDCASE.
 
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0300 INPUT.
+  CASE ok_code.
+    WHEN 'ENTER'.
+    WHEN 'BACK'.
+*      PERFORM free_tree.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+  CLEAR ok_code.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0300  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0300 INPUT.
+  CASE ok_code.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+
+    WHEN OTHERS.
+  ENDCASE.
+  CLEAR ok_code.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

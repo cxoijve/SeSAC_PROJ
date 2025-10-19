@@ -225,8 +225,9 @@ FORM set_fcat  CHANGING pt_fcat TYPE lvc_t_fcat.
     CASE ls_fcat-fieldname.
       WHEN 'LIGHT'.
         ls_fcat-coltext = '사용여부'.
+
       WHEN 'DEL'.
-        ls_fcat-no_out = 'X'.
+        ls_fcat-coltext = '삭제여부'.
     ENDCASE.
     MODIFY pt_fcat FROM ls_fcat.
     CLEAR ls_fcat.

@@ -25,6 +25,7 @@ FORM get_data .
 
   " dfgdsgd pa_vnme
   MOVE-CORRESPONDING gt_total TO gt_data.
+  delete ADJACENT DUPLICATES FROM gt_data COMPARING ponum.
 
 *  ELSE.
 
@@ -915,6 +916,7 @@ init_alv_0200 .
   PERFORM set_layout3.
   PERFORM set_fcat3.
   PERFORM set_sort3.
+  PERFORM set_exclude_btn.
   PERFORM set_tab_fdp_with_exclude USING 'ZSSSMD0803' gs_layo3 gt_exclude CHANGING gt_display gt_fcat3 gt_sort3 go_alv5.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1059,7 +1061,7 @@ FORM get_info_mat  TABLES   pt_cnt STRUCTURE gs_cnt
     CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
-        iv_endda         = '99991231'
+        iv_endda         = sy-datum
         iv_stoid         = pt_matlist-stoid
         iv_matnr         = pt_matlist-matnr
       IMPORTING
@@ -1097,8 +1099,10 @@ FORM get_info_mat  TABLES   pt_cnt STRUCTURE gs_cnt
 
     APPEND LINES OF lt_color TO pt_cnt-cellscol.
     APPEND pt_cnt.
+
     CLEAR : lt_color, lt_color[].
   ENDLOOP.
+
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_LAYOUT3
@@ -1113,7 +1117,7 @@ FORM set_layout3 .
   gs_layo3-zebra = 'X'.
   gs_layo3-ctab_fname = 'CELLSCOL'.
   gs_layo3-stylefname = 'CT'.
-
+*  gs_layo3-stylefname = 'CELLTAB'.
   gs_layo3-sel_mode = 'A'.
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1246,30 +1250,31 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM get_into_display .
 
-
+  DATA: ls_color TYPE lvc_s_scol,
+        ls_style TYPE lvc_s_styl.
   LOOP AT gt_cnt INTO gs_cnt.
+    CLEAR gs_display.
     MOVE-CORRESPONDING gs_cnt TO gs_display.
     PERFORM get_venid USING gs_cnt-matnr CHANGING gs_display-venid.
     PERFORM get_ven_name USING gs_display-venid CHANGING gs_display-vname.
+
     IF gs_display-astck <= 10.
-      DATA: ls_color TYPE lvc_s_scol.
       CLEAR ls_color.
-      ls_color-fname = 'ASTCK'.        " 필드명
-      ls_color-color-col = 6.          " 빨간색
-      ls_color-color-int = 0.          " 일반 강도
-      ls_color-color-inv = 0.          " 반전 없음
+      ls_color-fname = 'ASTCK'.
+      ls_color-color-col = 6.
+      ls_color-color-int = 0.          "
+      ls_color-color-inv = 0.          "
       APPEND ls_color TO gs_display-cellscol.
     ENDIF.
-
+    CLEAR ls_style.
+    ls_style-fieldname = 'BTN_TXT'.
+    ls_style-style = cl_gui_alv_grid=>mc_style_button.
+    APPEND ls_style TO gs_display-ct.
     gs_display-btn_txt = '구매오더하러 가기'.
-*    DATA: ls_style TYPE lvc_s_styl.
-*
-*    ls_style-fieldname = 'BUTTON'.
-*    ls_style-style = cl_gui_alv_grid=>mc_style_button.  " 버튼 스타일
-*    APPEND ls_style TO gs_display-celltab.
     APPEND gs_display TO gt_display.
   ENDLOOP.
 *  PERFORM modify_display.
+  delete ADJACENT DUPLICATES FROM gt_cnt COMPARING matnr.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1302,6 +1307,21 @@ ENDFORM.
 FORM set_sort3 .
 
 
+  DATA: ls_sort TYPE lvc_s_sort.
+
+  REFRESH gt_sort.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'VENID'.
+  ls_sort-spos = 1.
+  ls_sort-up = 'X'.
+  APPEND ls_sort TO gt_sort3.
+
+  CLEAR ls_sort.
+  ls_sort-fieldname = 'MATNR'.
+  ls_sort-spos = 2.
+  ls_sort-up = 'X'.
+  APPEND ls_sort TO gt_sort3.
 
 ENDFORM.
 *&---------------------------------------------------------------------*
@@ -1350,6 +1370,473 @@ FORM refresh_alvs .
   ls_stbl-col = 'X'. "( col scroll Fix )
   go_alv5->refresh_table_display( EXPORTING i_soft_refresh = 'X'
                                            is_stable      = ls_stbl  ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_STOCK_TOP3
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM get_stock_top3 .
+  DATA: lt_sorted  LIKE gt_display,
+        ls_display LIKE gs_display.
+
+  " 초기화
+  CLEAR: gv_low1_venid, gv_low1_vname, gv_low1_matnr, gv_low1_matnm, gv_low1_astck,
+         gv_low2_venid, gv_low2_vname, gv_low2_matnr, gv_low2_matnm, gv_low2_astck,
+         gv_low3_venid, gv_low3_vname, gv_low3_matnr, gv_low3_matnm, gv_low3_astck.
+
+  " 데이터 복사
+  lt_sorted[] = gt_display[].
+
+  " 가용재고 오름차순 정렬 (낮은 순)
+  SORT lt_sorted BY astck ASCENDING.
+
+  " 1위 (가장 적은 재고)
+  READ TABLE lt_sorted INTO ls_display INDEX 1.
+  IF sy-subrc = 0.
+    gv_low1_venid = ls_display-venid.
+    gv_low1_vname = ls_display-vname.
+    gv_low1_matnr = ls_display-matnr.
+    perform get_mat_name using ls_display-matnr CHANGING gv_low1_matnm.
+    gv_low1_astck = ls_display-astck.
+  ENDIF.
+
+  " 2위
+  READ TABLE lt_sorted INTO ls_display INDEX 2.
+  IF sy-subrc = 0.
+    gv_low2_venid = ls_display-venid.
+    gv_low2_vname = ls_display-vname.
+    gv_low2_matnr = ls_display-matnr.
+    perform get_mat_name using ls_display-matnr CHANGING gv_low2_matnm.
+    gv_low2_astck = ls_display-astck.
+  ENDIF.
+
+  " 3위
+  READ TABLE lt_sorted INTO ls_display INDEX 3.
+  IF sy-subrc = 0.
+    gv_low3_venid = ls_display-venid.
+    gv_low3_vname = ls_display-vname.
+    gv_low3_matnr = ls_display-matnr.
+    perform get_mat_name using ls_display-matnr CHANGING gv_low3_matnm.
+    gv_low3_astck = ls_display-astck.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SET_EXCLUDE_BTN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM set_exclude_btn .
+  CLEAR gt_exclude.
+
+  DATA : ls_excl TYPE ui_func,
+         lt_excl TYPE ui_functions.
+
+  ls_excl = cl_gui_alv_grid=>mc_fc_excl_all.
+  APPEND ls_excl TO gt_exclude.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CREATE_ALV_CUSTOM_TREE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_0059   text
+*      <--P_GO_CON_TREE  text
+*      <--P_GO_ALV_TREE  text
+*----------------------------------------------------------------------*
+FORM create_alv_custom_tree  USING VALUE(p_con) TYPE c
+                 CHANGING  co_con TYPE REF TO cl_gui_custom_container
+                           co_tree TYPE REF TO cl_gui_simple_tree.
+
+  IF co_con IS NOT INITIAL. RETURN. ENDIF.
+
+  CREATE OBJECT co_con
+    EXPORTING
+*     parent                      =
+      container_name              = p_con
+*     style                       =
+*     lifetime                    = lifetime_default
+*     repid                       =
+*     dynnr                       =
+*     no_autodef_progid_dynnr     =
+    EXCEPTIONS
+      cntl_error                  = 1
+      cntl_system_error           = 2
+      create_error                = 3
+      lifetime_error              = 4
+      lifetime_dynpro_dynpro_link = 5
+      OTHERS                      = 6.
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+
+
+  IF co_tree IS NOT INITIAL. RETURN. ENDIF.
+  CREATE OBJECT co_tree
+    EXPORTING
+*     lifetime            =
+      parent              = co_con
+*     shellstyle          =
+      node_selection_mode = cl_gui_simple_tree=>node_sel_mode_single
+*     hide_selection      =
+*     name                =
+    EXCEPTIONS
+      OTHERS              = 6.
+
+  IF sy-subrc <> 0.
+    MESSAGE a100(zmss) WITH sy-uname. " 시스템 오류입니다 &에게 문의하세요!
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  REQ_EVENT_FOR_ALV_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM req_event_for_alv_0300 .
+  DATA: ls_event TYPE cntl_simple_event,
+        lt_event LIKE TABLE OF ls_event.
+
+  ls_event-eventid = cl_gui_simple_tree=>eventid_node_double_click.
+*  ls_event-appl_event = 'X'. " PAI Event
+  APPEND ls_event TO lt_event.
+  CALL METHOD go_alv_tree->set_registered_events
+    EXPORTING
+      events = lt_event.
+
+  SET HANDLER lcl_handler_tree=>on_node_double_click FOR go_alv_tree.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_TREE_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GO_ALV_TREE  text
+*----------------------------------------------------------------------*
+FORM display_tree_0400  CHANGING co_tree TYPE REF TO cl_gui_simple_tree.
+  PERFORM get_tree_data.
+
+  CALL METHOD co_tree->add_nodes
+    EXPORTING
+      table_structure_name = 'MTREESNODE'
+      node_table           = gt_tree
+*  EXCEPTIONS
+*     error_in_node_table  = 1
+*     failed               = 2
+*     dp_error             = 3
+*     table_structure_name_not_found = 4
+*     others               = 5
+    .
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = 'ROOT'.
+
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = '1000'.
+
+  CALL METHOD co_tree->expand_node
+    EXPORTING
+      node_key = '2000'.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+
+* Expand Level
+*  CALL METHOD go_tree->expand_root_nodes
+*    EXPORTING
+*      level_count    = 1
+*      expand_subtree = ''.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_TREE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+*----------------------------------------------------------------------*
+* FORM: Tree 데이터 생성 (MESSAGE 제거)
+*----------------------------------------------------------------------*
+FORM get_tree_data.
+
+  DATA: lv_year TYPE numc4,
+        lv_quarter TYPE c LENGTH 2,
+        lv_prev_year TYPE numc4,
+        lv_prev_quarter TYPE c LENGTH 2,
+        lv_node_key TYPE string,
+        lv_vendor_key TYPE string,
+        lv_text TYPE string,
+        lv_month TYPE numc2,
+        lv_po_count TYPE i,
+        lv_count_str TYPE string,  " ★ 추가
+        ls_temp LIKE gs_po.
+
+  REFRESH: gt_tree, gt_po.
+
+  SELECT h~ponum h~venid h~podat h~dudat v~vname
+    INTO CORRESPONDING FIELDS OF TABLE gt_po
+    FROM ztsspoh AS h
+    LEFT JOIN ztssvend AS v ON h~venid = v~venid
+    ORDER BY h~podat DESCENDING.
+
+  CHECK sy-subrc = 0.
+
+  LOOP AT gt_po INTO gs_po.
+    gs_po-year = gs_po-podat(4).
+    gs_po-month = gs_po-podat+4(2).
+    MODIFY gt_po FROM gs_po.
+  ENDLOOP.
+
+
+  CLEAR gs_tree.
+  gs_tree-node_key = 'ROOT'.
+  gs_tree-isfolder = 'X'.
+  gs_tree-text = '구매오더 목록'.
+  gs_tree-expander = 'X'.
+  APPEND gs_tree TO gt_tree.
+
+  CLEAR: lv_prev_year, lv_prev_quarter.
+
+  LOOP AT gt_po INTO gs_po.
+
+    CHECK gs_po-podat IS NOT INITIAL.
+    CHECK gs_po-venid IS NOT INITIAL.
+
+    lv_year = gs_po-year.
+    lv_month = gs_po-month.
+
+
+    IF lv_month BETWEEN '01' AND '03'.
+      lv_quarter = 'Q1'.
+    ELSEIF lv_month BETWEEN '04' AND '06'.
+      lv_quarter = 'Q2'.
+    ELSEIF lv_month BETWEEN '07' AND '09'.
+      lv_quarter = 'Q3'.
+    ELSE.
+      lv_quarter = 'Q4'.
+    ENDIF.
+
+
+    IF lv_year <> lv_prev_year.
+
+      CLEAR lv_po_count.
+      LOOP AT gt_po INTO ls_temp WHERE year = lv_year.
+        lv_po_count = lv_po_count + 1.
+      ENDLOOP.
+
+      CLEAR gs_tree.
+      gs_tree-node_key = lv_year.
+      gs_tree-relatkey = 'ROOT'.
+      gs_tree-relatship = cl_gui_simple_tree=>relat_last_child.
+      gs_tree-isfolder = 'X'.
+
+
+      lv_count_str = lv_po_count.
+      CONDENSE lv_count_str NO-GAPS.
+      CONCATENATE lv_year '년 (' lv_count_str '건)' INTO lv_text.
+      gs_tree-text = lv_text.
+      gs_tree-expander = 'X'.
+      APPEND gs_tree TO gt_tree.
+
+      lv_prev_year = lv_year.
+      CLEAR lv_prev_quarter.
+    ENDIF.
+
+
+    IF lv_quarter <> lv_prev_quarter.
+
+      CLEAR lv_po_count.
+      LOOP AT gt_po INTO ls_temp WHERE year = lv_year.
+
+        CASE lv_quarter.
+          WHEN 'Q1'.
+            IF ls_temp-month BETWEEN '01' AND '03'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q2'.
+            IF ls_temp-month BETWEEN '04' AND '06'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q3'.
+            IF ls_temp-month BETWEEN '07' AND '09'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q4'.
+            IF ls_temp-month BETWEEN '10' AND '12'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+        ENDCASE.
+      ENDLOOP.
+
+      CLEAR gs_tree.
+      CONCATENATE lv_year '_' lv_quarter INTO lv_node_key.
+      gs_tree-node_key = lv_node_key.
+      gs_tree-relatkey = lv_year.
+      gs_tree-relatship = cl_gui_simple_tree=>relat_last_child.
+      gs_tree-isfolder = 'X'.
+
+
+      lv_count_str = lv_po_count.
+      CONDENSE lv_count_str NO-GAPS.
+
+      CASE lv_quarter.
+        WHEN 'Q1'.
+          CONCATENATE '1분기 (1~3월) - ' lv_count_str '건' INTO lv_text.
+        WHEN 'Q2'.
+          CONCATENATE '2분기 (4~6월) - ' lv_count_str '건' INTO lv_text.
+        WHEN 'Q3'.
+          CONCATENATE '3분기 (7~9월) - ' lv_count_str '건' INTO lv_text.
+        WHEN 'Q4'.
+          CONCATENATE '4분기 (10~12월) - ' lv_count_str '건' INTO lv_text.
+      ENDCASE.
+
+      gs_tree-text = lv_text.
+      gs_tree-expander = 'X'.
+      APPEND gs_tree TO gt_tree.
+
+      lv_prev_quarter = lv_quarter.
+    ENDIF.
+
+
+    CONCATENATE lv_year '_' lv_quarter '_' gs_po-venid INTO lv_vendor_key.
+
+    READ TABLE gt_tree TRANSPORTING NO FIELDS
+         WITH KEY node_key = lv_vendor_key.
+
+    IF sy-subrc <> 0.
+
+
+      CLEAR lv_po_count.
+      LOOP AT gt_po INTO ls_temp WHERE venid = gs_po-venid
+                                   AND year = lv_year.
+
+        CASE lv_quarter.
+          WHEN 'Q1'.
+            IF ls_temp-month BETWEEN '01' AND '03'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q2'.
+            IF ls_temp-month BETWEEN '04' AND '06'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q3'.
+            IF ls_temp-month BETWEEN '07' AND '09'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+          WHEN 'Q4'.
+            IF ls_temp-month BETWEEN '10' AND '12'.
+              lv_po_count = lv_po_count + 1.
+            ENDIF.
+        ENDCASE.
+      ENDLOOP.
+
+      CLEAR gs_tree.
+      gs_tree-node_key = lv_vendor_key.
+      gs_tree-relatkey = lv_node_key.
+      gs_tree-relatship = cl_gui_simple_tree=>relat_last_child.
+      gs_tree-isfolder = ''.
+
+
+      lv_count_str = lv_po_count.
+      CONDENSE lv_count_str NO-GAPS.
+
+      CONCATENATE gs_po-vname ' (' gs_po-venid ') - ' lv_count_str '건'
+           INTO lv_text SEPARATED BY space.
+      gs_tree-text = lv_text.
+      APPEND gs_tree TO gt_tree.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  HANDLE_NODE_DOUBLE_CLICK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_NODE_KEY  text
+*----------------------------------------------------------------------*
+FORM handle_node_double_click  USING    p_node.
+
+  DATA : lv_venid TYPE ztssvend-venid,
+         lv_vname TYPE ztssvend-vname,
+         lv_year  TYPE numc4.
+
+  CASE p_node.
+    WHEN '1000'.
+    WHEN '2000'.
+    WHEN OTHERS.
+*      CLEAR gt_vdudat.
+*      lv_venid = p_node.
+*      READ TABLE gt_vendor INTO DATA(ls_vendor) WITH KEY venid = lv_venid.
+*      IF sy-subrc = 0.
+*        lv_vname = ls_vendor-vname.
+*        PERFORM get_exp_detail_data USING lv_venid.
+*        PERFORM refresh_alv_0400.
+*      ENDIF.
+
+
+
+
+  ENDCASE.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  DISPLAY_TREE_0300
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_GO_ALV_TREE  text
+*----------------------------------------------------------------------*
+FORM display_tree_0300  CHANGING co_tree TYPE REF TO cl_gui_simple_tree.
+
+  PERFORM get_tree_data.
+
+  CALL METHOD co_tree->add_nodes
+    EXPORTING
+      table_structure_name = 'MTREESNODE'
+      node_table           = gt_tree
+*  EXCEPTIONS
+*     error_in_node_table  = 1
+*     failed               = 2
+*     dp_error             = 3
+*     table_structure_name_not_found = 4
+*     others               = 5
+    .
+*  CALL METHOD co_tree->expand_node
+*    EXPORTING
+*      node_key = 'ROOT'.
+*
+*  CALL METHOD co_tree->expand_node
+*    EXPORTING
+*      node_key = '1000'.
+*
+*  CALL METHOD co_tree->expand_node
+*    EXPORTING
+*      node_key = '2000'.
+*  IF sy-subrc <> 0.
+** Implement suitable error handling here
+*  ENDIF.
+
+* Expand Level
+*  CALL METHOD go_tree->expand_root_nodes
+*    EXPORTING
+*      level_count    = 1
+*      expand_subtree = ''.
+
+
 ENDFORM.
 
 ----------------------------------------------------------------------------------

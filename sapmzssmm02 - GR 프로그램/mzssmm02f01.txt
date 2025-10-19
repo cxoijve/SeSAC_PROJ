@@ -1444,7 +1444,7 @@ FORM get_tree_data .
     PERFORM get_vendor_name USING ls_vendor-venid CHANGING lv_vname.
     IF sy-subrc = 0.
       CLEAR gs_tree.
-      gs_tree-node_key = |2024{ ls_vendor-venid }|.  " ← 2024V001
+      gs_tree-node_key = |2024{ ls_vendor-venid }|.
       gs_tree-relatkey = '1000'.
       gs_tree-isfolder = ''.
       gs_tree-text = lv_vname.
@@ -1583,6 +1583,11 @@ FORM set_alv_0400 .
     PERFORM refresh_alv_0400.
   ENDIF.
 
+  IF go_con_vinfo IS INITIAL.
+    PERFORM init_alv_0400_vinfo.
+  ELSE.
+    PERFORM refresh_alv_0400.
+  ENDIF.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  INIT_ALV_0400
@@ -1606,6 +1611,7 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM refresh_alv_0400 .
   PERFORM refresh_table_display CHANGING go_alv_exp_tree.
+  PERFORM refresh_table_display CHANGING go_alv_vinfo.
 ENDFORM.
 *&---------------------------------------------------------------------*
 *&      Form  SET_FCAT5_CHANGE
@@ -1787,9 +1793,9 @@ ENDFORM.
 *----------------------------------------------------------------------*
 FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
 
-  DATA: ls_data LIKE LINE OF pt_data,
-        ls_stat LIKE gs_vendor_stat,
-        lv_year TYPE numc4,
+  DATA: ls_data  LIKE LINE OF pt_data,
+        ls_stat  LIKE gs_vendor_stat,
+        lv_year  TYPE numc4,
         lv_count TYPE i,
         lv_tabix TYPE sy-tabix.
 
@@ -1837,7 +1843,7 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
     READ TABLE lt_po_count WITH KEY venid = lt_po_all-venid
                                     year = lv_year.
     IF sy-subrc = 0.
-      lv_tabix = sy-tabix.  " ★ tabix 저장
+      lv_tabix = sy-tabix.
       lt_po_count-total = lt_po_count-total + 1.
       MODIFY lt_po_count INDEX lv_tabix.  " ★ 저장된 값 사용
     ELSE.
@@ -1865,7 +1871,7 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
     IF sy-subrc <> 0.
       CLEAR ls_stat.
       ls_stat-venid = ls_data-venid.
-      perform get_vendor_name using ls_stat-venid CHANGING ls_stat-vname.
+      PERFORM get_vendor_name USING ls_stat-venid CHANGING ls_stat-vname.
 *      ls_stat-vname = ls_data-vname.
     ENDIF.
 
@@ -1875,10 +1881,10 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
 
       READ TABLE lt_sum WITH KEY venid = ls_data-venid year = '2024'.
       IF sy-subrc = 0.
-        lv_tabix = sy-tabix.  " ★ tabix 저장
+        lv_tabix = sy-tabix.
         lt_sum-total_days = lt_sum-total_days + ls_data-ludat.
         lt_sum-delay_count = lt_sum-delay_count + 1.
-        MODIFY lt_sum INDEX lv_tabix.  " ★ 저장된 값 사용
+        MODIFY lt_sum INDEX lv_tabix.
       ELSE.
         CLEAR lt_sum.
         lt_sum-venid = ls_data-venid.
@@ -1893,10 +1899,10 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
 
       READ TABLE lt_sum WITH KEY venid = ls_data-venid year = '2025'.
       IF sy-subrc = 0.
-        lv_tabix = sy-tabix.  " ★ tabix 저장
+        lv_tabix = sy-tabix.
         lt_sum-total_days = lt_sum-total_days + ls_data-ludat.
         lt_sum-delay_count = lt_sum-delay_count + 1.
-        MODIFY lt_sum INDEX lv_tabix.  " ★ 저장된 값 사용
+        MODIFY lt_sum INDEX lv_tabix.
       ELSE.
         CLEAR lt_sum.
         lt_sum-venid = ls_data-venid.
@@ -1907,12 +1913,12 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
       ENDIF.
     ENDIF.
 
-    " ★ 테이블 업데이트 (안전하게)
+
     READ TABLE gt_vendor_stat TRANSPORTING NO FIELDS
          WITH KEY venid = ls_data-venid.
     IF sy-subrc = 0.
-      lv_tabix = sy-tabix.  " ★ tabix 저장
-      MODIFY gt_vendor_stat FROM ls_stat INDEX lv_tabix.  " ★ 저장된 값 사용
+      lv_tabix = sy-tabix.
+      MODIFY gt_vendor_stat FROM ls_stat INDEX lv_tabix.
     ELSE.
       APPEND ls_stat TO gt_vendor_stat.
     ENDIF.
@@ -1922,7 +1928,7 @@ FORM calculate_delay_statistics USING pt_data LIKE gt_vdudat.
   " 3단계: 지연율 계산
   LOOP AT gt_vendor_stat INTO ls_stat.
 
-    lv_tabix = sy-tabix.  " ★ LOOP의 현재 인덱스 저장
+    lv_tabix = sy-tabix.
 
     " 2024년 전체 건수
     READ TABLE lt_po_count WITH KEY venid = ls_stat-venid year = '2024'.
@@ -2016,7 +2022,7 @@ FORM get_top3_delayed_vendors.
 
   lt_sorted[] = gt_vendor_stat[].
 
-  " ★ 전체(2024+2025) 지연율 기준 내림차순 정렬 ★
+  " 전체 지연율 내림차순  순우ㅣ내려보자
   SORT lt_sorted BY rate_all DESCENDING
                     avg_days_all DESCENDING.
 
@@ -2064,7 +2070,7 @@ FORM calculate_all_vendor_top3 .
 
   REFRESH gt_vdudat_all.
 
-  " ★ 모든 업체 루프
+  "
   LOOP AT gt_vendor INTO ls_vendor.
 
     " ===== 2024년 데이터 =====
@@ -2108,6 +2114,18 @@ FORM calculate_all_vendor_top3 .
     PERFORM calculate_delay_statistics USING gt_vdudat_all.
     PERFORM get_top3_delayed_vendors.
   ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  INIT_ALV_0400_VINFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM init_alv_0400_vinfo .
+  PERFORM create_alv_custom USING 'CON_VINFO'  CHANGING go_con_vinfo   go_alv_vinfo.
+  PERFORM set_tab_fdp_with_exclude USING 'ZSSSMM0224' gs_layo14 gt_exclude CHANGING gt_avgven gt_fcat14 gt_sort go_alv_vinfo.
 ENDFORM.
 
 ----------------------------------------------------------------------------------

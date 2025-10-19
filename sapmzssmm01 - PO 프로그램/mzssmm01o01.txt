@@ -194,6 +194,7 @@ ENDMODULE.
 *----------------------------------------------------------------------*
 MODULE set_alv_0500 OUTPUT.
   perform set_alv_0500.
+
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0501  OUTPUT
@@ -213,6 +214,24 @@ MODULE set_text_edit_0510 OUTPUT.
    PERFORM set_text_edit_0510 USING 'CON_EDIT'
                                     go_mod
                                     go_edit.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MODIFY_SCREEN_0500  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE modify_screen_0500 OUTPUT.
+    IF gv_ven_screen = 'SAVE'.
+    LOOP AT SCREEN.
+      IF screen-name = 'ZSSSMM0103-VENID'.
+        screen-input = 0.
+      ENDIF.
+      IF screen-name = 'ZSSSMM0103-RGTOR'.
+        screen-input = 0.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

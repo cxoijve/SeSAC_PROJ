@@ -187,5 +187,7 @@ DATA : gt_sort_0400 TYPE lvc_t_sort,
 " ALV Handler 0400
 DATA go_handler_0400 TYPE REF TO lcl_handler.
 
+DATA : gv_debugdate LIKE sy-datum.
+
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

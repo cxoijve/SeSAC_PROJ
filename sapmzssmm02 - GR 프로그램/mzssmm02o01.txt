@@ -216,12 +216,11 @@ ENDMODULE.
 MODULE set_alv_0400 OUTPUT.
   PERFORM set_alv_0400.
   " 통계 계산
-  IF gv_top3_calculated IS INITIAL.
-    gv_top3_calculated = 'X'.
-
-    " 모든 업체 TOP 3 계산
-    PERFORM calculate_all_vendor_top3.
-  ENDIF.
+*  IF gv_top3_calculated IS INITIAL.
+*    gv_top3_calculated = 'X'.
+*    " 모든 업체 TOP 3 계산
+*    PERFORM calculate_all_vendor_top3.
+*  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0310  OUTPUT

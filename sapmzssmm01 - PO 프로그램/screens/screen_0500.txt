@@ -8,12 +8,12 @@ SAPMZSSMM01
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM01                             0500 0500     35129192 37  0  0200255  0G E                              20251016132036																																
+SAPMZSSMM01                             0500 0500     35129192 37  0  0200255  0G E                              20251018135633																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 P_COND		CHAR	 79	00	00	00	30	00	  1	  2		  0	  0	  0		  7	R				  0	  0	101							구매오더		
-		CHAR	 50	00	00	00	30	00	  1	 81		  0	  0	  0		  7	R				  0	  0	102									
+P_DETAIL		CHAR	 50	00	00	00	30	00	  1	 81		  0	  0	  0		  7	R				  0	  0	102									
 ZSSSMM0103-PODAT	2	CHAR	 20	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	  0								구매오더일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0103-PODAT	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 P_ICN	0	CHAR	  4	00	00	00	30	00	  2	 83		  0	  0	  0		  4					  0	  0								@0S@		
@@ -33,7 +33,10 @@ OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								_
 PROCESS BEFORE OUTPUT.																																
  MODULE STATUS_0500.																																
    MODULE set_alv_0500.																																
+    MODULE modify_screen_0500.																																
+*     CALL SUBSCREEN sub INCLUDING 'SAPLZFGSS28' '0500'.																																
 *																																
 PROCESS AFTER INPUT.																																
 MODULE exit_0500 at EXIT-COMMAND.																																
  MODULE USER_COMMAND_0500.																																
+*   call SUBSCREEN sub.																																

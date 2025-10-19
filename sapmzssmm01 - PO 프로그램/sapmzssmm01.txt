@@ -16,9 +16,13 @@ INCLUDE mzssmm01f01                             .  " FORM-Routines
 
 LOAD-OF-PROGRAM.
   PERFORM set_default.
+  IF sy-calld = 'X'.
+    PERFORM called_exe.
+  ENDIF.
 
 *GUI Texts
 *----------------------------------------------------------
+* 0500 --> 구매오더 생성
 * T0100 --> 구매오더 조회 및 관리
 * T0220 --> 아이템수정
 * T100 --> 구매오더 조회 및 관리

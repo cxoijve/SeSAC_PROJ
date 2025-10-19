@@ -12,7 +12,9 @@ MODULE status_0100 OUTPUT.
 
   IF gv_first IS INITIAL.
     " 출고일, 청구일 기본값 설정
+    gs_cond-gidat_b = '20250501'.
     gs_cond-gidat_e = sy-datum.
+    gs_cond-bidat_b = '20250501'.
     gs_cond-bidat_e = sy-datum.
     " 수금여부 체크박스
     gs_cond-archk_y = 'X'.
@@ -130,14 +132,14 @@ MODULE status_0200 OUTPUT.
   SET TITLEBAR 'T200'.
 
   " 청구일 기본값 설정
-  IF gs_head_ist-bidat IS INITIAL.
-    gs_head_ist-bidat = sy-datum.
-  ENDIF.
+*  IF gs_head_ist-bidat IS INITIAL.
+    gs_head_ist-bidat = gs_gi_head-gidat.
+*  ENDIF.
 
   " 등록일 기본값 설정
-  IF gs_head_ist-rgdat IS INITIAL.
-    gs_head_ist-rgdat = sy-datum.
-  ENDIF.
+*  IF gs_head_ist-rgdat IS INITIAL.
+    gs_head_ist-rgdat = gs_gi_head-gidat.
+*  ENDIF.
 ENDMODULE.
 *&---------------------------------------------------------------------*
 *&      Module  STATUS_0300  OUTPUT
@@ -311,7 +313,6 @@ MODULE set_icon_0100 OUTPUT.
       icon_not_found        = 1
       outputfield_too_short = 2
       OTHERS                = 3.
-
 ENDMODULE.
 
 ----------------------------------------------------------------------------------

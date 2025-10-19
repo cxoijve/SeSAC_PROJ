@@ -1,0 +1,20 @@
+FUNCTION Z_FMSS_GET_AVAIL_WARES .
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IT_MATLIST) TYPE  ZSFG2801_T
+*"  EXCEPTIONS
+*"      QUERY_FAILED
+*"----------------------------------------------------------------------
+
+  PERFORM get_info_0500 TABLES gt_infod_0500
+                               it_matlist
+                        CHANGING gv_subrc.
+
+  IF gv_subrc <> 0.
+    RAISE query_failed.
+  ENDIF.
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

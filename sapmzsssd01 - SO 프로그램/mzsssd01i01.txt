@@ -46,13 +46,14 @@ MODULE user_command_0100 INPUT.
         PERFORM set_toprc USING gt_item
                           CHANGING zssssd0103.
         CALL SCREEN 0200.
-        CLEAR: zssssd0103, gs_item, gs_head_udt, gs_item_udt.
+        CLEAR: zssssd0103, gs_item, gt_item, gs_head_udt, gs_item_udt, gt_item_udt.
         ts_info-activetab = 'TAB1'.
         PERFORM get_header_list.
       ENDIF.
 
     WHEN 'GOTO4'.
 *      PERFORM set_sonum.
+*      CLEAR: gs_head_crt, gt_item_crt, gs_item_crt.
       CALL SCREEN 0400.
       CLEAR: gs_head_crt, gt_item_crt, gs_item_crt.
     WHEN OTHERS.
@@ -83,7 +84,7 @@ MODULE user_command_0200 INPUT.
         MOVE-CORRESPONDING zssssd0103 TO gs_head_udt.
 *        PERFORM get_mat_f4 USING gs_head_udt-cstid.
         CALL SCREEN 0300.
-        CLEAR: gs_head_udt, gs_item_udt. "zssssd0103, zssssd0104.
+        CLEAR: gs_head_udt, gs_item_udt, gt_item_udt.
         PERFORM get_header_list.
       ELSEIF zssssd0103-stat EQ 'Y'.     " 출고
         MESSAGE i999(zmcss) WITH '출고가 완료된 판매오더는 변경이 불가합니다.' DISPLAY LIKE 'E'.

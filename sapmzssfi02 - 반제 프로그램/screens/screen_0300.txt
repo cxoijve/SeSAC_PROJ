@@ -8,7 +8,7 @@ SAPMZSSFI02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSFI02                             0300 0300     30 93192 37  0  0 37198  0G E                              20251016100446																																
+SAPMZSSFI02                             0300 0300     30 93192 37  0  0 37198  0G E                              20251018213504																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
@@ -31,7 +31,7 @@ ZSSSFI0203-RGTOR	2	CHAR	 20	30	00	04	30	00	  6	 40		  0	  0	  0		  0					  0	  0
 ZSSSFI0203-RGTOR	C	CHAR	  8	A0	00	84	30	08	  6	 61		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSFI0203-RGTOR_T	C	CHAR	 19	B0	02	80	31	00	  6	 70		  0	  0	  0		  0					 80	  0								___________________	                                       00	
 B_BOX2		CHAR	 89	00	00	00	30	00	  8	  4		  0	  0	  0		  6	R				  0	  0	103							전표 아이템		
-CON3			 83	00	00	00	30	00	  9	  6		  0	  0	  0		  4	U				  1	  1	104									
+CON3			 83	00	30	00	30	00	  9	  6		  0	  0	  0		  4	U				  4	 41	104									
 ZSSSFI0204-DEBIT	0	CHAR	  5	30	00	00	30	00	 14	 46		  0	  0	  0		  0					  0	  0								Debit	                                                                                                                                                                                                                                                        X	
 ZSSSFI0204-DEBIT	P	CURR	 13	B0	00	80	30	00	 14	 52		  0	  0	  0		  0					 15	  2		ZSSSFI0204-CURKY						_____________	                                       00	
 ZSSSFI0204-CREDIT	0	CHAR	  6	30	00	00	30	00	 14	 66		  0	  0	  0		  0					  0	  0								Credit	                                                                                                                                                                                                                                                        X	
@@ -55,7 +55,7 @@ ZSSSFI0205-RGTOR	2	CHAR	 20	30	00	04	30	00	 21	 40		  0	  0	  0		  0					  0	  0
 ZSSSFI0205-RGTOR	C	CHAR	  8	A0	00	84	30	08	 21	 61		  0	  0	  0		  0					 16	  0								________	X                                      00	
 ZSSSFI0205-RGTOR_T	C	CHAR	 20	B0	02	80	31	00	 21	 70		  0	  0	  0		  0					 80	  0								____________________	                                       00	
 B_BOX6		CHAR	 89	00	00	00	30	00	 23	  4		  0	  0	  0		  6	R				  0	  0	108							전표 아이템		
-CON4			 82	00	00	00	30	00	 24	  7		  0	  0	  0		  4	U				  1	  1	109									
+CON4			 82	00	30	00	30	00	 24	  7		  0	  0	  0		  4	U				  4	 41	109									
 ZSSSFI0206-DEBIT	0	CHAR	  5	30	00	00	30	00	 29	 46		  0	  0	  0		  0					  0	  0								Debit	                                                                                                                                                                                                                                                        X	
 ZSSSFI0206-DEBIT	P	CURR	 13	B0	00	80	30	00	 29	 52		  0	  0	  0		  0					 15	  2		ZSSSFI0206-CURKY						_____________	                                       00	
 ZSSSFI0206-CREDIT	0	CHAR	  6	30	00	00	30	00	 29	 66		  0	  0	  0		  0					  0	  0								Credit	                                                                                                                                                                                                                                                        X	

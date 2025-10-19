@@ -19,7 +19,7 @@ INCLUDE zrssmm01f02                             .  " Class-Routines
 INITIALIZATION.
   so_poda-sign   = 'I'.
   so_poda-option = 'BT'.
-  so_poda-low    = sy-datum(6) && '01'.  " 이번 달 1일
+  so_poda-low    = '20250501'.  " 이번 달 1일
   so_poda-high   = sy-datum.              " 오늘
   APPEND so_poda.
 
@@ -34,8 +34,9 @@ START-OF-SELECTION.
 
 *GUI Texts
 *----------------------------------------------------------
-* T100 --> 구매오더 조건 상세조회
-* T200 --> 구매오더 - 가용 재고 확인
+* T100 --> 구매오더 상세조회
+* T200 --> 구매오더 가용재고 조회
+* T300 --> 구매오더 연도/월별 조회
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

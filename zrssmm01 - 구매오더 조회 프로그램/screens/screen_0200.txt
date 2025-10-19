@@ -8,20 +8,49 @@ ZRSSMM01
 750																																
                 40																																
 %_HEADER																																
-ZRSSMM01                                0200 0200     64117192 37  0  0200255  0G E                              20251017021004																																
+ZRSSMM01                                0200 0200     35155192 37  0  0200255  0G E                              20251017161200																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
-SUB			115	00	00	00	30	00	  2	  3		  0	  0	  0		 17	B				  1	  1	101									
-CON_MAT			117	00	00	00	30	00	 20	  2		  0	  0	  0		 45	U				  1	  1	102									
+		CHAR	155	00	00	00	30	00	  1	  2		  0	  0	  0		  9	R				  0	  0	101									
+T_INFO	0	CHAR	 93	00	00	00	30	00	  2	  4		  0	  0	  0		 44					  0	  0								@0S@ 생산 우선순위 재고 : 가용 재고가 적은 순		
+T10	0	CHAR	 14	00	00	00	30	00	  3	  4		  0	  0	  0		 12					  0	  0								@5C@		
+T11	0	CHAR	 14	00	00	00	30	00	  3	 51		  0	  0	  0		 12					  0	  0								@5C@		
+T13	0	CHAR	 14	00	00	00	30	00	  3	102		  0	  0	  0		 12					  0	  0								@5C@		
+T1	0	CHAR	 12	00	00	00	30	00	  4	  4		  0	  0	  0		  0					  0	  0								벤더사	                                                                                                                                                                                                                                                        X	
+GV_LOW1_VENID	C	CHAR	  8	80	00	80	30	00	  4	 17		  0	  0	  0		  0					  0	  0								________		
+GV_LOW1_VNAME	C	CHAR	 13	80	00	80	31	00	  4	 26		  0	  0	  0		  0					  0	  0								_____________		
+T4	0	CHAR	 12	00	00	00	30	00	  4	 51		  0	  0	  0		  0					  0	  0								벤더사	                                                                                                                                                                                                                                                        X	
+GV_LOW2_VENID	C	CHAR	  8	80	00	80	30	00	  4	 64		  0	  0	  0		  0					  0	  0								________		
+GV_LOW2_VNAME	C	CHAR	 14	80	00	80	31	00	  4	 73		  0	  0	  0		  0					  0	  0								______________		
+T7	0	CHAR	 12	00	00	00	30	00	  4	102		  0	  0	  0		  0					  0	  0								벤더사	                                                                                                                                                                                                                                                        X	
+GV_LOW3_VENID	C	CHAR	  8	80	00	80	30	00	  4	115		  0	  0	  0		  0					  0	  0								________		
+GV_LOW3_VNAME	C	CHAR	 15	80	00	80	31	00	  4	124		  0	  0	  0		  0					  0	  0								_______________		
+T2	0	CHAR	 12	00	00	00	30	00	  5	  4		  0	  0	  0		  0					  0	  0								자재번호	                                                                                                                                                                                                                                                        X	
+GV_LOW1_MATNR	C	CHAR	  8	80	00	80	30	00	  5	 17		  0	  0	  0		  0					  0	  0								________		
+GV_LOW1_MATNM	C	CHAR	 23	80	00	80	31	00	  5	 26		  0	  0	  0		  0					  0	  0								_______________________		
+T5	0	CHAR	 12	00	00	00	30	00	  5	 51		  0	  0	  0		  0					  0	  0								자재번호	                                                                                                                                                                                                                                                        X	
+GV_LOW2_MATNR	C	CHAR	  8	80	00	80	30	00	  5	 64		  0	  0	  0		  0					  0	  0								________		
+GV_LOW2_MATNM	C	CHAR	 27	80	00	80	31	00	  5	 73		  0	  0	  0		  0					  0	  0								___________________________		
+T8	0	CHAR	 12	00	00	00	30	00	  5	102		  0	  0	  0		  0					  0	  0								자재번호	                                                                                                                                                                                                                                                        X	
+GV_LOW3_MATNR	C	CHAR	  8	80	00	80	30	00	  5	115		  0	  0	  0		  0					  0	  0								________		
+GV_LOW3_MATNM	C	CHAR	 25	80	00	80	31	00	  5	124		  0	  0	  0		  0					  0	  0								_________________________		
+T3	0	CHAR	 12	00	00	00	30	00	  6	  4		  0	  0	  0		  0					  0	  0								재고 현황	                                                                                                                                                                                                                                                        X	
+GV_LOW1_ASTCK	I	INT4	 10	80	00	80	30	00	  6	 17		  0	  0	  0		  0					  0	  0								__________		
+T6	0	CHAR	 12	00	00	00	30	00	  6	 51		  0	  0	  0		  0					  0	  0								재고 현황	                                                                                                                                                                                                                                                        X	
+GV_LOW2_ASTCK	I	INT4	 10	80	00	80	30	00	  6	 64		  0	  0	  0		  0					  0	  0								__________		
+T9	0	CHAR	 12	00	00	00	30	00	  6	102		  0	  0	  0		  0					  0	  0								재고 현황	                                                                                                                                                                                                                                                        X	
+GV_LOW3_ASTCK	I	INT4	 10	80	00	80	30	00	  6	115		  0	  0	  0		  0					  0	  0								__________		
+		CHAR	155	00	00	00	30	00	 10	  2		  0	  0	  0		 26	R				  0	  0	102									
+CON_MAT			150	00	00	00	30	00	 11	  4		  0	  0	  0		 24	U				  1	  1	103									
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																
   MODULE status_0200.																																
   MODULE set_alv_0200.																																
-  CALL SUBSCREEN sub INCLUDING 'SAPLZFGSS28' '0500'.																																
+*  CALL SUBSCREEN sub INCLUDING 'SAPLZFGSS28' '0500'.																																
 *																																
 PROCESS AFTER INPUT.																																
   MODULE exit_200 AT EXIT-COMMAND.																																
   MODULE user_command_0200.																																
-  CALL SUBSCREEN sub.																																
+*  CALL SUBSCREEN sub.																																

@@ -8,17 +8,19 @@ SAPMZSSMM02
 750																																
                 40																																
 %_HEADER																																
-SAPMZSSMM02                             0110M0110     17 71192 37  0  0 19 91  0G E                              20251012022321																																
+SAPMZSSMM02                             0110M0110     19 71192 37  0  0 19 93  0G E                              20251018140621																																
 %_DESCRIPTION																																
                 40																																
 %_FIELDS																																
 ZSSSMM0214-GRDAT	2	CHAR	 20	30	00	00	30	00	  2	  3		  0	  0	  0		  0					  0	  0								입고일	                                                                                                                                                                                                                                                        X	
 ZSSSMM0214-GRDAT	D	DATE	 10	A0	00	80	00	08	  2	 24		  0	  0	  0		  0					 16	  0								__________	X                                      00	
-ZSSSMM0214-RGTOR	2	CHAR	 20	30	00	04	30	00	  3	  3		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
-ZSSSMM0214-RGTOR	C	CHAR	  8	A0	00	84	30	08	  3	 24		  0	  0	  0		  0					 16	  0								________	X                                      00	
-ZSSSMM0214-ENAME	C	CHAR	 40	A0	02	80	31	00	  3	 33		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
-STEXT	0	CHAR	 11	00	00	00	30	00	  5	  3		  0	  0	  0		  0					  0	  0								비고작성		
-CON_EDIT			 69	00	00	00	30	00	  6	  3		  0	  0	  0		 12	U				  1	  1	101									
+STEXT	0	CHAR	 11	00	00	00	30	00	  4	  3		  0	  0	  0		  0					  0	  0								비고작성		
+CON_EDIT			 69	00	00	00	30	00	  5	  3		  0	  0	  0		 12	U				  1	  1	101									
+ZSSSMM0214-RGTOR	2	CHAR	 20	30	00	04	30	00	 18	  3		  0	  0	  0		  0					  0	  0								등록자	                                                                                                                                                                                                                                                        X	
+ZSSSMM0214-RGTOR	C	CHAR	  8	A0	00	84	30	08	 18	 24		  0	  0	  0		  0					 16	  0								________	X                                      00	
+ZSSSMM0214-ENAME	C	CHAR	 40	A0	02	80	31	00	 18	 33		  0	  0	  0		  0					 80	  0								________________________________________	                                       00	
+ZSSSMM0214-RGDAT	2	CHAR	 20	30	00	00	30	00	 19	  3		  0	  0	  0		  0					  0	  0								등록일	                                                                                                                                                                                                                                                        X	
+ZSSSMM0214-RGDAT	D	DATE	 10	A0	00	80	30	08	 19	 24		  0	  0	  0		  0					 16	  0								__________	X                                      00	
 OK_CODE		CHAR	 20	80	10	00	00	00	255	  1	O	  0	  0	  0		  0					  0	  0								____________________		
 %_FLOWLOGIC																																
 PROCESS BEFORE OUTPUT.																																

@@ -135,12 +135,13 @@ DATA : gt_cnt LIKE TABLE OF gs_cnt.
 
 
 DATA : BEGIN OF gs_display.
-         include TYPE zsssmd0803.
+    INCLUDE TYPE zsssmd0803.
 DATA : venid       TYPE ztssvend-venid,
        vname       TYPE ztssvend-vname,
-       cellscol TYPE lvc_t_scol,
+       cellscol    TYPE lvc_t_scol,
        dr_hndl,
        btn_txt(16),
+*        celltab TYPE lvc_t_styl,
        ct          TYPE lvc_t_styl.
 DATA : END OF gs_display.
 DATA : gt_display LIKE TABLE OF gs_display.
@@ -157,6 +158,63 @@ DATA : gs_layo3 TYPE lvc_s_layo,
        gt_fcat3 TYPE lvc_t_fcat.
 
 DATA : gt_exclude TYPE ui_functions.
+
+
+DATA: gv_low1_venid TYPE ztssvend-venid,
+      gv_low1_vname TYPE ztssvend-vname,
+      gv_low1_matnr TYPE ztssware-matnr,
+      gv_low1_astck TYPE zsssmd0803-astck,  " astck 타입
+      gv_low1_matnm type ztssmat_t-matnm,
+
+      gv_low2_venid TYPE ztssvend-venid,
+      gv_low2_vname TYPE ztssvend-vname,
+      gv_low2_matnr TYPE ztssware-matnr,
+      gv_low2_astck TYPE zsssmd0803-astck,
+      gv_low2_matnm type ztssmat_t-matnm,
+
+      gv_low3_venid TYPE ztssvend-venid,
+      gv_low3_vname TYPE ztssvend-vname,
+      gv_low3_matnr TYPE ztssware-matnr,
+      gv_low3_astck TYPE zsssmd0803-astck,
+      gv_low3_matnm type ztssmat_t-matnm.
+
+
+
+* tree object
+DATA : go_con_tree TYPE REF TO cl_gui_custom_container,
+       go_alv_tree TYPE REF TO cl_gui_simple_tree.
+
+* Tree Node
+DATA : gs_tree TYPE mtreesnode,
+       gt_tree LIKE TABLE OF gs_tree.
+
+DATA : go_con_exp_tree TYPE REF TO cl_gui_custom_container,
+       go_alv_exp_tree TYPE REF TO cl_gui_alv_grid.
+
+
+DATA: BEGIN OF gs_po,
+        " 기본 필드
+        ponum TYPE ztsspoh-ponum,   " 구매오더번호
+        venid TYPE ztsspoh-venid,   " 업체코드
+        podat TYPE ztsspoh-podat,   " 구매오더일
+        dudat TYPE ztsspoh-dudat,   " 납기일
+        vname TYPE ztssvend-vname,  " 업체명
+
+        " 날짜 관련
+        year  TYPE numc4,           " 년도
+        month TYPE numc2,           " 월
+        half  TYPE c LENGTH 2,      " 반기 (H1/H2)
+        quarter TYPE c LENGTH 2,    " 분기 (Q1~Q4)
+
+        " 상태 관련
+        status TYPE c LENGTH 1,     " 상태 (예: 'O'=Open, 'C'=Closed)
+
+        " 금액 관련 (필요시)
+        total_amt TYPE p DECIMALS 2, " 총 금액
+
+      END OF gs_po.
+
+DATA: gt_po LIKE TABLE OF gs_po.
 
 
 *======================================
@@ -177,6 +235,12 @@ CLASS lcl_event_handler DEFINITION FINAL.
             es_row_no.
 ENDCLASS.
 DATA: go_event_handler TYPE REF TO lcl_event_handler.
+
+CLASS lcl_handler_tree DEFINITION.
+  PUBLIC SECTION.
+
+    CLASS-METHODS on_node_double_click FOR EVENT node_double_click OF cl_gui_simple_tree IMPORTING node_key.
+ENDCLASS.
 
 ----------------------------------------------------------------------------------
 Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2025. Sap Release 750

@@ -535,7 +535,7 @@ FORM get_info_0100  TABLES   pt_info_0100 STRUCTURE gs_info_0100
     CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
-        iv_endda         = '99991231'
+        iv_endda         = sy-datum
         iv_stoid         = ps_cond_0100-stoid
         iv_matnr         = pt_info_0100-matnr
       IMPORTING
@@ -864,7 +864,7 @@ FORM get_info_0200  TABLES   pt_info_0210 STRUCTURE gs_info_0200
   CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
     EXPORTING
       iv_begda         = '11110101'
-      iv_endda         = '99991231'
+      iv_endda         = sy-datum
       iv_stoid         = ps_alvtitle_0100-stoid
       iv_matnr         = ps_row_0100-matnr
     IMPORTING
@@ -1463,7 +1463,7 @@ FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
   CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
     EXPORTING
       iv_begda         = '11110101'
-      iv_endda         = '99991231'
+      iv_endda         = gv_debugdate "'99991231'
       iv_stoid         = 'SL02'
       iv_matnr         = ps_cond_0310-matnr
     IMPORTING
@@ -1513,7 +1513,7 @@ FORM get_info_0310  TABLES   pt_info_0310 STRUCTURE gs_info_0310
     CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
-        iv_endda         = '99991231'
+        iv_endda         = gv_debugdate "'99991231'
         iv_stoid         = 'SL01'
         iv_matnr         = pt_info_0310-matnr
       IMPORTING
@@ -1657,7 +1657,7 @@ FORM check_mrp  TABLES   pt_info_0310 STRUCTURE gs_info_0310
     WHEN 'X'.
       ps_inware-wdate = ps_cond_time-sdlstrtdt.
     WHEN OTHERS.
-      ps_inware-wdate = sy-datum.
+      ps_inware-wdate = gv_debugdate.
   ENDCASE.
 
   ps_inware-rgtor = 'E0000024'.
@@ -1677,7 +1677,7 @@ FORM check_mrp  TABLES   pt_info_0310 STRUCTURE gs_info_0310
       WHEN 'X'.
         pt_outwares-wdate = ps_cond_time-sdlstrtdt.
       WHEN OTHERS.
-        pt_outwares-wdate = sy-datum.
+        pt_outwares-wdate = gv_debugdate.
     ENDCASE.
 
     pt_outwares-rgtor = 'E0000012'.
@@ -1711,6 +1711,7 @@ FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
           iv_starttime        = ps_cond_time-sdlstrttm
           is_inware           = ps_inware
           it_outwares         = pt_outwares[]
+          iv_datum            = gv_debugdate
         EXCEPTIONS
           query_failed        = 1
           insert_failed       = 2
@@ -1725,6 +1726,7 @@ FORM release_mrp  TABLES   pt_outwares STRUCTURE ztssware
           iv_startimm         = 'X'
           is_inware           = ps_inware
           it_outwares         = pt_outwares[]
+          iv_datum            = gv_debugdate
         EXCEPTIONS
           query_failed        = 1
           insert_failed       = 2
@@ -2216,7 +2218,7 @@ FORM get_info_0400_from_0100  TABLES   pt_info_0400 STRUCTURE gs_info_0400
     CALL FUNCTION 'Z_FMSS_GET_AVAIL_STOCKS'
       EXPORTING
         iv_begda         = '11110101'
-        iv_endda         = '99991231'
+        iv_endda         = sy-datum
         iv_stoid         = lv_stoid
         iv_matnr         = pt_info_0100-matnr
       TABLES
