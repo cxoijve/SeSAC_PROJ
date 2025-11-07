@@ -66,3 +66,9 @@
 
 - 사원, 고객, 벤더, 원자재, 부서 등 주요 마스터 테이블과 원자재-완제품, 사원-직급 등 관계 테이블 구성
 - 각 마스터별 Text Table 분리로 다국어 이슈 대응 가능
+
+## 시연 영상
+
+https://github.com/user-attachments/assets/5b0099ef-5eba-4ed3-a448-e9643bc03311
+
+
