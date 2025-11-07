@@ -68,6 +68,7 @@
 - 각 마스터별 Text Table 분리로 다국어 이슈 대응 가능
 
 ## 시연 영상
+- 영상 제작: 최지예
 
 https://github.com/user-attachments/assets/5b0099ef-5eba-4ed3-a448-e9643bc03311
 
