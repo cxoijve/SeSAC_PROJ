@@ -18,6 +18,7 @@ SAP SeSAC 5기의 6조 교육생들이 가상의 밀키트 제조·유통 기업
   - 운영비용 절감 및 수익성 향상
 
 ## 시연 영상
+- 영상 제작자: 최지예
 <video src="https://github.com/user-attachments/assets/cfb803e3-a11e-46bf-863d-4b2777b8f50a" width="480" controls></video>
 
 
